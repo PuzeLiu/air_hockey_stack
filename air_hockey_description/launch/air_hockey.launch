@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="world_name" default="$(find air_hockey_description)/world/air_hockey.world"/>
+    <arg name="gui" default="true" />
+    <arg name="paused" default="true"/>
+    <arg name="use_sim_time" default="true"/>
+
+    <arg name="world_iiwas_f_x" default="0.0"/>
+    <arg name="world_iiwas_f_y" default="0.0"/>
+    <arg name="world_iiwas_f_z" default="0.0"/>
+    <arg name="world_iiwas_f_roll" default="0.0"/>
+    <arg name="world_iiwas_f_pitch" default="0.0"/>
+    <arg name="world_iiwas_f_yaw" default="0.0"/>
+
+    <include file="$(find iiwas_description)/launch/iiwas_rviz_new.launch">
+        <arg name="world_iiwas_f_x" value="$(arg world_iiwas_f_x)"/>
+        <arg name="world_iiwas_f_y" value="$(arg world_iiwas_f_y)"/>
+        <arg name="world_iiwas_f_z" value="$(arg world_iiwas_f_z)"/>
+        <arg name="world_iiwas_f_roll" value="$(arg world_iiwas_f_roll)"/>
+        <arg name="world_iiwas_f_pitch" value="$(arg world_iiwas_f_pitch)"/>
+        <arg name="world_iiwas_f_yaw" value="$(arg world_iiwas_f_yaw)"/>
+    </include>
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="use_sim_time" value="$(arg use_sim_time)"/>
+    </include>
+
+    <node name="iiwas_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+              args="-urdf -model iiwas -param robot_description"/>
+</launch>
