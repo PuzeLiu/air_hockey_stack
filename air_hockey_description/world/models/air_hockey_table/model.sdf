@@ -3,6 +3,17 @@
   <model name="table">
     <pose>0 0 0 0 0 0</pose>
     <link name="t_base">
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+      </inertial>
       <visual name="visual">
       <pose frame="">0 0 0.0555</pose>
         <geometry>
@@ -30,6 +41,17 @@
     </link>
 
     <link name="t_up_rim_l">
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+      </inertial>
       <visual name="visual">
         <pose frame="">0.3175 1.02 0.116</pose>
         <geometry>
@@ -65,6 +87,17 @@
       </collision>
     </link>
     <link name="t_up_rim_r">
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+      </inertial>
       <visual name="visual">
         <pose frame="">-0.3175 1.02 0.116</pose>
         <geometry>
@@ -100,6 +133,17 @@
       </collision>
     </link>
     <link name="t_up_rim_top">
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+      </inertial>
       <visual name="visual">
       <pose frame="">0 1.02 0.1305</pose>
         <geometry>
@@ -136,6 +180,17 @@
     </link>
 
     <link name="t_down_rim_l">
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+      </inertial>
       <visual name="visual">
       <pose frame="">0.3175 -1.02 0.116</pose>
         <geometry>
@@ -171,6 +226,17 @@
       </collision>
     </link>
     <link name="t_up_rim_r">
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+      </inertial>
       <visual name="visual">
         <pose frame="">-0.3175 -1.02 0.116</pose>
         <geometry>
@@ -206,6 +272,17 @@
       </collision>
     </link>
     <link name="t_up_rim_top">
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+      </inertial>
       <visual name="visual">
       <pose frame="">0 -1.02 0.1305</pose>
         <geometry>
@@ -242,6 +319,17 @@
     </link>
 
     <link name="t_right_rim">
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+      </inertial>
       <visual name="visual">
       <pose frame="">0.56 0.0 0.1255</pose>
         <geometry>
@@ -277,6 +365,17 @@
       </collision>
     </link>
     <link name="t_left_rim">
+      <inertial>
+        <mass>1.0</mass>
+        <inertia>
+          <ixx>1.0</ixx>
+          <ixy>0.0</ixy>
+          <ixz>0.0</ixz>
+          <iyy>1.0</iyy>
+          <iyz>0.0</iyz>
+          <izz>1.0</izz>
+        </inertia>
+      </inertial>
       <visual name="visual">
         <pose frame="">-0.56 0.0 0.1255</pose>
         <geometry>
