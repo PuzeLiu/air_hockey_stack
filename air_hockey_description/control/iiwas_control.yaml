@@ -17,22 +17,21 @@
       - F_WR
       - F_WFE
       - F_WAA
-
+#
     F_SFE:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     F_SAA:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     F_HR:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     F_EB:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     F_WR:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     F_WFE:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     F_WAA:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
-
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
 
   EffortJointInterface_B_Position_Controller:
     type: effort_controllers/JointGroupPositionController
@@ -46,20 +45,77 @@
       - B_WAA
 
     B_SFE:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     B_SAA:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     B_HR:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     B_EB:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     B_WR:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     B_WFE:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
     B_WAA:
-      pid: {p: 0.0,  d: 0.0, i: 0.0, i_clamp: 30}
+      pid: {p: 100.0,  d: 1.0, i: 0.0, i_clamp: 30}
 
+  EffortJointInterface_Position_Controller_F_SFE:
+    type: effort_controllers/JointPositionController
+    joint: F_SFE
+    pid: {p: 500.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_F_SAA:
+    type: effort_controllers/JointPositionController
+    joint: F_SAA
+    pid: {p: 5000.0,  d: 100.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_F_HR:
+    type: effort_controllers/JointPositionController
+    joint: F_HR
+    pid: {p: 500.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_F_EB:
+    type: effort_controllers/JointPositionController
+    joint: F_EB
+    pid: {p: 500.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_F_WR:
+    type: effort_controllers/JointPositionController
+    joint: F_WR
+    pid: {p: 100.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_F_WFE:
+    type: effort_controllers/JointPositionController
+    joint: F_WFE
+    pid: {p: 100.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_F_WAA:
+    type: effort_controllers/JointPositionController
+    joint: F_WAA
+    pid: {p: 100.0,  d: 10.0, i: 0.0, i_clamp: 30}
+
+  EffortJointInterface_Position_Controller_B_SFE:
+    type: effort_controllers/JointPositionController
+    joint: B_SFE
+    pid: {p: 500.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_B_SAA:
+    type: effort_controllers/JointPositionController
+    joint: B_SAA
+    pid: {p: 5000.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_B_HR:
+    type: effort_controllers/JointPositionController
+    joint: B_HR
+    pid: {p: 500.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_B_EB:
+    type: effort_controllers/JointPositionController
+    joint: B_EB
+    pid: {p: 500.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_B_WR:
+    type: effort_controllers/JointPositionController
+    joint: B_WR
+    pid: {p: 100.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_B_WFE:
+    type: effort_controllers/JointPositionController
+    joint: B_WFE
+    pid: {p: 100.0,  d: 10.0, i: 0.0, i_clamp: 30}
+  EffortJointInterface_Position_Controller_B_WAA:
+    type: effort_controllers/JointPositionController
+    joint: B_WAA
+    pid: {p: 100.0,  d: 10.0, i: 0.0, i_clamp: 30}
 
   # Position Position Controllers ---------------------------------------
   PositionJointInterface_F_Position_Controller:
@@ -73,20 +129,14 @@
       - F_WFE
       - F_WAA
 
-    F_SFE:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    F_SAA:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    F_HR:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    F_EB:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    F_WR:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    F_WFE:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    F_WAA:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
+#    pid_gains:
+#      F_SFE: {p: 800.0,  d: 10.0, i: 0.1}
+#      F_SAA: {p: 800.0,  d: 10.0, i: 0.1}
+#      F_HR:  {p: 500.0,  d: 10.0, i: 0.1}
+#      F_EB:  {p: 500.0,  d: 10.0, i: 0.1}
+#      F_WR:  {p: 300.0,  d: 10.0, i: 0.1}
+#      F_WFE: {p: 300.0,  d: 10.0, i: 0.1}
+#      F_WAA: {p: 100.0,  d: 10.0, i: 0.1}
 
   PositionJointInterface_B_Position_Controller:
     type: position_controllers/JointGroupPositionController
@@ -99,17 +149,11 @@
       - B_WFE
       - B_WAA
 
-    B_SFE:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    B_SAA:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    B_HR:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    B_EB:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    B_WR:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    B_WFE:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
-    B_WAA:
-      pid: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}
+#    pid_gains:
+#      B_SFE: {p: 800.0,  d: 10.0, i: 0.1, i_clamp: 30}
+#      B_SAA: {p: 800.0,  d: 10.0, i: 0.1, i_clamp: 30}
+#      B_HR:  {p: 500.0,  d: 10.0, i: 0.1, i_clamp: 30}
+#      B_EB:  {p: 500.0,  d: 10.0, i: 0.1, i_clamp: 30}
+#      B_WR:  {p: 300.0,  d: 10.0, i: 0.1, i_clamp: 30}
+#      B_WFE: {p: 300.0,  d: 10.0, i: 0.1, i_clamp: 30}
+#      B_WAA: {p: 100.0,  d: 10.0, i: 0.1, i_clamp: 30}

@@ -12,17 +12,19 @@
     <arg name="world_iiwas_f_pitch" default="0.0"/>
     <arg name="world_iiwas_f_yaw" default="0.0"/>
 
-    <arg name="hardware_interface" default="PositionJointInterface"/>
+    <arg name="hardware_interface" default="EffortJointInterface"/>
+<!--    <arg name="hardware_interface" default="PositionJointInterface"/>-->
 
-<!--    <arg name="controllers" default="joint_state_controller $(arg hardware_interface)_F_J1_controller $(arg hardware_interface)_F_J2_controller-->
-<!--      $(arg hardware_interface)_F_J3_controller $(arg hardware_interface)_F_J4_controller $(arg hardware_interface)_F_J5_controller-->
-<!--      $(arg hardware_interface)_F_J6_controller $(arg hardware_interface)_F_J7_controller-->
-<!--      $(arg hardware_interface)_B_J1_controller $(arg hardware_interface)_B_J2_controller $(arg hardware_interface)_B_J3_controller-->
-<!--      $(arg hardware_interface)_B_J4_controller $(arg hardware_interface)_B_J5_controller $(arg hardware_interface)_B_J6_controller-->
-<!--      $(arg hardware_interface)_B_J7_controller"/>-->
+    <arg name="controllers" default="joint_state_controller
+    $(arg hardware_interface)_Position_Controller_F_SFE $(arg hardware_interface)_Position_Controller_F_SAA
+    $(arg hardware_interface)_Position_Controller_F_HR $(arg hardware_interface)_Position_Controller_F_EB $(arg hardware_interface)_Position_Controller_F_WR
+    $(arg hardware_interface)_Position_Controller_F_WFE $(arg hardware_interface)_Position_Controller_F_WAA
+    $(arg hardware_interface)_Position_Controller_B_SFE $(arg hardware_interface)_Position_Controller_B_SAA
+    $(arg hardware_interface)_Position_Controller_B_HR $(arg hardware_interface)_Position_Controller_B_EB $(arg hardware_interface)_Position_Controller_B_WR
+    $(arg hardware_interface)_Position_Controller_B_WFE $(arg hardware_interface)_Position_Controller_B_WAA"/>
 
-    <arg name="controllers" default="joint_state_controller $(arg hardware_interface)_F_Position_Controller
-    $(arg hardware_interface)_B_Position_Controller"/>
+<!--    <arg name="controllers" default="joint_state_controller $(arg hardware_interface)_F_Position_Controller-->
+<!--    $(arg hardware_interface)_B_Position_Controller"/>-->
 
     <include file="$(find iiwas_description)/launch/iiwas_rviz_new.launch">
         <arg name="world_iiwas_f_x" value="$(arg world_iiwas_f_x)"/>
