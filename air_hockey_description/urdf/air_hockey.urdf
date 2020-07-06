@@ -655,6 +655,11 @@
     <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
   </joint>
   <link name="F_hand_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
     <visual>
       <origin rpy="0 0.0 1.57079632679" xyz="0 0 0"/>
       <geometry>
@@ -670,15 +675,22 @@
       <material name="Grey"/>
     </collision>
   </link>
-  <joint name="F_striker_joint" type="fixed">
+  <joint name="F_striker_joint" type="revolute">
     <parent link="F_hand_link"/>
     <child link="F_striker"/>
-    <origin rpy="0.785398163397 0.0 -1.57079632679" xyz="0.0 0.0 0.16"/>
+    <origin rpy="0 -1.57079632679 -1.57079632679" xyz="0.0 0.0 0.16"/>
     <axis xyz="0 0 1"/>
-    <limit effort="1000.0" velocity="1000.0"/>
+    <limit effort="300" lower="-2.96705972839" upper="2.96705972839" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
   </joint>
   <!--  The striker frame is here defined -->
   <link name="F_striker">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
     <visual>
       <origin rpy="0.0 0.0 0.0" xyz="0 0 0"/>
       <geometry>
@@ -713,6 +725,29 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" velocity="1000.0"/>
   </joint>
+  <gazebo reference="F_hand_link">
+    <material>Gazebo/Grey</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <selfCollide>0</selfCollide>
+  </gazebo>
+  <gazebo reference="F_striker">
+    <material>Gazebo/Grey</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <selfCollide>0</selfCollide>
+  </gazebo>
+  <transmission name="F_ee_tran_1">
+    <robotNamespace>/F</robotNamespace>
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="F_striker_joint">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="F_ee_motor_1">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
   <link name="F_striker_tip"/>
   <!--joint between {parent} and link_0-->
   <joint name="back_base_B_base_joint" type="fixed">
@@ -1152,6 +1187,11 @@
     <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
   </joint>
   <link name="B_hand_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
     <visual>
       <origin rpy="0 0.0 1.57079632679" xyz="0 0 0"/>
       <geometry>
@@ -1167,15 +1207,22 @@
       <material name="Grey"/>
     </collision>
   </link>
-  <joint name="B_striker_joint" type="fixed">
+  <joint name="B_striker_joint" type="revolute">
     <parent link="B_hand_link"/>
     <child link="B_striker"/>
-    <origin rpy="0.785398163397 0.0 -1.57079632679" xyz="0.0 0.0 0.16"/>
+    <origin rpy="0 -1.57079632679 -1.57079632679" xyz="0.0 0.0 0.16"/>
     <axis xyz="0 0 1"/>
-    <limit effort="1000.0" velocity="1000.0"/>
+    <limit effort="300" lower="-2.96705972839" upper="2.96705972839" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
+    <dynamics damping="0.5"/>
   </joint>
   <!--  The striker frame is here defined -->
   <link name="B_striker">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="1"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
     <visual>
       <origin rpy="0.0 0.0 0.0" xyz="0 0 0"/>
       <geometry>
@@ -1210,6 +1257,29 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" velocity="1000.0"/>
   </joint>
+  <gazebo reference="B_hand_link">
+    <material>Gazebo/Grey</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <selfCollide>0</selfCollide>
+  </gazebo>
+  <gazebo reference="B_striker">
+    <material>Gazebo/Grey</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <selfCollide>0</selfCollide>
+  </gazebo>
+  <transmission name="B_ee_tran_1">
+    <robotNamespace>/B</robotNamespace>
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="B_striker_joint">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="B_ee_motor_1">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
   <link name="B_striker_tip"/>
   <!-- Load Gazebo lib and set the robot namespace -->
   <gazebo>

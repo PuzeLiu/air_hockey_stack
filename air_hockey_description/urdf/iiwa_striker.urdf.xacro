@@ -15,6 +15,14 @@
     </joint>
 
     <link name="${robot_name}_hand_link">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="1" />
+        <inertia
+          ixx="1.0" ixy="0.0" ixz="0.0"
+          iyy="1.0" iyz="0.0"
+          izz="1.0" />
+      </inertial>
       <visual>
         <origin xyz="0 0 0" rpy="0 0.0 ${PI/2}"/>
         <geometry>
@@ -42,42 +50,49 @@
     </joint>
 
   <!--  The striker frame is here defined -->
-  <link name="${robot_name}_striker">
-    <visual>
-      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
-      <geometry>
-        <mesh filename="package://air_hockey_description/meshes/striker/visual/only_striker.stl"/>
-      </geometry>
-      <material name="Grey"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
-      <geometry>
-        <mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>
-      </geometry>
-      <material name="Grey"/>
-      <surface>
-          <bounce>
-              <restitution_coefficient>1</restitution_coefficient>
-          </bounce>
-          <contact>
-              <ode>
-                  <soft_cfm>0.1</soft_cfm>
-                  <soft_erp>0.1</soft_erp>
-                  <max_vel>1</max_vel>
-              </ode>
-          </contact>
-      </surface>
-    </collision>
-  </link>
+    <link name="${robot_name}_striker">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="1" />
+        <inertia
+                ixx="1.0" ixy="0.0" ixz="0.0"
+                iyy="1.0" iyz="0.0" izz="1.0" />
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <mesh filename="package://air_hockey_description/meshes/striker/visual/only_striker.stl"/>
+        </geometry>
+        <material name="Grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+        <geometry>
+          <mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>
+        </geometry>
+        <material name="Grey"/>
+        <surface>
+            <bounce>
+                <restitution_coefficient>1</restitution_coefficient>
+            </bounce>
+            <contact>
+                <ode>
+                    <soft_cfm>0.1</soft_cfm>
+                    <soft_erp>0.1</soft_erp>
+                    <max_vel>1</max_vel>
+                </ode>
+            </contact>
+        </surface>
+      </collision>
+    </link>
 
-  <joint name="${robot_name}_ee_joint" type="fixed">
-    <parent link="${robot_name}_striker" />
-    <child link = "${robot_name}_striker_tip" />
-    <origin xyz="0.0 0.051 0.0" rpy="${PI/2} 0 ${PI}" />
-    <axis xyz="0 0 1"/>
-    <limit effort="1000.0" velocity="1000.0" />
-  </joint>
+    <joint name="${robot_name}_ee_joint" type="fixed">
+      <parent link="${robot_name}_striker" />
+      <child link = "${robot_name}_striker_tip" />
+      <origin xyz="0.0 0.051 0.0" rpy="${PI/2} 0 ${PI}" />
+      <axis xyz="0 0 1"/>
+      <limit effort="1000.0" velocity="1000.0" />
+    </joint>
 
     <gazebo reference="${robot_name}_hand_link">
       <material>Gazebo/Grey</material>

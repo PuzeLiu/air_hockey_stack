@@ -18,10 +18,10 @@
     <arg name="controllers" default="joint_state_controller
     $(arg hardware_interface)_Position_Controller_F_SFE $(arg hardware_interface)_Position_Controller_F_SAA
     $(arg hardware_interface)_Position_Controller_F_HR $(arg hardware_interface)_Position_Controller_F_EB $(arg hardware_interface)_Position_Controller_F_WR
-    $(arg hardware_interface)_Position_Controller_F_WFE $(arg hardware_interface)_Position_Controller_F_WAA
+    $(arg hardware_interface)_Position_Controller_F_WFE $(arg hardware_interface)_Position_Controller_F_WAA $(arg hardware_interface)_Position_Controller_F_striker_joint
     $(arg hardware_interface)_Position_Controller_B_SFE $(arg hardware_interface)_Position_Controller_B_SAA
     $(arg hardware_interface)_Position_Controller_B_HR $(arg hardware_interface)_Position_Controller_B_EB $(arg hardware_interface)_Position_Controller_B_WR
-    $(arg hardware_interface)_Position_Controller_B_WFE $(arg hardware_interface)_Position_Controller_B_WAA"/>
+    $(arg hardware_interface)_Position_Controller_B_WFE $(arg hardware_interface)_Position_Controller_B_WAA $(arg hardware_interface)_Position_Controller_B_striker_joint"/>
 
 <!--    <arg name="controllers" default="joint_state_controller $(arg hardware_interface)_F_Position_Controller-->
 <!--    $(arg hardware_interface)_B_Position_Controller"/>-->
