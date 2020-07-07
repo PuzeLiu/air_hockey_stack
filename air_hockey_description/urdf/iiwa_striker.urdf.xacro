@@ -17,7 +17,7 @@
     <link name="${robot_name}_hand_link">
       <inertial>
         <origin xyz="0 0 0" rpy="0 0 0" />
-        <mass value="1" />
+        <mass value="0.1" />
         <inertia
           ixx="1.0" ixy="0.0" ixz="0.0"
           iyy="1.0" iyz="0.0"
@@ -42,21 +42,21 @@
     <joint name="${robot_name}_striker_joint" type="revolute">
       <parent link="${robot_name}_hand_link" />
       <child link = "${robot_name}_striker" />
-      <origin xyz="0.0 0.0 0.16" rpy="0 -${PI/2} -${PI/2}" />
+      <origin xyz="0.0 0.0 0.16" rpy="${PI/2} 0 0" />
       <axis xyz="0 0 1"/>
       <limit effort="300" lower="-2.96705972839" upper="2.96705972839" velocity="10"/>
       <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
-      <dynamics damping="0.5"/>
+      <dynamics damping="0.01" friction="1"/>
     </joint>
 
   <!--  The striker frame is here defined -->
     <link name="${robot_name}_striker">
       <inertial>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <mass value="1" />
+        <origin xyz="0 0.051 0" rpy="0 0 0" />
+        <mass value="0.1" />
         <inertia
-                ixx="1.0" ixy="0.0" ixz="0.0"
-                iyy="1.0" iyz="0.0" izz="1.0" />
+                ixx="0.00012" ixy="0.0" ixz="0.0"
+                iyy="0.00002" iyz="0.0" izz="0.00002" />
       </inertial>
       <visual>
         <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
@@ -73,7 +73,7 @@
         <material name="Grey"/>
         <surface>
             <bounce>
-                <restitution_coefficient>1</restitution_coefficient>
+                <restitution_coefficient>0.8</restitution_coefficient>
             </bounce>
             <contact>
                 <ode>
@@ -89,7 +89,7 @@
     <joint name="${robot_name}_ee_joint" type="fixed">
       <parent link="${robot_name}_striker" />
       <child link = "${robot_name}_striker_tip" />
-      <origin xyz="0.0 0.051 0.0" rpy="${PI/2} 0 ${PI}" />
+      <origin xyz="0.0 0.051 0.0" rpy="-${PI/2} 0 0" />
       <axis xyz="0 0 1"/>
       <limit effort="1000.0" velocity="1000.0" />
     </joint>
