@@ -682,14 +682,14 @@
     <axis xyz="0 0 1"/>
     <limit effort="300" lower="-2.96705972839" upper="2.96705972839" velocity="10"/>
     <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
-    <dynamics damping="0.01" friction="1"/>
+    <dynamics damping="0.01" friction="0.01"/>
   </joint>
   <!--  The striker frame is here defined -->
   <link name="F_striker">
     <inertial>
-      <origin rpy="0 0 0" xyz="0 0.051 0"/>
-      <mass value="0.1"/>
-      <inertia ixx="0.00012" ixy="0.0" ixz="0.0" iyy="0.00002" iyz="0.0" izz="0.00002"/>
+      <origin rpy="0 0 0" xyz="0 0.0 0"/>
+      <mass value="0.0"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
     </inertial>
     <visual>
       <origin rpy="0.0 0.0 0.0" xyz="0 0 0"/>
@@ -725,6 +725,13 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" velocity="1000.0"/>
   </joint>
+  <link name="F_striker_tip">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="0.00012" ixy="0.0" ixz="0.0" iyy="0.00002" iyz="0.0" izz="0.00002"/>
+    </inertial>
+  </link>
   <gazebo reference="F_hand_link">
     <material>Gazebo/Grey</material>
     <mu1>0.2</mu1>
@@ -737,18 +744,17 @@
     <mu2>0.2</mu2>
     <selfCollide>0</selfCollide>
   </gazebo>
-  <transmission name="F_ee_tran_1">
+  <transmission name="F_striker_tran">
     <robotNamespace>/F</robotNamespace>
     <type>transmission_interface/SimpleTransmission</type>
     <joint name="F_striker_joint">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
-    <actuator name="F_ee_motor_1">
+    <actuator name="F_striker_motor">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
-  <link name="F_striker_tip"/>
   <!--joint between {parent} and link_0-->
   <joint name="back_base_B_base_joint" type="fixed">
     <origin rpy="0.0 0.0 3.14159265359" xyz="0.0 0.0 0.015"/>
@@ -1214,14 +1220,14 @@
     <axis xyz="0 0 1"/>
     <limit effort="300" lower="-2.96705972839" upper="2.96705972839" velocity="10"/>
     <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.93215314335" soft_upper_limit="2.93215314335"/>
-    <dynamics damping="0.01" friction="1"/>
+    <dynamics damping="0.01" friction="0.01"/>
   </joint>
   <!--  The striker frame is here defined -->
   <link name="B_striker">
     <inertial>
-      <origin rpy="0 0 0" xyz="0 0.051 0"/>
-      <mass value="0.1"/>
-      <inertia ixx="0.00012" ixy="0.0" ixz="0.0" iyy="0.00002" iyz="0.0" izz="0.00002"/>
+      <origin rpy="0 0 0" xyz="0 0.0 0"/>
+      <mass value="0.0"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
     </inertial>
     <visual>
       <origin rpy="0.0 0.0 0.0" xyz="0 0 0"/>
@@ -1257,6 +1263,13 @@
     <axis xyz="0 0 1"/>
     <limit effort="1000.0" velocity="1000.0"/>
   </joint>
+  <link name="B_striker_tip">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="0.00012" ixy="0.0" ixz="0.0" iyy="0.00002" iyz="0.0" izz="0.00002"/>
+    </inertial>
+  </link>
   <gazebo reference="B_hand_link">
     <material>Gazebo/Grey</material>
     <mu1>0.2</mu1>
@@ -1269,18 +1282,17 @@
     <mu2>0.2</mu2>
     <selfCollide>0</selfCollide>
   </gazebo>
-  <transmission name="B_ee_tran_1">
+  <transmission name="B_striker_tran">
     <robotNamespace>/B</robotNamespace>
     <type>transmission_interface/SimpleTransmission</type>
     <joint name="B_striker_joint">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
-    <actuator name="B_ee_motor_1">
+    <actuator name="B_striker_motor">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
-  <link name="B_striker_tip"/>
   <!-- Load Gazebo lib and set the robot namespace -->
   <gazebo>
     _
