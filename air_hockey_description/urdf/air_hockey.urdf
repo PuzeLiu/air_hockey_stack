@@ -729,16 +729,17 @@
       <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
     </inertial>
     <visual>
-      <origin rpy="0.0 0.0 0.0" xyz="0 0 0"/>
+      <origin rpy="0.0 0.0 0.0" xyz="0 0.0 0.0"/>
       <geometry>
         <mesh filename="package://air_hockey_description/meshes/striker/visual/only_striker.stl"/>
       </geometry>
       <material name="Grey"/>
     </visual>
     <collision>
-      <origin rpy="0.0 0.0 0.0" xyz="0 0 0"/>
+      <origin rpy="1.57079632679 0.0 0.0" xyz="0 0.0255 0.0"/>
       <geometry>
-        <mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>
+        <cylinder length="0.051" radius="0.048"/>
+        <!--<mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>-->
       </geometry>
       <material name="Grey"/>
       <surface>
@@ -1272,16 +1273,17 @@
       <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
     </inertial>
     <visual>
-      <origin rpy="0.0 0.0 0.0" xyz="0 0 0"/>
+      <origin rpy="0.0 0.0 0.0" xyz="0 0.0 0.0"/>
       <geometry>
         <mesh filename="package://air_hockey_description/meshes/striker/visual/only_striker.stl"/>
       </geometry>
       <material name="Grey"/>
     </visual>
     <collision>
-      <origin rpy="0.0 0.0 0.0" xyz="0 0 0"/>
+      <origin rpy="1.57079632679 0.0 0.0" xyz="0 0.0255 0.0"/>
       <geometry>
-        <mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>
+        <cylinder length="0.051" radius="0.048"/>
+        <!--<mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>-->
       </geometry>
       <material name="Grey"/>
       <surface>

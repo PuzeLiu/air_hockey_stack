@@ -59,16 +59,17 @@
                 iyy="0.0" iyz="0.0" izz="0.0" />
       </inertial>
       <visual>
-        <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+        <origin xyz="0 0.0 0.0" rpy="0.0 0.0 0.0"/>
         <geometry>
-          <mesh filename="package://air_hockey_description/meshes/striker/visual/only_striker.stl"/>
+        	<mesh filename="package://air_hockey_description/meshes/striker/visual/only_striker.stl"/>
         </geometry>
         <material name="Grey"/>
       </visual>
       <collision>
-        <origin xyz="0 0 0" rpy="0.0 0.0 0.0"/>
+        <origin xyz="0 0.0255 0.0" rpy="${PI / 2} 0.0 0.0"/>
         <geometry>
-          <mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>
+					<cylinder radius="0.048" length="0.051"/>
+          <!--<mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>-->
         </geometry>
         <material name="Grey"/>
         <surface>
