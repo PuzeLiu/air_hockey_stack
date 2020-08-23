@@ -3,21 +3,11 @@
   <world name="default">
     <include>
       <uri>model://ground_plane</uri>
-      <pose>0.0 0.0 -0.195 0.0 0.0 0.0</pose>
+      <pose>0.0 0.0 0.0 0.0 0.0 0.0</pose>
     </include>
 
     <include>
       <uri>model://sun</uri>
-    </include>
-
-    <include>
-      <uri>model://air_hockey_table</uri>
-      <pose>1.51 0.0 0.0 0.0 0.0 1.57079632679</pose>
-    </include>
-
-    <include>
-      <uri>model://puck</uri>
-      <pose>1.51 0.0 0.1135 0.0 0.0 0.0</pose>
     </include>
 
     <gravity>0 0 -9.81</gravity>

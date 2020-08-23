@@ -1,64 +1,54 @@
 <?xml version="1.0"?>
 <launch>
+    <!-- Arguments -->
     <arg name="world_name" default="$(find air_hockey_description)/world/air_hockey.world"/>
+    <arg name="air_hockey_table" default="$(find air_hockey_description)/world/models/air_hockey_table/model.sdf"/>
+    <arg name="air_hockey_puck" default="$(find air_hockey_description)/world/models/puck/model.sdf"/>
     <arg name="gui" default="true" />
     <arg name="paused" default="true"/>
     <arg name="use_sim_time" default="true"/>
 
     <arg name="world_iiwas_f_x" default="0.0"/>
     <arg name="world_iiwas_f_y" default="0.0"/>
-    <arg name="world_iiwas_f_z" default="0.0"/>
-    <arg name="world_iiwas_f_roll" default="0.0"/>
-    <arg name="world_iiwas_f_pitch" default="0.0"/>
-    <arg name="world_iiwas_f_yaw" default="0.0"/>
+    <arg name="world_iiwas_f_z" default="0.195"/>
+    
+    <arg name="hardware_interface" default="PositionJointInterface"/>
+    
+    <arg name="front_controllers" default="front_iiwa/joint_state_controller
+                                           front_iiwa/joint_position_controller" />
+    
+    <arg name="back_controllers" default="back_iiwa/joint_state_controller
+                                          back_iiwa/joint_position_controller"/>
 
-    <arg name="hardware_interface" default="EffortJointInterface"/>
-<!--    <arg name="hardware_interface" default="PositionJointInterface"/>-->
+    <!-- Description -->
+    <include file="$(find iiwas_description)/launch/iiwas_rviz.launch">
+        <arg name="world_iiwas_f_x" value="$(arg world_iiwas_f_x)"/>
+        <arg name="world_iiwas_f_y" value="$(arg world_iiwas_f_y)"/>
+        <arg name="world_iiwas_f_z" value="$(arg world_iiwas_f_z)"/>
+        <arg name="hardware_interface" value="PositionJointInterface"/>
+    </include>
 
-    <arg name="controllers" default="joint_state_controller
-    $(arg hardware_interface)_Position_Controller_F_SFE $(arg hardware_interface)_Position_Controller_F_SAA
-    $(arg hardware_interface)_Position_Controller_F_HR $(arg hardware_interface)_Position_Controller_F_EB $(arg hardware_interface)_Position_Controller_F_WR
-    $(arg hardware_interface)_Position_Controller_F_WFE $(arg hardware_interface)_Position_Controller_F_WAA $(arg hardware_interface)_Position_Controller_F_striker_joint
-    $(arg hardware_interface)_Position_Controller_B_SFE $(arg hardware_interface)_Position_Controller_B_SAA
-    $(arg hardware_interface)_Position_Controller_B_HR $(arg hardware_interface)_Position_Controller_B_EB $(arg hardware_interface)_Position_Controller_B_WR
-    $(arg hardware_interface)_Position_Controller_B_WFE $(arg hardware_interface)_Position_Controller_B_WAA $(arg hardware_interface)_Position_Controller_B_striker_joint"/>
-
-<!--    <arg name="controllers" default="joint_state_controller $(arg hardware_interface)_F_Position_Controller-->
-<!--    $(arg hardware_interface)_B_Position_Controller"/>-->
-
-    <param name="robot_description"
-           command="$(find xacro)/xacro '$(find air_hockey_description)/urdf/air_hockey.urdf.xacro'
-           world_to_iiwas_f_x:=$(arg world_iiwas_f_x) world_to_iiwas_f_y:=$(arg world_iiwas_f_y) world_to_iiwas_f_z:=$(arg world_iiwas_f_z)
-           world_to_iiwas_f_roll:=$(arg world_iiwas_f_roll) world_to_iiwas_f_pitch:=$(arg world_iiwas_f_pitch) world_to_iiwas_f_yaw:=$(arg world_iiwas_f_yaw)
-           hardware_interface:=$(arg hardware_interface)"/>
-
-    <!-- send fake joint values -->
-    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-        <param name="use_gui" value="FALSE"/>
-    </node>
-
-    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen" >
-        <param name="publish_frequency" type="double" value="50.0" />
-    </node>
-
-    <node name="rviz" pkg="rviz" type="rviz"
-          args="-d $(find iiwas_description)/config/iiwas_frame.rviz"/>
-
+    <!-- Simulation -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
         <arg name="world_name" value="$(arg world_name)"/>
         <arg name="gui" value="$(arg gui)" />
         <arg name="paused" value="$(arg paused)"/>
-        <arg name="use_sim_time" value="$(arg use_sim_time)"/>
-        <arg name="physics" value="bullet" />
+        <arg name="use_sim_time" value="true"/>
+        <!-- <arg name="physics" value="bullet" /> -->
     </include>
 
     <node name="iiwas_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-urdf -model iiwas -param robot_description"/>
+                args="-urdf -model iiwas -param robot_description"/>
+    <node name="air_hockey_table_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" 
+                args="-file $(arg air_hockey_table) -sdf -model table -x 1.51 -Y 1.57079632679"/>
+    <node name="air_hockey_puck_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" 
+                args="-file $(arg air_hockey_puck) -sdf -model puck -x 1.51 -z 0.1140"/>
 
-    <!-- Load joint controller configurations from YAML file to parameter server -->
-    <rosparam file="$(find air_hockey_description)/control/iiwas_control.yaml" command="load"/>
-
-    <!-- load the controllers -->
-    <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-          output="screen" args="$(arg controllers)"/>
+    <!-- Controllers -->
+    <include file="$(find iiwas_control)/launch/iiwas_control.launch">
+        <arg name="use_front_iiwa" value="true" />
+        <arg name="use_back_iiwa" value="true" />
+        <arg name="front_controllers" value="$(arg front_controllers)"/>
+        <arg name="back_controllers" value="$(arg back_controllers)"/>
+    </include>
 </launch>

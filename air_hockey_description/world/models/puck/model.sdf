@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <sdf version='1.6'>
   <model name='puck'>
-  <pose>1.51 0 0.15 0 0 0</pose>
+  <pose>0.0 0 0.0 0 0 0</pose>
     <link name='link_0'>
       <inertial>
         <mass>0.01</mass>
@@ -45,7 +45,7 @@
         </geometry>
         <surface>
           <bounce>
-            <restitution_coefficient>0.95</restitution_coefficient>
+            <restitution_coefficient>0.8</restitution_coefficient>
             <threshold>0</threshold>
           </bounce>
           <friction>
@@ -63,17 +63,10 @@
           </contact>
         </surface>
       </collision>
-<!--      <velocity_decay>-->
-<!--        <linear>0.01</linear>-->
-<!--      </velocity_decay>-->
+      <velocity_decay>
+        <linear>0.004</linear>
+      </velocity_decay>
     </link>
-<!--    <plugin name="object_controller" filename="libgazebo_ros_planar_move.so">-->
-<!--      <commandTopic>cmd_vel</commandTopic>-->
-<!--      <odometryTopic>odom</odometryTopic>-->
-<!--      <odometryFrame>odom</odometryFrame>-->
-<!--      <odometryRate>20.0</odometryRate>-->
-<!--      <robotBaseFrame>link_0</robotBaseFrame>-->
-<!--    </plugin>-->
     <static>0</static>
     <allow_auto_disable>1</allow_auto_disable>
   </model>
