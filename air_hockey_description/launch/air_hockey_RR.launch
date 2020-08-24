@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Arguments -->
+    <arg name="use_front_iiwa" default="true" />
+    <arg name="use_back_iiwa" default="false" />
+    <arg name="hardware_interface" default="PositionJointInterface"/>
+    
+    <!-- optitrack-->
+    <include file="$(find ias_optitrack_bridge)/launch/optitrack_tf.launch"/>
+    
+    <!-- Real robot -->
+    <include file="$(find iiwas_bringup)/launch/iiwas_remote.launch">
+        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)"/>
+        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)"/>
+        <arg name="hardware_interface" default="PositionJointInterface"/>
+    </include>
+
+
+
+</launch>
