@@ -29,16 +29,17 @@ def joint_state_cb(data):
         q_cur = np.array(data.position)
 
 if __name__ == '__main__':
-    rospy.init_node("goto_puck", anonymous=True)
+    rospy.init_node("hit_static", anonymous=True)
     rate = rospy.Rate(1000)
 
     ls = tf.TransformListener()
 
-    cmd_pubisher = rospy.Publisher("front_iiwa/joint_position_controller/command", Float64MultiArray, queue_size=10)
+    cmd_pubisher = rospy.Publisher("front_iiwa/joint_position_controller/command", Float64MultiArray, queue_size=1)
+    vel_pubisher = rospy.Publisher("front_iiwa/joint_position_controller/velocity", Float64MultiArray, queue_size=1)
     rospy.Subscriber("joint_states", JointState, joint_state_cb)
 
     # ==========================================
-    table_height = 0.4
+    table_height = 0.28
 
     init_pos = np.array([0.45, 0.0, table_height])
     init_quat = getQuat([0, 1, 0], 180. / 180. * np.pi)
@@ -67,7 +68,7 @@ if __name__ == '__main__':
     print("Goto Initial Position: ", init_pos)
     goto(init_pos)
 
-    cart_max_vel = np.array([2])
+    cart_max_vel = np.array([1])
     cart_max_acc = np.array([5])
 
     while not rospy.is_shutdown():
@@ -83,7 +84,7 @@ if __name__ == '__main__':
             gripper_pos = np.array(gripper_pose[0])
             gripper_quat = np.array(gripper_pose[1])
 
-            dist_norm = np.linalg.norm((puck_dist - gripper_pos)[:2])
+            dist_norm = np.linalg.norm((puck_dist - gripper_pos)[:2]) + 0.15
 
             direction = puck_dist - gripper_pos[:3]
             direction[2] = 0.0
@@ -99,14 +100,18 @@ if __name__ == '__main__':
                 ee_pos_i[2] = table_height
                 command.append(kdl_interface.inverse_kinematics(ee_pos_i, gripper_quat, q_cur))
 
-            msg = Float64MultiArray()
+            cmd_msg = Float64MultiArray()
+            vel_msg = Float64MultiArray()
+
+            cmd_msg.data = command[0]
             while command.__len__() != 0:
-                msg.data = command.pop(0)
-                cmd_pubisher.publish(msg)
+                last_cmd = cmd_msg.data
+                cmd_msg.data = command.pop(0)
+                cmd_pubisher.publish(cmd_msg)
+
+                vel_msg.data = (cmd_msg.data - last_cmd) / rate.sleep_dur.to_sec()
+                vel_pubisher.publish(vel_msg)
                 rate.sleep()
-
-
-
 
         elif charac == "r":
             goto(init_pos)

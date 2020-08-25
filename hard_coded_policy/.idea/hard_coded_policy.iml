@@ -7,7 +7,7 @@
     </content>
     <content url="file://$MODULE_DIR$/../../ias_pykdl" />
     <content url="file:///opt/ros/kinetic/lib/python2.7/dist-packages" />
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="Python 2.7" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="workspace" level="project" />
     <orderEntry type="library" name="ROS" level="project" />
