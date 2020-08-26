@@ -8,10 +8,14 @@
     <arg name="paused" default="true"/>
     <arg name="use_sim_time" default="true"/>
 
-    <arg name="world_iiwas_f_x" default="0.0"/>
-    <arg name="world_iiwas_f_y" default="0.0"/>
-    <arg name="world_iiwas_f_z" default="0.195"/>
-    
+
+    <arg name="world_iiwas_f_x" default="-1.61538391e-02"/>
+    <arg name="world_iiwas_f_y" default="8.18335731e-01"/>
+    <arg name="world_iiwas_f_z" default="89999999999999999"/>
+    <arg name="world_iiwas_f_roll" default="0.00084844"/>
+    <arg name="world_iiwas_f_pitch" default="-0.00264906"/>
+    <arg name="world_iiwas_f_yaw" default="0.01872297"/>
+    <arg name="urdf_file" default="$(find air_hockey_description)/urdf/air_hockey.urdf.xacro"/>
     <arg name="hardware_interface" default="PositionJointInterface"/>
     
     <arg name="front_controllers" default="front_iiwa/joint_state_controller
@@ -22,10 +26,8 @@
 
     <!-- Description -->
     <include file="$(find iiwas_description)/launch/iiwas_rviz.launch">
-        <arg name="world_iiwas_f_x" value="$(arg world_iiwas_f_x)"/>
-        <arg name="world_iiwas_f_y" value="$(arg world_iiwas_f_y)"/>
-        <arg name="world_iiwas_f_z" value="$(arg world_iiwas_f_z)"/>
-        <arg name="hardware_interface" value="PositionJointInterface"/>
+        <arg name="hardware_interface" value="$(arg hardware_interface)"/>
+        <arg name="urdf_file" value="$(arg urdf_file)"/>
     </include>
 
     <!-- Simulation -->
@@ -40,9 +42,10 @@
     <node name="iiwas_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
                 args="-urdf -model iiwas -param robot_description"/>
     <node name="air_hockey_table_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" 
-                args="-file $(arg air_hockey_table) -sdf -model table -x 1.51 -Y 1.57079632679"/>
+                args="-file $(arg air_hockey_table) -sdf -model table 
+                -x 1.51 -y 0.0 -z 0.0 -Y 1.57079632679 -reference_frame front_base"/>
     <node name="air_hockey_puck_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" 
-                args="-file $(arg air_hockey_puck) -sdf -model puck -x 1.51 -z 0.1140"/>
+                args="-file $(arg air_hockey_puck) -sdf -model puck -x 1.51 -z 0.1140 -reference_frame front_base"/>
 
     <!-- Controllers -->
     <include file="$(find iiwas_control)/launch/iiwas_control.launch">
