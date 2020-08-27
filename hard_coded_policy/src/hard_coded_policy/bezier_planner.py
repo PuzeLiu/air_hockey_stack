@@ -46,7 +46,7 @@ class BezierTrajectory:
         else:
             return True
 
-    def generate_trajectory(self, t):
+    def __call__(self, t):
         # z = self._trapezoid_trajectory(tf)
         z, dz_dt = self._cubic_trajectory(t)
 
