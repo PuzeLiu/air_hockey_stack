@@ -1,0 +1,6 @@
+CATKIN_IGNORE
+*~
+*user
+*pyc
+
+.idea/
