@@ -52,19 +52,28 @@ class CubicSpline(nn.Module):
     def _divide_difference(self, v0, vf):
         # d_i = [d_1, ..., d_{n-1}]
         d_i = ((self.points[2:] - self.points[1:-1]) / self.h_i[1:].unsqueeze(-1)
-                - (self.points[1:-1] - self.points[:-2]) / self.h_i[:-1].unsqueeze(-1)) / \
+               - (self.points[1:-1] - self.points[:-2]) / self.h_i[:-1].unsqueeze(-1)) / \
               (self.h_i[1:] + self.h_i[:-1]).unsqueeze(-1)
         d_0 = 6 / self.h_i[0] * ((self.points[1] - self.points[0]) / self.h_i[0] - v0)
         d_n = 6 / self.h_i[-1] * (vf - (self.points[-1] - self.points[-2]) / self.h_i[-1])
         return torch.cat((d_0.unsqueeze(0), d_i, d_n.unsqueeze(0)), dim=0)
 
-    def __call__(self, t):
+    def __call__(self, t_i):
         for i in range(1, self.n_points):
-            if t >= self.t_i[i-1] and t<=self.t_i[i]:
-                return self.M[i - 1] * (self.t_i[i] - t) ** 3 / (6 * self.h_i[i - 1]) + \
-                       self.M[i] * (t - self.t_i[i - 1]) ** 3 / (6 * self.h_i[i - 1]) + \
-                       (self.points[i - 1] - self.M[i - 1] * self.h_i[i - 1]**2 / 6) * (self.t_i[i] - t) / self.h_i[i - 1] + \
-                       (self.points[i] - self.M[i] * self.h_i[i - 1]**2 / 6) * (t - self.t_i[i - 1]) / self.h_i[i - 1]
+            if self.t_i[i - 1] <= t_i <= self.t_i[i]:
+                x = self.M[i - 1] * (self.t_i[i] - t_i) ** 3 / (6 * self.h_i[i - 1]) + \
+                    self.M[i] * (t_i - self.t_i[i - 1]) ** 3 / (6 * self.h_i[i - 1]) + \
+                    (self.points[i - 1] - self.M[i - 1] * self.h_i[i - 1] ** 2 / 6) * (self.t_i[i] - t_i) / self.h_i[
+                        i - 1] + \
+                    (self.points[i] - self.M[i] * self.h_i[i - 1] ** 2 / 6) * (t_i - self.t_i[i - 1]) / self.h_i[i - 1]
+                dx = -self.M[i - 1] * (self.t_i[i] - t_i) ** 2 / (2 * self.h_i[i - 1]) + \
+                     self.M[i] * (t_i - self.t_i[i - 1]) ** 2 / (2 * self.h_i[i - 1]) + \
+                     (self.points[i] - self.points[i-1]) / self.h_i[i - 1] - \
+                     (self.M[i] - self.M[i-1]) / 6 * self.h_i[i - 1]
+                ddx = self.M[i - 1] * (self.t_i[i] - t) / self.h_i[i - 1] + self.M[i] * (t - self.t_i[i - 1]) / \
+                      self.h_i[i - 1]
+                return x, dx, ddx
+
 
 if __name__ == "__main__":
     cubic_spline = CubicSpline(2, 5)
@@ -73,12 +82,23 @@ if __name__ == "__main__":
     cubic_spline.set_via_points(via_points)
     cubic_spline.fit()
     x = []
+    dx = []
+    ddx = []
     for t in np.linspace(0, 5, 1000):
-        x.append(cubic_spline(t).detach().numpy())
+        x_t, dx_t, ddx_t = cubic_spline(t)
+        x.append(x_t.detach().numpy())
+        dx.append(dx_t.detach().numpy())
+        ddx.append(ddx_t.detach().numpy())
     x = np.array(x)
+    dx = np.array(dx)
+    ddx = np.array(ddx)
 
     plt.figure()
     plt.plot(np.linspace(0, 5, 1000), x)
     plt.scatter(np.linspace(0, 5, 7)[1:-1], via_points[:, 0], marker='o')
     plt.scatter(np.linspace(0, 5, 7)[1:-1], via_points[:, 1], marker='*')
+    plt.figure()
+    plt.plot(np.linspace(0, 5, 1000), dx)
+    plt.figure()
+    plt.plot(np.linspace(0, 5, 1000), ddx)
     plt.show()
