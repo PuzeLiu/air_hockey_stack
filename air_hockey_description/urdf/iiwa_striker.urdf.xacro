@@ -68,7 +68,7 @@
       <collision>
         <origin xyz="0 0.0255 0.0" rpy="${PI / 2} 0.0 0.0"/>
         <geometry>
-					<cylinder radius="0.048" length="0.051"/>
+				<cylinder radius="0.048" length="0.051"/>
           <!--<mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>-->
         </geometry>
         <material name="Grey"/>
