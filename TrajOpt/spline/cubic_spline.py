@@ -83,15 +83,15 @@ class CubicSpline(nn.Module):
 if __name__ == "__main__":
     n_dim = 2
     n_via_points = 4
-    x0 = np.array([1., 2.])
-    xf = np.array([10., 20.])
+    p0 = np.array([1., 2.])
+    pf = np.array([10., 20.])
     bound_0 = np.array([0., 0.])
-    bound_f = np.array([10., 10.])
+    bound_f = np.array([0., 0.])
     tf = 5
 
     cubic_spline = CubicSpline(n_dim)
-    cubic_spline.set_boudaries(x0, xf, bound_0, bound_f, tf)
-    via_points = np.linspace(x0, xf, n_via_points + 2)[1:-1] + np.random.random((n_via_points, n_dim))
+    cubic_spline.set_boudaries(p0, pf, bound_0, bound_f, tf)
+    via_points = np.linspace(p0, pf, n_via_points + 2)[1:-1] + np.random.random((n_via_points, n_dim))
     cubic_spline.set_via_points(via_points)
     cubic_spline.fit(type='velocity')
     x = []
