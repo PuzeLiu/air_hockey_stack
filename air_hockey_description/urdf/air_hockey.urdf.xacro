@@ -4,13 +4,6 @@
     <xacro:include filename="$(find air_hockey_description)/urdf/iiwa_striker.urdf.xacro"/>
     <!-- the mass values and inertia may not be completly correct as the moment so this model should just be used as a kinematic one now-->
 
-    <xacro:arg name="front_base_to_back_base_x" default="3.02"/>
-    <xacro:arg name="world_to_iiwas_f_x" default="0.0"/>
-    <xacro:arg name="world_to_iiwas_f_y" default="0.0"/>
-    <xacro:arg name="world_to_iiwas_f_z" default="0.0"/>
-    <xacro:arg name="world_to_iiwas_f_roll" default="0.0"/>
-    <xacro:arg name="world_to_iiwas_f_pitch" default="0.0"/>
-    <xacro:arg name="world_to_iiwas_f_yaw" default="0.0"/>
     <xacro:arg name="hardware_interface" default="PositionJointInterface"/>
 
     <xacro:striker robot_name="F" parent="F_link_ee" hardware_interface="hardware_interface/$(arg hardware_interface)">
