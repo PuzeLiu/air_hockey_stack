@@ -37,7 +37,7 @@
   <!-- the mass values and inertia may not be completly correct as the moment so this model should just be used as a kinematic one now-->
   <link name="world"/>
   <joint name="front_base_joint" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 -0.015"/>
+    <origin rpy="0.0 0.0 0.0" xyz="0.2 -0.61 -0.015"/>
     <parent link="world"/>
     <child link="front_base"/>
   </joint>
@@ -62,9 +62,35 @@
     </collision>
     <selfCollide>0</selfCollide>
   </link>
-  <joint name="back_base_joint" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="3.02 0.0 0.0"/>
+  <joint name="front_in" type="fixed">
+    <origin rpy="0.0 0.0 0.0" xyz="0.0 0.61 -0.0975"/>
     <parent link="front_base"/>
+    <child link="h_bar_front_in"/>
+  </joint>
+  <link name="h_bar_front_in">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="5"/>
+      <inertia ixx="0.0175" ixy="0.0" ixz="0.0" iyy="1.025" iyz="0.0" izz="1.02"/>
+    </inertial>
+    <visual>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.12 1.56 0.165"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.12 1.56 0.165"/>
+      </geometry>
+    </collision>
+    <selfCollide>0</selfCollide>
+  </link>
+  <joint name="back_base_joint" type="fixed">
+    <origin rpy="0.0 0.0 0.0" xyz="3.22 0.61 -0.015"/>
+    <parent link="world"/>
     <child link="back_base"/>
   </joint>
   <link name="back_base">
@@ -88,60 +114,8 @@
     </collision>
     <selfCollide>0</selfCollide>
   </link>
-  <joint name="front_in" type="fixed">
-    <origin rpy="0.0 0.0 1.5707963267948966" xyz="0.0 0.0 -0.0975"/>
-    <parent link="front_base"/>
-    <child link="h_bar_front_in"/>
-  </joint>
-  <link name="h_bar_front_in">
-    <inertial>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="5"/>
-      <inertia ixx="0.0175" ixy="0.0" ixz="0.0" iyy="1.025" iyz="0.0" izz="1.02"/>
-    </inertial>
-    <visual>
-      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-      <geometry>
-        <box size="1.56 0.12 0.165"/>
-      </geometry>
-      <material name="LightGrey"/>
-    </visual>
-    <collision>
-      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-      <geometry>
-        <box size="1.56 0.12 0.165"/>
-      </geometry>
-    </collision>
-    <selfCollide>0</selfCollide>
-  </link>
-  <joint name="front_out" type="fixed">
-    <origin rpy="0.0 0.0 1.5707963267948966" xyz="-0.20 0.0 -0.0975"/>
-    <parent link="front_base"/>
-    <child link="h_bar_front_out"/>
-  </joint>
-  <link name="h_bar_front_out">
-    <inertial>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="5"/>
-      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="1.025" iyz="0.0" izz="1.02"/>
-    </inertial>
-    <visual>
-      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-      <geometry>
-        <box size="1.56 0.08 0.165"/>
-      </geometry>
-      <material name="LightGrey"/>
-    </visual>
-    <collision>
-      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
-      <geometry>
-        <box size="1.56 0.08 0.165"/>
-      </geometry>
-    </collision>
-    <selfCollide>0</selfCollide>
-  </link>
   <joint name="back_in" type="fixed">
-    <origin rpy="0.0 0.0 1.5707963267948966" xyz="0.0 0.0 -0.0975"/>
+    <origin rpy="0.0 0.0 0.0" xyz="0.0 -0.61 -0.0975"/>
     <parent link="back_base"/>
     <child link="h_bar_back_in"/>
   </joint>
@@ -154,24 +128,24 @@
     <visual>
       <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
       <geometry>
-        <box size="1.56 0.12 0.165"/>
+        <box size="0.12 1.56 0.165"/>
       </geometry>
       <material name="LightGrey"/>
     </visual>
     <collision>
       <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
       <geometry>
-        <box size="1.56 0.12 0.165"/>
+        <box size="0.12 1.56 0.165"/>
       </geometry>
     </collision>
     <selfCollide>0</selfCollide>
   </link>
-  <joint name="back_out" type="fixed">
-    <origin rpy="0.0 0.0 1.5707963267948966" xyz="3.22 0.0 -0.0975"/>
-    <parent link="front_base"/>
-    <child link="h_bar_back_out"/>
+  <joint name="front_out" type="fixed">
+    <origin rpy="0.0 0.0 0" xyz="0.0 0.0 -0.1125"/>
+    <parent link="world"/>
+    <child link="h_bar_front_out"/>
   </joint>
-  <link name="h_bar_back_out">
+  <link name="h_bar_front_out">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <mass value="5"/>
@@ -180,21 +154,21 @@
     <visual>
       <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
       <geometry>
-        <box size="1.56 0.08 0.165"/>
+        <box size="0.08 1.56 0.165"/>
       </geometry>
       <material name="LightGrey"/>
     </visual>
     <collision>
       <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
       <geometry>
-        <box size="1.56 0.08 0.165"/>
+        <box size="0.08 1.56 0.165"/>
       </geometry>
     </collision>
     <selfCollide>0</selfCollide>
   </link>
   <joint name="left" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="1.51 0.84 -0.0975"/>
-    <parent link="front_base"/>
+    <origin rpy="0.0 0.0 3.141592653589793" xyz="1.71 0.8400000000000001 0.0"/>
+    <parent link="h_bar_front_out"/>
     <child link="v_bar_left"/>
   </joint>
   <link name="v_bar_left">
@@ -219,8 +193,8 @@
     <selfCollide>0</selfCollide>
   </link>
   <joint name="frame_right" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="1.51 -0.84 -0.0975"/>
-    <parent link="front_base"/>
+    <origin rpy="0.0 0.0 0.0" xyz="1.71 -0.8400000000000001 0.0"/>
+    <parent link="h_bar_front_out"/>
     <child link="v_bar_right"/>
   </joint>
   <link name="v_bar_right">
@@ -240,6 +214,32 @@
       <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
       <geometry>
         <box size="3.5 0.12 0.165"/>
+      </geometry>
+    </collision>
+    <selfCollide>0</selfCollide>
+  </link>
+  <joint name="back_out" type="fixed">
+    <origin rpy="0.0 0.0 0.0" xyz="1.71 0.8400000000000001 0.0"/>
+    <parent link="v_bar_right"/>
+    <child link="h_bar_back_out"/>
+  </joint>
+  <link name="h_bar_back_out">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="5"/>
+      <inertia ixx="0.014" ixy="0.0" ixz="0.0" iyy="1.025" iyz="0.0" izz="1.02"/>
+    </inertial>
+    <visual>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.08 1.56 0.165"/>
+      </geometry>
+      <material name="LightGrey"/>
+    </visual>
+    <collision>
+      <origin rpy="0.0 0.0 0.0" xyz="0.0 0.0 0.0"/>
+      <geometry>
+        <box size="0.08 1.56 0.165"/>
       </geometry>
     </collision>
     <selfCollide>0</selfCollide>
@@ -1090,58 +1090,73 @@
   <!-- the mass values and inertia may not be completly correct as the moment so this model should just be used as a kinematic one now-->
   <joint name="F_striker" type="fixed">
     <parent link="F_link_ee"/>
-    <child link="F_hand_link"/>
+    <child link="F_striker_base"/>
     <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
   </joint>
-  <link name="F_hand_link">
+  <link name="F_striker_base">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0.0417"/>
       <mass value="0.1"/>
       <inertia ixx="0.000297" ixy="0.0" ixz="0.0" iyy="0.000271" iyz="0.0000001" izz="0.0000653"/>
     </inertial>
     <visual>
-      <origin rpy="0 0.0 1.5707963267948966" xyz="0 0 0"/>
+      <origin rpy="0 0.0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://air_hockey_description/meshes/striker/visual/hand.stl"/>
+        <mesh filename="package://air_hockey_description/meshes/striker_new/visual/gas_spring.stl"/>
       </geometry>
       <material name="Grey"/>
     </visual>
     <collision>
-      <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://air_hockey_description/meshes/striker/collision/hand.stl"/>
+        <mesh filename="package://air_hockey_description/meshes/striker_new/collision/gas_spring_collision.stl"/>
       </geometry>
       <material name="Grey"/>
     </collision>
   </link>
-  <joint name="F_striker_joint" type="revolute">
-    <parent link="F_hand_link"/>
-    <child link="F_striker"/>
-    <origin rpy="1.5707963267948966 0 0" xyz="0.0 0.0 0.16"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="10" lower="-2.094395102" upper="2.094395102" velocity="10"/>
+  <joint name="F_striker_joint_1" type="revolute">
+    <parent link="F_striker_base"/>
+    <child link="F_striker_joint_link"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.3455"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="10" lower="-1.5707963267948966" upper="1.5707963267948966" velocity="10"/>
     <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.094395102" soft_upper_limit="2.094395102"/>
     <dynamics damping="0.5" friction="0.5"/>
   </joint>
-  <!--  The striker frame is here defined -->
-  <link name="F_striker">
+  <link name="F_striker_joint_link">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0.0 0"/>
       <mass value="0.0"/>
       <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
     </inertial>
+  </link>
+  <joint name="F_striker_joint_2" type="revolute">
+    <parent link="F_striker_joint_link"/>
+    <child link="F_striker_mallet"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="10" lower="-1.5707963267948966" upper="1.5707963267948966" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.094395102" soft_upper_limit="2.094395102"/>
+    <dynamics damping="0.5" friction="0.5"/>
+  </joint>
+  <!--  The striker frame is here defined -->
+  <link name="F_striker_mallet">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0.0 0.0805"/>
+      <mass value="0.0"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+    </inertial>
     <visual>
-      <origin rpy="0.0 0.0 0.0" xyz="0 0.0 0.0"/>
+      <origin rpy="0.0 0.0 0" xyz="0 0.0 0.0"/>
       <geometry>
-        <mesh filename="package://air_hockey_description/meshes/striker/visual/only_striker.stl"/>
+        <mesh filename="package://air_hockey_description/meshes/striker_new/visual/joint_mallet.stl"/>
       </geometry>
       <material name="Grey"/>
     </visual>
     <collision>
-      <origin rpy="1.5707963267948966 0.0 0.0" xyz="0 0.0255 0.0"/>
+      <origin rpy="0.0 0.0 0" xyz="0 0.0 0.0"/>
       <geometry>
-        <cylinder length="0.051" radius="0.048"/>
-        <!--<mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>-->
+        <mesh filename="package://air_hockey_description/meshes/striker_new/collision/joint_mallet_collision.stl"/>
       </geometry>
       <material name="Grey"/>
       <surface>
@@ -1158,97 +1173,134 @@
       </surface>
     </collision>
   </link>
-  <joint name="F_ee_joint" type="fixed">
-    <parent link="F_striker"/>
-    <child link="F_striker_tip"/>
-    <origin rpy="-1.5707963267948966 0 0" xyz="0.0 0.051 0.0"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="1000.0" velocity="1000.0"/>
+  <joint name="F_striker_mallet_fix" type="fixed">
+    <parent link="F_striker_mallet"/>
+    <child link="F_striker_mallet_tip"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.0805"/>
+    <axis xyz="1 0 0"/>
   </joint>
-  <link name="F_striker_tip">
+  <link name="F_striker_mallet_tip">
     <inertial>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.1"/>
-      <inertia ixx="0.0000658" ixy="0.0" ixz="0.0" iyy="0.0000658" iyz="0.0" izz="0.000125"/>
+      <origin rpy="0 0 0" xyz="0 0.0 0"/>
+      <mass value="0.0"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
     </inertial>
   </link>
-  <gazebo reference="F_hand_link">
+  <gazebo reference="F_striker_base">
     <material>Gazebo/Grey</material>
     <mu1>0.2</mu1>
     <mu2>0.2</mu2>
     <selfCollide>0</selfCollide>
   </gazebo>
-  <gazebo reference="F_striker">
+  <gazebo reference="F_striker_joint_link">
     <material>Gazebo/Grey</material>
     <mu1>0.2</mu1>
     <mu2>0.2</mu2>
     <selfCollide>0</selfCollide>
   </gazebo>
-  <transmission name="F_striker_tran">
+  <gazebo reference="F_striker_mallet">
+    <material>Gazebo/Grey</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <selfCollide>0</selfCollide>
+  </gazebo>
+  <gazebo reference="F_striker_mallet_tip">
+    <material>Gazebo/Grey</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <selfCollide>0</selfCollide>
+  </gazebo>
+  <transmission name="F_striker_tran_1">
     <robotNamespace>/F</robotNamespace>
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="F_striker_joint">
+    <joint name="F_striker_joint_1">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
-    <actuator name="F_striker_motor">
+    <actuator name="F_striker_motor_1">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="F_striker_tran_2">
+    <robotNamespace>/F</robotNamespace>
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="F_striker_joint_2">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="F_striker_motor_2">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>
   </transmission>
   <joint name="B_striker" type="fixed">
     <parent link="B_link_ee"/>
-    <child link="B_hand_link"/>
+    <child link="B_striker_base"/>
     <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
   </joint>
-  <link name="B_hand_link">
+  <link name="B_striker_base">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0.0417"/>
       <mass value="0.1"/>
       <inertia ixx="0.000297" ixy="0.0" ixz="0.0" iyy="0.000271" iyz="0.0000001" izz="0.0000653"/>
     </inertial>
     <visual>
-      <origin rpy="0 0.0 1.5707963267948966" xyz="0 0 0"/>
+      <origin rpy="0 0.0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://air_hockey_description/meshes/striker/visual/hand.stl"/>
+        <mesh filename="package://air_hockey_description/meshes/striker_new/visual/gas_spring.stl"/>
       </geometry>
       <material name="Grey"/>
     </visual>
     <collision>
-      <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://air_hockey_description/meshes/striker/collision/hand.stl"/>
+        <mesh filename="package://air_hockey_description/meshes/striker_new/collision/gas_spring_collision.stl"/>
       </geometry>
       <material name="Grey"/>
     </collision>
   </link>
-  <joint name="B_striker_joint" type="revolute">
-    <parent link="B_hand_link"/>
-    <child link="B_striker"/>
-    <origin rpy="1.5707963267948966 0 0" xyz="0.0 0.0 0.16"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="10" lower="-2.094395102" upper="2.094395102" velocity="10"/>
+  <joint name="B_striker_joint_1" type="revolute">
+    <parent link="B_striker_base"/>
+    <child link="B_striker_joint_link"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.3455"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="10" lower="-1.5707963267948966" upper="1.5707963267948966" velocity="10"/>
     <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.094395102" soft_upper_limit="2.094395102"/>
     <dynamics damping="0.5" friction="0.5"/>
   </joint>
-  <!--  The striker frame is here defined -->
-  <link name="B_striker">
+  <link name="B_striker_joint_link">
     <inertial>
       <origin rpy="0 0 0" xyz="0 0.0 0"/>
       <mass value="0.0"/>
       <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
     </inertial>
+  </link>
+  <joint name="B_striker_joint_2" type="revolute">
+    <parent link="B_striker_joint_link"/>
+    <child link="B_striker_mallet"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="10" lower="-1.5707963267948966" upper="1.5707963267948966" velocity="10"/>
+    <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.094395102" soft_upper_limit="2.094395102"/>
+    <dynamics damping="0.5" friction="0.5"/>
+  </joint>
+  <!--  The striker frame is here defined -->
+  <link name="B_striker_mallet">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0.0 0.0805"/>
+      <mass value="0.0"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+    </inertial>
     <visual>
-      <origin rpy="0.0 0.0 0.0" xyz="0 0.0 0.0"/>
+      <origin rpy="0.0 0.0 0" xyz="0 0.0 0.0"/>
       <geometry>
-        <mesh filename="package://air_hockey_description/meshes/striker/visual/only_striker.stl"/>
+        <mesh filename="package://air_hockey_description/meshes/striker_new/visual/joint_mallet.stl"/>
       </geometry>
       <material name="Grey"/>
     </visual>
     <collision>
-      <origin rpy="1.5707963267948966 0.0 0.0" xyz="0 0.0255 0.0"/>
+      <origin rpy="0.0 0.0 0" xyz="0 0.0 0.0"/>
       <geometry>
-        <cylinder length="0.051" radius="0.048"/>
-        <!--<mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>-->
+        <mesh filename="package://air_hockey_description/meshes/striker_new/collision/joint_mallet_collision.stl"/>
       </geometry>
       <material name="Grey"/>
       <surface>
@@ -1265,39 +1317,61 @@
       </surface>
     </collision>
   </link>
-  <joint name="B_ee_joint" type="fixed">
-    <parent link="B_striker"/>
-    <child link="B_striker_tip"/>
-    <origin rpy="-1.5707963267948966 0 0" xyz="0.0 0.051 0.0"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="1000.0" velocity="1000.0"/>
+  <joint name="B_striker_mallet_fix" type="fixed">
+    <parent link="B_striker_mallet"/>
+    <child link="B_striker_mallet_tip"/>
+    <origin rpy="0 0 0" xyz="0.0 0.0 0.0805"/>
+    <axis xyz="1 0 0"/>
   </joint>
-  <link name="B_striker_tip">
+  <link name="B_striker_mallet_tip">
     <inertial>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.1"/>
-      <inertia ixx="0.0000658" ixy="0.0" ixz="0.0" iyy="0.0000658" iyz="0.0" izz="0.000125"/>
+      <origin rpy="0 0 0" xyz="0 0.0 0"/>
+      <mass value="0.0"/>
+      <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
     </inertial>
   </link>
-  <gazebo reference="B_hand_link">
+  <gazebo reference="B_striker_base">
     <material>Gazebo/Grey</material>
     <mu1>0.2</mu1>
     <mu2>0.2</mu2>
     <selfCollide>0</selfCollide>
   </gazebo>
-  <gazebo reference="B_striker">
+  <gazebo reference="B_striker_joint_link">
     <material>Gazebo/Grey</material>
     <mu1>0.2</mu1>
     <mu2>0.2</mu2>
     <selfCollide>0</selfCollide>
   </gazebo>
-  <transmission name="B_striker_tran">
+  <gazebo reference="B_striker_mallet">
+    <material>Gazebo/Grey</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <selfCollide>0</selfCollide>
+  </gazebo>
+  <gazebo reference="B_striker_mallet_tip">
+    <material>Gazebo/Grey</material>
+    <mu1>0.2</mu1>
+    <mu2>0.2</mu2>
+    <selfCollide>0</selfCollide>
+  </gazebo>
+  <transmission name="B_striker_tran_1">
     <robotNamespace>/B</robotNamespace>
     <type>transmission_interface/SimpleTransmission</type>
-    <joint name="B_striker_joint">
+    <joint name="B_striker_joint_1">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
     </joint>
-    <actuator name="B_striker_motor">
+    <actuator name="B_striker_motor_1">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="B_striker_tran_2">
+    <robotNamespace>/B</robotNamespace>
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="B_striker_joint_2">
+      <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="B_striker_motor_2">
       <hardwareInterface>hardware_interface/PositionJointInterface</hardwareInterface>
       <mechanicalReduction>1</mechanicalReduction>
     </actuator>

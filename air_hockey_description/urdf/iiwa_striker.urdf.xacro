@@ -9,67 +9,85 @@
 
   <xacro:macro name="striker" params="robot_name parent hardware_interface">
     <joint name="${robot_name}_striker" type="fixed">
-      <parent link="${parent}" />
-      <child link = "${robot_name}_hand_link" />
-      <origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+		<parent link="${parent}" />
+		<child link = "${robot_name}_striker_base" />
+		<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
     </joint>
 
-    <link name="${robot_name}_hand_link">
-      <inertial>
-        <origin xyz="0 0 0.0417" rpy="0 0 0" />
-        <mass value="0.1" />
-        <inertia
-          ixx="0.000297" ixy="0.0" ixz="0.0"
-          iyy="0.000271" iyz="0.0000001"
-          izz="0.0000653" />
-      </inertial>
-      <visual>
-        <origin xyz="0 0 0" rpy="0 0.0 ${PI/2}"/>
-        <geometry>
-          <mesh filename="package://air_hockey_description/meshes/striker/visual/hand.stl"/>
-        </geometry>
-        <material name="Grey"/>
-      </visual>
-      <collision>
-        <origin xyz="0 0 0" rpy="0 0 ${PI/2}"/>
-        <geometry>
-          <mesh filename="package://air_hockey_description/meshes/striker/collision/hand.stl"/>
-        </geometry>
-        <material name="Grey"/>
-      </collision>
+    <link name="${robot_name}_striker_base">
+		<inertial>
+		<origin xyz="0 0 0.0417" rpy="0 0 0" />
+		<mass value="0.1" />
+		<inertia
+			ixx="0.000297" ixy="0.0" ixz="0.0"
+			iyy="0.000271" iyz="0.0000001" izz="0.0000653" />
+		</inertial>
+		<visual>
+		<origin xyz="0 0 0" rpy="0 0.0 0"/>
+		<geometry>
+		  	<mesh filename="package://air_hockey_description/meshes/striker_new/visual/gas_spring.stl"/>
+		</geometry>
+		<material name="Grey"/>
+		</visual>
+		<collision>
+		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<geometry>
+		  	<mesh filename="package://air_hockey_description/meshes/striker_new/collision/gas_spring_collision.stl"/>
+		</geometry>
+		<material name="Grey"/>
+		</collision>
     </link>
 
-    <joint name="${robot_name}_striker_joint" type="revolute">
-      <parent link="${robot_name}_hand_link" />
-      <child link = "${robot_name}_striker" />
-      <origin xyz="0.0 0.0 0.16" rpy="${PI/2} 0 0" />
-      <axis xyz="0 0 1"/>
-      <limit effort="10" lower="-2.094395102" upper="2.094395102" velocity="10"/>
-      <safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.094395102" soft_upper_limit="2.094395102"/>
-      <dynamics damping="0.5" friction="0.5"/>
+    <joint name="${robot_name}_striker_joint_1" type="revolute">
+		<parent link="${robot_name}_striker_base" />
+		<child link = "${robot_name}_striker_joint_link" />
+		<origin xyz="0.0 0.0 0.3455" rpy="0 0 0" />
+		<axis xyz="1 0 0"/>
+		<limit effort="10" lower="-${PI/2}" upper="${PI/2}" velocity="10"/>
+		<safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.094395102" soft_upper_limit="2.094395102"/>
+		<dynamics damping="0.5" friction="0.5"/>
+    </joint>
+
+    <link name="${robot_name}_striker_joint_link">
+    	<inertial>
+	        <origin xyz="0 0.0 0" rpy="0 0 0" />
+	        <mass value="0.0" />
+	        <inertia
+                ixx="0.0" ixy="0.0" ixz="0.0"
+                iyy="0.0" iyz="0.0" izz="0.0" />
+      	</inertial>
+    </link>
+
+    <joint name="${robot_name}_striker_joint_2" type="revolute">
+		<parent link="${robot_name}_striker_joint_link" />
+		<child link = "${robot_name}_striker_mallet" />
+		<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+		<axis xyz="0 1 0"/>
+		<limit effort="10" lower="-${PI/2}" upper="${PI/2}" velocity="10"/>
+		<safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.094395102" soft_upper_limit="2.094395102"/>
+		<dynamics damping="0.5" friction="0.5"/>
     </joint>
 
   <!--  The striker frame is here defined -->
-    <link name="${robot_name}_striker">
+    <link name="${robot_name}_striker_mallet">
       <inertial>
-        <origin xyz="0 0.0 0" rpy="0 0 0" />
+        <origin xyz="0 0.0 0.0805" rpy="0 0 0" />
         <mass value="0.0" />
         <inertia
                 ixx="0.0" ixy="0.0" ixz="0.0"
                 iyy="0.0" iyz="0.0" izz="0.0" />
       </inertial>
       <visual>
-        <origin xyz="0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+        <origin xyz="0 0.0 0.0" rpy="0.0 0.0 0"/>
         <geometry>
-        	<mesh filename="package://air_hockey_description/meshes/striker/visual/only_striker.stl"/>
+        	<mesh filename="package://air_hockey_description/meshes/striker_new/visual/joint_mallet.stl"/>
         </geometry>
         <material name="Grey"/>
       </visual>
       <collision>
-        <origin xyz="0 0.0255 0.0" rpy="${PI / 2} 0.0 0.0"/>
+        <origin xyz="0 0.0 0.0" rpy="0.0 0.0 0"/>
         <geometry>
-				<cylinder radius="0.048" length="0.051"/>
-          <!--<mesh filename="package://air_hockey_description/meshes/striker/collision/only_striker.stl"/>-->
+          	<mesh filename="package://air_hockey_description/meshes/striker_new/collision/joint_mallet_collision.stl"/>
         </geometry>
         <material name="Grey"/>
         <surface>
@@ -87,50 +105,74 @@
       </collision>
     </link>
 
-    <joint name="${robot_name}_ee_joint" type="fixed">
-      <parent link="${robot_name}_striker" />
-      <child link = "${robot_name}_striker_tip" />
-      <origin xyz="0.0 0.051 0.0" rpy="-${PI/2} 0 0" />
-      <axis xyz="0 0 1"/>
-      <limit effort="1000.0" velocity="1000.0" />
+    <joint name="${robot_name}_striker_mallet_fix" type="fixed">
+		<parent link="${robot_name}_striker_mallet" />
+		<child link = "${robot_name}_striker_mallet_tip" />
+		<origin xyz="0.0 0.0 0.0805" rpy="0 0 0" />
+		<axis xyz="1 0 0"/>
     </joint>
 
-    <link name="${robot_name}_striker_tip">
-      <inertial>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <mass value="0.1" />
-        <inertia
-                ixx="0.0000658" ixy="0.0" ixz="0.0"
-                iyy="0.0000658" iyz="0.0" izz="0.000125" />
-      </inertial>
+    <link name="${robot_name}_striker_mallet_tip">
+    	<inertial>
+	        <origin xyz="0 0.0 0" rpy="0 0 0" />
+	        <mass value="0.0" />
+	        <inertia
+                ixx="0.0" ixy="0.0" ixz="0.0"
+                iyy="0.0" iyz="0.0" izz="0.0" />
+      	</inertial>
     </link>
 
-    <gazebo reference="${robot_name}_hand_link">
-      <material>Gazebo/Grey</material>
-      <mu1>0.2</mu1>
-      <mu2>0.2</mu2>
-      <selfCollide>0</selfCollide>
+    <gazebo reference="${robot_name}_striker_base">
+			<material>Gazebo/Grey</material>
+			<mu1>0.2</mu1>
+			<mu2>0.2</mu2>
+			<selfCollide>0</selfCollide>
     </gazebo>
 
-    <gazebo reference="${robot_name}_striker">
-      <material>Gazebo/Grey</material>
-      <mu1>0.2</mu1>
-      <mu2>0.2</mu2>
-      <selfCollide>0</selfCollide>
+    <gazebo reference="${robot_name}_striker_joint_link">
+		<material>Gazebo/Grey</material>
+		<mu1>0.2</mu1>
+		<mu2>0.2</mu2>
+		<selfCollide>0</selfCollide>
     </gazebo>
 
-    <transmission name="${robot_name}_striker_tran">
-      <robotNamespace>/${robot_name}</robotNamespace>
-      <type>transmission_interface/SimpleTransmission</type>
-      <joint name="${robot_name}_striker_joint">
-	    <hardwareInterface>${hardware_interface}</hardwareInterface>
-      </joint>
-      <actuator name="${robot_name}_striker_motor">
-	    <hardwareInterface>${hardware_interface}</hardwareInterface>
-	    <mechanicalReduction>1</mechanicalReduction>
-      </actuator>
-    </transmission>
+    <gazebo reference="${robot_name}_striker_mallet">
+			<material>Gazebo/Grey</material>
+			<mu1>0.2</mu1>
+			<mu2>0.2</mu2>
+			<selfCollide>0</selfCollide>
+    </gazebo>
 
+    <gazebo reference="${robot_name}_striker_mallet_tip">
+			<material>Gazebo/Grey</material>
+			<mu1>0.2</mu1>
+			<mu2>0.2</mu2>
+			<selfCollide>0</selfCollide>
+    </gazebo>
+
+    <transmission name="${robot_name}_striker_tran_1">
+		<robotNamespace>/${robot_name}</robotNamespace>
+		<type>transmission_interface/SimpleTransmission</type>
+		<joint name="${robot_name}_striker_joint_1">
+			<hardwareInterface>${hardware_interface}</hardwareInterface>
+		</joint>
+		<actuator name="${robot_name}_striker_motor_1">
+		    <hardwareInterface>${hardware_interface}</hardwareInterface>
+		    <mechanicalReduction>1</mechanicalReduction>
+		</actuator>
+	</transmission>
+
+	<transmission name="${robot_name}_striker_tran_2">
+		<robotNamespace>/${robot_name}</robotNamespace>
+		<type>transmission_interface/SimpleTransmission</type>
+		<joint name="${robot_name}_striker_joint_2">
+			<hardwareInterface>${hardware_interface}</hardwareInterface>
+		</joint>
+		<actuator name="${robot_name}_striker_motor_2">
+		    <hardwareInterface>${hardware_interface}</hardwareInterface>
+		    <mechanicalReduction>1</mechanicalReduction>
+		</actuator>
+	</transmission>
 
 
   </xacro:macro>
