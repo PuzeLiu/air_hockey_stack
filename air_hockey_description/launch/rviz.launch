@@ -4,7 +4,7 @@
 		<arg name="urdf_file" value="$(find air_hockey_description)/urdf/air_hockey.urdf.xacro"/>
 	</include>
 
-  	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" />
+  	<node name="joint_state_publisher" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" />
   	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
 </launch>
