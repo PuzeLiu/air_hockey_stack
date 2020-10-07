@@ -1,10 +1,10 @@
 import abc
+
+from jax import jacfwd
 from jax import numpy as np
-from jax import jacfwd, jacrev
 
 
 class Dynamics:
-
     """Dynamics Model."""
 
     @property
@@ -102,10 +102,9 @@ class Dynamics:
 
 
 class AutoDiffDynamics(Dynamics):
-
     """Auto-differentiated Dynamics Model."""
 
-    def __init__(self, f, x_dim, u_dim):
+    def __init__(self, f, x_dim, u_dim, hessian=False):
         """Constructs an AutoDiffDynamics model.
         Args:
             f: Dynamics function.
@@ -119,7 +118,7 @@ class AutoDiffDynamics(Dynamics):
         self._state_size = x_dim
         self._action_size = u_dim
 
-        self._has_hessian = False
+        self._has_hessian = hessian
 
         super(AutoDiffDynamics, self).__init__()
 
@@ -176,7 +175,10 @@ class AutoDiffDynamics(Dynamics):
         Returns:
             d^2f/dx^2 [state_size, state_size, state_size].
         """
-        return jacfwd(jacfwd(self._f, 0), 0)(x, u)
+        if self._has_hessian:
+            return jacfwd(jacfwd(self._f, 0), 0)(x, u)
+        else:
+            return np.zeros((self._state_size, self._state_size, self._state_size))
 
     def f_ux(self, x, u):
         """Second partial derivative of dynamics model with respect to u and x.
@@ -186,7 +188,10 @@ class AutoDiffDynamics(Dynamics):
         Returns:
             d^2f/dudx [state_size, action_size, state_size].
         """
-        return jacfwd(jacfwd(self._f, 1), 0)(x, u)
+        if self._has_hessian:
+            return jacfwd(jacfwd(self._f, 1), 0)(x, u)
+        else:
+            return np.zeros((self._state_size, self._action_size, self._state_size))
 
     def f_uu(self, x, u):
         """Second partial derivative of dynamics model with respect to u.
@@ -196,4 +201,7 @@ class AutoDiffDynamics(Dynamics):
         Returns:
             d^2f/du^2 [state_size, action_size, action_size].
         """
-        return jacfwd(jacfwd(self._f, 1), 1)(x, u)
+        if self._has_hessian:
+            return jacfwd(jacfwd(self._f, 1), 1)(x, u)
+        else:
+            return np.zeros((self._state_size, self._action_size, self._action_size))

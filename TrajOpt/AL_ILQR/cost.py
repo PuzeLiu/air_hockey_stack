@@ -190,3 +190,127 @@ class AutoDiffCost(Cost):
             return np.zeros((self.action_size, self.action_size))
         else:
             return jacfwd(jacrev(self._l, 1), 1)(x, u)
+
+
+class QRCost(Cost):
+
+    """Quadratic Regulator Instantaneous Cost."""
+
+    def __init__(self, Q, R, Q_terminal=None, x_goal=None, u_goal=None):
+        """Constructs a QRCost.
+        Args:
+            Q: Quadratic state cost matrix [state_size, state_size].
+            R: Quadratic control cost matrix [action_size, action_size].
+            Q_terminal: Terminal quadratic state cost matrix
+                [state_size, state_size].
+            x_goal: Goal state [state_size].
+            u_goal: Goal control [action_size].
+        """
+        self.Q = np.array(Q)
+        self.R = np.array(R)
+
+        if Q_terminal is None:
+            self.Q_terminal = self.Q
+        else:
+            self.Q_terminal = np.array(Q_terminal)
+
+        if x_goal is None:
+            self.x_goal = np.zeros(Q.shape[0])
+        else:
+            self.x_goal = np.array(x_goal)
+
+        if u_goal is None:
+            self.u_goal = np.zeros(R.shape[0])
+        else:
+            self.u_goal = np.array(u_goal)
+
+        # Precompute some common constants.
+        self._Q_plus_Q_T = self.Q + self.Q.T
+        self._R_plus_R_T = self.R + self.R.T
+        self._Q_plus_Q_T_terminal = self.Q_terminal + self.Q_terminal.T
+
+        super(QRCost, self).__init__()
+
+    def l(self, x, u, terminal=False):
+        """Instantaneous cost function.
+        Args:
+            x: Current state [state_size].
+            u: Current control [action_size]. None if terminal.
+            terminal: Compute terminal cost. Default: False.
+        Returns:
+            Instantaneous cost (scalar).
+        """
+        Q = self.Q_terminal if terminal else self.Q
+        R = self.R
+        x_diff = x - self.x_goal
+        squared_x_cost = x_diff.T.dot(Q).dot(x_diff)
+
+        if terminal:
+            return squared_x_cost
+
+        u_diff = u - self.u_goal
+        return squared_x_cost + u_diff.T.dot(R).dot(u_diff)
+
+    def l_x(self, x, u, terminal=False):
+        """Partial derivative of cost function with respect to x.
+        Args:
+            x: Current state [state_size].
+            u: Current control [action_size]. None if terminal.
+            terminal: Compute terminal cost. Default: False.
+        Returns:
+            dl/dx [state_size].
+        """
+        Q_plus_Q_T = self._Q_plus_Q_T_terminal if terminal else self._Q_plus_Q_T
+        x_diff = x - self.x_goal
+        return x_diff.T.dot(Q_plus_Q_T)
+
+    def l_u(self, x, u, terminal=False):
+        """Partial derivative of cost function with respect to u.
+        Args:
+            x: Current state [state_size].
+            u: Current control [action_size]. None if terminal.
+            terminal: Compute terminal cost. Default: False.
+        Returns:
+            dl/du [action_size].
+        """
+        if terminal:
+            return np.zeros_like(self.u_goal)
+
+        u_diff = u - self.u_goal
+        return u_diff.T.dot(self._R_plus_R_T)
+
+    def l_xx(self, x, u, terminal=False):
+        """Second partial derivative of cost function with respect to x.
+        Args:
+            x: Current state [state_size].
+            u: Current control [action_size]. None if terminal.
+            terminal: Compute terminal cost. Default: False.
+        Returns:
+            d^2l/dx^2 [state_size, state_size].
+        """
+        return self._Q_plus_Q_T_terminal if terminal else self._Q_plus_Q_T
+
+    def l_ux(self, x, u, terminal=False):
+        """Second partial derivative of cost function with respect to u and x.
+        Args:
+            x: Current state [state_size].
+            u: Current control [action_size]. None if terminal.
+            terminal: Compute terminal cost. Default: False.
+        Returns:
+            d^2l/dudx [action_size, state_size].
+        """
+        return np.zeros((self.R.shape[0], self.Q.shape[0]))
+
+    def l_uu(self, x, u, terminal=False):
+        """Second partial derivative of cost function with respect to u.
+        Args:
+            x: Current state [state_size].
+            u: Current control [action_size]. None if terminal.
+            terminal: Compute terminal cost. Default: False.
+        Returns:
+            d^2l/du^2 [action_size, action_size].
+        """
+        if terminal:
+            return np.zeros_like(self.R)
+
+        return self._R_plus_R_T

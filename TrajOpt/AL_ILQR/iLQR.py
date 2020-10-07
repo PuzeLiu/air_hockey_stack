@@ -9,8 +9,9 @@ class iLQR:
 
         :param dynamics: System Dynamics
         :param cost: Cost Function
-        :param max_reg: Maximum regularization term to break early due to divergence.
-        :param hessian:
+        :param hessian: False: iLQR, True: DDP
+            Default: only use first order derivatives. (i.e. iLQR instead
+                of DDP).
         """
         self.iter_cur = 0
         self.dynamics = dynamics
@@ -19,13 +20,14 @@ class iLQR:
 
         # Parameters for iLQR
         self.max_iterations = 500
-        self.tolerance = 1e-6
+        self.tolerance = 1e-3
 
         # Parameters for regularization of Hessian Matrix
-        self.reg_init = 0.
+        self.reg = 0.
         self.reg_min = 1e-8
         self.reg_max = 1e10
         self.reg_scale = 2.0
+        self.delta_reg = 0.
 
         # Parameters of line search
         self.line_scale = 0.5
@@ -40,8 +42,7 @@ class iLQR:
 
         :param x0: Initial state.
         :param u_init: Initial control path.
-        :param n_iterations: Maximum number of iterations. Default: 100.
-        :param tolerance: Termination Tolerance. Default: 1e-6.
+        :param callback: Callback function
         :return:
             xs: optimal state path.
             us: optimal control path.
@@ -50,8 +51,7 @@ class iLQR:
         us = u_init.copy()
 
         # Reset regularization term
-        self.reg = self.reg_init
-        self.delta_reg = 0.
+
 
         changed = True
         converged = False
@@ -187,7 +187,7 @@ class iLQR:
             if np.any(np.linalg.eigvals(Q_uu) <= 0):
                 self._regularization_update("increase")
                 if self.reg > self.reg_max:
-                    warnings.warn("exceeded max regularization term")
+                    warnings.warn("exceeded max regularization term. Stop.")
                     return None, None, None
 
                 delta_V = np.zeros((params['N'], 2))
