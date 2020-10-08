@@ -263,26 +263,26 @@ class iLQR:
             x_i = xs[i]
             u_i = us[i]
 
-            xs[i + 1] = self.dynamics.f(x_i, u_i)
-            F_x[i] = self.dynamics.f_x(x_i, u_i)
-            F_u[i] = self.dynamics.f_u(x_i, u_i)
+            xs[i + 1] = self.dynamics.f(x_i, u_i, i)
+            F_x[i] = self.dynamics.f_x(x_i, u_i, i)
+            F_u[i] = self.dynamics.f_u(x_i, u_i, i)
 
             if self._use_hessian:
-                F_xx[i] = self.dynamics.f_xx(x_i, u_i)
-                F_ux[i] = self.dynamics.f_ux(x_i, u_i)
-                F_uu[i] = self.dynamics.f_uu(x_i, u_i)
+                F_xx[i] = self.dynamics.f_xx(x_i, u_i, i)
+                F_ux[i] = self.dynamics.f_ux(x_i, u_i, i)
+                F_uu[i] = self.dynamics.f_uu(x_i, u_i, i)
 
-            L[i] = self.cost.l(x_i, u_i, terminal=False)
-            L_x[i] = self.cost.l_x(x_i, u_i, terminal=False)
-            L_u[i] = self.cost.l_u(x_i, u_i, terminal=False)
-            L_xx[i] = self.cost.l_xx(x_i, u_i, terminal=False)
-            L_ux[i] = self.cost.l_ux(x_i, u_i, terminal=False)
-            L_uu[i] = self.cost.l_uu(x_i, u_i, terminal=False)
+            L[i] = self.cost.l(x_i, u_i, i, terminal=False)
+            L_x[i] = self.cost.l_x(x_i, u_i, i, terminal=False)
+            L_u[i] = self.cost.l_u(x_i, u_i, i, terminal=False)
+            L_xx[i] = self.cost.l_xx(x_i, u_i, i, terminal=False)
+            L_ux[i] = self.cost.l_ux(x_i, u_i, i, terminal=False)
+            L_uu[i] = self.cost.l_uu(x_i, u_i, i, terminal=False)
 
         x_f = xs[-1]
-        L[-1] = self.cost.l(x_f, None, terminal=True)
-        L_x[-1] = self.cost.l_x(x_f, None, terminal=True)
-        L_xx[-1] = self.cost.l_xx(x_f, None, terminal=True)
+        L[-1] = self.cost.l(x_f, None, i, terminal=True)
+        L_x[-1] = self.cost.l_x(x_f, None, i, terminal=True)
+        L_xx[-1] = self.cost.l_xx(x_f, None, i, terminal=True)
 
         params = {'L_x': L_x,
                   'L_u': L_u,

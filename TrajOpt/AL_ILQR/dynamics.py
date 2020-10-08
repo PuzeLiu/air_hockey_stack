@@ -1,6 +1,6 @@
 import abc
 
-from jax import jacfwd
+from jax import jacfwd, jacrev
 from jax import numpy as np
 
 
@@ -26,40 +26,43 @@ class Dynamics:
         raise NotImplementedError
 
     @abc.abstractmethod
-    def f(self, x, u):
+    def f(self, x, u, i):
         """Dynamics model.
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             Next state [state_size].
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def f_x(self, x, u):
+    def f_x(self, x, u, i):
         """Partial derivative of dynamics model with respect to x.
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             df/dx [state_size, state_size].
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def f_u(self, x, u):
+    def f_u(self, x, u, i):
         """Partial derivative of dynamics model with respect to u.
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             df/du [state_size, action_size].
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def f_xx(self, x, u):
+    def f_xx(self, x, u, i):
         """Second partial derivative of dynamics model with respect to x.
         Note:
             This is not necessary to implement if you're planning on skipping
@@ -67,13 +70,14 @@ class Dynamics:
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             d^2f/dx^2 [state_size, state_size, state_size].
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def f_ux(self, x, u):
+    def f_ux(self, x, u, i):
         """Second partial derivative of dynamics model with respect to u and x.
         Note:
             This is not necessary to implement if you're planning on skipping
@@ -81,13 +85,14 @@ class Dynamics:
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             d^2f/dudx [state_size, action_size, state_size].
         """
         raise NotImplementedError
 
     @abc.abstractmethod
-    def f_uu(self, x, u):
+    def f_uu(self, x, u, i):
         """Second partial derivative of dynamics model with respect to u.
         Note:
             This is not necessary to implement if you're planning on skipping
@@ -95,6 +100,7 @@ class Dynamics:
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             d^2f/du^2 [state_size, action_size, action_size].
         """
@@ -137,71 +143,77 @@ class AutoDiffDynamics(Dynamics):
         """Whether the second order derivatives are available."""
         return self._has_hessian
 
-    def f(self, x, u):
+    def f(self, x, u, i):
         """Dynamics model.
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             Next state [state_size].
         """
-        return self._f(x, u)
+        return self._f(x, u, i)
 
-    def f_x(self, x, u):
+    def f_x(self, x, u, i):
         """Partial derivative of dynamics model with respect to x.
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             df/dx [state_size, state_size].
         """
-        return jacfwd(self._f, 0)(x, u)
+        return jacfwd(self._f, 0)(x, u, i)
 
-    def f_u(self, x, u):
+    def f_u(self, x, u, i):
         """Partial derivative of dynamics model with respect to u.
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             df/du [state_size, action_size].
         """
-        return jacfwd(self._f, 1)(x, u)
+        return jacfwd(self._f, 1)(x, u, i)
 
-    def f_xx(self, x, u):
+    def f_xx(self, x, u, i):
         """Second partial derivative of dynamics model with respect to x.
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             d^2f/dx^2 [state_size, state_size, state_size].
         """
         if self._has_hessian:
-            return jacfwd(jacfwd(self._f, 0), 0)(x, u)
+            return jacfwd(jacrev(self._f, 0), 0)(x, u, i)
         else:
             return np.zeros((self._state_size, self._state_size, self._state_size))
 
-    def f_ux(self, x, u):
+    def f_ux(self, x, u, i):
         """Second partial derivative of dynamics model with respect to u and x.
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             d^2f/dudx [state_size, action_size, state_size].
         """
         if self._has_hessian:
-            return jacfwd(jacfwd(self._f, 1), 0)(x, u)
+            return jacfwd(jacrev(self._f, 1), 0)(x, u, i)
         else:
             return np.zeros((self._state_size, self._action_size, self._state_size))
 
-    def f_uu(self, x, u):
+    def f_uu(self, x, u, i):
         """Second partial derivative of dynamics model with respect to u.
         Args:
             x: Current state [state_size].
             u: Current control [action_size].
+            i: Current time step.
         Returns:
             d^2f/du^2 [state_size, action_size, action_size].
         """
         if self._has_hessian:
-            return jacfwd(jacfwd(self._f, 1), 1)(x, u)
+            return jacfwd(jacrev(self._f, 1), 1)(x, u, i)
         else:
             return np.zeros((self._state_size, self._action_size, self._action_size))
