@@ -83,7 +83,7 @@ class OptimizerHitPoint:
         res = opt.minimize(fun=self.obj_fun, x0=self.x0,
                            args=('numpy',), method='SLSQP',
                            bounds=bounds, constraints=constraints,
-                           jac=self.obj_jac,
+                           # jac=self.obj_jac,
                            options={'maxiter': 5000, 'disp': True})
         return res
 

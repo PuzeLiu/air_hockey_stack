@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from air_hockey.environments.iiwa.kinematics_torch import KinematicsTorch
+from air_hockey.robots.iiwa.kinematics_torch import KinematicsTorch
 from hard_coded_policy.src.hard_coded_policy.bezier_planner import BezierTrajectory
 
 from scipy import optimize as opt
