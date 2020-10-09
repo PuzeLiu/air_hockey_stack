@@ -333,20 +333,23 @@ class QRCost(Cost):
         return self._R_plus_R_T
 
 
-class AugmentedLagrangianCost:
+class AugmentedLagrangianCost(Cost):
     """Augmented Lagrangian Cost"""
 
-    def __init__(self, cost, constraint_list):
+    def __init__(self, cost, constraint_list, lagrangian, penalty, active_set):
         """Constructs an AutoDiffCost.
         Args:
             cost: origin cost function.
             constraint_list: List of constraints at each time step. [constraints_size]
             lagrangian: Lagrangian multiplier. [N+1, constraints_size]
-            penalty: Penalty multiplier. [N+1, constraints_size]
-            active_set:
+            penalty: Penalty multiplier diagonal matrix at each step. [N+1, constraints_size, constraints_size]
+            active_set: Boolean Array that indicate the active constraints. [N+1, constraints_size]
         """
         self._cost = cost
         self._constraint_list = constraint_list
+        self._lagrangian = lagrangian
+        self._penalty = penalty
+        self._active_set = active_set
 
         super(AugmentedLagrangianCost, self).__init__()
 
@@ -360,65 +363,65 @@ class AugmentedLagrangianCost:
         Returns:
             Instantaneous cost (scalar).
         """
-        return self._cost.l(x, u, terminal) +
+        c = self._constraint_list.c(x, u, i, terminal)
+        return self._cost.l(x, u, terminal) + self._lagrangian[i] @ c + 0.5 * c @ self._penalty[i] @ c
 
-    def l_x(self, x, u, terminal=False):
+    def l_x(self, x, u, i, terminal=False):
         """Partial derivative of cost function with respect to x.
         Args:
             x: Current state [state_size].
             u: Current control [action_size]. None if terminal.
+            i: Current time step.
             terminal: Compute terminal cost. Default: False.
         Returns:
             dl/dx [state_size].
         """
-        if terminal:
-            return jacrev(self._l_terminal, 0)(x)
-        else:
-            return jacrev(self._l, 0)(x, u)
+        c = self._constraint_list.c(x, u, i, terminal)
+        c_x = self._constraint_list.c_x(x, u, i, terminal)
+        return self._cost.l_x(x, u, i, terminal) + c_x @ (self._lagrangian[i] + self._penalty[i] @ c)
 
-    def l_u(self, x, u, terminal=False):
+    def l_u(self, x, u, i, terminal=False):
         """Partial derivative of cost function with respect to u.
         Args:
             x: Current state [state_size].
             u: Current control [action_size]. None if terminal.
+            i: Current time step.
             terminal: Compute terminal cost. Default: False.
         Returns:
             dl/du [action_size].
         """
-        if terminal:
-            return np.zeros(self.action_size)
-        else:
-            return jacrev(self._l, 1)(x, u)
+        c = self._constraint_list.c(x, u, i, terminal)
+        c_u = self._constraint_list.c_u(x, u, i, terminal)
+        return self._cost.l_x(x, u, i, terminal) + c_u @ (self._lagrangian[i] + self._penalty[i] @ c)
 
-    def l_xx(self, x, u, terminal=False):
+    def l_xx(self, x, u, i, terminal=False):
         """Second partial derivative of cost function with respect to x.
         Args:
             x: Current state [state_size].
             u: Current control [action_size]. None if terminal.
+            i: Current time step.
             terminal: Compute terminal cost. Default: False.
         Returns:
             d^2l/dx^2 [state_size, state_size].
         """
-        if terminal:
-            return jacfwd(jacrev(self._l_terminal, 0), 0)(x)
-        else:
-            return jacfwd(jacrev(self._l, 0), 0)(x, u)
+        c_x = self._constraint_list.c_x(x, u, i, terminal)
+        return self._cost.l_xx(x, u, i, terminal) + c_x @ self._penalty[i] @ c_x
 
-    def l_ux(self, x, u, terminal=False):
+    def l_ux(self, x, u, i, terminal=False):
         """Second partial derivative of cost function with respect to u and x.
         Args:
             x: Current state [state_size].
             u: Current control [action_size]. None if terminal.
+            i: Current time step.
             terminal: Compute terminal cost. Default: False.
         Returns:
             d^2l/dudx [action_size, state_size].
         """
-        if terminal:
-            return np.zeros((self.action_size, self.state_size))
-        else:
-            return jacfwd(jacrev(self._l, 1), 0)(x, u)
+        c_x = self._constraint_list.c_x(x, u, i, terminal)
+        c_u = self._constraint_list.c_u(x, u, i, terminal)
+        return self._cost.l_xx(x, u, i, terminal) + c_u @ self._penalty[i] @ c_x
 
-    def l_uu(self, x, u, terminal=False):
+    def l_uu(self, x, u, i, terminal=False):
         """Second partial derivative of cost function with respect to u.
         Args:
             x: Current state [state_size].
@@ -427,7 +430,5 @@ class AugmentedLagrangianCost:
         Returns:
             d^2l/du^2 [action_size, action_size].
         """
-        if terminal:
-            return np.zeros((self.action_size, self.action_size))
-        else:
-            return jacfwd(jacrev(self._l, 1), 1)(x, u)
+        c_u = self._constraint_list.c_u(x, u, i, terminal)
+        return self._cost.l_xx(x, u, i, terminal) + c_u @ self._penalty[i] @ c_u
