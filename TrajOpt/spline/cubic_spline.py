@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-# import numpy as np
+import numpy as np
 import torch
 
 
@@ -84,6 +84,35 @@ class CubicSpline:
                 ddx = 2 * (self.b[i] - 2 * self.a[i] + (self.a[i] - self.b[i]) * t_x * 3) / (self.h_i[i] ** 2)
                 return x, dx, ddx
 
+    def get_trajectory(self, step_size):
+        t = torch.arange(0, self.t_f + step_size, step_size)
+        trajectory = torch.empty((t.shape[0], 3, self.n_dim))
+        for i, t_i in enumerate(t):
+            x_t, dx_t, ddx_t = self(t_i)
+            trajectory[i, 0] = x_t
+            trajectory[i, 1] = dx_t
+            trajectory[i, 2] = ddx_t
+        return trajectory, t
+
+    def plot(self):
+        step_size = 0.01
+        trajectories, t = self.get_trajectory(step_size)
+        x = trajectories[:, 0].detach().numpy()
+        dx = trajectories[:, 1, :].detach().numpy()
+        ddx = trajectories[:, 2, :].detach().numpy()
+
+        for i in range(self.n_dim):
+            fig, axes = plt.subplots(3)
+            fig.suptitle("Trajectory for dimension {}".format(i))
+            axes[0].plot(t, x[:, i])
+            axes[0].scatter(np.linspace(0., self.t_f, self.n_points)[1:-1], self.points[1:-1, i], marker='*')
+            axes[0].set_title("Position")
+            axes[1].plot(t, dx[:, i])
+            axes[1].set_title("Velocity")
+            axes[2].plot(t, ddx[:, i])
+            axes[2].set_title("Acceleration")
+        plt.show()
+
 
 if __name__ == "__main__":
     import numpy as np
@@ -98,27 +127,4 @@ if __name__ == "__main__":
     tf = 2
 
     cubic_spline = CubicSpline(n_dim, p0, p_via, pf, bound_0, bound_f, tf, bound_type='velocity')
-    x = []
-    dx = []
-    ddx = []
-    for t in torch.linspace(0, tf, 1000):
-        x_t, dx_t, ddx_t = cubic_spline(t)
-        x.append(x_t.detach().numpy())
-        dx.append(dx_t.detach().numpy())
-        ddx.append(ddx_t.detach().numpy())
-    x = np.array(x)
-    dx = np.array(dx)
-    ddx = np.array(ddx)
-
-    max_vel, t_max = cubic_spline.get_max_velocities()
-
-    fig, axes = plt.subplots(3)
-    axes[0].plot(np.linspace(0, tf, 1000), x)
-    axes[0].scatter(np.linspace(0, tf, n_via_points + 2)[1:-1], p_via[:, 0], marker='o')
-    axes[0].scatter(np.linspace(0, tf, n_via_points + 2)[1:-1], p_via[:, 1], marker='*')
-    axes[0].set_title("Position")
-    axes[1].plot(np.linspace(0, tf, 1000), dx)
-    axes[1].set_title("Velocity")
-    axes[2].plot(np.linspace(0, tf, 1000), ddx)
-    axes[2].set_title("Acceleration")
-    plt.show()
+    cubic_spline.plot()

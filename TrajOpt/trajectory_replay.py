@@ -15,12 +15,12 @@ class DummyTrajectoryExecuter(Agent):
         tcp_pos = torch.tensor([0., 0., 0.3455]).double()
         tcp_quat = torch.tensor([0., 0., 0., 1.]).double()
         self.kinematics = KinematicsTorch(tcp_pos, tcp_quat)
-        self.q = np.load('q.npy')
+        self.q = np.load('generic_optimization/trajectory.npy')
         self.index = 0
 
     def draw_action(self, state):
-        # time.sleep(1/240.)
-        q = self.q[self.index]
+        time.sleep(1/100.)
+        q = self.q[self.index, 0]
         if self.index < self.q.shape[0]-1:
             self.index += 1
         return q
