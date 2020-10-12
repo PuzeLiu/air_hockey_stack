@@ -1,4 +1,5 @@
 import time
+import os
 
 import numpy as np
 import quaternion
@@ -136,7 +137,7 @@ class OptimizerCubicSpline:
         res = opt.minimize(fun=obj_.fun, x0=x0, method='SLSQP',
                            bounds=bounds, constraints=constraints,
                            jac=obj_.jac,
-                           options={'maxiter': 5000, 'disp': True})
+                           options={'maxiter': 5000, 'disp': True, 'ftol': 1e-8})
         return res
 
     def _final_position_constraint(self, q_f):
@@ -223,20 +224,22 @@ class OptimizerCubicSpline:
 
 if __name__ == "__main__":
     table_height = 0.1915
-    n_via_points = 2
+    n_via_points = 5
     t_f = 2.
-    goal_position = np.array([0.9, 0.2, table_height])
+    puck_position = np.array([0.9, 0.2, table_height])
 
-    hit_direction = (np.array([2.53, 0.0, table_height]) - goal_position)
+    hit_direction = (np.array([2.53, 0.0, table_height]) - puck_position)
     hit_direction = hit_direction / np.linalg.norm(hit_direction)
+
+    goal_position = puck_position - hit_direction * 0.03
 
     tcp_pos = np.array([0., 0., 0.3455])
     tcp_quat = np.array([1., 0., 0., 0.])
     kinematics = KinematicsTorch(tcp_pos=torch.tensor(tcp_pos).double(),
                                  tcp_quat=torch.tensor(tcp_quat).double())
 
-    q_0 = np.array([-1.0207648e-07, 5.0181419e-01, 6.8465688e-08, -1.1696992e+00,
-                    -3.7518330e-08, 1.4700792e+00, 0])
+    q_0 = np.array([1.1331584,  1.1954937, -0.9117808, -1.1128651, -0.27579075,
+                    1.5420077, -2.709497])
     dq_0 = np.zeros(7)
     optimizer = OptimizerCubicSpline(q_0=q_0, dq_0=dq_0, x_f=goal_position,
                                      dx_f_dir=hit_direction, n_via_points=n_via_points,
@@ -249,7 +252,8 @@ if __name__ == "__main__":
     print(res.x)
     print("Optimization Time:", t_end - t_start)
 
-    file_name = "result_" + np.array2string(goal_position[:2], separator=',') + ".npy"
+    output_dir = "result"
+    file_name = "result_" + np.array2string(puck_position[:2], separator=',') + ".npy"
     result = {"q_0": q_0,
               "dq_0": dq_0,
               "table_height": table_height,
@@ -261,4 +265,4 @@ if __name__ == "__main__":
               "tcp_quat": tcp_quat,
               "result": res.x}
 
-    np.save(file_name, result)
+    np.save(os.path.join(output_dir, file_name), result)

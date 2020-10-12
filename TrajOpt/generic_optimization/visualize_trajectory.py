@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
@@ -7,8 +8,9 @@ from TrajOpt.spline.cubic_spline import CubicSpline
 
 
 if __name__ == "__main__":
-    result_file = "result.npy"
-    result_summary = np.load(result_file, allow_pickle='TRUE').item()
+    output_dir = "result"
+    result_file = "result_[0.9,0.2].npy"
+    result_summary = np.load(os.path.join(output_dir, result_file), allow_pickle='TRUE').item()
     result_summary['dq_0'] = np.zeros(7)
     result_tensor = torch.from_numpy(result_summary['result']).view((-1, 7))
 
@@ -27,7 +29,7 @@ if __name__ == "__main__":
 
     step_size = 0.01
     trajectories, t = cubic_spline.get_trajectory(step_size)
-    np.save("trajectory.npy", trajectories)
+    np.save(os.path.join(output_dir, "trajectory.npy"), trajectories)
 
     ee_pos = torch.empty(trajectories.shape[0], 3)
     ee_vel = torch.empty(trajectories.shape[0], 3)
@@ -46,14 +48,16 @@ if __name__ == "__main__":
     axes[2].plot(t, torch.ones_like(t) * 0.1915, color='r', linestyle='-.', label='Table Height')
     axes[2].legend()
 
-    fig, axes = plt.subplots(3)
+    fig, axes = plt.subplots(2, 2)
     fig.suptitle("Velocity, maximum velocity:{:.3f}".format(torch.norm(ee_vel[-1, :])))
-    axes[0].set_title("X")
-    axes[0].plot(t, ee_vel[:, 0])
-    axes[1].set_title("Y")
-    axes[1].plot(t, ee_vel[:, 1])
-    axes[2].set_title("Z")
-    axes[2].plot(t, ee_vel[:, 2])
+    axes[0][0].set_title("X")
+    axes[0][0].plot(t, ee_vel[:, 0])
+    axes[0][1].set_title("Y")
+    axes[0][1].plot(t, ee_vel[:, 1])
+    axes[1][0].set_title("Z")
+    axes[1][0].plot(t, ee_vel[:, 2])
+    axes[1][1].set_title("X-Y")
+    axes[1][1].plot(t, torch.sqrt(ee_vel[:, 0]**2 + ee_pos[:, 1]**2))
 
     fig = plt.figure()
     plt.plot(ee_pos[:, 0], ee_pos[:, 1])

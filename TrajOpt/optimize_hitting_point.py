@@ -90,7 +90,7 @@ class OptimizerHitPoint:
 
 if __name__ == "__main__":
     table_height = 0.1915
-    puck_position = np.array([0.7, 0.2, table_height])
+    puck_position = np.array([0.9, 0.2, table_height])
     hit_direction = (np.array([2.53, 0.0, table_height]) - puck_position)
     hit_direction = hit_direction / np.linalg.norm(hit_direction)
     tcp_pos = np.array([0., 0., 0.3455])
