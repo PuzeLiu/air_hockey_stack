@@ -1,0 +1,4 @@
+*.npy
+*.idea
+__pychae__
+result/figures/

@@ -1,7 +1,7 @@
 import numpy as np
 import quaternion
 import torch
-from TrajOpt.optimize_hitting_point import OptimizerHitPoint
+from TrajOpt.generic_optimization.optimize_hitting_point import OptimizerHitPoint
 from air_hockey.policies.bezier import BezierTrajectory
 from air_hockey.robots.iiwa.kinematics_torch import KinematicsTorch
 

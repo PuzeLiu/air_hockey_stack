@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import os
 
 
 class CubicSpline:
@@ -17,7 +18,8 @@ class CubicSpline:
 
         self.K = torch.zeros((self.n_points, self.n_points))
         self.b = torch.zeros((self.n_points, self.n_dim))
-        self.t_i = torch.linspace(0, self.t_f, self.n_points)
+        self.t_i = torch.zeros(self.n_points)
+        self.t_i = torch.linspace(0, 1, self.n_points) * self.t_f
         # h_i = [0, h1, ..., hn]
         self.h_i = (self.t_i[1:] - self.t_i[:-1]).unsqueeze(1)
 
@@ -85,8 +87,8 @@ class CubicSpline:
                 return x, dx, ddx
 
     def get_trajectory(self, step_size):
-        t = torch.arange(0, self.t_f + step_size, step_size)
-        trajectory = torch.empty((t.shape[0], 3, self.n_dim))
+        t = torch.arange(0, self.t_f, step_size)
+        trajectory = torch.empty((t.shape[0], 3, self.n_dim)).double()
         for i, t_i in enumerate(t):
             x_t, dx_t, ddx_t = self(t_i)
             trajectory[i, 0] = x_t
@@ -94,7 +96,7 @@ class CubicSpline:
             trajectory[i, 2] = ddx_t
         return trajectory, t
 
-    def plot(self):
+    def plot(self, save_dir=None):
         step_size = 0.01
         trajectories, t = self.get_trajectory(step_size)
         x = trajectories[:, 0].detach().numpy()
@@ -111,7 +113,12 @@ class CubicSpline:
             axes[1].set_title("Velocity")
             axes[2].plot(t, ddx[:, i])
             axes[2].set_title("Acceleration")
-        plt.show()
+            if not (save_dir is None):
+                fig.savefig(os.path.join(save_dir, "joint_{}.png".format(i)))
+                plt.close(fig)
+
+        if save_dir is None:
+            plt.show()
 
 
 if __name__ == "__main__":

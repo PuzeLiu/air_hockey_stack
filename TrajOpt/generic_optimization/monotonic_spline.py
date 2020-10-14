@@ -6,50 +6,9 @@ import quaternion
 import scipy.optimize as opt
 import torch
 
-from TrajOpt.spline.cubic_spline import CubicSpline
+from TrajOpt.generic_optimization.joint_space_spline import AutogradNumpyWrapper
+from TrajOpt.spline.monotonic_cubic_spline import MonotonicCubicSpline
 from air_hockey.robots.iiwa.kinematics_torch import KinematicsTorch
-
-
-class AutogradNumpyWrapper:
-    def __init__(self, func):
-        self._fun = func
-        self._cached_x = None
-        self._cached_y = None
-        self._cached_jac = None
-
-    def is_new(self, x):
-        if self._cached_x is None:
-            return True
-        else:
-            # compare x to cached_x to determine if we've been given a new input
-            x, self._cached_x = np.array(x), np.array(self._cached_x)
-            error = np.abs(x - self._cached_x)
-            return error.max() > 1e-8
-
-    def cache(self, x):
-        self._cached_x = x
-        x_tensor = torch.tensor(x, requires_grad=True)
-
-        y = self._fun(x_tensor)
-        self._cached_y = y.detach().numpy()
-
-        if y.shape == torch.Size([]):
-            jac = torch.autograd.grad(y, x_tensor, create_graph=True)[0]
-        else:
-            jac = torch.zeros(y.shape[0], x.shape[0])
-            for i in range(y.shape[0]):
-                jac[i] = torch.autograd.grad(y[i], x_tensor, create_graph=True)[0]
-        self._cached_jac = jac.detach().numpy()
-
-    def fun(self, x):
-        if self.is_new(x):
-            self.cache(x)
-        return self._cached_y
-
-    def jac(self, x):
-        if self.is_new(x):
-            self.cache(x)
-        return self._cached_jac
 
 
 class OptimizerCubicSpline:
@@ -97,25 +56,25 @@ class OptimizerCubicSpline:
     def _obj_fun(self, x):
         x = x if isinstance(x, torch.Tensor) else torch.tensor(x)
         x_tmp = x.view((-1, 7))
-        q_f = x_tmp[-2]
-        dq_f = x_tmp[-1]
+        q_f = x_tmp[-1]
+        q_i = x_tmp[:-1]
+
+        spline = MonotonicCubicSpline(self._n_dim, self._q_0, q_i, q_f, self._t_f)
+        dq_f = spline.v_f
 
         # Maximize the hitting velocity
         jac = self._kine.get_jacobian(q_f)
         return -jac[:2] @ dq_f @ (jac[:2] @ dq_f)
 
-        # Minimize the distance to objective
-        # q_f_desired = torch.tensor([0.82695898, 2.07942967, -2.93173653, -1.30622888, 2.01920129, 1.6064055, 2.32755876])
-        # dq_f_desired = torch.tensor([-1.47027462, -1.461314, 1.70557269, 1.3071889, 2.15811473, -2.35611149, -1.95203635])
-        # return torch.norm(q_f_desired - q_f) + torch.norm(dq_f_desired - dq_f)
-
     def _eq_constraints_fun(self, x):
         eq_constraints = torch.zeros(3 + 1 + self._n_via_points)
         x = x if isinstance(x, torch.Tensor) else torch.tensor(x)
         x_tmp = x.view((-1, 7))
-        q_i = x_tmp[:-2]
-        q_f = x_tmp[-2]
-        dq_f = x_tmp[-1]
+        q_i = x_tmp[:-1]
+        q_f = x_tmp[-1]
+
+        spline = MonotonicCubicSpline(self._n_dim, self._q_0, q_i, q_f, self._t_f)
+        dq_f = spline.v_f
 
         eq_constraints[:3] = self._final_position_constraint(q_f)
         eq_constraints[3] = self._hit_velocity_constraint(q_f, dq_f)
@@ -126,15 +85,12 @@ class OptimizerCubicSpline:
     def _ineq_constraints_fun(self, x):
         x = x if isinstance(x, torch.Tensor) else torch.tensor(x)
         x_tmp = x.view((-1, 7))
-        q_i = x_tmp[:-2]
-        q_f = x_tmp[-2]
-        dq_f = x_tmp[-1]
+        q_i = x_tmp[:-1]
+        q_f = x_tmp[-1]
 
-        cubic_spline = CubicSpline(self._n_dim, torch.tensor(self._q_0), q_i, q_f,
-                                   torch.tensor(self._dq_0), dq_f,
-                                   self._t_f, bound_type='velocity')
+        spline = MonotonicCubicSpline(self._n_dim, self._q_0, q_i, q_f, self._t_f)
 
-        max_velocities = cubic_spline.get_max_velocities()
+        max_velocities = spline.get_max_velocities()
         vel_ineq = (self._kine.joint_vel_limits[:, 0].repeat(self._n_segment, 1) ** 2 - max_velocities ** 2).view(-1)
 
         x_i = torch.zeros((self._n_via_points, 2))
@@ -150,9 +106,6 @@ class OptimizerCubicSpline:
         ineq_constraints = AutogradNumpyWrapper(self._ineq_constraints_fun)
         constraints = [{'type': 'eq', 'fun': eq_constraints.fun, 'jac': eq_constraints.jac},
                        {'type': 'ineq', 'fun': ineq_constraints.fun, 'jac': ineq_constraints.jac}]
-
-        # constraints = [{'type': 'eq', 'fun': eq_constraints.fun},
-        #                {'type': 'ineq', 'fun': ineq_constraints.fun}]
 
         bounds = opt.Bounds(lb=self.bound_lb, ub=self.bound_ub)
 
@@ -268,9 +221,7 @@ class OptimizerCubicSpline:
 
         output_dir = "result/figures/heuristic"
 
-        cubic_spline = CubicSpline(self._n_dim, torch.tensor(self._q_0), q_i, q_f,
-                                   torch.tensor(self._dq_0), dq_f,
-                                   self._t_f, bound_type='velocity')
+        cubic_spline = MonotonicCubicSpline(self._n_dim, torch.tensor(self._q_0), q_i, q_f, self._t_f)
         output_dir_joint = os.path.join(output_dir, "iter_{}".format(self._cur_iter))
         if not os.path.exists(output_dir_joint):
             os.makedirs(output_dir_joint)
@@ -323,49 +274,3 @@ class OptimizerCubicSpline:
         plt.close(fig)
 
         return False
-
-
-if __name__ == "__main__":
-    table_height = 0.1915
-    n_via_points = 5
-    t_f = 2
-    puck_position = np.array([0.9, 0.2, table_height])
-
-    hit_direction = (np.array([2.53, 0.0, table_height]) - puck_position)
-    hit_direction = hit_direction / np.linalg.norm(hit_direction)
-
-    goal_position = puck_position - hit_direction * 0.0
-
-    tcp_pos = np.array([0., 0., 0.3455])
-    tcp_quat = np.array([1., 0., 0., 0.])
-    kinematics = KinematicsTorch(tcp_pos=torch.tensor(tcp_pos).double(),
-                                 tcp_quat=torch.tensor(tcp_quat).double())
-
-    q_0 = np.array([1.1331584, 1.1954937, -0.9117808, -1.1128651, -0.27579075,
-                    1.5420077, -2.709497])
-    dq_0 = np.zeros(7)
-    optimizer = OptimizerCubicSpline(q_0=q_0, dq_0=dq_0, x_f=goal_position, t_f=t_f,
-                                     dx_f_dir=hit_direction, n_via_points=n_via_points,
-                                     kinematics_=kinematics)
-    t_start = time.time()
-    res = optimizer.optimize()
-    t_end = time.time()
-
-    print(res.success)
-    print(res.x)
-    print("Optimization Time:", t_end - t_start)
-
-    output_dir = "result"
-    file_name = "result_" + np.array2string(puck_position[:2], separator=',') + "_heuristic_init.npy"
-    result = {"q_0": q_0,
-              "dq_0": dq_0,
-              "table_height": table_height,
-              "goal_position": goal_position,
-              "hit_direction": hit_direction,
-              "n_via_points": n_via_points,
-              "tcp_pos": tcp_pos,
-              "tcp_quat": tcp_quat,
-              "t_f": optimizer.t_f,
-              "result": res.x}
-
-    np.save(os.path.join(output_dir, file_name), result)
