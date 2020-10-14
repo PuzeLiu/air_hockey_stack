@@ -4,3 +4,4 @@ CATKIN_IGNORE
 *pyc
 
 .idea/
+*.npy
