@@ -5,3 +5,4 @@ CATKIN_IGNORE
 
 .idea/
 *.npy
+TrajOpt/generic_optimization/result/
