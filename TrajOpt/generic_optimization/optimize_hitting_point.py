@@ -1,8 +1,11 @@
+import os
 import torch
 import numpy as np
 from air_hockey.robots.iiwa.kinematics_torch import KinematicsTorch, Rotation
 
 from scipy import optimize as opt
+
+from TrajOpt.generic_optimization.joint_space_spline import AutogradNumpyWrapper
 
 
 class OptimizerHitPoint:
@@ -14,78 +17,66 @@ class OptimizerHitPoint:
         qd_min = self.kine.joint_vel_limits[:, 0].detach().numpy()
         qd_max = self.kine.joint_vel_limits[:, 1].detach().numpy()
 
-        self.x_des = x_des
+        self._x_f = x_des
         self.v_des_dir = v_des_dir
         self.bound_lb = np.concatenate((q_min, qd_min))
         self.bound_ub = np.concatenate((q_max, qd_max))
-        self.constr_b = np.concatenate((self.x_des[:3], np.array([1., ])))
+        self.constr_b = np.concatenate((self._x_f[:3], np.array([1., ])))
 
-    def obj_fun(self, x, out='torch'):
+    def _obj_fun(self, x):
         x = x if isinstance(x, torch.Tensor) else torch.tensor(x)
-        q = x[:7]
-        qd = x[7:]
+        x_tmp = x.view((-1, 7))
+        q = x_tmp[0]
+        qd = x_tmp[1]
         jac = self.kine.get_jacobian(q)
-        if out == 'torch':
-            return -((jac[:2] @ qd).dot(jac[:2] @ qd))
-        elif out == 'numpy':
-            return -((jac[:2] @ qd).dot(jac[:2] @ qd)).detach().numpy()
+        return -((jac[:2] @ qd).dot(jac[:2] @ qd))
 
-    def obj_jac(self, x, args):
-        x = torch.tensor(x)
-
-        def obj_fun_wrapper(x):
-            return self.obj_fun(x, 'torch')
-
-        jac = torch.autograd.functional.jacobian(obj_fun_wrapper, x)
-        return jac.detach().numpy()
-
-    def constraints_fun(self, x, out='torch'):
+    def _eq_constraints_fun(self, x):
         x = x if isinstance(x, torch.Tensor) else torch.tensor(x)
-        q = x[:7]
-        qd = x[7:]
+        x_tmp = x.view((-1, 7))
+        q = x_tmp[0]
+        qd = x_tmp[1]
         pose = self.kine.forward_kinematics(q)
         xyz = pose[:3]
 
         jac = self.kine.get_jacobian(q)
-        xyz_d = (jac[:3] @ qd).detach().numpy()
-        quat_d = torch.norm(jac[3:] @ qd).detach().numpy()
-        cos_theta = self.v_des_dir.dot(xyz_d) / np.linalg.norm(xyz_d)
-        if out == 'torch':
-            return torch.cat((xyz, torch.tensor([cos_theta]))) - torch.from_numpy(self.constr_b)
-        elif out == "numpy":
-            return np.concatenate((xyz.detach().numpy(), [cos_theta])) - self.constr_b
+        xyz_d = jac[:3] @ qd
+        cos_theta = (torch.from_numpy(self.v_des_dir) @ xyz_d) / torch.norm(xyz_d)
+        return torch.cat((xyz, cos_theta.unsqueeze(0))) - torch.from_numpy(self.constr_b)
 
-    def constraints_jac(self, x, args):
-        x = torch.tensor(x)
-
-        def const_fun_wrapper(x):
-            return self.constraints_fun(x, 'torch')
-
-        return torch.autograd.functional.jacobian(const_fun_wrapper, x).detach().numpy()
 
     def optimize(self):
-        constraints = [{'type': 'eq', 'fun': self.constraints_fun}]
+        obj_ = AutogradNumpyWrapper(self._obj_fun)
+        eq_constraints = AutogradNumpyWrapper(self._eq_constraints_fun)
+
+        constraints = [{'type': 'eq', 'fun': eq_constraints.fun, 'jac': eq_constraints.jac}]
         bounds = opt.Bounds(lb=self.bound_lb, ub=self.bound_ub)
 
-        pose = np.concatenate([self.x_des, np.array([0, 0.8660254, 0, 0.5])])
-        gc = torch.tensor([1., -1., 1.]).double()
+        x0 = self._get_feasible_init()
 
-        feasible_psi = self.kine.get_feasible_interval(torch.tensor(pose).double(), gc)
+        obj_.fun(x0)
+        eq_constraints.fun(x0)
+
+        res = opt.minimize(fun=obj_.fun, x0=x0, method='SLSQP',
+                           bounds=bounds, constraints=constraints,
+                           jac=obj_.jac,
+                           options={'maxiter': 1000, 'disp': True, 'ftol': 1e-8})
+        return res
+
+    def _get_feasible_init(self):
+        quat_f = np.array([0, 0.8660254, 0, 0.5])
+        pose_f = np.concatenate([self._x_f, quat_f])
+        gc = torch.tensor([1., -1., 1.]).double()
+        feasible_psi = self.kine.get_feasible_interval(torch.tensor(pose_f).double(), gc)
         if feasible_psi is not None:
             psi_0 = feasible_psi[0].mean()
         else:
             raise ValueError("No Feasible solution")
-        res, q0 = self.kine.inverse_kinematics(torch.tensor(pose).double(), psi_0, gc)
+        res, q0 = self.kine.inverse_kinematics(torch.tensor(pose_f).double(), psi_0, gc)
         qd0 = np.linalg.pinv(self.kine.get_jacobian(q0).detach().numpy()) @ np.concatenate(
             (self.v_des_dir * 0.1, np.array([0., 0., 0., 0.])))
-        self.x0 = np.concatenate((q0.detach().numpy(), qd0))
-
-        res = opt.minimize(fun=self.obj_fun, x0=self.x0,
-                           args=('numpy',), method='SLSQP',
-                           bounds=bounds, constraints=constraints,
-                           jac=self.obj_jac,
-                           options={'maxiter': 500, 'disp': True, 'ftol': 1e-6})
-        return res
+        x0 = np.concatenate((q0.detach().numpy(), qd0))
+        return x0
 
 
 if __name__ == "__main__":
@@ -93,23 +84,27 @@ if __name__ == "__main__":
     puck_position = np.array([0.9, 0.2, table_height])
     hit_direction = (np.array([2.53, 0.0, table_height]) - puck_position)
     hit_direction = hit_direction / np.linalg.norm(hit_direction)
+
+    goal_position = puck_position - hit_direction * 0.03
+
     tcp_pos = np.array([0., 0., 0.3455])
     tcp_quat = np.array([1., 0., 0., 0.])
     kinematics = KinematicsTorch(tcp_pos=torch.tensor(tcp_pos).double(),
                                  tcp_quat=torch.tensor(tcp_quat).double())
-    optimizer = OptimizerHitPoint(puck_position, hit_direction, kinematics)
 
-    ret = optimizer.optimize()
-    print(ret.success)
+    optimizer = OptimizerHitPoint(goal_position, hit_direction, kinematics)
 
-    print("Before Optimization:")
-    print(optimizer.x0)
-    print("Obj: ", -optimizer.obj_fun(optimizer.x0, 'numpy'))
+    res = optimizer.optimize()
+    print(res.success)
+
     print("After Optimization:")
-    print(ret.success)
-    print(ret.x)
-    print("Final Obj: ", -optimizer.obj_fun(ret.x, 'numpy'))
-    print("Pose: ", optimizer.kine.forward_kinematics(torch.tensor(ret.x[:7])))
-    print("Desired Pose: ", optimizer.x_des)
-    print("Velocity: ", optimizer.kine.get_jacobian(torch.tensor(ret.x[:7])).detach().numpy() @ ret.x[7:])
+    print(res.x)
+    print("Final Obj: ", -optimizer._obj_fun(res.x))
+    print("Pose: ", optimizer.kine.forward_kinematics(torch.tensor(res.x[:7])))
+    print("Desired Pose: ", optimizer._x_f)
+    print("Velocity: ", optimizer.kine.get_jacobian(torch.tensor(res.x[:7])).detach().numpy() @ res.x[7:])
     print("Desired:", optimizer.v_des_dir)
+
+    output_dir = "result"
+    file_name = np.array2string(puck_position[:2], separator=',') + "_optimal_init.npy"
+    np.save(os.path.join(output_dir, file_name), res.x)

@@ -109,8 +109,8 @@ class MonotonicCubicSpline:
                     self._points[i + 1] * self._h_01_dd(t_x) + self._h_i[i] * self._m_k[i + 1] * self._h_11_dd(t_x)
                 return x, dx, ddx
 
-    def get_trajectory(self, step_size):
-        t = torch.arange(0, self._t_f + step_size, step_size)
+    def get_trajectory(self, step_size=0.01):
+        t = torch.arange(0, self._t_f, step_size)
         trajectory = torch.empty((t.shape[0], 3, self._n_dim))
         for i, t_i in enumerate(t):
             x_t, dx_t, ddx_t = self(t_i)
@@ -120,8 +120,7 @@ class MonotonicCubicSpline:
         return trajectory, t
 
     def plot(self, save_dir=None):
-        step_size = 0.001
-        trajectories, t = self.get_trajectory(step_size)
+        trajectories, t = self.get_trajectory()
         x = trajectories[:, 0].detach().numpy()
         dx = trajectories[:, 1, :].detach().numpy()
         ddx = trajectories[:, 2, :].detach().numpy()

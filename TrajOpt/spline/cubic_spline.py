@@ -86,7 +86,7 @@ class CubicSpline:
                 ddx = 2 * (self.b[i] - 2 * self.a[i] + (self.a[i] - self.b[i]) * t_x * 3) / (self.h_i[i] ** 2)
                 return x, dx, ddx
 
-    def get_trajectory(self, step_size):
+    def get_trajectory(self, step_size=0.01):
         t = torch.arange(0, self.t_f, step_size)
         trajectory = torch.empty((t.shape[0], 3, self.n_dim)).double()
         for i, t_i in enumerate(t):
@@ -97,8 +97,7 @@ class CubicSpline:
         return trajectory, t
 
     def plot(self, save_dir=None):
-        step_size = 0.01
-        trajectories, t = self.get_trajectory(step_size)
+        trajectories, t = self.get_trajectory()
         x = trajectories[:, 0].detach().numpy()
         dx = trajectories[:, 1, :].detach().numpy()
         ddx = trajectories[:, 2, :].detach().numpy()

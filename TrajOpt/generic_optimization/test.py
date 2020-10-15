@@ -1,24 +1,28 @@
 import torch
-import time
+
+A = torch.tensor([[0., 1., 2., 3.]])
 
 
-def fun(x):
-    return x**2
+def my_nullspace(At, rcond=None):
 
-t_start = time.time()
-for i in range(10000):
-    x = torch.ones(100).requires_grad_()
-    y = fun(x)
-    jac = torch.zeros(y.shape[0], x.shape[0])
-    for i in range(y.shape[0]):
-        jac[i] = torch.autograd.grad(y[i], x, retain_graph=True)[0]
-print(jac)
-print("Forward Backward Time:", time.time()-t_start)
+    ut, st, vht = torch.Tensor.svd(At, some=False, compute_uv=True)
+    vht=vht.T
+    Mt, Nt = ut.shape[0], vht.shape[1]
+    if rcond is None:
+        rcondt = torch.finfo(st.dtype).eps * max(Mt, Nt)
+    tolt = torch.max(st) * rcondt
+    numt= torch.sum(st > tolt, dtype=int)
+    nullspace = vht[numt:,:].T.cpu().conj()
+    # nullspace.backward(torch.ones_like(nullspace),retain_graph=True)
+    return nullspace
 
-t_start = time.time()
-for i in range(10000):
-    x = torch.ones(100)
-    y = fun(x)
-    jac = torch.autograd.functional.jacobian(fun, x)
-print(jac)
-print("Functional Jacobian Time:", time.time() - t_start)
+A.requires_grad_()
+out = my_nullspace(A)
+
+print(out)
+print(A @ (torch.rand(1) * out[:, 0]))
+print(A @ (torch.rand(1) * out[:, 1]))
+print(A @ (torch.rand(1) * out[:, 2]))
+
+out.sum().backward()
+print("A.grad", A.grad)
