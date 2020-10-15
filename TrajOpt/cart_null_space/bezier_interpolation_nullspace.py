@@ -89,9 +89,9 @@ class NullSpaceTrajectory:
         for i in range(7):
             plt.figure()
             plt.plot(trajectories_joint[:, 1, i])
-            plt.plot(torch.ones(trajectories_joint.shape[0]) * kinematics.joint_vel_limits[i, 0])
-            plt.plot(torch.ones(trajectories_joint.shape[0]) * kinematics.joint_vel_limits[i, 1])
-            plt.title("Joint_{}".format(i + 1))
+            plt.plot(torch.ones(trajectories_joint.shape[0]) * kinematics.joint_vel_limits[i, 0], 'r-.')
+            plt.plot(torch.ones(trajectories_joint.shape[0]) * kinematics.joint_vel_limits[i, 1], 'r-.')
+            plt.title("Velocity Joint_{}".format(i + 1))
         plt.show()
 
 if __name__ == "__main__":
