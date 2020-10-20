@@ -3,15 +3,10 @@ import tf
 import numpy as np
 import sys, termios, tty, select
 import os
-
+from kalman_filter.utils import makedirs
 
 def isData():
     return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
-
-
-def makedirs(directory):
-    if not os.path.exists(directory):
-        os.makedirs(directory)
 
 
 def info():
