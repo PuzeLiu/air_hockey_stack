@@ -3,7 +3,7 @@ project(puck_tracker)
 
 add_compile_options(-std=c++11)
 
-find_package(catkin REQUIRED COMPONENTS roscpp)
+find_package(catkin REQUIRED COMPONENTS roscpp tf)
 
 find_package(MRPT REQUIRED COMPONENTS io bayes)
 
@@ -12,28 +12,29 @@ find_package(MRPT REQUIRED COMPONENTS io bayes)
 ###################################
 
 catkin_package(
-   INCLUDE_DIRS include
-#  DEPENDS system_lib
+        INCLUDE_DIRS include
+        #  DEPENDS system_lib
 )
 
 ###########
 ## Build ##
 ###########
 
-include_directories(include 
-                    ${catkin_INCLUDE_DIRS}
-)
+include_directories(include
+        ${catkin_INCLUDE_DIRS}
+#        ${MRPT_INCLUDE_DIRS}
+        )
 
 add_executable(tracker_node
-               src/Tracker.cpp 
-			   src/tracker_node.cpp)
+        src/ekf.cpp
+        src/tracker_node.cpp)
 
 # add_dependencies(tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(tracker_node
-   ${catkin_LIBRARIES}
-   ${MRPT_LIBS}
-)
+        ${catkin_LIBRARIES}
+        ${MRPT_LIBRARIES}
+        )
 
 #############
 ## Install ##
@@ -41,10 +42,10 @@ target_link_libraries(tracker_node
 
 install(TARGETS tracker_node
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+        )
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
         FILES_MATCHING PATTERN "*.h"
-)
+        )
 

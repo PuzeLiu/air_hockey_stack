@@ -22,10 +22,35 @@
  */
 
 #include <ros/ros.h>
+#include "ekf.h"
+#include "ros_visualization.h"
+#include <mrpt/math/CMatrixDynamic.h>
 
 int main(int argc, char* argv[]){
     ros::init(argc, argv, "puck_tracker");
     ros::NodeHandle nh("~");
+    ros::Rate rate(100);
 
+    DynamicsParam dynaParam = {0.0, 0.0,};
+    ModelNoise modelNoise = {0.5, 1.0, 1.0, 1.0};
+
+    EKF ekf_dynamics(dynaParam, modelNoise, rate.cycleTime().toSec());
+
+    VisualizationInterface visualizationInterface(nh);
+
+
+
+    mrpt::math::CVectorDynamic<double> xkk(4);
+    mrpt::math::CMatrixDynamic<double> pkk(4);
+
+    ekf_dynamics.init();
+    while (ros::ok()){
+        ekf_dynamics.doProcess();
+        ekf_dynamics.getState(xkk, pkk);
+        visualizationInterface.setPredictionMarker(xkk, pkk);
+        visualizationInterface.visualize();
+
+        rate.sleep();
+    }
     return 0;
 }
