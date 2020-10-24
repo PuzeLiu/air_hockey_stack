@@ -6,3 +6,5 @@ CATKIN_IGNORE
 .idea/
 *.npy
 *data/
+*result/
+*cmake-build-debug/
