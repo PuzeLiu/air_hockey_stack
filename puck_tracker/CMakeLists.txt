@@ -5,8 +5,6 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS roscpp tf)
 
-#find_package(MRPT REQUIRED COMPONENTS io bayes)
-
 find_package(Eigen3 REQUIRED)
 find_package(Kalman REQUIRED)
 
@@ -28,17 +26,13 @@ catkin_package(
 include_directories(include
         ${catkin_INCLUDE_DIRS}
         ${EIGEN3_INCLUDE_DIR}
-#        ${MRPT_INCLUDE_DIRS}
         )
 
-#add_executable(tracker_node
-#        src/ekf.cpp
-#        src/tracker_node.cpp)
 
 add_executable(tracker_node
         src/main.cpp)
 
-# add_dependencies(tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(tracker_node
         ${catkin_LIBRARIES}
