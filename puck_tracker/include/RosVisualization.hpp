@@ -25,36 +25,28 @@
 #ifndef PUCK_TRACKER_VISUALIZATION_INTERFACE_H
 #define PUCK_TRACKER_VISUALIZATION_INTERFACE_H
 
+#include <math.h>
 #include <ros/ros.h>
-#include <tf/transform_listener.h>
 #include <visualization_msgs/Marker.h>
-#include <mrpt/bayes/CKalmanFilterCapable.h>
+#include "EKF.hpp"
+
+
+namespace AirHockey{
+
 
 class VisualizationInterface{
 public:
     ros::NodeHandle m_nh;
 
-    ros::Publisher m_tablePub;
-    ros::Publisher m_puckPub;
-    ros::Publisher m_malletPub;
-    ros::Publisher m_predictionPub;
+    ros::Publisher m_markerPub;
 
-    visualization_msgs::Marker m_tableMarker;
-    visualization_msgs::Marker m_puckMarker;
-    visualization_msgs::Marker m_malletMarker;
-    visualization_msgs::Marker m_predictionMarker;
-
-    tf::TransformListener m_listener;
-
-    tf::StampedTransform m_tfTable, m_tfPuck, m_tfMallet;
+    visualization_msgs::Marker m_tableMarker, m_puckMarker, m_malletMarker, m_predictionMarker;
 
     VisualizationInterface(const ros::NodeHandle& nh) : m_nh(nh){
-        m_tablePub = m_nh.advertise<visualization_msgs::Marker>("marker_table", 1);
-        m_puckPub = m_nh.advertise<visualization_msgs::Marker>("marker_puck", 1);
-        m_malletPub = m_nh.advertise<visualization_msgs::Marker>("marker_mallet", 1);
-        m_predictionPub = m_nh.advertise<visualization_msgs::Marker>("marker_prediction", 1);
+        m_markerPub = m_nh.advertise<visualization_msgs::Marker>("marker", 10);
 
-        m_tableMarker.header.frame_id = "world";
+        m_tableMarker.header.frame_id = "Table";
+        m_tableMarker.ns = "Table";
         m_tableMarker.type = visualization_msgs::Marker::MESH_RESOURCE;
         m_tableMarker.action = visualization_msgs::Marker::ADD;
         m_tableMarker.scale.x = 1.0;
@@ -74,8 +66,8 @@ public:
         m_tableMarker.pose.orientation.y = 0.;
         m_tableMarker.pose.orientation.z = 0.;
 
-        m_puckMarker.header.frame_id = "world";
-//        m_puckMarker.header.stamp = ros::Time::now();
+        m_puckMarker.header.frame_id = "Puck";
+        m_puckMarker.ns = "Puck";
         m_puckMarker.type = visualization_msgs::Marker::CYLINDER;
         m_puckMarker.action = visualization_msgs::Marker::ADD;
         m_puckMarker.scale.x = 0.0633;
@@ -93,7 +85,8 @@ public:
         m_puckMarker.pose.orientation.y = 0.;
         m_puckMarker.pose.orientation.z = 0.;
 
-        m_malletMarker.header.frame_id = "world";
+        m_malletMarker.header.frame_id = "Mallet";
+        m_malletMarker.ns = "Mallet";
         m_malletMarker.type = visualization_msgs::Marker::CYLINDER;
         m_malletMarker.action = visualization_msgs::Marker::MODIFY;
         m_malletMarker.scale.x = 0.0963;
@@ -110,77 +103,47 @@ public:
         m_malletMarker.pose.orientation.x = 0.;
         m_malletMarker.pose.orientation.y = 0.;
         m_malletMarker.pose.orientation.z = 0.;
-    }
 
-    ~VisualizationInterface()= default;
-
-    bool lookupTF(){
-        try{
-            m_listener.lookupTransform("/world", "/Table", ros::Time(0), m_tfTable);
-        }
-        catch (tf::TransformException& ex) {
-            return false;
-        }
-
-        try{
-            m_listener.lookupTransform("/world", "/Puck", ros::Time(0), m_tfPuck);
-        }
-        catch (tf::TransformException& ex) {
-            return false;
-        }
-
-        try{
-            m_listener.lookupTransform("/world", "/Mallet", ros::Time(0), m_tfMallet);
-            return true;
-        }
-        catch (tf::TransformException& ex) {
-            return false;
-        }
-    }
-
-    void castTFToMarker(const tf::StampedTransform& tf, visualization_msgs::Marker& marker){
-        marker.header.stamp = tf.stamp_;
-        marker.pose.position.x = tf.getOrigin().x();
-        marker.pose.position.y = tf.getOrigin().y();
-        marker.pose.position.z = tf.getOrigin().z();
-        marker.pose.orientation.x = 0.;
-        marker.pose.orientation.y = 0.;
-        marker.pose.orientation.z = 0.;
-        marker.pose.orientation.w = 1.;
-    }
-
-    void visualize(){
-        if(lookupTF()) {
-            castTFToMarker(m_tfTable, m_tableMarker);
-            castTFToMarker(m_tfPuck, m_puckMarker);
-            castTFToMarker(m_tfMallet, m_malletMarker);
-            m_tablePub.publish(m_tableMarker);
-            m_puckPub.publish(m_puckMarker);
-            m_malletPub.publish(m_malletMarker);
-            m_predictionPub.publish(m_predictionMarker);
-        }
-    }
-
-    void setPredictionMarker(const mrpt::math::CVectorDynamic<double>& prediction,
-                             const mrpt::math::CMatrixDynamic<double>& variance){
         m_predictionMarker.header.frame_id = "world";
+        m_predictionMarker.ns = "Prediction";
         m_predictionMarker.type = visualization_msgs::Marker::CYLINDER;
         m_predictionMarker.action = visualization_msgs::Marker::MODIFY;
-        m_predictionMarker.scale.x = variance[0];
-        m_predictionMarker.scale.y = variance[5];
+        m_predictionMarker.scale.x = 0.1;
+        m_predictionMarker.scale.y = 0.1;
         m_predictionMarker.scale.z = 0.01;
         m_predictionMarker.color.r = 0.0;
         m_predictionMarker.color.g = 0.0;
         m_predictionMarker.color.b = 1.0;
         m_predictionMarker.color.a = 0.2;
-        m_predictionMarker.pose.position.x = prediction[0];
-        m_predictionMarker.pose.position.y = prediction[1];
-        m_predictionMarker.pose.position.z = m_tfPuck.getOrigin().z();
+        m_predictionMarker.pose.position.x = 0.0;
+        m_predictionMarker.pose.position.y = 0.0;
+        m_predictionMarker.pose.position.z = 0.06;
         m_predictionMarker.pose.orientation.w = 1.;
         m_predictionMarker.pose.orientation.x = 0.;
         m_predictionMarker.pose.orientation.y = 0.;
         m_predictionMarker.pose.orientation.z = 0.;
+
+    }
+
+    ~VisualizationInterface()= default;
+
+    void visualize(){
+        m_markerPub.publish(m_tableMarker);
+        m_markerPub.publish(m_puckMarker);
+        m_markerPub.publish(m_malletMarker);
+        m_markerPub.publish(m_predictionMarker);
+
+    }
+
+    void setPredictionMarker(const State& state,
+                             const EKF::InnovationCovariance& cov){
+        m_predictionMarker.pose.position.x = state.x();
+        m_predictionMarker.pose.position.y = state.y();
+        m_predictionMarker.scale.x = std::sqrt(cov(0, 0)) * 1.96;
+        m_predictionMarker.scale.y = std::sqrt(cov(1, 1)) * 1.96;
     }
 };
+
+}
 
 #endif //PUCK_TRACKER_VISUALIZATION_INTERFACE_H

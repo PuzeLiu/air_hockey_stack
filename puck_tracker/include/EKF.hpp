@@ -21,34 +21,38 @@
  * SOFTWARE.
  */
 
+#ifndef PUCK_TRACKER_EKF_HPP
+#define PUCK_TRACKER_EKF_HPP
+
 #include <ros/ros.h>
-#include "ekf.h"
+#include <tf/transform_listener.h>
+#include <kalman/ExtendedKalmanFilter.hpp>
 #include "RosVisualization.hpp"
-#include <mrpt/math/CMatrixDynamic.h>
+#include "ObservationModel.hpp"
+#include "kalman/LinearizedMeasurementModel.hpp"
 
-int main(int argc, char* argv[]){
-    ros::init(argc, argv, "puck_tracker");
-    ros::NodeHandle nh("~");
-    ros::Rate rate(120);
 
-    DynamicsParam dynaParam = {0.0, 0.0,};
-    ModelNoise modelNoise = {0.5, 1.0, 1.0, 1.0, 0.1};
-    ROS_INFO_STREAM("m_deltaTime: " << rate.cycleTime().toSec());
-    EKF ekf_dynamics(dynaParam, modelNoise, rate.cycleTime().toSec());
+namespace AirHockey {
+    class EKF : public Kalman::ExtendedKalmanFilter<State> {
+    public:
+        typedef Kalman::Covariance<Measurement> InnovationCovariance;
 
-    VisualizationInterface visualizationInterface(nh);
+        void updateInnovationCovariance( ObservationModel& m) {
+            S = m.getH() * this->P * m.getH().transpose() + m.getCovariance();
+        }
 
-    mrpt::math::CVectorDynamic<double> xkk(5);
-    mrpt::math::CMatrixDynamic<double> pkk(5);
+    protected:
+        using ExtendedKalmanFilter::P;
+        using ExtendedKalmanFilter::x;
 
-    ekf_dynamics.init();
-    while (ros::ok()){
-        ekf_dynamics.doProcess();
-        ekf_dynamics.getState(xkk, pkk);
-        visualizationInterface.setPredictionMarker(xkk, pkk);
-        visualizationInterface.visualize();
+        //! Innovation Covariance
+        InnovationCovariance S;
 
-        rate.sleep();
-    }
-    return 0;
+    public:
+        const InnovationCovariance& getInnovationCovariance() {
+            return S;
+        }
+    };
 }
+
+#endif //PUCK_TRACKER_EKF_HPP

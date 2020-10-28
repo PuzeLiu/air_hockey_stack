@@ -21,34 +21,28 @@
  * SOFTWARE.
  */
 
-#include <ros/ros.h>
-#include "ekf.h"
-#include "RosVisualization.hpp"
-#include <mrpt/math/CMatrixDynamic.h>
+#ifndef PUCK_TRACKER_H
+#define PUCK_TRACKER_H
 
-int main(int argc, char* argv[]){
-    ros::init(argc, argv, "puck_tracker");
-    ros::NodeHandle nh("~");
-    ros::Rate rate(120);
+#include <kalman/ExtendedKalmanFilter.hpp>
+#include "SystemModel.hpp"
+#include "ObservationModel.hpp"
+#include "ros/ros.h"
 
-    DynamicsParam dynaParam = {0.0, 0.0,};
-    ModelNoise modelNoise = {0.5, 1.0, 1.0, 1.0, 0.1};
-    ROS_INFO_STREAM("m_deltaTime: " << rate.cycleTime().toSec());
-    EKF ekf_dynamics(dynaParam, modelNoise, rate.cycleTime().toSec());
+template<typename StateType>
+class PuckTracker{
+public:
+    typedef Kalman::ExtendedKalmanFilter<StateType> EKF;
 
-    VisualizationInterface visualizationInterface(nh);
+    ros::NodeHandle m_nh;
+    EKF m_EKF;
 
-    mrpt::math::CVectorDynamic<double> xkk(5);
-    mrpt::math::CMatrixDynamic<double> pkk(5);
+    PuckTracker(ros::NodeHandle nh_) : m_nh(nh_){
 
-    ekf_dynamics.init();
-    while (ros::ok()){
-        ekf_dynamics.doProcess();
-        ekf_dynamics.getState(xkk, pkk);
-        visualizationInterface.setPredictionMarker(xkk, pkk);
-        visualizationInterface.visualize();
-
-        rate.sleep();
     }
-    return 0;
-}
+
+
+};
+
+
+#endif //PUCK_TRACKER_EXTENDEDKALMANFILTER_H
