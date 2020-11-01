@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+    <node name="rviz" pkg="rviz" type="rviz"
+          args="-d $(find puck_tracker)/rviz/config.rviz"/>
+
+    <node name="puck_tracker" pkg="puck_tracker" type="tracker_node"/>
+
+
+</launch>
