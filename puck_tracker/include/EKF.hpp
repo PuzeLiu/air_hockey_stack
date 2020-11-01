@@ -41,6 +41,10 @@ namespace AirHockey {
             S = m.getH() * this->P * m.getH().transpose() + m.getCovariance();
         }
 
+        State& getState(){
+            return x;
+        }
+
     protected:
         using ExtendedKalmanFilter::P;
         using ExtendedKalmanFilter::x;

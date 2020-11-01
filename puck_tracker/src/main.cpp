@@ -26,36 +26,18 @@
 #include "RosVisualization.hpp"
 #include "ObservationModel.hpp"
 #include "EKF.hpp"
+#include "CollisionModel.hpp"
 
 typedef double T;
 
 using namespace AirHockey;
 
-State initializeState(const tf::TransformListener& listener, tf::StampedTransform& tfPrev){
-    bool initialized = false;
-    State x0;
 
-    while (!initialized){
-        try{
-            listener.lookupTransform("/world", "/Puck", ros::Time(0), tfPrev);
-            x0.x() = tfPrev.getOrigin().x();
-            x0.y() = tfPrev.getOrigin().y();
-            x0.dx() = 0.;
-            x0.dy() = 0.;
-            x0.c() = 0.1;
-            break;
-        }
-        catch (tf::TransformException ex) {
-            ROS_WARN_ONCE("Wait tf for initialziation");
-        }
-    }
-    return x0;
-}
-
-int main(int argc, char** argv){
+int main(int argc, char **argv) {
     ros::init(argc, argv, "puck_tracker");
     ros::NodeHandle nh("~");
     tf::TransformListener listener;
+    ros::Rate rate(100);
 
     VisualizationInterface visualizationInterface(nh);
 
@@ -77,7 +59,7 @@ int main(int argc, char** argv){
     covDyn(1, 1) = 0.0001;
     covDyn(2, 2) = 0.01;
     covDyn(3, 3) = 0.01;
-    covDyn(4, 4) = 0.;
+    covDyn(4, 4) = 0.0;
 
     covObs(0, 0) = 0.000009;
     covObs(1, 1) = 0.000009;
@@ -86,12 +68,26 @@ int main(int argc, char** argv){
     observationModel.setCovariance(covObs);
     ekf.setCovariance(covInit);
 
-    tf::StampedTransform tfPrev;
-
     // Initialize State
-    State x0 = initializeState(listener, tfPrev);
-    ekf.init(x0);
     Control u;
+    State sInit;
+    sInit.setZero();
+    sInit(4) = 0.05;
+
+    ekf.init(sInit);
+
+    tf::StampedTransform tfTable, tfPrev;
+    if (listener.waitForTransform("/Table", "/world", ros::Time::now(), ros::Duration(10))) {
+        listener.lookupTransform("/world", "/Table", ros::Time(0), tfTable);
+    } else {
+        ROS_ERROR_STREAM("Cannot find TF of Air Hockey Table!");
+        return 0;
+    }
+
+    //! Collision Model
+    AirHockeyTable table(tfTable);
+    CollisionModel collisionModel(table);
+    collisionModel.m_dt = rate.expectedCycleTime().toSec();
 
     ROS_INFO_STREAM("Start Tracking.");
 
@@ -100,20 +96,29 @@ int main(int argc, char** argv){
     predictor.init(ekf.getState());
     predictor.setCovariance(ekf.getCovariance());
 
-    ros::Rate rate(100);
     u.dt() = rate.expectedCycleTime().toSec();
-    while (ros::ok()){
+    while (ros::ok()) {
+        //! predict step
         auto x_ekf = ekf.predict(dynamicsModel, u);
-        predictor.init(ekf.getState());
-        predictor.setCovariance(ekf.getCovariance());
-
+        collisionModel.applyCollision(ekf.getState());
         ekf.updateInnovationCovariance(observationModel);
 
+        //! predict future step
+        predictor.init(ekf.getState());
+        predictor.setCovariance(ekf.getCovariance());
+        for (int i = 0; i < 20; ++i) {
+            predictor.predict(dynamicsModel, u);
+            predictor.updateInnovationCovariance(observationModel);
+            collisionModel.applyCollision(predictor.getState());
+        }
 
+        visualizationInterface.setPredictionMarker(predictor.getState(), predictor.getInnovationCovariance());
+        visualizationInterface.visualize();
+
+        //! Update step
         tf::StampedTransform tfTmp;
         auto time = ros::Time::now();
-        if (listener.waitForTransform("/world", "/Puck", time, rate.cycleTime()))
-        {
+        if (listener.waitForTransform("/world", "/Puck", time, rate.expectedCycleTime() - rate.cycleTime())) {
             listener.lookupTransform("/world", "/Puck", time, tfTmp);
 
             measurementTmp.x() = tfTmp.getOrigin().x();
@@ -123,20 +128,6 @@ int main(int argc, char** argv){
 
             tfPrev = tfTmp;
         }
-
-        for (int i = 0; i < 20; ++i) {
-            predictor.predict(dynamicsModel, u);
-            predictor.updateInnovationCovariance(observationModel);
-        }
-
-//        ROS_INFO_STREAM("Observation: x: " << measurementTmp.x() << "  y: " << measurementTmp.y()<<
-//                                           " dx: " << measurementTmp.dx() << " dy: " << measurementTmp.dy());
-//        ROS_INFO_STREAM("Prediction : x: " << predictor.getState().x() << "  y: " << predictor.getState().y() <<
-//                                           " dx: " << predictor.getState().dx() << " dy: " << predictor.getState().dy());
-//        ROS_INFO_STREAM("             c: " << predictor.getState().c());
-
-        visualizationInterface.setPredictionMarker(predictor.getState(), predictor.getInnovationCovariance());
-        visualizationInterface.visualize();
 
         rate.sleep();
     }

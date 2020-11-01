@@ -7,12 +7,9 @@ Panels:
         - /Global Options1
         - /Status1
         - /Marker1
-        - /Marker2
-        - /Marker3
+        - /Marker1/Namespaces1
         - /Axes1
-        - /TF1
         - /TF1/Frames1
-        - /Marker4
       Splitter Ratio: 0.5
     Tree Height: 746
   - Class: rviz/Selection
@@ -61,51 +58,25 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /puck_tracker/marker_mallet
+      Marker Topic: /puck_tracker/marker
       Name: Marker
       Namespaces:
-        "": true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /puck_tracker/marker_puck
-      Name: Marker
-      Namespaces:
-        "": true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /puck_tracker/marker_table
-      Name: Marker
-      Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
       Class: rviz/Axes
-      Enabled: true
+      Enabled: false
       Length: 0.5
       Name: Axes
       Radius: 0.009999999776482582
       Reference Frame: <Fixed Frame>
-      Value: true
+      Value: false
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        Mallet:
-          Value: true
-        Puck:
-          Value: true
-        Table:
-          Value: true
-        unidentified_marker:
-          Value: false
-        world:
-          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -113,25 +84,9 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        world:
-          Mallet:
-            {}
-          Puck:
-            {}
-          Table:
-            {}
-          unidentified_marker:
-            {}
+        {}
       Update Interval: 0
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /puck_tracker/marker_prediction
-      Name: Marker
-      Namespaces:
-        "": true
-      Queue Size: 100
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -160,7 +115,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.600329637527466
+      Distance: 4.489095211029053
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -168,17 +123,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.8765958547592163
-        Y: 0.7274026870727539
-        Z: 0.43448784947395325
+        X: 1.3917505741119385
+        Y: 0.5240650177001953
+        Z: 0.17901888489723206
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6803978681564331
+      Pitch: 0.7953977584838867
       Target Frame: <Fixed Frame>
-      Yaw: 4.603579044342041
+      Yaw: 4.71858549118042
     Saved: ~
 Window Geometry:
   Displays:
