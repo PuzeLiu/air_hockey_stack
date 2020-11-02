@@ -113,7 +113,7 @@ public:
         m_predictionMarker.action = visualization_msgs::Marker::MODIFY;
         m_predictionMarker.scale.x = 0.1;
         m_predictionMarker.scale.y = 0.1;
-        m_predictionMarker.scale.z = 0.01;
+        m_predictionMarker.scale.z = 0.02;
         m_predictionMarker.color.r = 0.0;
         m_predictionMarker.color.g = 0.0;
         m_predictionMarker.color.b = 1.0;
@@ -144,6 +144,7 @@ public:
                              const EKF::InnovationCovariance& cov){
         m_predictionMarker.pose.position.x = state.x();
         m_predictionMarker.pose.position.y = state.y();
+        m_predictionMarker.pose.position.z = m_tableHeight;
         m_predictionMarker.scale.x = std::sqrt(cov(0, 0)) * 1.96;
         m_predictionMarker.scale.y = std::sqrt(cov(1, 1)) * 1.96;
     }
