@@ -39,8 +39,6 @@ int main(int argc, char **argv) {
     tf::TransformListener listener;
     ros::Rate rate(100);
 
-    VisualizationInterface visualizationInterface(nh);
-
     SystemModel dynamicsModel;
     ObservationModel observationModel;
     EKF ekf;
@@ -77,12 +75,17 @@ int main(int argc, char **argv) {
     ekf.init(sInit);
 
     tf::StampedTransform tfTable, tfPrev;
-    if (listener.waitForTransform("/Table", "/world", ros::Time::now(), ros::Duration(10))) {
+    ROS_INFO_STREAM("Wait for the TF message");
+
+    if (listener.waitForTransform("/Table", "/world", ros::Time(0), ros::Duration(30))) {
         listener.lookupTransform("/world", "/Table", ros::Time(0), tfTable);
     } else {
         ROS_ERROR_STREAM("Cannot find TF of Air Hockey Table!");
         return 0;
     }
+
+    // Initialize visualization table height
+    VisualizationInterface visualizationInterface(nh, tfTable.getOrigin().z());
 
     //! Collision Model
     AirHockeyTable table(tfTable);
@@ -106,7 +109,7 @@ int main(int argc, char **argv) {
         //! predict future step
         predictor.init(ekf.getState());
         predictor.setCovariance(ekf.getCovariance());
-        for (int i = 0; i < 20; ++i) {
+        for (int i = 0; i < 10; ++i) {
             predictor.predict(dynamicsModel, u);
             predictor.updateInnovationCovariance(observationModel);
             collisionModel.applyCollision(predictor.getState());

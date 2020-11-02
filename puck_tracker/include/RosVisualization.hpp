@@ -29,6 +29,7 @@
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include "EKF.hpp"
+#include "tf/transform_listener.h"
 
 
 namespace AirHockey{
@@ -42,7 +43,9 @@ public:
 
     visualization_msgs::Marker m_tableMarker, m_puckMarker, m_malletMarker, m_predictionMarker;
 
-    VisualizationInterface(const ros::NodeHandle& nh) : m_nh(nh){
+    double m_tableHeight;
+
+    VisualizationInterface(const ros::NodeHandle& nh, double tableHeight) : m_nh(nh){
         m_markerPub = m_nh.advertise<visualization_msgs::Marker>("marker", 10);
 
         m_tableMarker.header.frame_id = "Table";
@@ -72,7 +75,7 @@ public:
         m_puckMarker.action = visualization_msgs::Marker::ADD;
         m_puckMarker.scale.x = 0.0633;
         m_puckMarker.scale.y = 0.0633;
-        m_puckMarker.scale.z = 0.005;
+        m_puckMarker.scale.z = 0.02;
         m_puckMarker.color.r = 1.0;
         m_puckMarker.color.g = 0.0;
         m_puckMarker.color.b = 0.0;
@@ -117,11 +120,13 @@ public:
         m_predictionMarker.color.a = 0.2;
         m_predictionMarker.pose.position.x = 0.0;
         m_predictionMarker.pose.position.y = 0.0;
-        m_predictionMarker.pose.position.z = 0.06;
+        m_predictionMarker.pose.position.z = m_tableHeight;
         m_predictionMarker.pose.orientation.w = 1.;
         m_predictionMarker.pose.orientation.x = 0.;
         m_predictionMarker.pose.orientation.y = 0.;
         m_predictionMarker.pose.orientation.z = 0.;
+
+        m_tableHeight = tableHeight;
 
     }
 

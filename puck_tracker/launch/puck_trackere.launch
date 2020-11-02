@@ -3,6 +3,8 @@
     <node name="rviz" pkg="rviz" type="rviz"
           args="-d $(find puck_tracker)/rviz/config.rviz"/>
 
+    <include file="$(find ias_optitrack_bridge)/launch/optitrack_tf.launch"/>
+
     <node name="puck_tracker" pkg="puck_tracker" type="tracker_node"/>
 
 
