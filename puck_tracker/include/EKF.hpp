@@ -35,6 +35,7 @@
 namespace AirHockey {
     class EKF : public Kalman::ExtendedKalmanFilter<State> {
     public:
+        typedef Measurement InnovationType;
         typedef Kalman::Covariance<Measurement> InnovationCovariance;
 
         void updateInnovationCovariance( ObservationModel& m) {
@@ -56,13 +57,17 @@ namespace AirHockey {
         using ExtendedKalmanFilter::x;
 
         //! Innovation
-        Measurement mu;
+        InnovationType mu;
         //! Innovation Covariance
         InnovationCovariance S;
 
     public:
         const InnovationCovariance& getInnovationCovariance() {
             return S;
+        }
+
+        const InnovationType& getInnovation(){
+            return mu;
         }
     };
 }

@@ -10,5 +10,8 @@
   <author email="davide@robot-learning.de">Davide Tateo</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <exec_depend>tf</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
 
 </package>

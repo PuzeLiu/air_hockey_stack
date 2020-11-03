@@ -27,11 +27,10 @@
 #include "ObservationModel.hpp"
 #include "EKF.hpp"
 #include "CollisionModel.hpp"
+#include "Validation.hpp"
 
-typedef double T;
 
 using namespace AirHockey;
-
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "puck_tracker");
@@ -57,35 +56,40 @@ int main(int argc, char **argv) {
     covDyn(1, 1) = 0.0001;
     covDyn(2, 2) = 0.01;
     covDyn(3, 3) = 0.01;
-    covDyn(4, 4) = 0.0;
+    covDyn(4, 4) = 0.01;
 
-    covObs(0, 0) = 0.000009;
-    covObs(1, 1) = 0.000009;
+    covObs(0, 0) = 0.0001;
+    covObs(1, 1) = 0.0001;
 
     dynamicsModel.setCovariance(covDyn);
     observationModel.setCovariance(covObs);
     ekf.setCovariance(covInit);
 
-    // Initialize State
+    //! Initialize State
     Control u;
     State sInit;
     sInit.setZero();
     sInit(4) = 0.05;
-
-    ekf.init(sInit);
-
     tf::StampedTransform tfTable, tfPrev;
     ROS_INFO_STREAM("Wait for the TF message");
 
-    if (listener.waitForTransform("/Table", "/world", ros::Time::now(), ros::Duration(30))) {
+    if (listener.waitForTransform("/Table", "/world", ros::Time(0), ros::Duration(30))) {
         listener.lookupTransform("/world", "/Table", ros::Time(0), tfTable);
+        listener.lookupTransform("/world", "/Table", ros::Time(0), tfPrev);
+        sInit.x() = tfPrev.getOrigin().x();
+        sInit.y() = tfPrev.getOrigin().y();
     } else {
         ROS_ERROR_STREAM("Cannot find TF of Air Hockey Table!");
         return 0;
     }
 
-    // Initialize visualization table height
+    ekf.init(sInit);
+
+    //! Initialize visualization table height
     VisualizationInterface visualizationInterface(nh, tfTable.getOrigin().z());
+
+    //! Initialize validation
+    ValidationInterface validationInterface(nh, false);
 
     //! Collision Model
     AirHockeyTable table(tfTable);
@@ -100,6 +104,10 @@ int main(int argc, char **argv) {
     predictor.setCovariance(ekf.getCovariance());
 
     u.dt() = rate.expectedCycleTime().toSec();
+
+    int predict_steps = 20;
+    std::vector<Measurement> predictionBuffer;
+    std::vector<EKF::InnovationCovariance> innovationCovBuffer;
     while (ros::ok()) {
         //! predict step
         auto x_ekf = ekf.predict(dynamicsModel, u);
@@ -109,11 +117,19 @@ int main(int argc, char **argv) {
         //! predict future step
         predictor.init(ekf.getState());
         predictor.setCovariance(ekf.getCovariance());
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < predict_steps; ++i) {
             predictor.predict(dynamicsModel, u);
             predictor.updateInnovationCovariance(observationModel);
             collisionModel.applyCollision(predictor.getState());
         }
+
+        //! update buffer
+        if (predictionBuffer.size() > predict_steps || innovationCovBuffer.size() > predict_steps){
+            predictionBuffer.erase(predictionBuffer.begin());
+            innovationCovBuffer.erase(innovationCovBuffer.begin());
+        }
+        predictionBuffer.push_back(observationModel.h(predictor.getState()));
+        innovationCovBuffer.push_back(predictor.getInnovationCovariance());
 
         visualizationInterface.setPredictionMarker(predictor.getState(), predictor.getInnovationCovariance());
         visualizationInterface.visualize();
@@ -130,6 +146,8 @@ int main(int argc, char **argv) {
             x_ekf = ekf.update(observationModel, measurementTmp);
 
             tfPrev = tfTmp;
+
+            validationInterface.record(measurementTmp - predictionBuffer[0], innovationCovBuffer[0]);
         }
 
         rate.sleep();

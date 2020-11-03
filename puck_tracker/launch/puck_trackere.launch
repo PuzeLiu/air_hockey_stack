@@ -5,7 +5,7 @@
 
     <include file="$(find ias_optitrack_bridge)/launch/optitrack_tf.launch"/>
 
-    <node name="puck_tracker" pkg="puck_tracker" type="tracker_node"/>
+    <node name="puck_tracker" pkg="puck_tracker" type="tracker_node" output="screen"/>
 
 
 </launch>
