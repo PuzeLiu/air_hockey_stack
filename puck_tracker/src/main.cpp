@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     tf::StampedTransform tfTable, tfPrev;
     ROS_INFO_STREAM("Wait for the TF message");
 
-    if (listener.waitForTransform("/Table", "/world", ros::Time(0), ros::Duration(30))) {
+    if (listener.waitForTransform("/Table", "/world", ros::Time::now(), ros::Duration(30))) {
         listener.lookupTransform("/world", "/Table", ros::Time(0), tfTable);
     } else {
         ROS_ERROR_STREAM("Cannot find TF of Air Hockey Table!");

@@ -41,6 +41,12 @@ namespace AirHockey {
             S = m.getH() * this->P * m.getH().transpose() + m.getCovariance();
         }
 
+        const State& update(ObservationModel& m, const Measurement& z){
+            ExtendedKalmanFilter::update(m, z);
+            mu = z - m.h(x);
+            return this->getState();
+        }
+
         State& getState(){
             return x;
         }
@@ -49,6 +55,8 @@ namespace AirHockey {
         using ExtendedKalmanFilter::P;
         using ExtendedKalmanFilter::x;
 
+        //! Innovation
+        Measurement mu;
         //! Innovation Covariance
         InnovationCovariance S;
 

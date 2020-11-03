@@ -74,11 +74,6 @@ namespace AirHockey {
     public:
         /**
          * @brief Constructor
-         *
-         * @param landmark1x The x-position of landmark 1
-         * @param landmark1y The y-position of landmark 1
-         * @param landmark2x The x-position of landmark 2
-         * @param landmark2y The y-position of landmark 2
          */
         ObservationModel() {
             this->V.setIdentity();
