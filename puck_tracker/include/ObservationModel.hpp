@@ -34,30 +34,28 @@ namespace AirHockey {
  *
  * @param T Numeric scalar type
  */
-    class Measurement : public Kalman::Vector<T, 2> {
+    class Measurement : public Kalman::Vector<T, 3> {
     public:
-        KALMAN_VECTOR(Measurement, T, 2)
+        KALMAN_VECTOR(Measurement, T, 3)
 
         //! X-position
         static constexpr size_t X = 0;
         //! Y-position
         static constexpr size_t Y = 1;
-//            //! X-velocity
-//            static constexpr size_t DX = 2;
-//            //! Y-velocity
-//            static constexpr size_t DY = 3;
+        //! Yaw-angle
+        static constexpr size_t THETA = 2;
 
         T x() const { return (*this)[X]; }
 
         T y() const { return (*this)[Y]; }
-//            T dx() const { return (*this)[DX]; }
-//            T dy() const { return (*this)[DY]; }
+
+        T theta() const { return (*this)[THETA]; }
 
         T &x() { return (*this)[X]; }
 
         T &y() { return (*this)[Y]; }
-//            T &dx() { return (*this)[DX]; }
-//            T &dy() { return (*this)[DY]; }
+
+        T &theta() { return (*this)[THETA]; }
     };
 
 
@@ -93,6 +91,7 @@ namespace AirHockey {
             Measurement measurement;
             measurement.x() = x.x();
             measurement.y() = x.y();
+            measurement.theta() = x.theta();
             return measurement;
         }
 
@@ -124,6 +123,7 @@ namespace AirHockey {
             // partial derivative of meas.x() w.r.t. x.x()
             this->H(Measurement::X, State::X) = 1.0;
             this->H(Measurement::Y, State::Y) = 1.0;
+            this->H(Measurement::THETA, State::THETA) = 1.0;
         }
     };
 }

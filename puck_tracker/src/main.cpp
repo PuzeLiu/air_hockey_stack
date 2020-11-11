@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Davide Tateo, Puze Liu
+ * Copyright (c) 2020 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,17 @@ int main(int argc, char **argv) {
     tf::TransformListener listener;
     ros::Rate rate(100);
 
-    SystemModel dynamicsModel;
+    AirHockey::T friction_drag, friction_sliding, restitution, tangent_reduction;
+    nh.param<AirHockey::T>("friction_drag", friction_drag, 0.01);
+    nh.param<AirHockey::T>("friction_sliding", friction_sliding, 0.0);
+    nh.param<AirHockey::T>("restitution", restitution, 0.8);
+    nh.param<AirHockey::T>("tagent_reduction", tangent_reduction, 0.8);
+    ROS_INFO_STREAM("Drag Parameter:" << friction_drag);
+    ROS_INFO_STREAM("Sliding Parameter: "<< friction_sliding);
+    ROS_INFO_STREAM("Restitution Parameter:" << restitution);
+    ROS_INFO_STREAM("Tangent Velocity Reduction Parameter: "<< tangent_reduction);
+
+    SystemModel dynamicsModel(friction_drag, friction_sliding);
     ObservationModel observationModel;
     EKF ekf;
     EKF predictor;
@@ -52,14 +62,21 @@ int main(int argc, char **argv) {
     covObs.setIdentity();
     covInit.setIdentity();
 
-    covDyn(0, 0) = 0.0001;
-    covDyn(1, 1) = 0.0001;
-    covDyn(2, 2) = 0.01;
-    covDyn(3, 3) = 0.01;
-    covDyn(4, 4) = 0.01;
+    T obsVar, dynVarPos, dynVarVel;
+    nh.param<AirHockey::T>("observation_variance", obsVar, 1e-6);
+    nh.param<AirHockey::T>("dynamic_variance_position", dynVarPos, 1e-4);
+    nh.param<AirHockey::T>("dynamic_variance_velocity", dynVarVel, 1e-2);
+    ROS_INFO_STREAM("Observation Variance: "<< obsVar);
+    ROS_INFO_STREAM("Dynamics Variance Position:" << dynVarPos);
+    ROS_INFO_STREAM("Dynamics Variance Velocity: "<< dynVarVel);
 
-    covObs(0, 0) = 0.0001;
-    covObs(1, 1) = 0.0001;
+    covDyn(0, 0) = dynVarPos;
+    covDyn(1, 1) = dynVarPos;
+    covDyn(2, 2) = dynVarVel;
+    covDyn(3, 3) = dynVarVel;
+
+    covObs(0, 0) = obsVar;
+    covObs(1, 1) = obsVar;
 
     dynamicsModel.setCovariance(covDyn);
     observationModel.setCovariance(covObs);
@@ -69,7 +86,6 @@ int main(int argc, char **argv) {
     Control u;
     State sInit;
     sInit.setZero();
-    sInit(4) = 0.05;
     tf::StampedTransform tfTable, tfPrev;
     ROS_INFO_STREAM("Wait for the TF message");
 
@@ -92,9 +108,11 @@ int main(int argc, char **argv) {
     ValidationInterface validationInterface(nh, false);
 
     //! Collision Model
-    AirHockeyTable table(tfTable);
-    CollisionModel collisionModel(table);
-    collisionModel.m_dt = rate.expectedCycleTime().toSec();
+    AirHockeyTable table(restitution, tangent_reduction, rate.expectedCycleTime().toSec());
+    Mallet mallet(rate.expectedCycleTime().toSec());
+    table.setTransform(tfTable);
+
+    CollisionModel collisionModel(table, mallet);
 
     ROS_INFO_STREAM("Start Tracking.");
 
@@ -113,6 +131,13 @@ int main(int argc, char **argv) {
         auto x_ekf = ekf.predict(dynamicsModel, u);
         collisionModel.applyCollision(ekf.getState());
         ekf.updateInnovationCovariance(observationModel);
+
+        auto time = ros::Time::now();
+        if (listener.waitForTransform("/world", "/Mallet", time, rate.expectedCycleTime() - rate.cycleTime())) {
+            tf::StampedTransform tfTmp;
+            listener.lookupTransform("/world", "/Mallet", time, tfTmp);
+            collisionModel.m_mallet.setState(tfTmp);
+        }
 
         //! predict future step
         predictor.init(ekf.getState());
@@ -135,9 +160,8 @@ int main(int argc, char **argv) {
         visualizationInterface.visualize();
 
         //! Update step
-        tf::StampedTransform tfTmp;
-        auto time = ros::Time::now();
         if (listener.waitForTransform("/world", "/Puck", time, rate.expectedCycleTime() - rate.cycleTime())) {
+            tf::StampedTransform tfTmp;
             listener.lookupTransform("/world", "/Puck", time, tfTmp);
 
             measurementTmp.x() = tfTmp.getOrigin().x();
@@ -149,6 +173,8 @@ int main(int argc, char **argv) {
 
             validationInterface.record(measurementTmp - predictionBuffer[0], innovationCovBuffer[0]);
         }
+
+
 
         rate.sleep();
     }

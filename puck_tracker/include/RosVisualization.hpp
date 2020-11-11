@@ -29,7 +29,8 @@
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include "EKF.hpp"
-#include "tf/transform_listener.h"
+#include <tf/transform_listener.h>
+#include <tf/transform_datatypes.h>
 
 
 namespace AirHockey{
@@ -145,6 +146,13 @@ public:
         m_predictionMarker.pose.position.x = state.x();
         m_predictionMarker.pose.position.y = state.y();
         m_predictionMarker.pose.position.z = m_tableHeight;
+        tf::Quaternion quaternion;
+        quaternion.setRPY(state.theta(), 0., 0.);
+        m_predictionMarker.pose.orientation.x = quaternion.x();
+        m_predictionMarker.pose.orientation.y = quaternion.y();
+        m_predictionMarker.pose.orientation.z = quaternion.z();
+        m_predictionMarker.pose.orientation.w = quaternion.w();
+
         m_predictionMarker.scale.x = std::sqrt(cov(0, 0)) * 1.96;
         m_predictionMarker.scale.y = std::sqrt(cov(1, 1)) * 1.96;
     }

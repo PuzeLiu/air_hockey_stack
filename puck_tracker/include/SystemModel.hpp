@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Davide Tateo, Puze Liu
+ * Copyright (c) 2020 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,8 @@ namespace AirHockey{
 
     typedef double T;
 
+    typedef Kalman::Vector<T, 2> Vector2;
+
 /**
  * @brief System state vector-type for the puck
  *
@@ -39,10 +41,10 @@ namespace AirHockey{
  * @param T Numeric scalar type
  */
 
-class State : public Kalman::Vector<T, 5>
+class State : public Kalman::Vector<T, 6>
 {
 public:
-    KALMAN_VECTOR(State, T, 5)
+    KALMAN_VECTOR(State, T, 6)
 
     //! X-position
     static constexpr size_t X = 0;
@@ -52,20 +54,24 @@ public:
     static constexpr size_t DX = 2;
     //! Y-velocity
     static constexpr size_t DY = 3;
-    //! Friction Constant
-    static constexpr size_t FC = 4;
+    //! Yaw
+    static constexpr size_t THETA = 4;
+    //! Yaw-angular-velocity
+    static constexpr size_t DTHETA = 5;
 
     T x()       const { return (*this)[ X ]; }
     T y()       const { return (*this)[ Y ]; }
     T dx()      const { return (*this)[ DX ]; }
     T dy()      const { return (*this)[ DY ]; }
-    T c()       const { return (*this)[ FC ]; }
+    T theta()      const { return (*this)[ THETA ]; }
+    T dtheta()      const { return (*this)[ DTHETA ]; }
 
     T& x()      { return (*this)[ X ]; }
     T& y()      { return (*this)[ Y ]; }
     T& dx()      { return (*this)[ DX ]; }
     T& dy()      { return (*this)[ DY ]; }
-    T& c()      { return (*this)[ FC ]; }
+    T& theta()      { return (*this)[ THETA ]; }
+    T& dtheta()      { return (*this)[ DTHETA ]; }
 };
 
 /**
@@ -109,6 +115,21 @@ public:
     //! Control type shortcut definition
     typedef AirHockey::Control C;
 
+    //! Friction coefficient for air drag
+    T m_c;
+    //! Friction coefficient for sliding movement
+    T m_d;
+
+    /**
+     * Constructor of the dynamic model
+     * @param c Friction coefficient for air
+     * @param d Friction coefficient for lateral movement
+     */
+    SystemModel(double c, double d){
+        m_c = c;
+        m_d = d;
+    }
+
     /**
      * @brief Definition of (non-linear) state transition function
      *
@@ -128,10 +149,17 @@ public:
 
         x_.x() = x.x() + u.dt() * x.dx();
         x_.y() = x.y() + u.dt() * x.dy();
-        x_.dx() = x.dx() - u.dt() * x.c() * x.dx();
-        x_.dy() = x.dy() - u.dt() * x.c() * x.dy();
-        x_.c() = x.c();
-
+        x_.theta() = x.theta() + u.dt() * x.dtheta();
+        if (x.dx()!=0 && x.dy()!=0) {
+            x_.dx() = x.dx() - u.dt() * m_c * x.dx() - u.dt() * m_d * x.dx() / abs(x.dx());
+            x_.dy() = x.dy() - u.dt() * m_c * x.dy() - u.dt() * m_d * x.dy() / abs(x.dy());
+            x_.dtheta() = x.dtheta();
+        } else{
+            x_.dx() = x.dx() - u.dt() * m_c * x.dx();
+            x_.dy() = x.dy() - u.dt() * m_c * x.dy();
+            x_.dtheta() = x.dtheta();
+        }
+//        ROS_INFO_STREAM("Velocity x: " << x_.dx() << " y: "<< x_.dy());
         // Return transitioned state vector
         return x_;
     }
@@ -157,12 +185,9 @@ protected:
         this->F.setIdentity();
         this->F(S::X, S::DX) = u.dt();
         this->F(S::Y, S::DY) = u.dt();
-        this->F(S::DX, S::DX) = 1. - u.dt() * x.c();
-        this->F(S::DX, S::FC) = - u.dt() * x.dx();
-        this->F(S::DY, S::DY) = 1. - u.dt() * x.c();
-        this->F(S::DY, S::FC) = - u.dt() * x.dy();
-        this->F(S::FC, S::FC) = 0.;
-
+        this->F(S::DX, S::DX) = 1. - u.dt() * m_c;
+        this->F(S::DY, S::DY) = 1. - u.dt() * m_c;
+        this->F(S::THETA, S::DTHETA) = u.dt();
     }
 };
 
