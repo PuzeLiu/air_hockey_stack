@@ -83,6 +83,7 @@ int main(int argc, char **argv) {
     nh.param<AirHockey::T>("friction_sliding", frictionSliding, 0.0);
     nh.param<AirHockey::T>("restitution_table", restitutionTable, 0.8);
     nh.param<AirHockey::T>("restitution_mallet", restitutionMallet, 0.1);
+
     ROS_INFO_STREAM("Drag Parameter:" << frictionDrag);
     ROS_INFO_STREAM("Sliding Parameter: " << frictionSliding);
     ROS_INFO_STREAM("Restitution Parameter of Wall: " << restitutionTable);
@@ -138,7 +139,9 @@ int main(int argc, char **argv) {
 
     Measurement measurementTmp;
 
-    int predict_steps = 20;
+    int predict_steps;
+    nh.param<int>("prediction_steps", predict_steps, 20);
+
     std::vector<Measurement> predictionBuffer;
     std::vector<EKF::InnovationCovariance> innovationCovBuffer;
 
@@ -170,8 +173,7 @@ int main(int argc, char **argv) {
             reInit = false;
         }
         else {
-            predictor.init(ekf.getState());
-            predictor.setCovariance(ekf.getCovariance());
+
 
             auto time = ros::Time::now();
             if (listener.waitForTransform("/world", "/Mallet", time, rate.expectedCycleTime())) {
@@ -181,6 +183,7 @@ int main(int argc, char **argv) {
             }
 
             //! predict step
+            u.dt() = rate.cycleTime().toSec();
             ekf.predict(dynamicsModel, u);
             collisionModel.m_table.applyCollision(ekf.getState());
             if (collisionModel.m_mallet.applyCollision(ekf.getState())) {
@@ -189,6 +192,9 @@ int main(int argc, char **argv) {
             }
 
             //! predict future step
+            predictor.init(ekf.getState());
+            predictor.setCovariance(ekf.getCovariance());
+            u.dt() = rate.expectedCycleTime().toSec();
             for (int i = 0; i < predict_steps; ++i) {
                 predictor.predict(dynamicsModel, u);
                 collisionModel.m_mallet.predict();

@@ -1,3 +1,5 @@
+prediction_steps:
+  50
 friction_drag:
   0.13087578868418712
 friction_sliding:
