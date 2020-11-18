@@ -59,13 +59,11 @@ namespace AirHockey {
         T m_puckRadius;
         //! restitution coefficient
         T m_e;
-        //! friction coefficient
-        T m_mu;
 
         BoundaryType m_boundary;
 
     public:
-        AirHockeyTable(T e, T mu, T dt = 1 / 120.) {
+        AirHockeyTable(T e, T dt = 1 / 120.) {
             m_center.setZero();
             m_yaw = 0.;
             m_length = 1.96;
@@ -73,7 +71,6 @@ namespace AirHockey {
             m_puckRadius = 0.03165;
 
             m_e = e;
-            m_mu = mu;
             m_dt = dt;
         }
 
@@ -103,10 +100,10 @@ namespace AirHockey {
             offsetP3 = m_center + rotation * vecTmp;
             vecTmp << (m_length / 2 - m_puckRadius), (m_width / 2 - m_puckRadius);
             offsetP4 = m_center + rotation * vecTmp;
-            m_boundary.row(0) << offsetP1.x(), offsetP1.y(), offsetP2.x(), offsetP2.y();
+            m_boundary.row(0) << offsetP1.x(), offsetP1.y(), offsetP3.x(), offsetP3.y();
             m_boundary.row(1) << offsetP3.x(), offsetP3.y(), offsetP4.x(), offsetP4.y();
-            m_boundary.row(2) << offsetP1.x(), offsetP1.y(), offsetP3.x(), offsetP3.y();
-            m_boundary.row(3) << offsetP2.x(), offsetP2.y(), offsetP4.x(), offsetP4.y();
+            m_boundary.row(2) << offsetP4.x(), offsetP4.y(), offsetP2.x(), offsetP2.y();
+            m_boundary.row(3) << offsetP2.x(), offsetP2.y(), offsetP1.x(), offsetP1.y();
         }
 
         inline Vector2 getCenter() { return m_center; }
@@ -115,29 +112,14 @@ namespace AirHockey {
 
         inline BoundaryType getBoundary() { return m_boundary; }
 
-        void applyCollision(EKF::State &state) {
-            Vector2 p = state.block<2, 1>(0, 0);
-            Vector2 v = state.block<2, 1>(2, 0);
-
-            //! closest point parameter: p = p0 + t(p1 - p0)
-            Vector2 pNext, vNext, pInter;
-            if (isColliding(p, v, pNext, vNext, pInter)) {
-                //! check if second collision happens
-                Vector2 pReflect = pInter;
-                Vector2 vReflect = vNext;
-
-                if (isColliding(pReflect, vReflect, pNext, vNext, pInter)) {
-//                    ROS_INFO_STREAM("Second Collision!");
-                }
-
-                //! Update the state
-                state.block<2, 1>(0, 0) = pNext;
-                state.block<2, 1>(2, 0) = vNext;
-            }
-        }
-
-    protected:
-        bool isColliding(const Vector2 &p, const Vector2 &vel, Vector2 &pNext, Vector2 &vNext, Vector2 &pInter) {
+        bool applyCollision(EKF::State &state) {
+            Vector2 p, vel;
+            p.x() = state.x();
+            p.y() = state.y();
+            vel.x() = state.dx();
+            vel.y() = state.dy();
+            double theta = state.theta();
+            double dtheta = state.dtheta();
 
             for (int i = 0; i < m_boundary.rows(); ++i) {
                 Vector2 p1 = m_boundary.block<1, 2>(i, 0);
@@ -147,6 +129,10 @@ namespace AirHockey {
                 Vector2 v = p2 - p1;
                 Vector2 w = p1 - p;
 
+                Eigen::Rotation2D<double> rot(M_PI_2);
+                Vector2 vecT = v / v.norm();
+                Vector2 vecN =  rot * vecT;
+
                 T denominator = cross2D(v, u);
                 if (abs(denominator) < 1e-6) {
                     // parallel
@@ -154,25 +140,37 @@ namespace AirHockey {
                 } else {
                     T s = cross2D(v, w) / denominator;
                     T r = cross2D(u, w) / denominator;
-                    if (s >= 0 + 1e-4 && s <= 1 - 1e-4 && r >= 0 + 1e-4 && r <= 1 - 1e-4) {
-                        Vector2 vt = vel.dot(v) / std::pow(v.norm(), 2) * v;
-                        Vector2 vn = vel - vt;
+                    if (cross2D(w, v) < 0 || s >= 0 + 1e-4 && s <= 1 - 1e-4 && r >= 0 + 1e-4 && r <= 1 - 1e-4) {
+                        double vtScalar = vel.dot(vecT);
+                        double vnScalar = vel.dot(vecN);
 
                         // Velocity on next time step
-                        vNext = m_mu * vt + (-m_e * vn);
+                        double vtNextScalar = 2./3. * vtScalar - m_puckRadius / 5 * dtheta; // - m_puckRadius / 3 * dtheta;
+                        double vnNextScalar = - m_e * vnScalar;
+                        double dthetaNext = 1. / 3. * dtheta - 2. / (3. * m_puckRadius) * vnScalar;
+                        Vector2 vNext = vnNextScalar * vecN + vtNextScalar * vecT;
 
                         // Position of intersection point
-                        pInter = p + s * u;
+                        Vector2 pInter = p + s * u;
+                        // Angular Position of intersection point
+                        double thetaInter = theta + s * dtheta * m_dt;
                         // Position of next point
-                        pNext = pInter + (1 - s) * vNext * m_dt;
+                        Vector2 pNext = pInter + (1 - s) * vNext * m_dt;
+                        // Angular Position of next point
+                        double thetaNext = thetaInter + (1 - s) * dthetaNext * m_dt;
+
+                        state.x() = pNext.x();
+                        state.y() = pNext.y();
+                        state.dx() = vNext.x();
+                        state.dy() = vNext.y();
+                        state.theta() = thetaNext;
+                        state.dtheta() = dthetaNext;
                         return true;
                     }
                 }
             }
             return false;
         }
-
-
     };
 
     class Mallet {
@@ -190,73 +188,78 @@ namespace AirHockey {
         //! restitution coefficient
         T m_e;
 
-        State m_Malletstate;
+        State m_malletState, m_malletStatePredict;
 
-        Mallet(T dt) {
+        Mallet(T e, T dt) {
             m_dt = dt;
             t_prev = 0.;
-            m_Malletstate.setZero();
+            m_malletState.setZero();
+            m_malletStatePredict.setZero();
 
             m_radiusPuck = 0.03165;
             m_radiusMallet = 0.04815;
-            m_e = 0.6;
+            m_e = 0.5;
         }
 
         void setState(const tf::StampedTransform &tfMallet) {
             double deltaT = tfMallet.stamp_.toSec() - t_prev;
 
-            m_Malletstate.dx() = (tfMallet.getOrigin().x() - m_Malletstate.x()) / deltaT;
-            m_Malletstate.dy() = (tfMallet.getOrigin().y() - m_Malletstate.y()) / deltaT;
-            m_Malletstate.dtheta() = (tf::getYaw(tfMallet.getRotation()) - m_Malletstate.theta()) / deltaT;
+            m_malletState.dx() = (tfMallet.getOrigin().x() - m_malletState.x()) / deltaT;
+            m_malletState.dy() = (tfMallet.getOrigin().y() - m_malletState.y()) / deltaT;
+            m_malletState.dtheta() = (tf::getYaw(tfMallet.getRotation()) - m_malletState.theta()) / deltaT;
 
-            m_Malletstate.x() = tfMallet.getOrigin().x();
-            m_Malletstate.y() = tfMallet.getOrigin().y();
-            m_Malletstate.theta() = tf::getYaw(tfMallet.getRotation());
+            m_malletState.x() = tfMallet.getOrigin().x();
+            m_malletState.y() = tfMallet.getOrigin().y();
+            m_malletState.theta() = tf::getYaw(tfMallet.getRotation());
             t_prev = tfMallet.stamp_.toSec();
+            m_malletStatePredict = m_malletState;
         }
 
-        void applyCollision(State &puckState) {
+        void predict(){
+            m_malletStatePredict.x() = m_malletStatePredict.x() + m_malletStatePredict.dx() * m_dt;
+            m_malletStatePredict.y() = m_malletStatePredict.y() + m_malletStatePredict.dy() * m_dt;
+            m_malletStatePredict.theta() = m_malletStatePredict.theta() + m_malletStatePredict.dtheta() * m_dt;
+        }
+
+        bool applyCollision(State &puckState) {
             Vector2 pPuck = puckState.block<2, 1>(0, 0);
             Vector2 vPuck = puckState.block<2, 1>(2, 0);
             Vector2 pPuckNext = pPuck + vPuck * m_dt;
 
-            Vector2 pMallet = m_Malletstate.block<2, 1>(0, 0);
-            Vector2 vMallet = m_Malletstate.block<2, 1>(2, 0);
+            Vector2 pMallet = m_malletStatePredict.block<2, 1>(0, 0);
+            Vector2 vMallet = m_malletStatePredict.block<2, 1>(2, 0);
             Vector2 pMalletNext = pMallet + vMallet * m_dt;
 
-            if ((pPuck - pMallet).norm() > (m_radiusMallet + m_radiusPuck) &&
-                (pMalletNext - pPuckNext).norm() < (m_radiusMallet + m_radiusPuck)) {
+            Vector2 vRelative = m_dt * (vMallet - vPuck);
+            Vector2 pRelative = pMallet - pPuck;
 
-                Vector2 vRelative = vPuck - vMallet;
-                Vector2 pRelative = pMallet - pPuck;
-                // Angle between velocity and relative position
-                double cosAlpha = vRelative.dot(pRelative) / (vRelative.norm() * pRelative.norm());
+            double distToGo = pRelative.norm() - m_radiusPuck - m_radiusMallet;
+            double t = distToGo / (vRelative.dot(pRelative) / pRelative.norm());
 
-                double dist = pRelative.norm();
-                double distMin = m_radiusPuck + m_radiusMallet;
+            if (t>0 && t<1){
+                Vector2 pPuckCollide = pPuck + t * vPuck * m_dt;
+                Vector2 pMalletCollide = pMallet + t * vMallet * m_dt;
 
-                double s = 1.;
-                if (vRelative.norm() > 1e-3) {
-                    s = (dist * cosAlpha - sqrt(pow(dist * cosAlpha, 2) - dist * dist + distMin * distMin))/ (vRelative.norm() * m_dt);
-                }
+                Vector2 vNorm = pPuckCollide - pMalletCollide;
 
-                Vector2 pPuckCollide = pPuck + s * vPuck * m_dt;
-                Vector2 pMalletCollide = pMallet + s * vMallet * m_dt;
+                Eigen::Rotation2D<double> rot(-M_PI_2);
+                Vector2 vecN = vNorm / vNorm.norm();
+                Vector2 vecT = rot * vecN;
+                double vtScalarPuck = vPuck.dot(vecT);
+                double vnScalarPuck = vPuck.dot(vecN);
+                double vtScalarMallet = vMallet.dot(vecT);
+                double vnScalarMallet = vMallet.dot(vecN);
 
-                Vector2 vNorm = pMalletCollide - pPuckCollide;
-                Vector2 vPuckNormal = vPuck.dot(vNorm) / pow(vNorm.norm(), 2) * vNorm;
-                Vector2 vMalletNorm = vMallet.dot(vNorm) / pow(vNorm.norm(), 2) * vNorm;
+                double vtScalarPuckNext = 2. / 3. * vtScalarPuck + 1. / 3. * vtScalarMallet;
+                double vnScalarPuckNext = -m_e * vnScalarPuck + (1 + m_e) * vnScalarMallet;
 
-                Vector2 vPuckTangent = vPuck - vPuckNormal;
-                Vector2 vMalletTangent = vMallet - vMalletNorm;
-
-                Vector2 vPuckNextNorm = -m_e * vPuckNormal + (1 + m_e) * vMalletNorm;
-                Vector2 vPuckNextTangent = 2. / 3. * vPuckTangent + 1. / 3. * vMalletTangent;
-
+                Vector2 vPuckNext = vtScalarPuckNext * vecT + vnScalarPuckNext * vecN;
                 //! Update the state
-                puckState.block<2, 1>(0, 0) = pPuckCollide + (1 - s) * (vPuckNextNorm + vPuckNextTangent) * m_dt;
-                puckState.block<2, 1>(2, 0) = vPuckNextNorm + vPuckNextTangent * m_dt;
+                puckState.block<2, 1>(0, 0) = pPuckCollide + (1 - t) * vPuckNext * m_dt;
+                puckState.block<2, 1>(2, 0) = vPuckNext;
+                return true;
             }
+            return false;
         }
     };
 
@@ -267,12 +270,14 @@ namespace AirHockey {
 
         Mallet m_mallet;
 
-        CollisionModel(AirHockeyTable &table, Mallet &mallet) : m_table(table), m_mallet(mallet) {
+        CollisionModel(tf::StampedTransform &tfTable, T &restitutionTable, T &restitutionMallet, T dt) :
+            m_table(restitutionTable, dt), m_mallet(restitutionMallet, dt) {
+            m_table.setTransform(tfTable);
         }
 
-        void applyCollision(State &puckState) {
+        bool applyCollision(State &puckState) {
             m_table.applyCollision(puckState);
-            m_mallet.applyCollision(puckState);
+            return (m_mallet.applyCollision(puckState));
         }
 
     };

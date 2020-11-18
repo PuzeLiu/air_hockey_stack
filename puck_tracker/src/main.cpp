@@ -32,74 +32,103 @@
 
 using namespace AirHockey;
 
-int main(int argc, char **argv) {
-    ros::init(argc, argv, "puck_tracker");
-    ros::NodeHandle nh("~");
-    tf::TransformListener listener;
-    ros::Rate rate(100);
-
-    AirHockey::T friction_drag, friction_sliding, restitution, tangent_reduction;
-    nh.param<AirHockey::T>("friction_drag", friction_drag, 0.01);
-    nh.param<AirHockey::T>("friction_sliding", friction_sliding, 0.0);
-    nh.param<AirHockey::T>("restitution", restitution, 0.8);
-    nh.param<AirHockey::T>("tagent_reduction", tangent_reduction, 0.8);
-    ROS_INFO_STREAM("Drag Parameter:" << friction_drag);
-    ROS_INFO_STREAM("Sliding Parameter: "<< friction_sliding);
-    ROS_INFO_STREAM("Restitution Parameter:" << restitution);
-    ROS_INFO_STREAM("Tangent Velocity Reduction Parameter: "<< tangent_reduction);
-
-    SystemModel dynamicsModel(friction_drag, friction_sliding);
-    ObservationModel observationModel;
-    EKF ekf;
-    EKF predictor;
-
-    // Initialize Covariance Matrix
-    Kalman::Covariance<State> covDyn;
-    Kalman::Covariance<Measurement> covObs;
-    Kalman::Covariance<State> covInit;
-
-    covDyn.setIdentity();
+void setCovariance(ros::NodeHandle &nh, Kalman::Covariance<State> &covDyn, Kalman::Covariance<Measurement> &covObs,
+                   Kalman::Covariance<State> &covInit) {
     covObs.setIdentity();
+    covDyn.setIdentity();
     covInit.setIdentity();
 
-    T obsVar, dynVarPos, dynVarVel;
-    nh.param<AirHockey::T>("observation_variance", obsVar, 1e-6);
+    T obsVarPos, obsVarAng, dynVarPos, dynVarVel, dynVarAngPos, dynVarAngVel;
+    nh.param<AirHockey::T>("observation_variance_position", obsVarPos, 1e-6);
+    nh.param<AirHockey::T>("observation_variance_angular", obsVarAng, 1e-6);
     nh.param<AirHockey::T>("dynamic_variance_position", dynVarPos, 1e-4);
     nh.param<AirHockey::T>("dynamic_variance_velocity", dynVarVel, 1e-2);
-    ROS_INFO_STREAM("Observation Variance: "<< obsVar);
+    nh.param<AirHockey::T>("dynamic_variance_angular_position", dynVarAngPos, 1e-4);
+    nh.param<AirHockey::T>("dynamic_variance_angular_velocity", dynVarAngVel, 1e-2);
+    ROS_INFO_STREAM("Observation Variance Position: " << obsVarPos);
+    ROS_INFO_STREAM("Observation Variance Angular Position: " << obsVarAng);
     ROS_INFO_STREAM("Dynamics Variance Position:" << dynVarPos);
-    ROS_INFO_STREAM("Dynamics Variance Velocity: "<< dynVarVel);
+    ROS_INFO_STREAM("Dynamics Variance Velocity: " << dynVarVel);
+    ROS_INFO_STREAM("Dynamics Variance Angular Position:" << dynVarAngPos);
+    ROS_INFO_STREAM("Dynamics Variance Angular Velocity: " << dynVarAngVel);
 
     covDyn(0, 0) = dynVarPos;
     covDyn(1, 1) = dynVarPos;
     covDyn(2, 2) = dynVarVel;
     covDyn(3, 3) = dynVarVel;
+    covDyn(4, 4) = dynVarAngPos;
+    covDyn(5, 5) = dynVarAngVel;
 
-    covObs(0, 0) = obsVar;
-    covObs(1, 1) = obsVar;
+    covObs(0, 0) = obsVarPos;
+    covObs(1, 1) = obsVarPos;
+    covObs(2, 2) = obsVarAng;
 
+    covInit(0, 0) = 0.5;
+    covInit(1, 1) = 0.5;
+    covInit(2, 2) = 1.0;
+    covInit(3, 3) = 1.0;
+    covInit(4, 4) = 0.5;
+    covInit(5, 5) = 1.0;
+}
+
+int main(int argc, char **argv) {
+    ros::init(argc, argv, "puck_tracker");
+    ros::NodeHandle nh("~");
+    tf::TransformListener listener;
+    ros::Rate rate(120);
+
+    ROS_INFO_STREAM("Read System Parameters");
+    AirHockey::T frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
+    nh.param<AirHockey::T>("friction_drag", frictionDrag, 0.1);
+    nh.param<AirHockey::T>("friction_sliding", frictionSliding, 0.0);
+    nh.param<AirHockey::T>("restitution_table", restitutionTable, 0.8);
+    nh.param<AirHockey::T>("restitution_mallet", restitutionMallet, 0.1);
+    ROS_INFO_STREAM("Drag Parameter:" << frictionDrag);
+    ROS_INFO_STREAM("Sliding Parameter: " << frictionSliding);
+    ROS_INFO_STREAM("Restitution Parameter of Wall: " << restitutionTable);
+    ROS_INFO_STREAM("Restitution Parameter of Mallet: " << restitutionMallet);
+
+    ROS_INFO_STREAM("Wait for the TF message: /Table");
+
+    tf::StampedTransform tfTable, tfPrev;
+
+    listener.waitForTransform("/world", "/Table", ros::Time(0), ros::Duration(30.0));
+    listener.lookupTransform("/world", "/Table", ros::Time(0), tfTable);
+
+    //! Kalman Filter Model
+    SystemModel dynamicsModel(frictionDrag, frictionSliding);
+    ObservationModel observationModel;
+
+    //! Collision Model
+    CollisionModel collisionModel(tfTable, restitutionTable, restitutionMallet, rate.expectedCycleTime().toSec());
+
+    //! Initialize Covariance Matrix
+    Kalman::Covariance<State> covDyn;
+    Kalman::Covariance<Measurement> covObs;
+    Kalman::Covariance<State> covInit;
+    setCovariance(nh, covDyn, covObs, covInit);
     dynamicsModel.setCovariance(covDyn);
     observationModel.setCovariance(covObs);
-    ekf.setCovariance(covInit);
 
-    //! Initialize State
-    Control u;
+    //! Initialize State and Control Vector
+    ROS_INFO_STREAM("Wait for the TF message: /Puck");
+    listener.waitForTransform("/world", "/Puck", ros::Time(0), ros::Duration(30.0));
+    listener.lookupTransform("/world", "/Puck", ros::Time(0), tfPrev);
     State sInit;
     sInit.setZero();
-    tf::StampedTransform tfTable, tfPrev;
-    ROS_INFO_STREAM("Wait for the TF message");
+    sInit.x() = tfPrev.getOrigin().x();
+    sInit.y() = tfPrev.getOrigin().y();
 
-    if (listener.waitForTransform("/Table", "/world", ros::Time(0), ros::Duration(30))) {
-        listener.lookupTransform("/world", "/Table", ros::Time(0), tfTable);
-        listener.lookupTransform("/world", "/Table", ros::Time(0), tfPrev);
-        sInit.x() = tfPrev.getOrigin().x();
-        sInit.y() = tfPrev.getOrigin().y();
-    } else {
-        ROS_ERROR_STREAM("Cannot find TF of Air Hockey Table!");
-        return 0;
-    }
+    Control u;
+    u.dt() = rate.expectedCycleTime().toSec();
 
+    //! Initialize Kalman Filter
+    EKF ekf;
+    EKF predictor;
     ekf.init(sInit);
+    ekf.setCovariance(covInit);
+    predictor.init(ekf.getState());
+    predictor.setCovariance(ekf.getCovariance());
 
     //! Initialize visualization table height
     VisualizationInterface visualizationInterface(nh, tfTable.getOrigin().z());
@@ -107,75 +136,97 @@ int main(int argc, char **argv) {
     //! Initialize validation
     ValidationInterface validationInterface(nh, false);
 
-    //! Collision Model
-    AirHockeyTable table(restitution, tangent_reduction, rate.expectedCycleTime().toSec());
-    Mallet mallet(rate.expectedCycleTime().toSec());
-    table.setTransform(tfTable);
-
-    CollisionModel collisionModel(table, mallet);
-
-    ROS_INFO_STREAM("Start Tracking.");
-
     Measurement measurementTmp;
-
-    predictor.init(ekf.getState());
-    predictor.setCovariance(ekf.getCovariance());
-
-    u.dt() = rate.expectedCycleTime().toSec();
 
     int predict_steps = 20;
     std::vector<Measurement> predictionBuffer;
     std::vector<EKF::InnovationCovariance> innovationCovBuffer;
+
+    ROS_INFO_STREAM("Start Tracking.");
+    bool reInit = true;
     while (ros::ok()) {
-        //! predict step
-        auto x_ekf = ekf.predict(dynamicsModel, u);
-        collisionModel.applyCollision(ekf.getState());
-        ekf.updateInnovationCovariance(observationModel);
+        if (reInit){
+            int updateCount = 0;
+            ekf.setCovariance(covInit);
+            predictionBuffer.clear();
+            innovationCovBuffer.clear();
+            while (updateCount < 10){
+                auto time = ros::Time::now();
+                ekf.predict(dynamicsModel, u);
+                collisionModel.m_table.applyCollision(ekf.getState());
+                if (listener.waitForTransform("/world", "/Puck", time, rate.expectedCycleTime())) {
+                    tf::StampedTransform tfTmp;
+                    listener.lookupTransform("/world", "/Puck", time, tfTmp);
+                    double thetaTmp = tf::getYaw(tfTmp.getRotation());
+                    measurementTmp.x() = tfTmp.getOrigin().x();
+                    measurementTmp.y() = tfTmp.getOrigin().y();
+                    measurementTmp.theta() = thetaTmp;
 
-        auto time = ros::Time::now();
-        if (listener.waitForTransform("/world", "/Mallet", time, rate.expectedCycleTime() - rate.cycleTime())) {
-            tf::StampedTransform tfTmp;
-            listener.lookupTransform("/world", "/Mallet", time, tfTmp);
-            collisionModel.m_mallet.setState(tfTmp);
+                    ekf.update(observationModel, measurementTmp);
+                    tfPrev = tfTmp;
+                    updateCount ++;
+                }
+            }
+            reInit = false;
         }
+        else {
+            predictor.init(ekf.getState());
+            predictor.setCovariance(ekf.getCovariance());
 
-        //! predict future step
-        predictor.init(ekf.getState());
-        predictor.setCovariance(ekf.getCovariance());
-        for (int i = 0; i < predict_steps; ++i) {
-            predictor.predict(dynamicsModel, u);
-            predictor.updateInnovationCovariance(observationModel);
-            collisionModel.applyCollision(predictor.getState());
+            auto time = ros::Time::now();
+            if (listener.waitForTransform("/world", "/Mallet", time, rate.expectedCycleTime())) {
+                tf::StampedTransform tfTmp;
+                listener.lookupTransform("/world", "/Mallet", time, tfTmp);
+                collisionModel.m_mallet.setState(tfTmp);
+            }
+
+            //! predict step
+            ekf.predict(dynamicsModel, u);
+            collisionModel.m_table.applyCollision(ekf.getState());
+            if (collisionModel.m_mallet.applyCollision(ekf.getState())) {
+                reInit = true;
+                continue;
+            }
+
+            //! predict future step
+            for (int i = 0; i < predict_steps; ++i) {
+                predictor.predict(dynamicsModel, u);
+                collisionModel.m_mallet.predict();
+                collisionModel.m_table.applyCollision(predictor.getState());
+            }
+
+            visualizationInterface.setPredictionMarker(predictor.getState(),
+                                                       predictor.updateInnovationCovariance(observationModel));
+            visualizationInterface.visualize();
+
+            predictionBuffer.push_back(observationModel.h(predictor.getState()));
+            innovationCovBuffer.push_back(predictor.getInnovationCovariance());
+
+            //! Update step
+            time = ros::Time::now();
+            if (listener.waitForTransform("/world", "/Puck", time, rate.expectedCycleTime())) {
+                tf::StampedTransform tfTmp;
+                listener.lookupTransform("/world", "/Puck", time, tfTmp);
+
+                double thetaTmp = tf::getYaw(tfTmp.getRotation());
+
+                measurementTmp.x() = tfTmp.getOrigin().x();
+                measurementTmp.y() = tfTmp.getOrigin().y();
+                measurementTmp.theta() = thetaTmp;
+
+                ekf.update(observationModel, measurementTmp);
+
+                tfPrev = tfTmp;
+            }
+
+            //! update buffer
+            if (predictionBuffer.size() > predict_steps && innovationCovBuffer.size() > predict_steps) {
+                validationInterface.record(predictionBuffer[0], measurementTmp, innovationCovBuffer[0]);
+                predictionBuffer.erase(predictionBuffer.begin());
+                innovationCovBuffer.erase(innovationCovBuffer.begin());
+            }
+
         }
-
-        //! update buffer
-        if (predictionBuffer.size() > predict_steps || innovationCovBuffer.size() > predict_steps){
-            predictionBuffer.erase(predictionBuffer.begin());
-            innovationCovBuffer.erase(innovationCovBuffer.begin());
-        }
-        predictionBuffer.push_back(observationModel.h(predictor.getState()));
-        innovationCovBuffer.push_back(predictor.getInnovationCovariance());
-
-        visualizationInterface.setPredictionMarker(predictor.getState(), predictor.getInnovationCovariance());
-        visualizationInterface.visualize();
-
-        //! Update step
-        if (listener.waitForTransform("/world", "/Puck", time, rate.expectedCycleTime() - rate.cycleTime())) {
-            tf::StampedTransform tfTmp;
-            listener.lookupTransform("/world", "/Puck", time, tfTmp);
-
-            measurementTmp.x() = tfTmp.getOrigin().x();
-            measurementTmp.y() = tfTmp.getOrigin().y();
-
-            x_ekf = ekf.update(observationModel, measurementTmp);
-
-            tfPrev = tfTmp;
-
-            validationInterface.record(measurementTmp - predictionBuffer[0], innovationCovBuffer[0]);
-        }
-
-
-
         rate.sleep();
     }
     return 0;

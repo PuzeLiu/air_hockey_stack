@@ -29,12 +29,12 @@
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 #include "EKF.hpp"
+#include "SystemModel.hpp"
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 
 
 namespace AirHockey{
-
 
 class VisualizationInterface{
 public:
@@ -42,7 +42,7 @@ public:
 
     ros::Publisher m_markerPub;
 
-    visualization_msgs::Marker m_tableMarker, m_puckMarker, m_malletMarker, m_predictionMarker;
+    visualization_msgs::Marker m_tableMarker, m_puckMarker, m_puckMarkerIndicator, m_malletMarker, m_predictionMarker;
 
     double m_tableHeight;
 
@@ -88,6 +88,25 @@ public:
         m_puckMarker.pose.orientation.x = 0.;
         m_puckMarker.pose.orientation.y = 0.;
         m_puckMarker.pose.orientation.z = 0.;
+
+        m_puckMarkerIndicator.header.frame_id = "Puck";
+        m_puckMarkerIndicator.ns = "Puck_Indicator";
+        m_puckMarkerIndicator.type = visualization_msgs::Marker::CYLINDER;
+        m_puckMarkerIndicator.action = visualization_msgs::Marker::ADD;
+        m_puckMarkerIndicator.scale.x = 0.01;
+        m_puckMarkerIndicator.scale.y = 0.01;
+        m_puckMarkerIndicator.scale.z = 0.021;
+        m_puckMarkerIndicator.color.r = 0.0;
+        m_puckMarkerIndicator.color.g = 1.0;
+        m_puckMarkerIndicator.color.b = 0.0;
+        m_puckMarkerIndicator.color.a = 1.0;
+        m_puckMarkerIndicator.pose.position.x = 0.02;
+        m_puckMarkerIndicator.pose.position.y = 0.;
+        m_puckMarkerIndicator.pose.position.z = 0.;
+        m_puckMarkerIndicator.pose.orientation.w = 1.;
+        m_puckMarkerIndicator.pose.orientation.x = 0.;
+        m_puckMarkerIndicator.pose.orientation.y = 0.;
+        m_puckMarkerIndicator.pose.orientation.z = 0.;
 
         m_malletMarker.header.frame_id = "Mallet";
         m_malletMarker.ns = "Mallet";
@@ -138,7 +157,7 @@ public:
         m_markerPub.publish(m_puckMarker);
         m_markerPub.publish(m_malletMarker);
         m_markerPub.publish(m_predictionMarker);
-
+        m_markerPub.publish(m_puckMarkerIndicator);
     }
 
     void setPredictionMarker(const State& state,
@@ -147,7 +166,7 @@ public:
         m_predictionMarker.pose.position.y = state.y();
         m_predictionMarker.pose.position.z = m_tableHeight;
         tf::Quaternion quaternion;
-        quaternion.setRPY(state.theta(), 0., 0.);
+        quaternion.setRPY(0., 0., state.theta());
         m_predictionMarker.pose.orientation.x = quaternion.x();
         m_predictionMarker.pose.orientation.y = quaternion.y();
         m_predictionMarker.pose.orientation.z = quaternion.z();

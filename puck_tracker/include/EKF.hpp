@@ -28,23 +28,36 @@
 #include <tf/transform_listener.h>
 #include <kalman/ExtendedKalmanFilter.hpp>
 #include "RosVisualization.hpp"
-#include "ObservationModel.hpp"
+#include "SystemModel.hpp"
 #include "kalman/LinearizedMeasurementModel.hpp"
+#include "ObservationModel.hpp"
 
 
 namespace AirHockey {
-    class EKF : public Kalman::ExtendedKalmanFilter<State> {
+class EKF : public Kalman::ExtendedKalmanFilter<State>{
     public:
         typedef Measurement InnovationType;
         typedef Kalman::Covariance<Measurement> InnovationCovariance;
 
-        void updateInnovationCovariance( ObservationModel& m) {
-            S = m.getH() * this->P * m.getH().transpose() + m.getCovariance();
-        }
-
         const State& update(ObservationModel& m, const Measurement& z){
-            ExtendedKalmanFilter::update(m, z);
-            mu = z - m.h(x);
+            m.updateJacobians( x );
+
+            // COMPUTE KALMAN GAIN
+            // compute innovation covariance
+            S = ( m.H * P * m.H.transpose() ) + ( m.V * m.getCovariance() * m.V.transpose() );
+
+            // compute kalman gain
+            KalmanGain<Measurement> K = P * m.H.transpose() * S.inverse();
+
+            // UPDATE STATE ESTIMATE AND COVARIANCE
+            // Update state using computed kalman gain and innovation
+            calculateInnovation(m, z);
+            x += K * ( mu );
+
+            // Update covariance
+            P -= K * m.H * P;
+
+            // return updated state estimate
             return this->getState();
         }
 
@@ -61,8 +74,18 @@ namespace AirHockey {
         //! Innovation Covariance
         InnovationCovariance S;
 
+        void calculateInnovation(ObservationModel& m, const Measurement& z){
+            mu = z - m.h(x);
+            mu.theta() = atan2(sin(mu.theta()), cos(mu.theta()));
+        }
+
     public:
         const InnovationCovariance& getInnovationCovariance() {
+            return S;
+        }
+
+        const InnovationCovariance& updateInnovationCovariance(ObservationModel &m){
+            S = ( m.H * P * m.H.transpose() ) + ( m.V * m.getCovariance() * m.V.transpose() );
             return S;
         }
 

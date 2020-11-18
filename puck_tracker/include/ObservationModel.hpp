@@ -28,6 +28,7 @@
 #include "SystemModel.hpp"
 
 namespace AirHockey {
+    class EKF;
 
 /**
  * @brief Measurement vector measuring the puck's position and velocity
@@ -70,6 +71,7 @@ namespace AirHockey {
     */
     class ObservationModel : public Kalman::LinearizedMeasurementModel<State, Measurement> {
     public:
+        friend class AirHockey::EKF;
         /**
          * @brief Constructor
          */

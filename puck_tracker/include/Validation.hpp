@@ -39,7 +39,9 @@ namespace AirHockey{
 
     public:
         ValidationInterface(ros::NodeHandle nh_, bool save=false):m_nh(nh_){
-            m_pub = m_nh.advertise<puck_tracker::InnovationMsg>("innovation", 1000);
+            m_pub_predict = m_nh.advertise<puck_tracker::InnovationMsg>("prediction", 1000);
+            m_pub_true = m_nh.advertise<puck_tracker::InnovationMsg>("measured", 1000);
+            m_pub_diff = m_nh.advertise<puck_tracker::InnovationMsg>("difference", 1000);
             m_save = save;
             if (m_save) {
                 string path = ros::package::getPath("puck_tracker");
@@ -57,15 +59,29 @@ namespace AirHockey{
             bag.close();
         }
 
-        void record(const Measurement& mu, const InnovationCovariance& S){
+        void record(const Measurement& prediction, const Measurement& measurement, const InnovationCovariance& S){
             m_msg.header.stamp = ros::Time::now();
             m_msg.size = 1;
+            m_msg.x = prediction.x();
+            m_msg.y = prediction.y();
+            m_msg.theta = prediction.theta();
+            m_msg.normalized = prediction.transpose() * S.inverse() * prediction;
+            m_pub_predict.publish(m_msg);
 
-            m_msg.x = mu.x();
-            m_msg.y = mu.y();
+            m_msg.size = 1;
+            m_msg.x = measurement.x();
+            m_msg.y = measurement.y();
+            m_msg.theta = measurement.theta();
+            m_msg.normalized = measurement.transpose() * S.inverse() * measurement;
+            m_pub_true.publish(m_msg);
 
-            m_msg.normalized = mu.transpose() * S.inverse() * mu;
-            m_pub.publish(m_msg);
+            m_msg.size = 1;
+            m_msg.x = prediction.x() - measurement.x();
+            m_msg.y = prediction.y() - measurement.y();
+            m_msg.theta = prediction.theta() - measurement.theta();
+            m_msg.normalized = measurement.transpose() * S.inverse() * measurement;
+            m_pub_diff.publish(m_msg);
+
             if (m_save){
                 bag.write("innovation", ros::Time::now(), m_msg);
             }
@@ -75,7 +91,9 @@ namespace AirHockey{
     public:
         ros::NodeHandle m_nh;
         rosbag::Bag bag;
-        ros::Publisher m_pub;
+        ros::Publisher m_pub_predict;
+        ros::Publisher m_pub_true;
+        ros::Publisher m_pub_diff;
         puck_tracker::InnovationMsg m_msg;
 
     protected:

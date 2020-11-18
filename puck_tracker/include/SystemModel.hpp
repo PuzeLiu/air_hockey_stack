@@ -153,13 +153,13 @@ public:
         if (x.dx()!=0 && x.dy()!=0) {
             x_.dx() = x.dx() - u.dt() * m_c * x.dx() - u.dt() * m_d * x.dx() / abs(x.dx());
             x_.dy() = x.dy() - u.dt() * m_c * x.dy() - u.dt() * m_d * x.dy() / abs(x.dy());
-            x_.dtheta() = x.dtheta();
         } else{
             x_.dx() = x.dx() - u.dt() * m_c * x.dx();
             x_.dy() = x.dy() - u.dt() * m_c * x.dy();
-            x_.dtheta() = x.dtheta();
         }
-//        ROS_INFO_STREAM("Velocity x: " << x_.dx() << " y: "<< x_.dy());
+
+        x_.theta() = x.theta() + u.dt() * x.dtheta();
+        x_.dtheta() = x.dtheta();
         // Return transitioned state vector
         return x_;
     }

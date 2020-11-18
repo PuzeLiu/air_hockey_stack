@@ -32,7 +32,7 @@ def plot_innovation(innovation):
     plt.show()
 
 def main():
-    file_name = "2020-03-11-19-02-41" + ".bag"
+    file_name = "2020-11-03-14-54-29" + ".bag"
     file_path = os.path.join(os.path.abspath(__file__ + "/../../data"), file_name)
     bag = rosbag.Bag(file_path)
     innovation = []
