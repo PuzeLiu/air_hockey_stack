@@ -36,18 +36,20 @@ class NullSpaceTrajectory:
         self._bezier = BezierTrajectory(3, self._x_0[:3], self._x_f[:3], self._v_f[:3], lb, ub)
 
         self.t_f = self._bezier.t_f
+        self.t_stop = torch.tensor(0.5)
         self.error_correction_gain = torch.ones(3).double()
 
     def generate_trajectory(self, step_size=0.01):
-        trajectories_desired, t = self._bezier.get_trajectory(step_size)
+        trajectories_desired, t_desired = self._bezier.get_trajectory(step_size)
 
-        t = torch.arange(0, self.t_f, step_size)
+        trajectories_desired, t_desired = self.append_stop_trajectory(trajectories_desired, t_desired, step_size)
+
         q_i = self._q_0.clone()
 
         trajectories_joint = torch.zeros((trajectories_desired.shape[0], 2, 7)).double()
         trajectories_cartesian = torch.zeros_like(trajectories_desired)
 
-        for i, t_i in enumerate(t):
+        for i, t_i in enumerate(t_desired):
             x_i_desired = trajectories_desired[i, 0]
             x_d_i_desired = trajectories_desired[i, 1]
             x_i = self._kine.forward_kinematics(q_i)[:3]
@@ -55,22 +57,19 @@ class NullSpaceTrajectory:
             q_i = q_i.detach()
             null_jac = get_nullspace(jac_i)
 
-            lamb = 1e-3
-            K = torch.eye(3).double() * 100
+            lamb = 1e-6
+            K = torch.eye(3).double() * 10
             # Damped Least Squares
             A = jac_i.T @ torch.inverse(jac_i @ jac_i.T + lamb * torch.eye(3))
             # Position Errors
-            b = K @ (x_i_desired - x_i) + x_d_i_desired
+            b = A @ (K @ (x_i_desired - x_i) + x_d_i_desired)
 
             # Construct QP Solver
-            P = np.eye(4)
-            q = 2 * b.T @ A.T @ null_jac
-            G = np.concatenate([null_jac, - null_jac], axis=0)
-            h = np.concatenate([(self._kine.joint_vel_limits[:, 1] - A @ b).detach().numpy(),
-                                (A @ b - self._kine.joint_vel_limits[:, 0]).detach().numpy()])
-            alpha = qpsolvers.solve_qp(P, q.detach().numpy(), G, h)
+            W = torch.diag(torch.tensor([1., 1., 1., 100., 1., 10., 1.]).double())
+            P, q, G, h = self.construct_QP(W, null_jac, b)
+            alpha = qpsolvers.solve_qp(P, q, G, h)
 
-            dq_i = A @ b + null_jac @ torch.from_numpy(alpha)
+            dq_i = b + null_jac @ torch.from_numpy(alpha)
             q_i += dq_i * step_size
 
             trajectories_joint[i, 0] = q_i
@@ -78,7 +77,55 @@ class NullSpaceTrajectory:
 
             trajectories_cartesian[i, 0] = x_i
             trajectories_cartesian[i, 1] = jac_i @ dq_i
-        return trajectories_joint, trajectories_cartesian, t
+        return trajectories_joint, trajectories_cartesian, t_desired
+
+    def construct_QP(self, W, N_J, b):
+        """
+        Construc the QP solver:
+            minimize 1/2 x^T Q x + q^T x
+            s.t.            G x <= h
+                            A x  = b
+                        lb <= x <= ub
+        Args:
+            W: [7 * 7] Weight matrix
+            N_J: [7 * 4] The nullspace of the Jacobian
+            b: [7 * 1] Projection of cartesian error: N_J * error
+        Returns:
+            Q: Quadratic Term
+            p: Linear Term
+            G: Inequality constraint LHS
+            h: Inequality constraint RHS
+        """
+        P = N_J.T @ W @ N_J
+        q = b.T @ W @ N_J
+        G = np.concatenate([N_J, - N_J], axis=0)
+        h = np.concatenate([(self._kine.joint_vel_limits[:, 1] - b).detach().numpy(),
+                            (b - self._kine.joint_vel_limits[:, 0]).detach().numpy()])
+        return P.detach().numpy(), q.detach().numpy(), G, h
+
+    def append_stop_trajectory(self, trajectory_desired, t_desired, step_size):
+
+        v0 = torch.norm(trajectory_desired[-1, 1])
+        v_dir = trajectory_desired[-1, 1] / v0
+
+        # quadratic polynomial
+        # f(x) = b_0 x^2 + b_1 x + b_2
+        b = torch.tensor([ -v0 / (2 * self.t_stop), v0, 0.])
+        t_stop = torch.arange(0, self.t_stop, step_size) + step_size
+
+        trajectory_stop = torch.empty((t_stop.shape[0], 3, trajectory_desired.shape[-1])).double()
+        for i, t_i in enumerate(t_stop):
+            x_t = trajectory_desired[-1, 0] + v_dir * (b[0] * t_i ** 2 + b[1] * t_i + b[2])
+            dx_t = v_dir * (b[0] * t_i * 2 + b[1])
+            ddx_t = 2 * b[0]
+            trajectory_stop[i, 0] = x_t
+            trajectory_stop[i, 1] = dx_t
+            trajectory_stop[i, 2] = ddx_t
+        trajectory_desired = torch.cat([trajectory_desired, trajectory_stop], dim=0)
+        t_desired = torch.cat([t_desired, t_stop], dim=0)
+        return trajectory_desired, t_desired
+
+
 
     def plot(self):
         trajectories_joint, trajectories_cartesian, t = self.generate_trajectory(0.01)
@@ -89,8 +136,8 @@ class NullSpaceTrajectory:
         for i in range(7):
             plt.figure()
             plt.plot(trajectories_joint[:, 1, i])
-            plt.plot(torch.ones(trajectories_joint.shape[0]) * kinematics.joint_vel_limits[i, 0], 'r-.')
-            plt.plot(torch.ones(trajectories_joint.shape[0]) * kinematics.joint_vel_limits[i, 1], 'r-.')
+            plt.plot(torch.ones(trajectories_joint.shape[0]) * self._kine.joint_vel_limits[i, 0], 'r-.')
+            plt.plot(torch.ones(trajectories_joint.shape[0]) * self._kine.joint_vel_limits[i, 1], 'r-.')
             plt.title("Velocity Joint_{}".format(i + 1))
         plt.show()
 

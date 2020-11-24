@@ -34,7 +34,7 @@ class BezierTrajectory:
         self._a[2] = 0.
         self._a[3] = self.zf / self.t_f ** 3
 
-    def __call__(self, t):
+    def get_point_i(self, t):
         z = self._a[3] * t ** 3
         dz_dt = 3 * self._a[3] * t ** 2
         dz_ddt = 6 * self._a[3] * t
@@ -47,10 +47,10 @@ class BezierTrajectory:
         return x, dx_dt, dx_ddt
 
     def get_trajectory(self, step_size=0.01):
-        t = torch.arange(0, self.t_f, step_size)
+        t = torch.arange(0, self.t_f + step_size, step_size)
         trajectory = torch.empty((t.shape[0], 3, self._dim)).double()
         for i, t_i in enumerate(t):
-            x_t, dx_t, ddx_t = self(t_i)
+            x_t, dx_t, ddx_t = self.get_point_i(t_i)
             trajectory[i, 0] = x_t
             trajectory[i, 1] = dx_t
             trajectory[i, 2] = ddx_t
