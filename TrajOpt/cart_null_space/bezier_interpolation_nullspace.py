@@ -65,7 +65,7 @@ class NullSpaceTrajectory:
             b = A @ (K @ (x_i_desired - x_i) + x_d_i_desired)
 
             # Construct QP Solver
-            W = torch.diag(torch.tensor([1., 1., 1., 100., 1., 10., 1.]).double())
+            W = torch.diag(torch.tensor([1., 20., 1., 20., 1., 10., 1.]).double())
             P, q, G, h = self.construct_QP(W, null_jac, b)
             alpha = qpsolvers.solve_qp(P, q, G, h)
 

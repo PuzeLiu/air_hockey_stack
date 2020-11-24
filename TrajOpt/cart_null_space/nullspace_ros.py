@@ -45,7 +45,7 @@ if __name__ == '__main__':
             q_cur = np.array(msg.position)
             break
 
-    tcp_pos = torch.tensor([0., 0., 0.58])
+    tcp_pos = torch.tensor([0., 0., 0.59])
     tcp_quat = torch.tensor([1., 0., 0., 0.])
     kinematics = KinematicsTorch(tcp_pos=tcp_pos,
                                  tcp_quat=tcp_quat)
@@ -60,13 +60,13 @@ if __name__ == '__main__':
         charac = input("press Key to continue (r)eset/ (g)oto:\n")
         if charac =="g":
             q_0 = torch.tensor(q_cur)
-            x_f = torch.tensor([0.9, 0.2, table_height])
-            v_f = torch.tensor([1.5, 0.0, 0])
+            x_f = torch.tensor([0.7, 0.2, table_height])
+            v_f = torch.tensor([1.6, 0.0, 0])
             # Initialize Trajectory planner
             null_traj = NullSpaceTrajectory(q_0=q_0, x_f=x_f, v_f=v_f, table_height=table_height, kinematics=kinematics)
             traj_q, traj_x, t = null_traj.generate_trajectory(rate.sleep_dur.to_sec())
             msg_pub = Float64MultiArray()
-            null_traj.plot()
+            # null_traj.plot()
             for traj_i in traj_q:
                 msg_pub.data = traj_i.detach().numpy()[0]
                 cmd_pubisher.publish(msg_pub)
