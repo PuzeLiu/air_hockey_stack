@@ -4,23 +4,27 @@
 
 #include <chrono>
 #include <iostream>
-#include <ros/ros.h>
 
 #include "null_space_opt.h"
+#include "null_space_opt_ros.h"
 
 using namespace std;
-using namespace null_space_optim;
+using namespace null_space_optimization;
 using namespace iiwas_kinematics;
 
 int main(int argc, char *argv[]) {
-    Vector3d tcp_ee(0., 0., 0.5);
-    Quaterniond tcp_quat(1., 0., 0., 0.);
+    ros::init(argc, argv, "null_space_optimizer");
+    ros::NodeHandle nh;
 
-    Kinematics kinematics(tcp_ee, tcp_quat);
-    NullSpaceOptimizer optimizer(kinematics);
+    Vector3d tcp_ee(0., 0., 0.5);
+    Quaterniond tcpQuat(1., 0., 0., 0.);
+
+    Kinematics kinematics(tcp_ee, tcpQuat);
+
+    NullSpaceOptimizerROS optimizerRos(kinematics);
+//    NullSpaceOptimizer optimizer(kinematics);
 
     Kinematics::JointArrayType q_cur;
-    Kinematics::JacobianPosType jac_pos;
 
     Vector3d x_des, dx_des;
     Quaterniond quat_cur;
