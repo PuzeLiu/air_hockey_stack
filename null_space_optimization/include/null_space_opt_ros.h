@@ -18,12 +18,12 @@ class NullSpaceOptimizerROS{
 public:
     NullSpaceOptimizerROS(Kinematics kinematics);
 
-    void Start();
+    void Update();
 
 private:
-    void GenerateTrajectoryPoint(const VectorXd solution);
     void CartesianCmdCallback(const CartersianTrajectory::ConstPtr& msg);
     void JointPositionCallback(const sensor_msgs::JointState::ConstPtr& msg);
+    void GenerateTrajectoryCommand();
 
 private:
     ros::NodeHandle nh_;
@@ -33,7 +33,6 @@ private:
     trajectory_msgs::JointTrajectoryPoint jointTrajectoryPoint_;
     double timeStep_;
 
-    Kinematics& kinematics_;
     NullSpaceOptimizer optimizer_;
 
     Vector3d xDes_, dxDes_;
@@ -41,8 +40,8 @@ private:
 
     Kinematics::JointArrayType weights_; //Diagonal Weight Matrix for Optimization
 
-
-
+    bool hasNewCmd;
+    bool hasNewState;
 
 };
 }

@@ -1,4 +1,4 @@
 std_msgs/Header header
-float64 time_step
+float64 time_step_size
 geometry_msgs/Vector3 position
 geometry_msgs/Vector3 velocity
