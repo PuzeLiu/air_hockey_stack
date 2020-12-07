@@ -18,7 +18,7 @@ namespace null_space_optim {
     public:
         NullSpaceOptimizer(Kinematics &kinematics);
 
-        void ConstructQP(const Vector3d &x_des,
+        int SolveQP(const Vector3d &x_des,
                          const Vector3d &dx_des,
                          const Kinematics::JointArrayType &q_cur,
                          const Kinematics::JointArrayType &weights);

@@ -12,7 +12,6 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics &kinematics) : solver_(), kine
     solver_.settings()->setVerbosity(false);
     solver_.data()->setNumberOfVariables(4);
     solver_.data()->setNumberOfConstraints(NUM_OF_JOINTS);
-
     P_.resize(4, 4);
     A_.resize(7, 4);
     P_.setIdentity();
@@ -43,7 +42,7 @@ void NullSpaceOptimizer::GetNullSpace(const NullSpaceOptimizer::JacobianPosType 
     out_null_space = cod.colsPermutation() * out_null_space; // Unpermute the columns
 }
 
-void NullSpaceOptimizer::ConstructQP(const Vector3d &x_des,
+int NullSpaceOptimizer::SolveQP(const Vector3d &x_des,
                                      const Vector3d &dx_des,
                                      const Kinematics::JointArrayType &q_cur,
                                      const Kinematics::JointArrayType &weights) {
@@ -63,14 +62,14 @@ void NullSpaceOptimizer::ConstructQP(const Vector3d &x_des,
     q_ = b.transpose() * weights.asDiagonal() * null_space_;
     A_ = null_space_.sparseView();
 
-    solver_.updateHessianMatrix(P_);
-    solver_.updateGradient(q_);
-    solver_.updateLinearConstraintsMatrix(A_);
-    solver_.updateBounds(kinematics_.vel_limits_lower - b, kinematics_.vel_limits_upper - b);
-    solver_.solve();
+    if(!solver_.clearSolverVariables()){return -1;}
+    if(!solver_.updateHessianMatrix(P_)){ return -1;}
+    if(!solver_.updateGradient(q_)){ return -1;}
+    if(!solver_.updateLinearConstraintsMatrix(A_)){ return -1;}
+    if(!solver_.updateBounds(kinematics_.vel_limits_lower - b, kinematics_.vel_limits_upper - b)){ return -1;}
+    if (!solver_.solve()){return -1;}
 
-//    cout << "Solved: " << solver_.solve() << endl;
-    cout << "Solution: " << solver_.getSolution() << endl;
+    return 0;
 }
 
 void NullSpaceOptimizer::castConstraintMatrix(SparseMatrix<double> &constraint_matrix, const int &num_of_variables) {

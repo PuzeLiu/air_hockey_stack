@@ -4,6 +4,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <ros/ros.h>
 
 #include "null_space_opt.h"
 
@@ -33,11 +34,10 @@ int main(int argc, char *argv[]) {
         q_cur *=  M_PI;
         kinematics.ForwardKinematics(q_cur, x_des, quat_cur);
         dx_des = dx_des.setRandom();
-        dx_des *= 0.01;
+        dx_des = dx_des * 0.01;
         x_des += dx_des;
-        optimizer.ConstructQP(x_des, dx_des, q_cur, weights);
     }
     auto finish = chrono::high_resolution_clock::now();
-    cout << "Jacobian Null Space Time: " << chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count() / 10000. / 1.e6 << "ms\n";
+    cout << "Jacobian Null Space Optimization Time: " << chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count() / 10000. / 1.e6 << "ms\n";
     return 0;
 }
