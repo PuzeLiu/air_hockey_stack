@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
         message_generation
         )
 
+find_package(Eigen3 REQUIRED)
+
 find_package(osqp REQUIRED)
 
 find_package(OsqpEigen REQUIRED COMPONENTS)
@@ -137,7 +139,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME} src/null_space_optimization_node.cpp src/null_space_opt.cpp src/null_space_opt_ros.cpp include/null_space_opt_ros.h)
+add_executable(${PROJECT_NAME} src/null_space_opt_node.cpp src/null_space_opt.cpp src/null_space_opt_ros.cpp include/null_space_opt_ros.h)
+add_executable(bezier_curve_planner src/bezier_curve_node.cpp src/bezier_curve.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -156,6 +159,8 @@ target_link_libraries(${PROJECT_NAME}
         osqp::osqp
         OsqpEigen
         )
+target_link_libraries(bezier_curve_planner
+        Eigen3::Eigen)
 
 #############
 ## Install ##

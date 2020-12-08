@@ -25,8 +25,7 @@ int main(int argc, char *argv[]) {
     Kinematics::JointArrayType q_cur;
 
     while (ros::ok()){
-
-        optimizerRos.Update();
+        optimizerRos.update();
     }
 
     return 0;

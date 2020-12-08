@@ -18,12 +18,12 @@ class NullSpaceOptimizerROS{
 public:
     NullSpaceOptimizerROS(Kinematics kinematics);
 
-    void Update();
+    void update();
 
 private:
-    void CartesianCmdCallback(const CartersianTrajectory::ConstPtr& msg);
-    void JointPositionCallback(const sensor_msgs::JointState::ConstPtr& msg);
-    void GenerateTrajectoryCommand();
+    void cartesianCmdCallback(const CartersianTrajectory::ConstPtr& msg);
+    void jointPositionCallback(const sensor_msgs::JointState::ConstPtr& msg);
+    void generateTrajectoryCommand();
 
 private:
     ros::NodeHandle nh_;

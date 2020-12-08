@@ -9,8 +9,8 @@ using namespace null_space_optimization;
 NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics kinematics) : nh_("/"),
                                                                       optimizer_(kinematics) {
     cmdPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory_controller/command", 1);
-    cartPosSub_ = nh_.subscribe("cartesian_command", 1, &NullSpaceOptimizerROS::CartesianCmdCallback, this);
-    jointPosSub_ = nh_.subscribe("joint_state", 1, &NullSpaceOptimizerROS::JointPositionCallback, this);
+    cartPosSub_ = nh_.subscribe("cartesian_command", 1, &NullSpaceOptimizerROS::cartesianCmdCallback, this);
+    jointPosSub_ = nh_.subscribe("joint_state", 1, &NullSpaceOptimizerROS::jointPositionCallback, this);
 
     weights_ << 40., 40., 20., 40., 10., 10., 10.;
     string ns = ros::this_node::getNamespace();
@@ -39,11 +39,11 @@ NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics kinematics) : nh_("/"),
     hasNewState = false;
 }
 
-void NullSpaceOptimizerROS::Update() {
+void NullSpaceOptimizerROS::update() {
     ros::spinOnce();
     if (hasNewState && hasNewCmd) {
         if (optimizer_.SolveQP(xDes_, dxDes_, qCur_, weights_, timeStep_, qNext_, dqNext_)) {
-            GenerateTrajectoryCommand();
+            generateTrajectoryCommand();
             cmdPub_.publish(jointTrajectoryCmd_);
         }
         hasNewState = false;
@@ -51,7 +51,7 @@ void NullSpaceOptimizerROS::Update() {
     }
 }
 
-void NullSpaceOptimizerROS::CartesianCmdCallback(const CartersianTrajectory::ConstPtr &msg) {
+void NullSpaceOptimizerROS::cartesianCmdCallback(const CartersianTrajectory::ConstPtr &msg) {
     timeStep_ = msg->time_step_size;
     xDes_.x() = msg->position.x;
     xDes_.y() = msg->position.y;
@@ -63,7 +63,7 @@ void NullSpaceOptimizerROS::CartesianCmdCallback(const CartersianTrajectory::Con
     hasNewCmd = true;
 }
 
-void NullSpaceOptimizerROS::JointPositionCallback(const sensor_msgs::JointState::ConstPtr &msg) {
+void NullSpaceOptimizerROS::jointPositionCallback(const sensor_msgs::JointState::ConstPtr &msg) {
     if (msg->position.size() == 7) {
         qCur_[0] = msg->position[0];
         qCur_[1] = msg->position[1];
@@ -72,11 +72,11 @@ void NullSpaceOptimizerROS::JointPositionCallback(const sensor_msgs::JointState:
         qCur_[4] = msg->position[4];
         qCur_[5] = msg->position[5];
         qCur_[6] = msg->position[6];
+        hasNewState = true;
     }
-    hasNewState = true;
 }
 
-void NullSpaceOptimizerROS::GenerateTrajectoryCommand() {
+void NullSpaceOptimizerROS::generateTrajectoryCommand() {
     for (int i = 0; i < NUM_OF_JOINTS; ++i) {
         jointTrajectoryPoint_.positions[i] = qNext_[i];
         jointTrajectoryPoint_.velocities[i] = dqNext_[i];
