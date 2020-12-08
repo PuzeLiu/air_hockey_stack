@@ -10,6 +10,10 @@
         <color rgba="1.0 0.0 0.0 1"/>
     </material>
 
+    <xacro:arg name="table_base_x" default="0.0"/>
+    <xacro:arg name="table_base_y" default="0.0"/>
+    <xacro:arg name="table_base_z" default="0.0"/>
+
     <xacro:property name="table_base_length" value="2.14"/>
     <xacro:property name="table_base_width" value="1.22"/>
     <xacro:property name="table_base_height" value="0.11"/>
@@ -418,5 +422,8 @@
 
         <static>1</static>
     </xacro:macro>
+
+
+    <xacro:air_hockey_table base_x="$(arg table_base_x)" base_y="$(arg table_base_y)" base_z="$(arg table_base_z)"/>
 </robot>
 
