@@ -65,7 +65,8 @@ class NullSpaceTrajectory:
             b = A @ (K @ (x_i_desired - x_i) + x_d_i_desired)
 
             # Construct QP Solver
-            W = torch.diag(torch.tensor([1., 20., 1., 20., 1., 10., 1.]).double())
+            W = torch.diag(torch.tensor([40., 40., 20., 40., 1., 1., 1.]).double())
+            # W = torch.diag(jac_i[2].abs() / jac_i[2].norm() * 10 + 1)
             P, q, G, h = self.construct_QP(W, null_jac, b)
             alpha = qpsolvers.solve_qp(P, q, G, h)
 
@@ -131,14 +132,17 @@ class NullSpaceTrajectory:
         trajectories_joint, trajectories_cartesian, t = self.generate_trajectory(0.01)
         trajectories_desired, t = self._bezier.get_trajectory(0.01)
         plt.figure()
-        plt.plot(trajectories_cartesian[:, 0, 0], trajectories_cartesian[:, 0, 1])
-        plt.plot(trajectories_desired[:, 0, 0], trajectories_desired[:, 0, 1])
+        plt.plot(trajectories_cartesian[:, 0, 0], trajectories_cartesian[:, 0, 1], label="optim")
+        plt.plot(trajectories_desired[:, 0, 0], trajectories_desired[:, 0, 1], label="desired")
+        plt.legend()
         for i in range(7):
             plt.figure()
-            plt.plot(trajectories_joint[:, 1, i])
-            plt.plot(torch.ones(trajectories_joint.shape[0]) * self._kine.joint_vel_limits[i, 0], 'r-.')
-            plt.plot(torch.ones(trajectories_joint.shape[0]) * self._kine.joint_vel_limits[i, 1], 'r-.')
+            plt.plot(trajectories_joint[:, 1, i], label="optim")
+            plt.plot(torch.ones(trajectories_joint.shape[0]) * self._kine.joint_vel_limits[i, 0], 'r-.', label="bound")
+            plt.plot(torch.ones(trajectories_joint.shape[0]) * self._kine.joint_vel_limits[i, 1], 'r-.', label="bound")
+            plt.legend()
             plt.title("Velocity Joint_{}".format(i + 1))
+
         plt.show()
 
 if __name__ == "__main__":

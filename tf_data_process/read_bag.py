@@ -81,6 +81,7 @@ def remove_outlier(traj):
 
 
 def cut_trajectory(puck_tf, output_dir, idx):
+    idx = [0, 31, 61, 91, 191, 346, 356, 605, 635, 658]
     pd.DataFrame(puck_tf).to_csv(os.path.join(output_dir, "data"), index=False)
     count = 0
     for interv_idx in range(len(idx) - 1):
@@ -94,7 +95,7 @@ def cut_trajectory(puck_tf, output_dir, idx):
 
 def main():
     input_dir = os.path.abspath(__file__ + "/../data")
-    file_name = "2020-11-03-14-54-29"
+    file_name = "2020-11-03-14-53-29"
     output_dir = os.path.join(input_dir, file_name)
     makedirs(output_dir)
 
