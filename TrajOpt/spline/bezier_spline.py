@@ -4,13 +4,12 @@ import matplotlib.pyplot as plt
 
 
 class BezierTrajectory:
-    def __init__(self, dim, x0, xf, vf, lb, ub):
+    def __init__(self, dim, x0, xf, vf, lb, ub, phase_polynom="quartic"):
         self._lb = lb
         self._ub = ub
         self._dim = dim
 
-        # Parameter for cubic phase variable
-        self._a = torch.zeros(4).double()
+        self._phase_polynom = phase_polynom
 
         self.x0 = x0
         self.xf = xf
@@ -25,19 +24,37 @@ class BezierTrajectory:
         self.xm = self.xf - alpha_min * self.vf
 
         # Cubic Trajectory on Phase Variable.
-        self.zf = 1
-        self.d_zf = torch.mean(self.vf[0] / (self.xf[0] - self.xm[0]) / 2)
-        self.t_f = 3 * (self.zf - 0) / self.d_zf
+        if self._phase_polynom == "cubic":
+            self._a = torch.zeros(4).double()
+            self.z_f = 1
+            self.dz_f = torch.mean(self.vf[0] / (self.xf[0] - self.xm[0]) / 2)
+            self.t_f = 3 * (self.z_f - 0) / self.dz_f
+            self._a[0] = 0.
+            self._a[1] = 0.
+            self._a[2] = 0.
+            self._a[3] = self.z_f / self.t_f ** 3
+        elif self._phase_polynom == "quartic":
+            self._a = torch.zeros(5).double()
+            self.dz_f = torch.mean(self.vf[0] / (self.xf[0] - self.xm[0]) / 2)
+            self.t_f = 2 / self.dz_f
+            self._a[0] = 0.
+            self._a[1] = 0.
+            self._a[2] = 0.
+            self._a[3] = self.dz_f ** 3 / 4.
+            self._a[4] = - self.dz_f ** 4 / 16.
 
-        self._a[0] = 0.
-        self._a[1] = 0.
-        self._a[2] = 0.
-        self._a[3] = self.zf / self.t_f ** 3
+
 
     def get_point_i(self, t):
-        z = self._a[3] * t ** 3
-        dz_dt = 3 * self._a[3] * t ** 2
-        dz_ddt = 6 * self._a[3] * t
+        if self._phase_polynom == "cubic":
+            z = self._a[3] * t ** 3
+            dz_dt = 3 * self._a[3] * t ** 2
+            dz_ddt = 6 * self._a[3] * t
+        elif self._phase_polynom == "quartic":
+            z = self._a[3] * t ** 3 + self._a[4] * t ** 4
+            dz_dt = 3 * self._a[3] * t ** 2 + 4 * self._a[4] * t ** 3
+            dz_ddt = 6 * self._a[3] * t + 12 * self._a[4] * t ** 2
+
 
         x = self.xm + (1 - z) ** 2 * (self.x0 - self.xm) + z ** 2 * (self.xf - self.xm)
         dx_dz = 2 * (1 - z) * (self.xm - self.x0) + 2 * z * (self.xf - self.xm)
