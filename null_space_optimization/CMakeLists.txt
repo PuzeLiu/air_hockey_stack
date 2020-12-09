@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
         geometry_msgs
         iiwas_kinematics
         message_generation
+        message_filters
         )
 
 find_package(Eigen3 REQUIRED)
@@ -160,6 +161,7 @@ target_link_libraries(${PROJECT_NAME}
         OsqpEigen
         )
 target_link_libraries(bezier_curve_planner
+        ${catkin_LIBRARIES}
         Eigen3::Eigen)
 
 #############

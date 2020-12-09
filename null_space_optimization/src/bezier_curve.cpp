@@ -10,7 +10,7 @@ BezierCurve2D::BezierCurve2D(Vector2d bound_lower, Vector2d bound_upper, double 
     height_ = height;
 }
 
-bool BezierCurve2D::fit(const Vector2d x0, const Vector2d xf, const Vector2d vf) {
+bool BezierCurve2D::fit(const Vector2d& x0, const Vector2d& xf, const Vector2d& vf) {
     // Check both point are inside boundary
     for (int i = 0; i < 2; ++i) {
         if (x0[i] < boundLower_[i] or x0[i] > boundUpper_[i] or
@@ -34,7 +34,7 @@ bool BezierCurve2D::fit(const Vector2d x0, const Vector2d xf, const Vector2d vf)
         }
     }
     xMiddle_ = xHit_ - alpha_min_hit * vHit_;
-    xMiddleStop_ = xHit_ - alpha_min_hit * vHit_;
+    xMiddleStop_ = xHit_ + alpha_min_hit * vHit_;
 
     // Construct Quartic Polynomial
     double dz_dtf = vHit_[0] / (xHit_[0] - xMiddle_[0]) / 2;

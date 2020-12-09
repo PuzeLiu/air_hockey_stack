@@ -16,10 +16,13 @@ class BezierCurve2D{
 public:
     BezierCurve2D(Vector2d bound_lower, Vector2d bound_upper, double height=0.);
 
-    bool fit(const Vector2d x0, const Vector2d xf, const Vector2d vf);
+    bool fit(const Vector2d& x0, const Vector2d& xf, const Vector2d& vf);
 
     void getPoint(double t, null_space_optimization::CartersianTrajectory& msg);
 
+    inline double getHitTime(){return tHit_;};
+
+    inline double getStopTime(){return tStop_;};
 private:
     Vector2d boundLower_;
     Vector2d boundUpper_;

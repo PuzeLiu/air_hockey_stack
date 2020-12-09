@@ -9,6 +9,7 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <sensor_msgs/JointState.h>
 
+
 #include "null_space_opt.h"
 #include "null_space_optimization/CartersianTrajectory.h"
 
@@ -16,22 +17,26 @@
 namespace null_space_optimization{
 class NullSpaceOptimizerROS{
 public:
-    NullSpaceOptimizerROS(Kinematics kinematics);
+    NullSpaceOptimizerROS(Kinematics& kinematics);
+
+    void cartesianCmdCallback(const CartersianTrajectory::ConstPtr& msg);
+    void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+    void cmdCallback(const CartersianTrajectory::ConstPtr& msgCartTraj,
+                     const sensor_msgs::JointState::ConstPtr& msgJointState);
 
     void update();
 
 private:
-    void cartesianCmdCallback(const CartersianTrajectory::ConstPtr& msg);
-    void jointPositionCallback(const sensor_msgs::JointState::ConstPtr& msg);
+    void optimize();
     void generateTrajectoryCommand();
+
 
 private:
     ros::NodeHandle nh_;
     ros::Publisher cmdPub_;
-    ros::Subscriber cartPosSub_, jointPosSub_;
+
     trajectory_msgs::JointTrajectory jointTrajectoryCmd_;
     trajectory_msgs::JointTrajectoryPoint jointTrajectoryPoint_;
-    double timeStep_;
 
     NullSpaceOptimizer optimizer_;
 
@@ -40,9 +45,7 @@ private:
 
     Kinematics::JointArrayType weights_; //Diagonal Weight Matrix for Optimization
 
-    bool hasNewCmd;
-    bool hasNewState;
-
+    double timeStep_;
 };
 }
 #endif //SRC_NULL_SPACE_OPT_ROS_H
