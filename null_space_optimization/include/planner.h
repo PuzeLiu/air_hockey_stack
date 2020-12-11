@@ -2,8 +2,8 @@
 // Created by puze on 08.12.20.
 //
 
-#ifndef SRC_BEZIER_CURVE_H
-#define SRC_BEZIER_CURVE_H
+#ifndef SRC_PLANNER_H
+#define SRC_PLANNER_H
 
 #include "ros/ros.h"
 #include <Eigen/Core>
@@ -16,16 +16,21 @@ class BezierCurve2D{
 public:
     BezierCurve2D(Vector2d bound_lower, Vector2d bound_upper, double height=0.);
 
-    bool fit(const Vector2d& x0, const Vector2d& xf, const Vector2d& vf);
+    bool fit(const Vector2d& xStart, const Vector2d& xHit, const Vector2d& vHit);
 
-    void getPoint(double t, null_space_optimization::CartersianTrajectory& msg);
+    bool getPoint(double t, null_space_optimization::CartersianTrajectory& msg);
 
-    inline double getHitTime(){return tHit_;};
+    vector<null_space_optimization::CartersianTrajectory> getTrajectory(double stepSize);
 
-    inline double getStopTime(){return tStop_;};
-private:
+    inline double getHitTime() const{return tHit_;};
+
+    inline double getStopTime() const{return tStop_;};
+
+public:
     Vector2d boundLower_;
     Vector2d boundUpper_;
+private:
+
     Vector2d xStart_, xMiddle_, xHit_, vHit_;    //Start point, middle point, final point, final velocity
     double height_;
     double tHit_, tStop_;
@@ -38,4 +43,4 @@ private:
 };
 
 
-#endif //SRC_BEZIER_CURVE_H
+#endif //SRC_PLANNER_H

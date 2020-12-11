@@ -6,11 +6,14 @@
 
 using namespace null_space_optimization;
 
-NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics &kinematics) : optimizer_(kinematics), nh_("/"){
-
-    cmdPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory_controller/command", 1);
+NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics &kinematics,
+                                             BezierCurve2D &bezier,
+                                             bool closeLoop) : kinematics_(kinematics),
+                                                               optimizer_(kinematics),
+                                                               bezier(bezier){
 
     weights_ << 40., 40., 20., 40., 10., 10., 10.;
+    closeLoop_ = closeLoop;
     string ns = ros::this_node::getNamespace();
     string ns_prefix;
     if (ns == "/front_iiwa") {
@@ -25,34 +28,48 @@ NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics &kinematics) : optimizer
     jointTrajectoryPoint_.positions.resize(NUM_OF_JOINTS);
     jointTrajectoryPoint_.velocities.resize(NUM_OF_JOINTS);
 
-    jointTrajectoryCmd_.joint_names.push_back(ns_prefix + "_joint_1");
-    jointTrajectoryCmd_.joint_names.push_back(ns_prefix + "_joint_2");
-    jointTrajectoryCmd_.joint_names.push_back(ns_prefix + "_joint_3");
-    jointTrajectoryCmd_.joint_names.push_back(ns_prefix + "_joint_4");
-    jointTrajectoryCmd_.joint_names.push_back(ns_prefix + "_joint_5");
-    jointTrajectoryCmd_.joint_names.push_back(ns_prefix + "_joint_6");
-    jointTrajectoryCmd_.joint_names.push_back(ns_prefix + "_joint_7");
+    jointTrajCmdMsg.joint_names.push_back(ns_prefix + "_joint_1");
+    jointTrajCmdMsg.joint_names.push_back(ns_prefix + "_joint_2");
+    jointTrajCmdMsg.joint_names.push_back(ns_prefix + "_joint_3");
+    jointTrajCmdMsg.joint_names.push_back(ns_prefix + "_joint_4");
+    jointTrajCmdMsg.joint_names.push_back(ns_prefix + "_joint_5");
+    jointTrajCmdMsg.joint_names.push_back(ns_prefix + "_joint_6");
+    jointTrajCmdMsg.joint_names.push_back(ns_prefix + "_joint_7");
 
 }
 
-void NullSpaceOptimizerROS::update() {
-
+bool NullSpaceOptimizerROS::startBeizerHit(const Vector2d &xHit, Vector2d vHit, double stepSize) {
+    Vector3d xCur;
+    kinematics_.ForwardKinematics(qCur_, xCur);
+    Vector2d xStart = xCur.block<2, 1>(0, 0);
+    bezier.fit(xStart, xHit, vHit);
+    vector<null_space_optimization::CartersianTrajectory> traj = bezier.getTrajectory(stepSize);
+    vector<null_space_optimization::CartersianTrajectory>::iterator iter;
+    reset();
+    for (iter = traj.begin(); iter != traj.end(); iter++) {
+        xDes_.x() = iter->position.x;
+        xDes_.y() = iter->position.y;
+        xDes_.z() = iter->position.z;
+        dxDes_.x() = iter->velocity.x;
+        dxDes_.y() = iter->velocity.y;
+        dxDes_.z() = iter->velocity.z;
+        if (optimizer_.solveQP(xDes_, dxDes_, qCur_, weights_, stepSize, qNext_, dqNext_)) {
+            if (!closeLoop_) {
+                qCur_ = qNext_;
+            }
+            time_from_start += stepSize;
+            generatePoint(qNext_, dqNext_, time_from_start);
+            jointTrajCmdMsg.points.push_back(jointTrajectoryPoint_);
+        }
+        else{
+            return false;
+        }
+    }
+    return true;
 }
 
-void NullSpaceOptimizerROS::cartesianCmdCallback(const CartersianTrajectory::ConstPtr &msg) {
-    ROS_INFO_STREAM("Enter Cartesian Cmd Callback");
-    timeStep_ = msg->time_step_size;
-    xDes_.x() = msg->position.x;
-    xDes_.y() = msg->position.y;
-    xDes_.z() = msg->position.z;
-
-    dxDes_.x() = msg->velocity.x;
-    dxDes_.y() = msg->velocity.y;
-    dxDes_.z() = msg->velocity.z;
-}
 
 void NullSpaceOptimizerROS::jointStateCallback(const sensor_msgs::JointState::ConstPtr &msg) {
-    ROS_INFO_STREAM("Enter Joint State Callback");
     if (msg->position.size() == 7) {
         qCur_[0] = msg->position[0];
         qCur_[1] = msg->position[1];
@@ -64,25 +81,29 @@ void NullSpaceOptimizerROS::jointStateCallback(const sensor_msgs::JointState::Co
     }
 }
 
-void NullSpaceOptimizerROS::cmdCallback(const CartersianTrajectory::ConstPtr &msgCartTraj,
-                                        const sensor_msgs::JointState::ConstPtr &msgJointState) {
-    ROS_INFO_STREAM("Enter Synchronizer");
-    cartesianCmdCallback(msgCartTraj);
-    jointStateCallback(msgJointState);
-    if (optimizer_.SolveQP(xDes_, dxDes_, qCur_, weights_, timeStep_, qNext_, dqNext_)) {
-        generateTrajectoryCommand();
-        cmdPub_.publish(jointTrajectoryCmd_);
+
+trajectory_msgs::JointTrajectoryPoint
+NullSpaceOptimizerROS::generatePoint(Kinematics::JointArrayType qDes, Kinematics::JointArrayType dqDes,
+                                     double time_from_start) {
+    for (int i = 0; i < NUM_OF_JOINTS; ++i) {
+        jointTrajectoryPoint_.positions[i] = qDes[i];
+        jointTrajectoryPoint_.velocities[i] = dqDes[i];
+    }
+    jointTrajectoryPoint_.time_from_start = ros::Duration(time_from_start);
+    return jointTrajectoryPoint_;
+}
+
+bool NullSpaceOptimizerROS::setQInit(Kinematics::JointArrayType qInit) {
+    if (!closeLoop_) {
+        qCur_ = qInit;
+        return true;
+    } else {
+        ROS_ERROR_STREAM("Failed to set Initial joint position in close loop optimization");
+        return false;
     }
 }
 
-void NullSpaceOptimizerROS::generateTrajectoryCommand() {
-    for (int i = 0; i < NUM_OF_JOINTS; ++i) {
-        jointTrajectoryPoint_.positions[i] = qNext_[i];
-        jointTrajectoryPoint_.velocities[i] = dqNext_[i];
-    }
-    jointTrajectoryPoint_.time_from_start = ros::Duration(timeStep_);
-
-    jointTrajectoryCmd_.header.stamp = ros::Time::now();
-    jointTrajectoryCmd_.points.clear();
-    jointTrajectoryCmd_.points.push_back(jointTrajectoryPoint_);
+void NullSpaceOptimizerROS::reset() {
+    jointTrajCmdMsg.points.clear();
+    time_from_start = 0.0;
 }

@@ -18,7 +18,7 @@ namespace null_space_optimization {
     public:
         NullSpaceOptimizer(Kinematics &kinematics);
 
-        bool SolveQP(const Vector3d &xDes,
+        bool solveQP(const Vector3d &xDes,
                      const Vector3d &dxDes,
                      const Kinematics::JointArrayType &qCur,
                      const Kinematics::JointArrayType &weights,
@@ -26,19 +26,17 @@ namespace null_space_optimization {
                      Kinematics::JointArrayType &qNext,
                      Kinematics::JointArrayType &dqNext);
 
-        void GetNullSpace(const JacobianPosType &jacobian, MatrixXd &out_null_space, int &out_rank);
-
-        void GetNextPoint(Kinematics::JointArrayType &qNext, Kinematics::JointArrayType &dqNext);
-
     private:
-        void castConstraintMatrix(Eigen::SparseMatrix<double> &constraintMatrix, const int &num_of_variables);
+        void GetNullSpace(const JacobianPosType &jacobian, MatrixXd &out_null_space);
 
-    private:
+    public:
         Kinematics &kinematics_;
         Kinematics::JacobianPosType jacobian_;
         MatrixXd nullSpace_;
 
-        Vector3d K_; // Weight for correcting position error
+    private:
+        int num_of_variables_;  //Dimensions of jacobian
+        Vector3d K_;            // Weight for correcting position error
 
         Vector3d xCurPos_;
         Quaterniond xCurQuat_;
@@ -49,6 +47,7 @@ namespace null_space_optimization {
         Matrix<double, 4, 1> q_;
         SparseMatrix<double> A_;
 
+        MatrixXd V_;            // temporal matrix for calculating null space
     };
 }
 

@@ -140,8 +140,11 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME} src/null_space_opt_node.cpp src/null_space_opt.cpp src/null_space_opt_ros.cpp include/null_space_opt_ros.h)
-add_executable(bezier_curve_planner src/bezier_curve_node.cpp src/bezier_curve.cpp)
+add_executable(${PROJECT_NAME} src/null_space_opt_node.cpp
+        src/optimizer.cpp
+        src/planner.cpp
+        src/null_space_opt_ros.cpp)
+#add_executable(bezier_curve_planner src/bezier_curve_node.cpp src/planner.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -160,9 +163,9 @@ target_link_libraries(${PROJECT_NAME}
         osqp::osqp
         OsqpEigen
         )
-target_link_libraries(bezier_curve_planner
-        ${catkin_LIBRARIES}
-        Eigen3::Eigen)
+#target_link_libraries(bezier_curve_planner
+#        ${catkin_LIBRARIES}
+#        Eigen3::Eigen)
 
 #############
 ## Install ##

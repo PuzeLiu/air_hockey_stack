@@ -2,7 +2,7 @@
 // Created by puze on 06.12.20.
 //
 #include "iostream"
-#include "null_space_opt.h"
+#include "optimizer.h"
 
 using namespace std;
 using namespace null_space_optimization;
@@ -30,36 +30,39 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics &kinematics) : solver_(), kine
 }
 
 void NullSpaceOptimizer::GetNullSpace(const NullSpaceOptimizer::JacobianPosType &jacobian,
-                                      MatrixXd &out_null_space,
-                                      int &out_rank) {
+                                      MatrixXd &out_null_space) {
     CompleteOrthogonalDecomposition<Matrix<double, Dynamic, Dynamic> > cod;
     cod.compute(jacobian);
-    out_rank = cod.dimensionOfKernel();
+    num_of_variables_ = cod.dimensionOfKernel();
     // Find URV^T
-    MatrixXd V = cod.matrixZ().transpose();
-    out_null_space = V.block(0, cod.rank(), V.rows(), V.cols() - cod.rank());
+    V_ = cod.matrixZ().transpose();
+    out_null_space = V_.block(0, cod.rank(), V_.rows(), V_.cols() - cod.rank());
 //    MatrixXd P = cod.colsPermutation();
     out_null_space = cod.colsPermutation() * out_null_space; // Unpermute the columns
 }
 
-bool NullSpaceOptimizer::SolveQP(const Vector3d &xDes,
+bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
                                  const Vector3d &dxDes,
                                  const Kinematics::JointArrayType &qCur,
                                  const Kinematics::JointArrayType &weights,
-                                 const double timeStep,
+                                 const double stepSize,
                                  Kinematics::JointArrayType &qNext,
                                  Kinematics::JointArrayType &dqNext) {
     kinematics_.ForwardKinematics(qCur, xCurPos_, xCurQuat_);
+
+    if ((xCurPos_ - xDes).norm() / stepSize > 2){
+        cout << "Optimization failed: the current position is too far from desired position" << endl;
+        return false;
+    }
     kinematics_.JacobianPos(qCur, jacobian_);
-    int num_of_variables;
-    GetNullSpace(jacobian_, nullSpace_, num_of_variables);
+    GetNullSpace(jacobian_, nullSpace_);
 
     auto x_err_pos_ = K_.asDiagonal() * (xDes - xCurPos_);
     auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() * (x_err_pos_ + dxDes);
 
-    if (num_of_variables != dimNullSpace_) {
+    if (num_of_variables_ != dimNullSpace_) {
         throw std::runtime_error(
-                std::string("The Jacobian is at Singularity, dimension is: ") + to_string(num_of_variables));
+                std::string("The Jacobian is at Singularity, dimension is: ") + to_string(num_of_variables_));
     }
 
     P_ = (nullSpace_.transpose() * weights.asDiagonal() * nullSpace_).sparseView();
@@ -74,7 +77,7 @@ bool NullSpaceOptimizer::SolveQP(const Vector3d &xDes,
     if (!solver_.solve()) { return false; }
 
     dqNext = b + nullSpace_ * solver_.getSolution();
-    qNext = qCur + dqNext * timeStep;
+    qNext = qCur + dqNext * stepSize;
 
     return true;
 }

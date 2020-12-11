@@ -5,10 +5,12 @@
 #include <chrono>
 #include <iostream>
 
-#include "null_space_opt.h"
+#include "optimizer.h"
 #include "null_space_opt_ros.h"
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
+
+#include <chrono>
 
 using namespace std;
 using namespace null_space_optimization;
@@ -16,36 +18,74 @@ using namespace iiwas_kinematics;
 
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "null_space_optimizer");
-    ros::NodeHandle nh;
+    ros::NodeHandle nh("/");
     ros::Rate rate(1000);
+    ros::Publisher jointTrajectoryPub = nh.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory_controller/command", 1);
+    ros::Subscriber jointStateSub;
 
     bool closeLoop = false;
 
+    // Define Kinematics
     Vector3d tcp_ee(0., 0., 0.5);
     Quaterniond tcpQuat(1., 0., 0., 0.);
-
     Kinematics kinematics(tcp_ee, tcpQuat);
+    // Define Bezier Planner
+    Vector2d boundLower, boundUpper;
+    double height = 0.3;
+    boundLower << 0.4, -0.5;
+    boundUpper << 2.2, 0.5;
+    BezierCurve2D bezierPlanner(boundLower, boundUpper, height);
+    // Define ROS interface
+    NullSpaceOptimizerROS optimizerRos(kinematics, bezierPlanner, closeLoop);
 
-    NullSpaceOptimizerROS optimizerRos(kinematics);
+    Kinematics::JointArrayType qDes, dqDes;
+    trajectory_msgs::JointTrajectory initMsg;
+    initMsg = optimizerRos.jointTrajCmdMsg;
+    trajectory_msgs::JointTrajectoryPoint msgPoint;
 
-    ros::Subscriber cartPosSub, jointPosSub;
+    // Go to initial position
+    qDes << 0.7461,  0.5554, -1.6715, -0.8750,  0.7037,  2.1961, -0.4820;
+    dqDes << 0., 0., 0., 0., 0., 0., 0.;
+    double time_from_start = -1.0;
+    msgPoint = optimizerRos.generatePoint(qDes, dqDes, time_from_start);
+    initMsg.points.push_back(msgPoint);
+    initMsg.header.stamp = ros::Time::now();
+    jointTrajectoryPub.publish(initMsg);
+    ros::Duration(time_from_start + 1.0).sleep();
 
-    if (!closeLoop) {
-        cartPosSub = nh.subscribe("cartesian_command", 1, &NullSpaceOptimizerROS::cartesianCmdCallback, &optimizerRos);
-        jointPosSub = nh.subscribe("joint_state", 1, &NullSpaceOptimizerROS::jointStateCallback, &optimizerRos);
-    } else {
-        message_filters::Subscriber<CartersianTrajectory> cartPosSyncSub(nh, "cartesian_command", 1);
-        message_filters::Subscriber<sensor_msgs::JointState> jointPosSyncSub(nh, "joint_state", 1);
-        message_filters::TimeSynchronizer<CartersianTrajectory, sensor_msgs::JointState> msgSynchronizer(cartPosSyncSub, jointPosSyncSub, 1);
-        msgSynchronizer.registerCallback(&NullSpaceOptimizerROS::cmdCallback, &optimizerRos);
+    if(closeLoop){
+        jointStateSub = nh.subscribe("joint_state", 1, &NullSpaceOptimizerROS::jointStateCallback, &optimizerRos);
+    } else{
+        optimizerRos.setQInit(qDes);
     }
 
-    Kinematics::JointArrayType q_cur;
-
-    while (ros::ok()){
-        optimizerRos.update();
-        ros::spinOnce();
-        rate.sleep();
+    // Hitting Movement
+    Vector2d xDes, dxDes;
+    xDes << 0.8, 0.2;
+    dxDes << 1.5, 0.0;
+    auto start = chrono::high_resolution_clock::now();
+    if(optimizerRos.startBeizerHit(xDes, dxDes, rate.expectedCycleTime().toSec())){
+        jointTrajectoryPub.publish(optimizerRos.jointTrajCmdMsg);
     }
+    auto finish = chrono::high_resolution_clock::now();
+    cout << "Trajectory Optimization Time: " << chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count() / 1.e6 << "ms\n";
+    ROS_INFO_STREAM("Hit Time: "<< optimizerRos.bezier.getHitTime());
+    ROS_INFO_STREAM("Stop Time: "<< optimizerRos.bezier.getStopTime());
+    ROS_INFO_STREAM("Total Points: "<< optimizerRos.jointTrajCmdMsg.points.size());
+    ros::Duration(optimizerRos.bezier.getStopTime()).sleep();
+
+//    jointTrajectoryPub.publish(initMsg);
+
+
+//    ros::Publisher jointPointPub = nh.advertise<trajectory_msgs::JointTrajectoryPoint>("points", 1);
+//    start = chrono::high_resolution_clock::now();
+//    for (int i = 0; i < optimizerRos.jointTrajCmdMsg.points.size(); ++i) {
+//        jointPointPub.publish(optimizerRos.jointTrajCmdMsg.points[i]);
+//        ROS_INFO_STREAM("Publish");
+//        rate.sleep();
+//    }
+//    finish = chrono::high_resolution_clock::now();
+//    cout << "Trajectory Publishing Time: " << chrono::duration_cast<std::chrono::nanoseconds>(finish-start).count() / 1.e6 << "ms\n";
+
     return 0;
 }
