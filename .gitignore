@@ -9,3 +9,4 @@ CATKIN_IGNORE
 *result/
 *cmake-build-debug/
 *.egg-info
+*.bag
