@@ -40,7 +40,7 @@ NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics &kinematics,
 
 bool NullSpaceOptimizerROS::startBeizerHit(const Vector2d &xHit, Vector2d vHit, double stepSize) {
     Vector3d xCur;
-    kinematics_.ForwardKinematics(qCur_, xCur);
+    kinematics_.forwardKinematics(qCur_, xCur);
     Vector2d xStart = xCur.block<2, 1>(0, 0);
     bezier.fit(xStart, xHit, vHit);
     vector<null_space_optimization::CartersianTrajectory> traj = bezier.getTrajectory(stepSize);
