@@ -12,7 +12,7 @@ NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics &kinematics,
                                                                optimizer_(kinematics),
                                                                bezier(bezier){
 
-    weights_ << 40., 40., 20., 40., 10., 10., 10.;
+    weights_ << 40., 40., 20., 40., 10., 20., 10.;
     closeLoop_ = closeLoop;
     string ns = ros::this_node::getNamespace();
     string ns_prefix;

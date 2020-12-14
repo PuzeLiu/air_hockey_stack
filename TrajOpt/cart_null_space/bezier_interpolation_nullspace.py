@@ -1,7 +1,7 @@
 import torch
 import matplotlib.pyplot as plt
 
-from air_hockey.robots.iiwa.kinematics_torch import KinematicsTorch
+from iiwas_kinematics.kinematics_torch import KinematicsTorch
 from TrajOpt.spline.bezier_spline import BezierTrajectory
 
 import qpsolvers
