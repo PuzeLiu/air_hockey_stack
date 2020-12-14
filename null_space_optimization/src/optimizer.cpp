@@ -48,13 +48,13 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
                                  const double stepSize,
                                  Kinematics::JointArrayType &qNext,
                                  Kinematics::JointArrayType &dqNext) {
-    kinematics_.ForwardKinematics(qCur, xCurPos_, xCurQuat_);
+    kinematics_.forwardKinematics(qCur, xCurPos_, xCurQuat_);
 
     if ((xCurPos_ - xDes).norm() / stepSize > 2){
         cout << "Optimization failed: the current position is too far from desired position" << endl;
         return false;
     }
-    kinematics_.JacobianPos(qCur, jacobian_);
+    kinematics_.jacobianPos(qCur, jacobian_);
     GetNullSpace(jacobian_, nullSpace_);
 
     auto x_err_pos_ = K_.asDiagonal() * (xDes - xCurPos_);
