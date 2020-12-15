@@ -31,7 +31,7 @@ public:
 
     void jointStateCallback(const sensor_msgs::JointState::ConstPtr &msg);
 
-    bool startBeizerHit(const Vector2d& xHit, Vector2d vHit, double stepSize);
+    bool startBeizerHit(const Vector2d& xHit, const Vector2d& vHit, double stepSize);
 
     void reset();
 
