@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-    <node name="null_space_optimization" pkg="null_space_optimization" type="null_space_optimization" ns="front_iiwa"
+    <node name="null_space_optimization" pkg="null_space_optimization" type="null_space_optimization" ns="iiwa_front"
           output="screen"/>
 </launch>

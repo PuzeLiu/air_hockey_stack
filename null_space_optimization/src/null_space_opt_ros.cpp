@@ -16,17 +16,18 @@ NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics &kinematics,
     closeLoop_ = closeLoop;
     string ns = ros::this_node::getNamespace();
     string ns_prefix;
-    if (ns == "/front_iiwa") {
+    if (ns == "/iiwa_front") {
         ns_prefix = 'F';
-    } else if (ns == "/back_iiwa") {
+    } else if (ns == "/iiwa_back") {
         ns_prefix = 'B';
     } else {
-        ROS_ERROR_STREAM("Run the node under the namespace: front_iiwa / back_iiwa");
+        ROS_ERROR_STREAM("Run the node under the namespace: iiwa_front / iiwa_back");
     }
 
     jointTrajectoryPoint_.positions.resize(NUM_OF_JOINTS);
     jointTrajectoryPoint_.velocities.resize(NUM_OF_JOINTS);
 
+    jointTrajCmdMsg.joint_names.clear();
     jointTrajCmdMsg.joint_names.push_back(ns_prefix + "_joint_1");
     jointTrajCmdMsg.joint_names.push_back(ns_prefix + "_joint_2");
     jointTrajCmdMsg.joint_names.push_back(ns_prefix + "_joint_3");
