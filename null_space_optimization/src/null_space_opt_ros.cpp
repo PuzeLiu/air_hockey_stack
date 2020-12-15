@@ -22,7 +22,6 @@ NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics &kinematics,
         ns_prefix = 'B';
     } else {
         ROS_ERROR_STREAM("Run the node under the namespace: front_iiwa / back_iiwa");
-        return;
     }
 
     jointTrajectoryPoint_.positions.resize(NUM_OF_JOINTS);
@@ -38,7 +37,7 @@ NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics &kinematics,
 
 }
 
-bool NullSpaceOptimizerROS::startBeizerHit(const Vector2d &xHit, Vector2d vHit, double stepSize) {
+bool NullSpaceOptimizerROS::startBeizerHit(const Vector2d &xHit, const Vector2d& vHit, double stepSize) {
     Vector3d xCur;
     kinematics_.forwardKinematics(qCur_, xCur);
     Vector2d xStart = xCur.block<2, 1>(0, 0);

@@ -19,7 +19,7 @@ using namespace iiwas_kinematics;
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "null_space_optimizer");
     ros::NodeHandle nh("/");
-    ros::Rate rate(1000);
+    ros::Rate rate(100);
     ros::Publisher jointTrajectoryPub = nh.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory_controller/command", 1);
     ros::Subscriber jointStateSub;
 
@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
     // Define Bezier Planner
     Vector2d boundLower, boundUpper;
     double height = 0.3;
-    boundLower << 0.4, -0.5;
+    boundLower << 0.6, -0.5;
     boundUpper << 2.2, 0.5;
     BezierCurve2D bezierPlanner(boundLower, boundUpper, height);
     // Define ROS interface
@@ -44,9 +44,18 @@ int main(int argc, char *argv[]) {
     trajectory_msgs::JointTrajectoryPoint msgPoint;
 
     // Go to initial position
-    qDes << 0.7461,  0.5554, -1.6715, -0.8750,  0.7037,  2.1961, -0.4820;
+    Vector3d xStart(0.45, 0.0, height);
+    Vector3d gc(1., -1., 1);
+    Quaterniond quatStart(0., 0., -1., 0.);
+    quatStart.normalize();
+    double psi = -60/180.*M_PI;
+    if (kinematics.inverseKinematics(xStart, quatStart, gc, psi, qDes)){
+        cout << qDes << endl;
+    } else{
+        return -1;
+    }
     dqDes << 0., 0., 0., 0., 0., 0., 0.;
-    double time_from_start = -1.0;
+    double time_from_start = 3.0;
     msgPoint = optimizerRos.generatePoint(qDes, dqDes, time_from_start);
     initMsg.points.push_back(msgPoint);
     initMsg.header.stamp = ros::Time::now();
@@ -74,7 +83,8 @@ int main(int argc, char *argv[]) {
     ROS_INFO_STREAM("Total Points: "<< optimizerRos.jointTrajCmdMsg.points.size());
     ros::Duration(optimizerRos.bezier.getStopTime()).sleep();
 
-//    jointTrajectoryPub.publish(initMsg);
+    jointTrajectoryPub.publish(initMsg);
+    ros::Duration(time_from_start).sleep();
 
 
 //    ros::Publisher jointPointPub = nh.advertise<trajectory_msgs::JointTrajectoryPoint>("points", 1);
