@@ -51,8 +51,19 @@ iiwa_front:
       - F_joint_5
       - F_joint_6
       - F_joint_7
+#      - F_striker_joint_1
+#      - F_striker_joint_2
+
+  striker_controller:
+    type: effort_controllers/JointGroupPositionController
+    joints:
       - F_striker_joint_1
       - F_striker_joint_2
+
+    F_striker_joint_1:
+      pid: { p: 0.0, i: 0.0, d: 0.0, i_clamp_min: -10000, i_clamp_max: 10000 }
+    F_striker_joint_2:
+      pid: { p: 0.0, i: 0.0, d: 0.0, i_clamp_min: -10000, i_clamp_max: 10000 }
 
 #  striker_controller:
 #    type: effort_controllers/JointTrajectoryController
@@ -119,16 +130,14 @@ iiwa_back:
       - B_joint_5
       - B_joint_6
       - B_joint_7
+
+  striker_controller:
+    type: effort_controllers/JointGroupPositionController
+    joints:
       - B_striker_joint_1
       - B_striker_joint_2
 
-#  striker_controller:
-#    type: effort_controllers/JointTrajectoryController
-#    joints:
-#      - B_striker_joint_1
-#      - B_striker_joint_2
-#    gains:
-#      B_striker_joint_1:
-#        pid: { p: 0.0, i: 0.0, d: 1.0, i_clamp_min: -1, i_clamp_max: 1 }
-#      B_striker_joint_2:
-#        pid: { p: 0.0, i: 0.0, d: 1.0, i_clamp_min: -1, i_clamp_max: 1 }
+    B_striker_joint_1:
+      pid: { p: 0.0, i: 0.0, d: 0.0, i_clamp_min: -10000, i_clamp_max: 10000 }
+    B_striker_joint_2:
+      pid: { p: 0.0, i: 0.0, d: 0.0, i_clamp_min: -10000, i_clamp_max: 10000 }
