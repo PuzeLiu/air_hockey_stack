@@ -1,179 +1,35 @@
 <?xml version="1.0"?>
+<robot name="iiwa_striker" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-<!-- Here we define the robot, we named it "iiwa14_tool" -->
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <!-- Tool properties -->
-  <xacro:property name="tool_mass" value="0.200" />
-  <xacro:property name="tool_joint_offset" value="0.00 0.00 0.00" />
-  <xacro:property name="tool_link_offset" value="-0.16 0.0 0.0" />
+    <!-- Import Rviz colors -->
+    <xacro:include filename="$(find iiwas_description)/urdf/materials.xacro" />
+    <!--Import the lbr iiwa macro -->
+    <xacro:include filename="$(find iiwas_description)/urdf/iiwa14.xacro"/>
+    <!--Import the striker macro -->
+    <xacro:include filename="$(find air_hockey_description)/urdf/striker.xacro"/>
 
-  <xacro:macro name="striker" params="robot_name parent hardware_interface">
-    <joint name="${robot_name}_striker" type="fixed">
-		<parent link="${parent}" />
-		<child link = "${robot_name}_striker_base" />
-		<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-    </joint>
+    <xacro:property name="base_height" default="0.03"/>
 
-    <link name="${robot_name}_striker_base">
-		<inertial>
-		<origin xyz="0 0 0.0417" rpy="0 0 0" />
-		<mass value="0.1" />
-		<inertia
-			ixx="0.000297" ixy="0.0" ixz="0.0"
-			iyy="0.000271" iyz="0.0000001" izz="0.0000653" />
-		</inertial>
-		<visual>
-		<origin xyz="0 0 0" rpy="0 0.0 0"/>
-		<geometry>
-		  	<mesh filename="package://air_hockey_description/meshes/striker_new/visual/gas_spring.stl"/>
-		</geometry>
-		<material name="Grey"/>
-		</visual>
-		<collision>
-		<origin xyz="0 0 0" rpy="0 0 0"/>
-		<geometry>
-		  	<mesh filename="package://air_hockey_description/meshes/striker_new/collision/gas_spring_collision.stl"/>
-		</geometry>
-		<material name="Grey"/>
-		</collision>
-    </link>
+    <xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+    <xacro:arg name="robot_name" default="F"/>
+    <xacro:arg name="parent" default="front_base"/>
+    <xacro:arg name="base_rpy" default="0 0 0"/>
 
-    <joint name="${robot_name}_striker_joint_1" type="revolute">
-		<parent link="${robot_name}_striker_base" />
-		<child link = "${robot_name}_striker_joint_link" />
-		<origin xyz="0.0 0.0 0.3455" rpy="0 0 0" />
-		<axis xyz="1 0 0"/>
-		<limit effort="100" lower="-${PI/2}" upper="${PI/2}" velocity="100"/>
-		<safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.094395102" soft_upper_limit="2.094395102"/>
-		<dynamics damping="0.5"/>
-    </joint>
+    <!-- Fix to world just for testing -->
+    <link name="$(arg parent)"/>
 
-    <link name="${robot_name}_striker_joint_link">
-    	<inertial>
-	        <origin xyz="0 0.0 0" rpy="0 0 0" />
-	        <mass value="0.01" />
-	        <inertia
-                ixx="0.0001" ixy="0.0" ixz="0.0"
-                iyy="0.0001" iyz="0.000000" izz="0.00001" />
-      	</inertial>
-    </link>
+    <!--iiwa-->
+    <xacro:iiwa14 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)" parent="$(arg parent)">
+        <origin xyz="0 0 ${base_height/2}" rpy="$(arg base_rpy)" />
+    </xacro:iiwa14>
+    <xacro:striker hardware_interface="hardware_interface/PositionJointInterface" robot_name="$(arg robot_name)"/>
 
-    <joint name="${robot_name}_striker_joint_2" type="revolute">
-		<parent link="${robot_name}_striker_joint_link" />
-		<child link = "${robot_name}_striker_mallet" />
-		<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
-		<axis xyz="0 1 0"/>
-		<limit effort="100" lower="-${PI/2}" upper="${PI/2}" velocity="100"/>
-		<safety_controller k_position="100" k_velocity="2" soft_lower_limit="-2.094395102" soft_upper_limit="2.094395102"/>
-		<dynamics damping="0.5"/>
-    </joint>
-
-  <!--  The striker frame is here defined -->
-    <link name="${robot_name}_striker_mallet">
-      <inertial>
-        <origin xyz="0 0.0 0.0" rpy="0 0 0" />
-        <mass value="0.1" />
-        <inertia
-                ixx="0.0001" ixy="0.0" ixz="0.0"
-                iyy="0.0001" iyz="0.0" izz="0.0001" />
-      </inertial>
-      <visual>
-        <origin xyz="0 0.0 0.0" rpy="0.0 0.0 0"/>
-        <geometry>
-        	<mesh filename="package://air_hockey_description/meshes/striker_new/visual/joint_mallet.stl"/>
-        </geometry>
-        <material name="Grey"/>
-      </visual>
-      <collision>
-        <origin xyz="0 0.0 0.0" rpy="0.0 0.0 0"/>
-        <geometry>
-          	<mesh filename="package://air_hockey_description/meshes/striker_new/collision/joint_mallet_collision.stl"/>
-        </geometry>
-        <material name="Grey"/>
-        <surface>
-            <bounce>
-                <restitution_coefficient>0.8</restitution_coefficient>
-            </bounce>
-            <contact>
-                <ode>
-                    <soft_cfm>0.1</soft_cfm>
-                    <soft_erp>0.1</soft_erp>
-                    <max_vel>1</max_vel>
-                </ode>
-            </contact>
-        </surface>
-      </collision>
-    </link>
-
-    <joint name="${robot_name}_striker_mallet_fix" type="fixed">
-		<parent link="${robot_name}_striker_mallet" />
-		<child link = "${robot_name}_striker_mallet_tip" />
-		<origin xyz="0.0 0.0 0.0805" rpy="0 0 0" />
-		<axis xyz="1 0 0"/>
-    </joint>
-
-    <link name="${robot_name}_striker_mallet_tip">
-      <inertial>
-        <origin rpy="0 0 0" xyz="0 0 0.0"/>
-        <mass value="0.0"/>
-        <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
-      </inertial>
-    </link>
-
-    <gazebo reference="${robot_name}_striker_base">
-			<material>Gazebo/Grey</material>
-			<mu1>0.2</mu1>
-			<mu2>0.2</mu2>
-			<selfCollide>0</selfCollide>
+    <gazebo reference="$(arg parent)">
+        <kinematic>true</kinematic>
     </gazebo>
 
-    <gazebo reference="${robot_name}_striker_joint_link">
-		<material>Gazebo/Grey</material>
-		<mu1>0.2</mu1>
-		<mu2>0.2</mu2>
-		<selfCollide>0</selfCollide>
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+        </plugin>
     </gazebo>
-
-    <gazebo reference="${robot_name}_striker_mallet">
-			<material>Gazebo/Grey</material>
-			<mu1>0.2</mu1>
-			<mu2>0.2</mu2>
-			<selfCollide>0</selfCollide>
-    </gazebo>
-
-    <gazebo reference="${robot_name}_striker_mallet_tip">
-			<material>Gazebo/Grey</material>
-			<mu1>0.2</mu1>
-			<mu2>0.2</mu2>
-			<selfCollide>0</selfCollide>
-    </gazebo>
-
-    <transmission name="${robot_name}_striker_tran_1">
-		<robotNamespace>/${robot_name}</robotNamespace>
-		<type>transmission_interface/SimpleTransmission</type>
-		<joint name="${robot_name}_striker_joint_1">
-			<hardwareInterface>${hardware_interface}</hardwareInterface>
-		</joint>
-		<actuator name="${robot_name}_striker_motor_1">
-		    <hardwareInterface>${hardware_interface}</hardwareInterface>
-		    <mechanicalReduction>1</mechanicalReduction>
-		</actuator>
-	</transmission>
-
-	<transmission name="${robot_name}_striker_tran_2">
-		<robotNamespace>/${robot_name}</robotNamespace>
-		<type>transmission_interface/SimpleTransmission</type>
-		<joint name="${robot_name}_striker_joint_2">
-			<hardwareInterface>${hardware_interface}</hardwareInterface>
-		</joint>
-		<actuator name="${robot_name}_striker_motor_2">
-		    <hardwareInterface>${hardware_interface}</hardwareInterface>
-		    <mechanicalReduction>1</mechanicalReduction>
-		</actuator>
-	</transmission>
-
-
-  </xacro:macro>
-
-
-</robot> 
+</robot>

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="use_front" default="true"/>
+    <arg name="use_back" default="true"/>
+    <arg name="front_controllers" default="joint_trajectory_controller"/>
+    <arg name="back_controllers" default="joint_trajectory_controller"/>
+
+    <!-- Load joint controller configurations from YAML file to parameter server -->
+    <rosparam file="$(find air_hockey_description)/control/air_hockey_control.yaml" command="load"/>
+
+    <group ns="iiwa_front" if="$(arg use_front)">
+        <!-- load the controllers -->
+        <node name="iiwa_controller" pkg="controller_manager" type="spawner" respawn="true"
+              output="screen" args="joint_state_controller $(arg front_controllers)"/>
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+    </group>
+
+    <group ns="iiwa_back" if="$(arg use_back)">
+        <!-- load the controllers -->
+        <node name="iiwa_controller" pkg="controller_manager" type="spawner" respawn="true"
+              output="screen" args="joint_state_controller $(arg back_controllers)"/>
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+    </group>
+</launch>

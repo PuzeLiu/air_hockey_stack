@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="air_hockey">
+    <material name="grey">
+        <color rgba="0.8 0.8 0.8 1"/>
+    </material>
+    <material name="white">
+        <color rgba="1.0 1.0 1.0 1"/>
+    </material>
+    <material name="red">
+        <color rgba="1.0 0.0 0.0 1"/>
+    </material>
+
+    <xacro:arg name="table_base_x" default="0.0"/>
+    <xacro:arg name="table_base_y" default="0.0"/>
+    <xacro:arg name="table_base_z" default="0.0"/>
+
+    <xacro:property name="table_base_length" value="2.14"/>
+    <xacro:property name="table_base_width" value="1.22"/>
+    <xacro:property name="table_base_height" value="0.11"/>
+    <xacro:property name="table_rim_horizon_length" value="0.09"/>
+    <xacro:property name="table_rim_horizon_width" value="0.395"/>
+    <xacro:property name="table_rim_horizon_height" value="0.01"/>
+    <xacro:property name="table_rim_horizon_top_height" value="0.02"/>
+    <xacro:property name="table_rim_vertical_length" value="2.14"/>
+    <xacro:property name="table_rim_vertical_width" value="0.09"/>
+    <xacro:property name="table_rim_vertical_height" value="0.03"/>
+
+    <xacro:macro name="air_hockey_table" params="base_x base_y base_z">
+        <link name="world"/>
+        <joint name="base_joint" type="fixed">
+            <origin xyz="${base_x} ${base_y} ${base_z - table_base_height/2}" rpy="0 0 0"/>
+            <parent link="world"/>
+            <child link="t_base"/>
+        </joint>
+        <link name="t_base">
+            <inertial>
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <mass value="1"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual name="visual">
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${table_base_length} ${table_base_width} ${table_base_height}"/>
+                </geometry>
+                <material name="white"/>
+            </visual>
+            <collision name="collision">
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${table_base_length} ${table_base_width} ${table_base_height}"/>
+                </geometry>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <ode>
+                            <mu>0</mu>
+                            <mu2>0</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <contact>
+                <restitution value="1.0"/>
+                <lateral_friction value="1.0"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_down_rim_l" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="${(table_base_length - table_rim_horizon_length) / 2}
+                                           ${table_base_width/2 - table_rim_vertical_width - table_rim_horizon_width / 2}
+                                           ${(table_base_height + table_rim_horizon_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_down_rim_l"/>
+        </joint>
+        <link name="t_down_rim_l">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual name="visual">
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision name="collision">
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
+                </geometry>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <ode>
+                            <mu>0</mu>
+                            <mu2>0</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <contact>
+                <restitution value="1.0"/>
+                <lateral_friction value="0.0"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_down_rim_r" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="${(table_base_length - table_rim_horizon_length) / 2}
+                                           -${table_base_width/2 - table_rim_vertical_width - table_rim_horizon_width / 2}
+                                           ${(table_base_height + table_rim_horizon_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_down_rim_r"/>
+        </joint>
+        <link name="t_down_rim_r">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual name="visual">
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision name="collision">
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
+                </geometry>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <ode>
+                            <mu>0</mu>
+                            <mu2>0</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <contact>
+                <restitution value="1.0"/>
+                <lateral_friction value="0.0"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_down_rim_top" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="${(table_base_length - table_rim_horizon_length) / 2}
+                                           0.0
+                                           ${(table_base_height + table_rim_horizon_top_height) / 2 + table_rim_horizon_height}"/>
+            <parent link="t_base"/>
+            <child link="t_down_rim_top"/>
+        </joint>
+        <link name="t_down_rim_top">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual name="visual">
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision name="collision">
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>
+                </geometry>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <ode>
+                            <mu>0</mu>
+                            <mu2>0</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <contact>
+                <restitution value="1.0"/>
+                <lateral_friction value="0.0"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_up_rim_l" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="-${(table_base_length - table_rim_horizon_length) / 2}
+                                           ${table_base_width/2 - table_rim_vertical_width - table_rim_horizon_width / 2}
+                                           ${(table_base_height + table_rim_horizon_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_up_rim_l"/>
+        </joint>
+        <link name="t_up_rim_l">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual name="visual">
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision name="collision">
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
+                </geometry>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <ode>
+                            <mu>0</mu>
+                            <mu2>0</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <contact>
+                <restitution value="1.0"/>
+                <lateral_friction value="0.0"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_up_rim_r" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="-${(table_base_length - table_rim_horizon_length) / 2}
+                                           -${table_base_width/2 - table_rim_vertical_width - table_rim_horizon_width / 2}
+                                           ${(table_base_height + table_rim_horizon_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_up_rim_r"/>
+        </joint>
+        <link name="t_up_rim_r">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual name="visual">
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision name="collision">
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
+                </geometry>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <ode>
+                            <mu>0</mu>
+                            <mu2>0</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <contact>
+                <restitution value="1.0"/>
+                <lateral_friction value="0.0"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_up_rim_top" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="-${(table_base_length - table_rim_horizon_length) / 2}
+                                           0.0
+                                           ${(table_base_height + table_rim_horizon_top_height) / 2 + table_rim_horizon_height}"/>
+            <parent link="t_base"/>
+            <child link="t_up_rim_top"/>
+        </joint>
+        <link name="t_up_rim_top">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual name="visual">
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision name="collision">
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>
+                </geometry>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <ode>
+                            <mu>0</mu>
+                            <mu2>0</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <contact>
+                <restitution value="1.0"/>
+                <lateral_friction value="0.0"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_left_rim" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="0.0
+                                           ${(table_base_width - table_rim_vertical_width) / 2}
+                                           ${(table_base_height + table_rim_vertical_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_left_rim"/>
+        </joint>
+        <link name="t_left_rim">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual name="visual">
+                <geometry>
+                    <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision name="collision">
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height + 0.1}"/>
+                </geometry>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <ode>
+                            <mu>0</mu>
+                            <mu2>0</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <contact>
+                <restitution value="1.0"/>
+                <lateral_friction value="0.0"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_right_rim" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="0.0
+                                           -${(table_base_width - table_rim_vertical_width) / 2}
+                                           ${(table_base_height + table_rim_vertical_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_right_rim"/>
+        </joint>
+        <link name="t_right_rim">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual name="visual">
+                <geometry>
+                    <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision name="collision">
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height + 0.1}"/>
+                </geometry>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <ode>
+                            <mu>0</mu>
+                            <mu2>0</mu2>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <contact>
+                <restitution value="1.0"/>
+                <lateral_friction value="0.0"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <static>1</static>
+    </xacro:macro>
+
+
+    <xacro:air_hockey_table base_x="$(arg table_base_x)" base_y="$(arg table_base_y)" base_z="$(arg table_base_z)"/>
+</robot>
+

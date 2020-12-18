@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Arguments -->
+    <arg name="world_name" default="$(find iiwas_gazebo)/worlds/iiwas_world.world"/>
+    <arg name="gui" default="true"/>
+    <arg name="paused" default="true"/>
+
+    <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+
+    <arg name="use_front" default="true"/>
+    <arg name="use_back" default="true"/>
+
+    <!-- Description -->
+    <include file="$(find air_hockey_description)/launch/air_hockey_bringup.launch">
+        <arg name="use_front" value="$(arg use_front)"/>
+        <arg name="use_back" value="$(arg use_back)"/>
+        <arg name="hardware_interface" value="$(arg hardware_interface)"/>
+    </include>
+
+    <node name="rviz" pkg="rviz" type="rviz"
+          args="-d $(find iiwas_description)/config/iiwas_two_separate.rviz"/>
+
+    <!-- Simulation -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="use_sim_time" value="true"/>
+<!--        <arg name="physics" value="bullet" />-->
+    </include>
+
+    <!-- Controllers -->
+    <include file="$(find air_hockey_description)/launch/air_hockey_control.launch">
+        <arg name="use_front" value="$(arg use_front)" />
+        <arg name="use_back" value="$(arg use_back)" />
+        <arg name="front_controllers" value="joint_trajectory_controller"/>
+        <arg name="back_controllers" value="joint_trajectory_controller"/>
+    </include>
+
+    <group ns="iiwas_frame">
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+        <node name="frame_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+              args="-urdf -model iiwas_frame -param robot_description"/>
+    </group>
+
+    <group ns="iiwa_front" if="$(arg use_front)">
+        <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+              args="-urdf -model iiwa_front -param robot_description -wait iiwas_frame
+              -reference_frame iiwas_frame::front_base"/>
+    </group>
+
+    <group ns="iiwa_back" if="$(arg use_back)">
+        <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+              args="-urdf -model iiwa_back -param robot_description -wait iiwas_frame
+              -reference_frame iiwas_frame::back_base"/>
+    </group>
+</launch>
