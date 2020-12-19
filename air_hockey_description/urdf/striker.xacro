@@ -9,12 +9,12 @@
 
         <link name="${robot_name}_striker_base">
             <inertial>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <mass value="0.1"/>
+                <origin xyz="0 0 0.156" rpy="0 0 0"/>
+                <mass value="0.350"/>
 <!--                <inertia ixx="0.000297" ixy="0.0" ixz="0.0"-->
 <!--                         iyy="0.000271" iyz="0.0000001" izz="0.0000653"/>-->
-                <inertia ixx="0.01" ixy="0.0" ixz="0.0"
-                         iyy="0.01" iyz="0.0" izz="0.01"/>
+                <inertia ixx="0.005" ixy="0.0" ixz="0.0"
+                         iyy="0.005" iyz="0.0" izz="0.001"/>
             </inertial>
             <visual>
                 <origin xyz="0 0 0" rpy="0 0.0 0"/>
@@ -53,20 +53,20 @@
                 <inertia ixx="0.01" ixy="0.0" ixz="0.0"
                          iyy="0.01" iyz="0.0" izz="0.01"/>
             </inertial>
-            <visual>
-                <origin xyz="0 0 0" rpy="0 0.0 0"/>
-                <geometry>
-                    <mesh filename="package://air_hockey_description/meshes/striker/visual/EE_joint.stl"/>
-                </geometry>
-                <material name="White"/>
-            </visual>
-            <collision>
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-                <geometry>
-                    <mesh filename="package://air_hockey_description/meshes/striker/collision/EE_joint_collision.stl"/>
-                </geometry>
-                <material name="White"/>
-            </collision>
+<!--            <visual>-->
+<!--                <origin xyz="0 0 0" rpy="0 0.0 0"/>-->
+<!--                <geometry>-->
+<!--                    <mesh filename="package://air_hockey_description/meshes/striker/visual/EE_joint.stl"/>-->
+<!--                </geometry>-->
+<!--                <material name="White"/>-->
+<!--            </visual>-->
+<!--            <collision>-->
+<!--                <origin xyz="0 0 0" rpy="0 0 0"/>-->
+<!--                <geometry>-->
+<!--                    <mesh filename="package://air_hockey_description/meshes/striker/collision/EE_joint_collision.stl"/>-->
+<!--                </geometry>-->
+<!--                <material name="White"/>-->
+<!--            </collision>-->
         </link>
 
         <joint name="${robot_name}_striker_joint_2" type="revolute">
@@ -83,13 +83,13 @@
         <!--  The striker frame is here defined -->
         <link name="${robot_name}_striker_mallet">
             <inertial>
-                <origin xyz="0 0.0 0.0" rpy="0 0 0"/>
-                <mass value="0.1"/>
-<!--                <inertia-->
-<!--                        ixx="0.0001" ixy="0.0" ixz="0.0"-->
-<!--                        iyy="0.0001" iyz="0.0" izz="0.0001"/>-->
-                <inertia ixx="0.01" ixy="0.0" ixz="0.0"
-                         iyy="0.01" iyz="0.0" izz="0.01"/>
+                <origin xyz="0 0.0 0.078" rpy="0 0 0"/>
+                <mass value="0.183"/>
+                <inertia
+                        ixx="0.0001" ixy="0.0" ixz="0.0"
+                        iyy="0.0001" iyz="0.0" izz="0.0001"/>
+<!--                <inertia ixx="0.01" ixy="0.0" ixz="0.0"-->
+<!--                         iyy="0.01" iyz="0.0" izz="0.01"/>-->
             </inertial>
             <visual>
                 <origin xyz="0 0.0 0.0" rpy="0.0 0.0 0"/>
@@ -129,11 +129,12 @@
         <link name="${robot_name}_striker_mallet_tip">
             <inertial>
                 <origin rpy="0 0 0" xyz="0 0 0.0"/>
-<!--                <mass value="0.0"/>-->
-<!--                <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>-->
                 <mass value="0.1"/>
-                <inertia ixx="0.01" ixy="0.0" ixz="0.0"
-                         iyy="0.01" iyz="0.0" izz="0.01"/>
+                <inertia ixx="0.0001" ixy="0.0" ixz="0.0"
+                         iyy="0.0001" iyz="0.0" izz="0.0001"/>
+<!--                <mass value="0.1"/>-->
+<!--                <inertia ixx="0.01" ixy="0.0" ixz="0.0"-->
+<!--                         iyy="0.01" iyz="0.0" izz="0.01"/>-->
             </inertial>
         </link>
 

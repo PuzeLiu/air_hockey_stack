@@ -38,14 +38,14 @@
                 <mass value="1"/>
                 <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
             </inertial>
-            <visual name="visual">
+            <visual>
                 <origin xyz="0 0 0.0" rpy="0 0 0"/>
                 <geometry>
                     <box size="${table_base_length} ${table_base_width} ${table_base_height}"/>
                 </geometry>
                 <material name="white"/>
             </visual>
-            <collision name="collision">
+            <collision>
                 <origin xyz="0 0 0.0" rpy="0 0 0"/>
                 <geometry>
                     <box size="${table_base_length} ${table_base_width} ${table_base_height}"/>
@@ -56,9 +56,11 @@
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0</mu>
-                            <mu2>0</mu2>
+                            <mu>1.0</mu>
+                            <mu2>1.0</mu2>
                         </ode>
                     </friction>
                 </surface>
@@ -77,19 +79,20 @@
                                            ${(table_base_height + table_rim_horizon_height) / 2}"/>
             <parent link="t_base"/>
             <child link="t_down_rim_l"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
         </joint>
         <link name="t_down_rim_l">
             <inertial>
                 <mass value="1.0"/>
                 <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
             </inertial>
-            <visual name="visual">
+            <visual>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
-            <collision name="collision">
+            <collision>
                 <origin xyz="0.0 0.0 0.0"/>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
@@ -100,9 +103,11 @@
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0</mu>
-                            <mu2>0</mu2>
+                            <mu>1.0</mu>
+                            <mu2>1.0</mu2>
                         </ode>
                     </friction>
                 </surface>
@@ -121,19 +126,20 @@
                                            ${(table_base_height + table_rim_horizon_height) / 2}"/>
             <parent link="t_base"/>
             <child link="t_down_rim_r"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
         </joint>
         <link name="t_down_rim_r">
             <inertial>
                 <mass value="1.0"/>
                 <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
             </inertial>
-            <visual name="visual">
+            <visual>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
-            <collision name="collision">
+            <collision>
                 <origin xyz="0.0 0.0 0.0"/>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
@@ -144,9 +150,11 @@
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0</mu>
-                            <mu2>0</mu2>
+                            <mu>1.0</mu>
+                            <mu2>1.0</mu2>
                         </ode>
                     </friction>
                 </surface>
@@ -165,19 +173,21 @@
                                            ${(table_base_height + table_rim_horizon_top_height) / 2 + table_rim_horizon_height}"/>
             <parent link="t_base"/>
             <child link="t_down_rim_top"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
+
         </joint>
         <link name="t_down_rim_top">
             <inertial>
                 <mass value="1.0"/>
                 <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
             </inertial>
-            <visual name="visual">
+            <visual>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
-            <collision name="collision">
+            <collision>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>
                 </geometry>
@@ -187,9 +197,11 @@
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0</mu>
-                            <mu2>0</mu2>
+                            <mu>1.0</mu>
+                            <mu2>1.0</mu2>
                         </ode>
                     </friction>
                 </surface>
@@ -208,19 +220,20 @@
                                            ${(table_base_height + table_rim_horizon_height) / 2}"/>
             <parent link="t_base"/>
             <child link="t_up_rim_l"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
         </joint>
         <link name="t_up_rim_l">
             <inertial>
                 <mass value="1.0"/>
                 <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
             </inertial>
-            <visual name="visual">
+            <visual>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
-            <collision name="collision">
+            <collision>
                 <origin xyz="0.0 0.0 0.0"/>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
@@ -231,9 +244,11 @@
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0</mu>
-                            <mu2>0</mu2>
+                            <mu>1.0</mu>
+                            <mu2>1.0</mu2>
                         </ode>
                     </friction>
                 </surface>
@@ -252,19 +267,20 @@
                                            ${(table_base_height + table_rim_horizon_height) / 2}"/>
             <parent link="t_base"/>
             <child link="t_up_rim_r"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
         </joint>
         <link name="t_up_rim_r">
             <inertial>
                 <mass value="1.0"/>
                 <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
             </inertial>
-            <visual name="visual">
+            <visual>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
-            <collision name="collision">
+            <collision>
                 <origin xyz="0.0 0.0 0.0"/>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
@@ -275,9 +291,11 @@
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0</mu>
-                            <mu2>0</mu2>
+                            <mu>1.0</mu>
+                            <mu2>1.0</mu2>
                         </ode>
                     </friction>
                 </surface>
@@ -296,19 +314,20 @@
                                            ${(table_base_height + table_rim_horizon_top_height) / 2 + table_rim_horizon_height}"/>
             <parent link="t_base"/>
             <child link="t_up_rim_top"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
         </joint>
         <link name="t_up_rim_top">
             <inertial>
                 <mass value="1.0"/>
                 <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
             </inertial>
-            <visual name="visual">
+            <visual>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
-            <collision name="collision">
+            <collision>
                 <geometry>
                     <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>
                 </geometry>
@@ -318,9 +337,11 @@
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0</mu>
-                            <mu2>0</mu2>
+                            <mu>1.0</mu>
+                            <mu2>1.0</mu2>
                         </ode>
                     </friction>
                 </surface>
@@ -339,19 +360,20 @@
                                            ${(table_base_height + table_rim_vertical_height) / 2}"/>
             <parent link="t_base"/>
             <child link="t_left_rim"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
         </joint>
         <link name="t_left_rim">
             <inertial>
                 <mass value="1.0"/>
                 <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
             </inertial>
-            <visual name="visual">
+            <visual>
                 <geometry>
                     <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height}"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
-            <collision name="collision">
+            <collision>
                 <origin xyz="0.0 0.0 0.0"/>
                 <geometry>
                     <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height + 0.1}"/>
@@ -362,9 +384,11 @@
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0</mu>
-                            <mu2>0</mu2>
+                            <mu>1.0</mu>
+                            <mu2>1.0</mu2>
                         </ode>
                     </friction>
                 </surface>
@@ -383,19 +407,20 @@
                                            ${(table_base_height + table_rim_vertical_height) / 2}"/>
             <parent link="t_base"/>
             <child link="t_right_rim"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
         </joint>
         <link name="t_right_rim">
             <inertial>
                 <mass value="1.0"/>
                 <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
             </inertial>
-            <visual name="visual">
+            <visual>
                 <geometry>
                     <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height}"/>
                 </geometry>
                 <material name="grey"/>
             </visual>
-            <collision name="collision">
+            <collision>
                 <origin xyz="0.0 0.0 0.0"/>
                 <geometry>
                     <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height + 0.1}"/>
@@ -406,9 +431,11 @@
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0</mu>
-                            <mu2>0</mu2>
+                            <mu>1.0</mu>
+                            <mu2>1.0</mu2>
                         </ode>
                     </friction>
                 </surface>
@@ -423,7 +450,6 @@
 
         <static>1</static>
     </xacro:macro>
-
 
     <xacro:air_hockey_table base_x="$(arg table_base_x)" base_y="$(arg table_base_y)" base_z="$(arg table_base_z)"/>
 </robot>

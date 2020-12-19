@@ -6,10 +6,11 @@
     <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
     <arg name="iiwa_urdf" default="$(find air_hockey_description)/urdf/iiwa_striker.urdf.xacro"/>
     <arg name="table_urdf" default="$(find air_hockey_description)/urdf/air_hockey_table/model.urdf.xacro"/>
+    <arg name="puck_urdf" default="$(find air_hockey_description)/urdf/puck/model.urdf.xacro"/>
 
     <arg name="table_base_x" default="1.694"/>
     <arg name="table_base_y" default="0.813"/>
-    <arg name="table_base_z" default="0.17"/>
+    <arg name="table_base_z" default="0.095"/>
 
     <group ns="iiwas_frame">
         <param name="robot_description"
@@ -20,11 +21,6 @@
         <param name="robot_description" command="$(find xacro)/xacro '$(arg table_urdf)'
         table_base_x:=$(arg table_base_x) table_base_y:=$(arg table_base_y) table_base_z:=$(arg table_base_z)"/>
     </group>
-
-<!--    <group ns="puck">-->
-<!--        <param name="robot_description"-->
-<!--               command="$(find xacro)/xacro '$(find air_hockey_description)/robots/iiwas_frame.urdf.xacro'"/>-->
-<!--    </group>-->
 
     <group ns="iiwa_front">
         <param name="robot_description" command="$(find xacro)/xacro '$(arg iiwa_urdf)' robot_name:='F'

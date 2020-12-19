@@ -1,0 +1,459 @@
+<?xml version="1.0" ?>
+<sdf version='1.6'>
+<model name="air_hockey">
+    <pose>0 0 0 0 0 0</pose>
+    <link name="t_base">
+        <pose frame="">0 0 -0.055</pose>
+        <inertial>
+            <mass>1.0</mass>
+            <inertia>
+                <ixx>1.0</ixx>
+                <ixy>0.0</ixy>
+                <ixz>0.0</ixz>
+                <iyy>1.0</iyy>
+                <iyz>0.0</iyz>
+                <izz>1.0</izz>
+            </inertia>
+        </inertial>
+        <visual name="visual">
+            <origin rpy="0 0 0" xyz="0 0 0.0"/>
+            <geometry>
+                <box>
+                    <size>2.14 1.22 0.11</size>
+                </box>
+            </geometry>
+            <material name="white"/>
+        </visual>
+        <collision name="collision">
+            <origin rpy="0 0 0" xyz="0 0 0.0"/>
+            <geometry>
+                <box>
+                    <size>2.14 1.22 0.11</size>
+                </box>
+            </geometry>
+            <surface>
+                <bounce>
+                    <restitution_coefficient>1.0</restitution_coefficient>
+                    <threshold>0</threshold>
+                </bounce>
+                <friction>
+                    <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                    <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                    <ode>
+                        <mu>0.02</mu>
+                        <mu2>0.02</mu2>
+                    </ode>
+                </friction>
+            </surface>
+        </collision>
+        <contact>
+            <restitution value="1.0"/>
+            <lateral_friction value="1.0"/>
+            <rolling_friction value="0.0"/>
+            <spinning_friction value="0.0"/>
+        </contact>
+    </link>
+
+    <link name="t_down_rim_l">
+        <pose frame="t_base">1.025 0.3225 0.06</pose>
+        <inertial>
+            <mass>1.0</mass>
+            <inertia>
+                <ixx>1.0</ixx>
+                <ixy>0.0</ixy>
+                <ixz>0.0</ixz>
+                <iyy>1.0</iyy>
+                <iyz>0.0</iyz>
+                <izz>1.0</izz>
+            </inertia>
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box>
+                    <size>0.09 0.395 0.01</size>
+                </box>
+            </geometry>
+            <material name="grey"/>
+        </visual>
+        <collision name="collision">
+            <origin xyz="0.0 0.0 0.0"/>
+            <geometry>
+                <box>
+                    <size>0.09 0.395 0.11</size>
+                </box>
+            </geometry>
+            <surface>
+                <bounce>
+                    <restitution_coefficient>1.0</restitution_coefficient>
+                    <threshold>0</threshold>
+                </bounce>
+                <friction>
+                    <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                    <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                    <ode>
+                        <mu>1.0</mu>
+                        <mu2>1.0</mu2>
+                    </ode>
+                </friction>
+            </surface>
+        </collision>
+        <contact>
+            <restitution value="1.0"/>
+            <lateral_friction value="0.0"/>
+            <rolling_friction value="0.0"/>
+            <spinning_friction value="0.0"/>
+        </contact>
+    </link>
+    <link name="t_down_rim_r">
+        <pose frame="t_base">1.025 -0.3225 0.06</pose>
+        <inertial>
+            <mass>1.0</mass>
+            <inertia>
+                <ixx>1.0</ixx>
+                <ixy>0.0</ixy>
+                <ixz>0.0</ixz>
+                <iyy>1.0</iyy>
+                <iyz>0.0</iyz>
+                <izz>1.0</izz>
+            </inertia>
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box>
+                    <size>0.09 0.395 0.01</size>
+                </box>
+            </geometry>
+            <material name="grey"/>
+        </visual>
+        <collision name="collision">
+            <origin xyz="0.0 0.0 0.0"/>
+            <geometry>
+                <box>
+                    <size>0.09 0.395 0.11</size>
+                </box>
+            </geometry>
+            <surface>
+                <bounce>
+                    <restitution_coefficient>1.0</restitution_coefficient>
+                    <threshold>0</threshold>
+                </bounce>
+                <friction>
+                    <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                    <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                    <ode>
+                        <mu>1.0</mu>
+                        <mu2>1.0</mu2>
+                    </ode>
+                </friction>
+            </surface>
+        </collision>
+        <contact>
+            <restitution value="1.0"/>
+            <lateral_friction value="0.0"/>
+            <rolling_friction value="0.0"/>
+            <spinning_friction value="0.0"/>
+        </contact>
+    </link>
+    <link name="t_down_rim_top">
+        <pose frame="t_base">1.025 0.0 0.075</pose>
+        <inertial>
+            <mass>1.0</mass>
+            <inertia>
+                <ixx>1.0</ixx>
+                <ixy>0.0</ixy>
+                <ixz>0.0</ixz>
+                <iyy>1.0</iyy>
+                <iyz>0.0</iyz>
+                <izz>1.0</izz>
+            </inertia>
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box>
+                    <size>0.09 1.04 0.02</size>
+                </box>
+            </geometry>
+            <material name="grey"/>
+        </visual>
+        <collision name="collision">
+            <geometry>
+                <box>
+                    <size>0.09 1.04 0.02</size>
+                </box>
+            </geometry>
+            <surface>
+                <bounce>
+                    <restitution_coefficient>1.0</restitution_coefficient>
+                    <threshold>0</threshold>
+                </bounce>
+                <friction>
+                    <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                    <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                    <ode>
+                        <mu>1.0</mu>
+                        <mu2>1.0</mu2>
+                    </ode>
+                </friction>
+            </surface>
+        </collision>
+        <contact>
+            <restitution value="1.0"/>
+            <lateral_friction value="0.0"/>
+            <rolling_friction value="0.0"/>
+            <spinning_friction value="0.0"/>
+        </contact>
+    </link>
+
+    <link name="t_up_rim_l">
+        <pose frame="t_base">-1.025 0.3225 0.06</pose>
+        <inertial>
+            <mass>1.0</mass>
+            <inertia>
+                <ixx>1.0</ixx>
+                <ixy>0.0</ixy>
+                <ixz>0.0</ixz>
+                <iyy>1.0</iyy>
+                <iyz>0.0</iyz>
+                <izz>1.0</izz>
+            </inertia>
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box>
+                    <size>0.09 0.395 0.01</size>
+                </box>
+            </geometry>
+            <material name="grey"/>
+        </visual>
+        <collision name="collision">
+            <origin xyz="0.0 0.0 0.0"/>
+            <geometry>
+                <box>
+                    <size>0.09 0.395 0.11</size>
+                </box>
+            </geometry>
+            <surface>
+                <bounce>
+                    <restitution_coefficient>1.0</restitution_coefficient>
+                    <threshold>0</threshold>
+                </bounce>
+                <friction>
+                    <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                    <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                    <ode>
+                        <mu>1.0</mu>
+                        <mu2>1.0</mu2>
+                    </ode>
+                </friction>
+            </surface>
+        </collision>
+        <contact>
+            <restitution value="1.0"/>
+            <lateral_friction value="0.0"/>
+            <rolling_friction value="0.0"/>
+            <spinning_friction value="0.0"/>
+        </contact>
+    </link>
+    <link name="t_up_rim_r">
+        <pose frame="t_base">-1.025 -0.3225 0.06</pose>
+        <inertial>
+            <mass>1.0</mass>
+            <inertia>
+                <ixx>1.0</ixx>
+                <ixy>0.0</ixy>
+                <ixz>0.0</ixz>
+                <iyy>1.0</iyy>
+                <iyz>0.0</iyz>
+                <izz>1.0</izz>
+            </inertia>
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box>
+                    <size>0.09 0.395 0.01</size>
+                </box>
+            </geometry>
+            <material name="grey"/>
+        </visual>
+        <collision name="collision">
+            <origin xyz="0.0 0.0 0.0"/>
+            <geometry>
+                <box>
+                    <size>0.09 0.395 0.11</size>
+                </box>
+            </geometry>
+            <surface>
+                <bounce>
+                    <restitution_coefficient>1.0</restitution_coefficient>
+                    <threshold>0</threshold>
+                </bounce>
+                <friction>
+                    <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                    <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                    <ode>
+                        <mu>1.0</mu>
+                        <mu2>1.0</mu2>
+                    </ode>
+                </friction>
+            </surface>
+        </collision>
+        <contact>
+            <restitution value="1.0"/>
+            <lateral_friction value="0.0"/>
+            <rolling_friction value="0.0"/>
+            <spinning_friction value="0.0"/>
+        </contact>
+    </link>
+    <link name="t_up_rim_top">
+        <pose frame="t_base">-1.025 0.0 0.075</pose>
+        <inertial>
+            <mass>1.0</mass>
+            <inertia>
+                <ixx>1.0</ixx>
+                <ixy>0.0</ixy>
+                <ixz>0.0</ixz>
+                <iyy>1.0</iyy>
+                <iyz>0.0</iyz>
+                <izz>1.0</izz>
+            </inertia>
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box>
+                    <size>0.09 1.04 0.02</size>
+                </box>
+            </geometry>
+            <material name="grey"/>
+        </visual>
+        <collision name="collision">
+            <geometry>
+                <box>
+                    <size>0.09 1.04 0.02</size>
+                </box>
+            </geometry>
+            <surface>
+                <bounce>
+                    <restitution_coefficient>1.0</restitution_coefficient>
+                    <threshold>0</threshold>
+                </bounce>
+                <friction>
+                    <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                    <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                    <ode>
+                        <mu>1.0</mu>
+                        <mu2>1.0</mu2>
+                    </ode>
+                </friction>
+            </surface>
+        </collision>
+        <contact>
+            <restitution value="1.0"/>
+            <lateral_friction value="0.0"/>
+            <rolling_friction value="0.0"/>
+            <spinning_friction value="0.0"/>
+        </contact>
+    </link>
+
+    <link name="t_left_rim">
+        <pose frame="t_base">0.0 0.565 0.07</pose>
+        <inertial>
+            <mass>1.0</mass>
+            <inertia>
+                <ixx>1.0</ixx>
+                <ixy>0.0</ixy>
+                <ixz>0.0</ixz>
+                <iyy>1.0</iyy>
+                <iyz>0.0</iyz>
+                <izz>1.0</izz>
+            </inertia>
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box>
+                    <size>2.14 0.09 0.03</size>
+                </box>
+            </geometry>
+            <material name="grey"/>
+        </visual>
+        <collision name="collision">
+            <origin xyz="0.0 0.0 0.0"/>
+            <geometry>
+                <box>
+                    <size>2.14 0.09 0.13</size>
+                </box>
+            </geometry>
+            <surface>
+                <bounce>
+                    <restitution_coefficient>1.0</restitution_coefficient>
+                    <threshold>0</threshold>
+                </bounce>
+                <friction>
+                    <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                    <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                    <ode>
+                        <mu>1.0</mu>
+                        <mu2>1.0</mu2>
+                    </ode>
+                </friction>
+            </surface>
+        </collision>
+        <contact>
+            <restitution value="1.0"/>
+            <lateral_friction value="0.0"/>
+            <rolling_friction value="0.0"/>
+            <spinning_friction value="0.0"/>
+        </contact>
+    </link>
+    <link name="t_right_rim">
+        <pose frame="t_base">0.0 -0.565 0.07</pose>
+        <inertial>
+            <mass>1.0</mass>
+            <inertia>
+                <ixx>1.0</ixx>
+                <ixy>0.0</ixy>
+                <ixz>0.0</ixz>
+                <iyy>1.0</iyy>
+                <iyz>0.0</iyz>
+                <izz>1.0</izz>
+            </inertia>
+        </inertial>
+        <visual name="visual">
+            <geometry>
+                <box>
+                    <size>2.14 0.09 0.03</size>
+                </box>
+            </geometry>
+            <material name="grey"/>
+        </visual>
+        <collision name="collision">
+            <origin xyz="0.0 0.0 0.0"/>
+            <geometry>
+                <box>
+                    <size>2.14 0.09 0.13</size>
+                </box>
+            </geometry>
+            <surface>
+                <bounce>
+                    <restitution_coefficient>1.0</restitution_coefficient>
+                    <threshold>0</threshold>
+                </bounce>
+                <friction>
+                    <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                    <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                    <ode>
+                        <mu>1.0</mu>
+                        <mu2>1.0</mu2>
+                    </ode>
+                </friction>
+            </surface>
+        </collision>
+        <contact>
+            <restitution value="1.0"/>
+            <lateral_friction value="0.0"/>
+            <rolling_friction value="0.0"/>
+            <spinning_friction value="0.0"/>
+        </contact>
+    </link>
+  <static>1</static>
+</model>
+</sdf>
