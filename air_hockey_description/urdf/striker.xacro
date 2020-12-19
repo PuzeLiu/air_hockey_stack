@@ -105,9 +105,7 @@
                 </geometry>
                 <material name="White"/>
                 <surface>
-                    <bounce>
-                        <restitution_coefficient>0.8</restitution_coefficient>
-                    </bounce>
+                    <bounce restitution_coefficient="1.0" threshold="0.01"/>
                     <contact>
                         <ode>
                             <soft_cfm>0.1</soft_cfm>

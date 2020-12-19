@@ -10,9 +10,9 @@
         <color rgba="1.0 0.0 0.0 1"/>
     </material>
 
-    <xacro:arg name="table_base_x" default="0.0"/>
-    <xacro:arg name="table_base_y" default="0.0"/>
-    <xacro:arg name="table_base_z" default="0.0"/>
+    <xacro:arg name="table_surface_x" default="0.0"/>
+    <xacro:arg name="table_surface_y" default="0.0"/>
+    <xacro:arg name="table_surface_z" default="0.0"/>
 
     <xacro:property name="table_base_length" value="2.14"/>
     <xacro:property name="table_base_width" value="1.22"/>
@@ -25,10 +25,10 @@
     <xacro:property name="table_rim_vertical_width" value="0.09"/>
     <xacro:property name="table_rim_vertical_height" value="0.03"/>
 
-    <xacro:macro name="air_hockey_table" params="base_x base_y base_z">
+    <xacro:macro name="air_hockey_table" params="surface_x surface_y surface_z">
         <link name="world"/>
         <joint name="base_joint" type="fixed">
-            <origin xyz="${base_x} ${base_y} ${base_z - table_base_height/2}" rpy="0 0 0"/>
+            <origin xyz="${surface_x} ${surface_y} ${surface_z - table_base_height/2}" rpy="0 0 0"/>
             <parent link="world"/>
             <child link="t_base"/>
         </joint>
@@ -451,6 +451,6 @@
         <static>1</static>
     </xacro:macro>
 
-    <xacro:air_hockey_table base_x="$(arg table_base_x)" base_y="$(arg table_base_y)" base_z="$(arg table_base_z)"/>
+    <xacro:air_hockey_table surface_x="$(arg table_surface_x)" surface_y="$(arg table_surface_y)" surface_z="$(arg table_surface_z)"/>
 </robot>
 

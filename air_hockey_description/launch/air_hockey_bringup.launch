@@ -8,9 +8,9 @@
     <arg name="table_urdf" default="$(find air_hockey_description)/urdf/air_hockey_table/model.urdf.xacro"/>
     <arg name="puck_urdf" default="$(find air_hockey_description)/urdf/puck/model.urdf.xacro"/>
 
-    <arg name="table_base_x" default="1.694"/>
-    <arg name="table_base_y" default="0.813"/>
-    <arg name="table_base_z" default="0.095"/>
+    <arg name="table_surface_x" default="1.694"/>
+    <arg name="table_surface_y" default="0.813"/>
+    <arg name="table_surface_z" default="0.1"/>
 
     <group ns="iiwas_frame">
         <param name="robot_description"
@@ -19,7 +19,7 @@
 
     <group ns="air_hockey_table">
         <param name="robot_description" command="$(find xacro)/xacro '$(arg table_urdf)'
-        table_base_x:=$(arg table_base_x) table_base_y:=$(arg table_base_y) table_base_z:=$(arg table_base_z)"/>
+        table_surface_x:=$(arg table_surface_x) table_surface_y:=$(arg table_surface_y) table_surface_z:=$(arg table_surface_z)"/>
     </group>
 
     <group ns="iiwa_front">

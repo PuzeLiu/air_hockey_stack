@@ -10,9 +10,9 @@
     <arg name="use_front" default="true"/>
     <arg name="use_back" default="true"/>
 
-    <arg name="table_base_x" default="1.694"/>
-    <arg name="table_base_y" default="0.813"/>
-    <arg name="table_base_z" default="0.095"/>
+    <arg name="table_surface_x" default="1.694"/>
+    <arg name="table_surface_y" default="0.813"/>
+    <arg name="table_surface_z" default="0.1"/>
 
     <!-- Description -->
     <include file="$(find air_hockey_description)/launch/air_hockey_bringup.launch">
@@ -55,13 +55,13 @@
         </node>
         <node name="table_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
               args="-sdf -model air_hockey_table -file '$(find air_hockey_description)/urdf/air_hockey_table/model.sdf'
-              -x $(arg table_base_x) -y $(arg table_base_y) -z $(arg table_base_z)"/>
+              -x $(arg table_surface_x) -y $(arg table_surface_y) -z $(arg table_surface_z)"/>
     </group>
 
     <group ns="puck">
         <node name="puck_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
               args="-sdf -model puck -file '$(find air_hockey_description)/urdf/puck/model.sdf'
-              -x $(arg table_base_x) -y $(arg table_base_y) -z $(arg table_base_z)"/>
+              -x 0.990 -y 0.613 -z $(arg table_surface_z)"/>
     </group>
 
     <group ns="iiwa_front" if="$(arg use_front)">
