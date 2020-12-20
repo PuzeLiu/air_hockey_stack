@@ -1,32 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="air_hockey">
+<robot name="puck" xmlns:xacro="http://www.ros.org/wiki/xacro" >
     <material name="red">
         <color rgba="1.0 0.0 0.0 1"/>
     </material>
-
-    <xacro:arg name="puck_base_x" default="0.0"/>
-    <xacro:arg name="puck_base_y" default="0.0"/>
-    <xacro:arg name="puck_base_z" default="0.0"/>
 
     <xacro:property name="puck_radius" value="0.03165"/>
     <xacro:property name="puck_height" value="0.0049"/>
 
     <xacro:property name="restitution" value="0.8"/>
-    <xacro:property name="lateral_friction" value="0.04"/>
+    <xacro:property name="lateral_friction" value="0.02"/>
     <xacro:property name="rolling_friction" value="0.8"/>
     <xacro:property name="spinning_friction" value="0.04"/>
 
     <xacro:macro name="puck">
-        <link name="root">
+        <link name="base">
         </link>
 
         <joint name="base_joint" type="fixed">
             <origin xyz="0 0 ${puck_height/2}" rpy="0 0 0"/>
-            <parent link="root"/>
-            <child link="base"/>
+            <parent link="base"/>
+            <child link="link"/>
         </joint>
 
-        <link name="base">
+        <link name="link">
             <inertial>
                 <origin xyz="0 0 0.0" rpy="0 0 0"/>
                 <mass value="0.01"/>
@@ -37,26 +33,13 @@
                 <geometry>
                     <cylinder radius="${puck_radius}" length="${puck_height}"/>
                 </geometry>
-                <material name="red"/>
-                <material>Gazebo/Orange</material>
+                <material name="Red"/>
             </visual>
             <collision>
-                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <origin xyz="0 0 0.05" rpy="0 0 0"/>
                 <geometry>
-                    <cylinder radius="${puck_radius}" length="${puck_height}"/>
+                    <cylinder radius="${puck_radius}" length="${puck_height + 0.1}"/>
                 </geometry>
-                <surface>
-                    <restitution_coefficient>${restitution}</restitution_coefficient>
-                    <threshold>0.01</threshold>
-                </surface>
-                <friction>
-                    <ode>
-                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
-                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
-                        <mu>${lateral_friction}</mu>
-                        <mu2>${lateral_friction}</mu2>
-                    </ode>
-                </friction>
             </collision>
             <contact>
                 <restitution value="${restitution}"/>
@@ -66,10 +49,28 @@
             </contact>
         </link>
 
-        <gazebo reference="base">
-<!--            <mu1>${lateral_friction}</mu1>-->
-<!--            <mu2>${lateral_friction}</mu2>-->
-            <maxVel value="10.0"/>
+        <gazebo reference="link">
+            <collision>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>${restitution}</restitution_coefficient>
+                        <threshold>0.0</threshold>
+                    </bounce>
+                    <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                        <ode>
+                            <mu>${lateral_friction}</mu>
+                            <mu2>${lateral_friction}</mu2>
+                        </ode>
+                    </friction>
+                    <contact>
+                        <ode>
+                            <max_vel>100</max_vel>
+                        </ode>
+                    </contact>
+                </surface>
+            </collision>
             <material>Gazebo/Red</material>
         </gazebo>
 
