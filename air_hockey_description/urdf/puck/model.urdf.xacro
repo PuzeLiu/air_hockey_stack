@@ -33,7 +33,7 @@
                 <geometry>
                     <cylinder radius="${puck_radius}" length="${puck_height}"/>
                 </geometry>
-                <material name="Red"/>
+                <material name="red"/>
             </visual>
             <collision>
                 <origin xyz="0 0 0.05" rpy="0 0 0"/>
@@ -72,6 +72,11 @@
                 </surface>
             </collision>
             <material>Gazebo/Red</material>
+        </gazebo>
+
+        <gazebo>
+            <plugin name="puck_tf_plugin" filename="libpuck_tf_plugin.so">
+            </plugin>
         </gazebo>
 
     </xacro:macro>

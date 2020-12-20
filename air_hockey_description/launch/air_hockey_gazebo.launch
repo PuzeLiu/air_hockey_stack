@@ -3,7 +3,7 @@
     <!-- Arguments -->
     <arg name="world_name" default="$(find iiwas_gazebo)/worlds/iiwas_world.world"/>
     <arg name="gui" default="true"/>
-    <arg name="paused" default="true"/>
+    <arg name="paused" default="false"/>
 
     <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
 
@@ -30,7 +30,6 @@
         <arg name="gui" value="$(arg gui)" />
         <arg name="paused" value="$(arg paused)"/>
         <arg name="use_sim_time" value="true"/>
-<!--        <arg name="physics" value="bullet" />-->
     </include>
 
     <!-- Controllers -->
@@ -54,14 +53,15 @@
             <param name="publish_frequency" type="double" value="50.0"/>
         </node>
         <node name="table_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-sdf -model air_hockey_table -file '$(find air_hockey_description)/urdf/air_hockey_table/model.sdf'
-              -x $(arg table_surface_x) -y $(arg table_surface_y) -z $(arg table_surface_z)"/>
+              args="-urdf -model air_hockey_table -param robot_description"/>
     </group>
 
     <group ns="puck">
+        <param name="robot_description"
+               command="$(find xacro)/xacro '$(find air_hockey_description)/urdf/puck/model.urdf.xacro'"/>
         <node name="puck_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-sdf -model puck -file '$(find air_hockey_description)/urdf/puck/model.sdf'
-              -x 0.990 -y 0.613 -z $(arg table_surface_z)"/>
+              args="-urdf -model puck -param robot_description
+              -x 1.08075 -y 0.613 -z $(arg table_surface_z)"/>
     </group>
 
     <group ns="iiwa_front" if="$(arg use_front)">
