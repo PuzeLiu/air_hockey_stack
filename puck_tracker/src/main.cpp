@@ -45,8 +45,8 @@ void setCovariance(ros::NodeHandle &nh, Kalman::Covariance<State> &covDyn, Kalma
     nh.param<AirHockey::T>("dynamic_variance_velocity", dynVarVel, 1e-2);
     nh.param<AirHockey::T>("dynamic_variance_angular_position", dynVarAngPos, 1e-4);
     nh.param<AirHockey::T>("dynamic_variance_angular_velocity", dynVarAngVel, 1e-2);
-    ROS_INFO_STREAM("Observation Variance Position: " << obsVarPos);
-    ROS_INFO_STREAM("Observation Variance Angular Position: " << obsVarAng);
+    ROS_INFO_STREAM("Observer Variance Position: " << obsVarPos);
+    ROS_INFO_STREAM("Observer Variance Angular Position: " << obsVarAng);
     ROS_INFO_STREAM("Dynamics Variance Position:" << dynVarPos);
     ROS_INFO_STREAM("Dynamics Variance Velocity: " << dynVarVel);
     ROS_INFO_STREAM("Dynamics Variance Angular Position:" << dynVarAngPos);
@@ -78,16 +78,19 @@ int main(int argc, char **argv) {
     ros::Rate rate(120);
 
     ROS_INFO_STREAM("Read System Parameters");
+    int predict_steps;
     AirHockey::T frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
     nh.param<AirHockey::T>("friction_drag", frictionDrag, 0.1);
     nh.param<AirHockey::T>("friction_sliding", frictionSliding, 0.0);
     nh.param<AirHockey::T>("restitution_table", restitutionTable, 0.8);
     nh.param<AirHockey::T>("restitution_mallet", restitutionMallet, 0.1);
+    nh.param<int>("prediction_steps", predict_steps, 20);
 
     ROS_INFO_STREAM("Drag Parameter:" << frictionDrag);
     ROS_INFO_STREAM("Sliding Parameter: " << frictionSliding);
     ROS_INFO_STREAM("Restitution Parameter of Wall: " << restitutionTable);
     ROS_INFO_STREAM("Restitution Parameter of Mallet: " << restitutionMallet);
+    ROS_INFO_STREAM("Prediction Steps: " << predict_steps);
 
     ROS_INFO_STREAM("Wait for the TF message: /Table");
 
@@ -139,9 +142,6 @@ int main(int argc, char **argv) {
 
     Measurement measurementTmp;
 
-    int predict_steps;
-    nh.param<int>("prediction_steps", predict_steps, 20);
-
     std::vector<Measurement> predictionBuffer;
     std::vector<EKF::InnovationCovariance> innovationCovBuffer;
 
@@ -173,8 +173,6 @@ int main(int argc, char **argv) {
             reInit = false;
         }
         else {
-
-
             auto time = ros::Time::now();
             if (listener.waitForTransform("/world", "/Mallet", time, rate.expectedCycleTime())) {
                 tf::StampedTransform tfTmp;

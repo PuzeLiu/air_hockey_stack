@@ -56,7 +56,7 @@ public:
         m_tableMarker.scale.x = 1.0;
         m_tableMarker.scale.y = 1.0;
         m_tableMarker.scale.z = 1.0;
-        m_tableMarker.mesh_resource = "package://air_hockey_description/world/models/air_hockey_table/mesh/table.dae";
+        m_tableMarker.mesh_resource = "package://air_hockey_description/meshes/air_hockey_table/mesh/table.dae";
         m_tableMarker.mesh_use_embedded_materials = true;
         m_tableMarker.color.r = 0.9;
         m_tableMarker.color.g = 0.9;
