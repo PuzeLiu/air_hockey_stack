@@ -2,22 +2,26 @@ cmake_minimum_required(VERSION 3.0.2)
 project(tactical_agent)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  geometry_msgs
-  sensor_msgs
-   tf2
-   tf2_ros
-   message_filters
-)
+    roscpp
+    geometry_msgs
+    sensor_msgs
+    trajectory_msgs
+    tf2
+    tf2_ros
+    iiwas_kinematics
+    )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(Eigen3 REQUIRED)
+find_package(osqp REQUIRED)
+find_package(OsqpEigen REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -106,10 +110,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES tactical_agent
-  CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros
-#  DEPENDS system_lib
+    INCLUDE_DIRS include
+    #  LIBRARIES tactical_agent
+    CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros
+    #  DEPENDS system_lib
 )
 
 ###########
@@ -119,8 +123,8 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
+    include
+    ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -136,7 +140,16 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME} src/main.cpp src/agent.cpp src/observation.cpp src/observation.cpp)
+set(SOURCE
+    src/main.cpp
+    src/agent.cpp
+    src/observer.cpp
+#    src/null_space_optimizer.cpp
+    )
+set(HEADERS
+    )
+
+add_executable(${PROJECT_NAME} ${SOURCE})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -150,8 +163,10 @@ add_executable(${PROJECT_NAME} src/main.cpp src/agent.cpp src/observation.cpp sr
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-)
+    ${catkin_LIBRARIES}
+    osqp::osqp
+    OsqpEigen
+    )
 
 #############
 ## Install ##

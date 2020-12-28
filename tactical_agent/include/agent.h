@@ -6,8 +6,7 @@
 #define SRC_TACTICAL_AGENT_H
 
 #include <boost/shared_ptr.hpp>
-
-#include "observation.h"
+#include "observer.h"
 
 using namespace std;
 
@@ -21,19 +20,20 @@ namespace tactical_agent{
 
     class Agent{
     public:
-        Agent();
+        Agent(ros::NodeHandle nh);
         ~Agent();
 
         void update();
 
     private:
+        void updateTactic();
+
+    private:
         Tactics tacticState_;
         int dim_;
-        boost::shared_ptr<Observer> observer_;
+        Observer observer_;
 
-        ObservationState observation_;
-
-
+        ObservationState observationStates_;
     };
 }
 

@@ -2,15 +2,18 @@
 
 using namespace tactical_agent;
 
-Agent::Agent() {
-    observer_ = boost::make_shared<Observer>();
+Agent::Agent(ros::NodeHandle nh) : observer_(nh, ros::Rate(10)) {
 }
 
 Agent::~Agent() {
-
 }
 
 void Agent::update() {
-    observation_ = observer_->getObservation();
+    observationStates_ = observer_.getObservation();
+    updateTactic();
 
+}
+
+void Agent::updateTactic() {
+    tacticState_ = Tactics::SMASH;
 }
