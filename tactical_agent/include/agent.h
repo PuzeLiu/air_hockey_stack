@@ -7,6 +7,8 @@
 
 #include <boost/shared_ptr.hpp>
 #include "observer.h"
+#include "planner/bezierHit.h"
+#include "iiwas_kinematics.h"
 
 using namespace std;
 
@@ -27,13 +29,18 @@ namespace tactical_agent{
 
     private:
         void updateTactic();
+        bool generateTrajectory();
 
     private:
+        ros::NodeHandle nh_;
         Tactics tacticState_;
-        int dim_;
-        Observer observer_;
-
         ObservationState observationStates_;
+        double universalJointHeight_; //! Table height (0.1) + mallet height (0.095)
+
+        Observer observer_;
+        iiwas_kinematics::Kinematics* kinematics_;
+        BezierHit* bezierHit_;
+
     };
 }
 

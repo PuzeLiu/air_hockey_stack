@@ -10,8 +10,6 @@
 
 #include "iiwas_kinematics.h"
 
-
-
 namespace tactical_agent{
 class NullSpaceOptimizer {
 public:
