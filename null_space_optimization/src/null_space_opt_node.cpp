@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     ros::init(argc, argv, "null_space_optimizer");
     ros::NodeHandle nh("/");
     ros::Rate rate(100);
-    ros::Publisher jointTrajectoryPub = nh.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory_controller/command", 10);
+    ros::Publisher jointTrajectoryPub = nh.advertise<trajectory_msgs::JointTrajectory>("joint_torque_trajectory_controller/command", 1);
     ros::Subscriber jointStateSub;
 
     ros::Duration(1).sleep();

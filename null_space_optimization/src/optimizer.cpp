@@ -50,7 +50,7 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
                                  Kinematics::JointArrayType &dqNext) {
     kinematics_.forwardKinematics(qCur, xCurPos_, xCurQuat_);
 
-    if ((xCurPos_ - xDes).norm() / stepSize > 2){
+    if ((xCurPos_ - xDes).norm() / stepSize > 10){
         cout << "Optimization failed: the current position is too far from desired position" << endl;
         return false;
     }

@@ -54,6 +54,8 @@ bool BezierCurve2D::fit(const Vector2d& x0, const Vector2d& xf, const Vector2d& 
     phaseCoeff_[3] = pow(dz_dtf, 3) / 4.;
     phaseCoeff_[4] = -pow(dz_dtf, 4) / 16.;
 
+    double dz_dt_hit = 3 * phaseCoeff_[3] * pow(tHit_, 2) + 4 * phaseCoeff_[4] * pow(tHit_, 3);
+    tStop_ = dz_dt_hit / 10 + tHit_;
     return true;
 }
 
@@ -70,15 +72,29 @@ bool BezierCurve2D::getPoint(double t, null_space_optimization::CartersianTrajec
         dx_ddt = dx_ddz_ * pow(dz_dt, 2) + dx_dz_ * dz_ddt;
     }
     else if (t <= tStop_){
-        z = phaseCoeff_[3] * pow(t, 3) + phaseCoeff_[4] * pow(t, 4) - 1;
-        dz_dt = 3 * phaseCoeff_[3] * pow(t, 2) + 4 * phaseCoeff_[4] * pow(t, 3);
-        dz_ddt = 6 * phaseCoeff_[3] * t + 12 * phaseCoeff_[4] * pow(t, 2);
+//        z = phaseCoeff_[3] * pow(t, 3) + phaseCoeff_[4] * pow(t, 4);
+//        dz_dt = 3 * phaseCoeff_[3] * pow(t, 2) + 4 * phaseCoeff_[4] * pow(t, 3);
+//        dz_ddt = 6 * phaseCoeff_[3] * t + 12 * phaseCoeff_[4] * pow(t, 2);
 
-        x_ = xMiddleStop_ + pow((1 - z), 2) * (xHit_ - xMiddleStop_) + pow(z, 2) * (xStart_ - xMiddleStop_) ;
-        dx_dz_ = (2 * (1 - z) * (xMiddleStop_ - xHit_) + 2 * z * (xStart_ - xMiddleStop_));
-        dx_dt_ = dx_dz_ * dz_dt;
-        dx_ddz_ = 2 * (xHit_ - 2 * xMiddleStop_ + xStart_);
-        dx_ddt = dx_ddz_ * pow(dz_dt, 2) + dx_dz_ * dz_ddt;
+        dz_ddt = -10;
+        double dz_dt_hit = 3 * phaseCoeff_[3] * pow(tHit_, 2) + 4 * phaseCoeff_[4] * pow(tHit_, 3);
+        dz_dt = dz_dt_hit -10 * (t-tHit_);
+        z = 1 + dz_dt_hit * (t-tHit_) - 5 * pow((t-tHit_), 2);
+
+
+        x_ = xMiddle_ + z * (xHit_ - xMiddle_);
+        dx_dt_ = dz_dt * (xHit_ - xMiddle_) * 2;
+        dx_ddt = dz_ddt * (xHit_ - xMiddle_);
+
+//        z = phaseCoeff_[3] * pow(t, 3) + phaseCoeff_[4] * pow(t, 4) - 1;
+//        dz_dt = 3 * phaseCoeff_[3] * pow(t, 2) + 4 * phaseCoeff_[4] * pow(t, 3);
+//        dz_ddt = 6 * phaseCoeff_[3] * t + 12 * phaseCoeff_[4] * pow(t, 2);
+//
+//        x_ = xMiddleStop_ + pow((1 - z), 2) * (xHit_ - xMiddleStop_) + pow(z, 2) * (xStart_ - xMiddleStop_) ;
+//        dx_dz_ = (2 * (1 - z) * (xMiddleStop_ - xHit_) + 2 * z * (xStart_ - xMiddleStop_));
+//        dx_dt_ = dx_dz_ * dz_dt;
+//        dx_ddz_ = 2 * (xHit_ - 2 * xMiddleStop_ + xStart_);
+//        dx_ddt = dx_ddz_ * pow(dz_dt, 2) + dx_dz_ * dz_ddt;
     }
     else{
         return false;
