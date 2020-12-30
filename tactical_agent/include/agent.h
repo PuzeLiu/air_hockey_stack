@@ -5,10 +5,15 @@
 #ifndef SRC_TACTICAL_AGENT_H
 #define SRC_TACTICAL_AGENT_H
 
-#include <boost/shared_ptr.hpp>
 #include "observer.h"
-#include "planner/bezierHit.h"
 #include "iiwas_kinematics.h"
+
+#include "planner/bezierHit.h"
+
+#include "null_space_optimizer.h"
+
+#include "trajectory_msgs/MultiDOFJointTrajectory.h"
+#include "trajectory_msgs/JointTrajectory.h"
 
 using namespace std;
 
@@ -22,24 +27,39 @@ namespace tactical_agent{
 
     class Agent{
     public:
-        Agent(ros::NodeHandle nh);
+        Agent(ros::NodeHandle nh, double rate);
         ~Agent();
 
         void update();
+        void gotoHome();
 
     private:
+
         void updateTactic();
         bool generateTrajectory();
 
     private:
         ros::NodeHandle nh_;
+        ros::Publisher jointTrajectoryPub_;
+        double rate_;
         Tactics tacticState_;
-        ObservationState observationStates_;
-        double universalJointHeight_; //! Table height (0.1) + mallet height (0.095)
+        ObservationState observationState_;
+
+        iiwas_kinematics::Kinematics::JointArrayType qHome_;
+        Vector2d xHome_;
+        trajectory_msgs::MultiDOFJointTrajectory cartTrajectory_;
+        trajectory_msgs::JointTrajectory jointTrajectory_;
+        trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
+
+        double universalJointHeight_; //! Table height (0.1) + mallet height (0.095) - base height(0.03)
+        double puckRadius_;
+        double malletRadius_;
+        Vector2d xGoal_;
 
         Observer observer_;
         iiwas_kinematics::Kinematics* kinematics_;
         BezierHit* bezierHit_;
+        NullSpaceOptimizer* optimizer_;
 
     };
 }

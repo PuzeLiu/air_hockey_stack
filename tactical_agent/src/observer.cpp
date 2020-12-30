@@ -15,6 +15,14 @@ Observer::Observer(ros::NodeHandle nh, ros::Rate rate) : nh_(nh), rate_(rate), t
     isInitialized = false;
 
     thread_ = boost::thread(&Observer::startObservation, this);
+
+    if (nh_.getNamespace() == "/iiwa_front"){
+        robotBaseName = "F_link_0";
+    } else if (nh_.getNamespace() == "/iiwa_back"){
+        robotBaseName = "B_link_0";
+    } else{
+        ROS_INFO_STREAM("node should run in namespace: /iiwa_front or /iiwa_back");
+    }
 }
 
 Observer::~Observer() {
@@ -29,7 +37,7 @@ void Observer::startObservation() {
     ros::Duration(1.).sleep();
     while (nh_.ok()) {
         try {
-            puckStateCallback(tfBuffer_.lookupTransform("Puck", "world", ros::Time(0)));
+            puckStateCallback(tfBuffer_.lookupTransform(robotBaseName, "Puck", ros::Time(0)));
         }
         catch (tf2::TransformException e) {
         }

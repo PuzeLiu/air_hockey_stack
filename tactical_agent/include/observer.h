@@ -52,7 +52,8 @@ namespace tactical_agent {
         bool isInitialized;
 
         geometry_msgs::TransformStamped tfPrev_;
-        double tf_dt_{};
+        double tf_dt_;
+        std::string robotBaseName;
 
         tf2::Quaternion quat_, quatPrev_, quatDiff_;
         tf2::Vector3 vecDiff_;

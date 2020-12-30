@@ -144,7 +144,7 @@ set(SOURCE
     src/main.cpp
     src/agent.cpp
     src/observer.cpp
-#    src/null_space_optimizer.cpp
+    src/null_space_optimizer.cpp
     src/planner/bezierHit.cpp
     )
 set(HEADERS
