@@ -66,11 +66,9 @@ void PuckTFPublisher::OnUpdate() {
 
     double seconds_since_last_update = ( current_time - last_update_time_ ).Double();
 
-    if ( seconds_since_last_update > update_period_ ) {
-
+    if ( seconds_since_last_update > update_period_ && ros::Time::now() > transformMsg_.header.stamp) {
         publishTF();
         last_update_time_+= common::Time ( update_period_ );
-
     }
 }
 
