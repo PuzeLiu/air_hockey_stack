@@ -25,7 +25,15 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
     cartTrajectory_.joint_names.push_back("y");
     cartTrajectory_.joint_names.push_back("z");
 
-    qHome_ << -1.08895, -1.17309, 1.61066, -1.92931, 0.0767975, 0.902649, 0.820094;
+    qHome_ << -1.11679, -1.18764, 1.65169, -1.79497, 0.074292, 1.00819, 0.861091;
+//    Vector3d xHome3d, gc;
+//    xHome3d << 0.6, 0.0, universalJointHeight_;
+//    gc << -1., -1., 1.;
+//    Quaterniond quatHome(0.258819, 0, 0.9659258, 0);
+//    double psi=0.;
+//    if(!kinematics_->inverseKinematics(xHome3d, quatHome, gc, psi, qHome_)){
+//        ROS_INFO_STREAM("No feasible solution!");
+//    }
 
     std::string ns_prefix;
     if (nh.getNamespace() == "/iiwa_front") {
@@ -99,9 +107,8 @@ bool Agent::generateTrajectory() {
         vHit *= vHitMag;
 
         for (size_t i=0; i<10; ++i){
-            ROS_INFO_STREAM(xCur2d);
-            ROS_INFO_STREAM(xHit);
-            ROS_INFO_STREAM(vHit);
+//            xHit << 0.8, -0.2;
+//            vHit << 0.8, 0.0;
             if(!bezierHit_->plan(xCur2d, xHit, vHit, cartTrajectory_)){
                 return false;
             }

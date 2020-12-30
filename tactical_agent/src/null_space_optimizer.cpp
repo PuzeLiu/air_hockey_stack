@@ -5,10 +5,12 @@ using namespace iiwas_kinematics;
 
 NullSpaceOptimizer::NullSpaceOptimizer(Kinematics* kinematics,
                                        Observer* observer,
-                                       bool closeLoop):
+                                       bool closeLoop,
+                                       double rate):
                                        kinematics_(kinematics),
                                        observer_(observer),
-                                       closeLoop_(closeLoop){
+                                       closeLoop_(closeLoop),
+                                       stepSize_(1/rate){
     solver_.settings()->setWarmStart(true);
     solver_.settings()->setVerbosity(false);
     solver_.data()->setNumberOfVariables(4);
@@ -30,8 +32,8 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics* kinematics,
     jointViaPoint_.positions.resize(iiwas_kinematics::NUM_OF_JOINTS);
     jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
 
-    K_ << 10., 10., 10.;
-    weights_ << 40., 40., 20., 40., 10., 20., 10.;
+    K_ << 100., 100., 100.;
+    weights_ << 40., 40., 20., 40., 10., 20., 1.;
 }
 
 NullSpaceOptimizer::~NullSpaceOptimizer() {
@@ -57,10 +59,12 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
             dxDes[0] = cartTraj.points[i].velocities[0].linear.x;
             dxDes[1] = cartTraj.points[i].velocities[0].linear.y;
             dxDes[2] = cartTraj.points[i].velocities[0].linear.z;
-            //TODO
-            double timeStep = 0.01;
 
-            if(!solveQP(xDes, dxDes, qCur, timeStep, qNext, dqNext)){
+            if(!solveQP(xDes, dxDes, qCur, qNext, dqNext)){
+                ROS_INFO_STREAM("Optimization failed at time step: " << cartTraj.points[i].time_from_start.toSec());
+                ROS_INFO_STREAM("desired Position: " << xDes.transpose());
+                ROS_INFO_STREAM("desired Velocity: " << dxDes.transpose());
+                ROS_INFO_STREAM("Jacobian: " << jacobian_);
                 return false;
             }
 
@@ -81,12 +85,11 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
 }
 
 bool NullSpaceOptimizer::solveQP(const Vector3d &xDes, const Vector3d &dxDes, const Kinematics::JointArrayType &qCur,
-                                 double stepSize, Kinematics::JointArrayType &qNext,
+                                 Kinematics::JointArrayType &qNext,
                                  Kinematics::JointArrayType &dqNext) {
-
     kinematics_->forwardKinematics(qCur, xCurPos_);
 
-    if ((xCurPos_ - xDes).norm() / stepSize > 2){
+    if ((xCurPos_ - xDes).norm() / stepSize_ > 2){
         cout << "Optimization failed: the current position is too far from desired position" << endl;
         return false;
     }
@@ -110,10 +113,12 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes, const Vector3d &dxDes, co
     if (!solver_.updateGradient(q_)) { return false; }
     if (!solver_.updateLinearConstraintsMatrix(A_)) { return false; }
     if (!solver_.updateBounds(kinematics_->velLimitsLower_ - b, kinematics_->velLimitsUpper_ - b)) { return false; }
-    if (!solver_.solve()) { return false; }
+    if (!solver_.solve()) {
+        return false;
+    }
 
     dqNext = b + nullSpace_ * solver_.getSolution();
-    qNext = qCur + dqNext * stepSize;
+    qNext = qCur + dqNext * stepSize_;
 
     return true;
 }

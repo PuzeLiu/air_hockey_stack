@@ -13,7 +13,7 @@
 namespace tactical_agent{
 class NullSpaceOptimizer {
 public:
-    NullSpaceOptimizer(iiwas_kinematics::Kinematics* kinematics, Observer* observer, bool closeLoop=false);
+    NullSpaceOptimizer(iiwas_kinematics::Kinematics* kinematics, Observer* observer, bool closeLoop=false, double rate=100.);
     ~NullSpaceOptimizer();
 
     bool optimizeJointTrajectory(const trajectory_msgs::MultiDOFJointTrajectory& cartTraj,
@@ -23,13 +23,13 @@ private:
     bool solveQP(const Vector3d &xDes,
                  const Vector3d &dxDes,
                  const iiwas_kinematics::Kinematics::JointArrayType &qCur,
-                 double stepSize,
                  iiwas_kinematics::Kinematics::JointArrayType &qNext,
                  iiwas_kinematics::Kinematics::JointArrayType &dqNext);
     void GetNullSpace(const iiwas_kinematics::Kinematics::JacobianPosType &jacobian, MatrixXd &out_null_space);
 
 private:
     bool closeLoop_;
+    double stepSize_;
 
     iiwas_kinematics::Kinematics* kinematics_;
     Observer* observer_;
