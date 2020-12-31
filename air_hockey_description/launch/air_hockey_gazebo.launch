@@ -7,8 +7,8 @@
 
     <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
 
-    <arg name="use_front" default="true"/>
-    <arg name="use_back" default="true"/>
+    <arg name="use_front_iiwa" default="true"/>
+    <arg name="use_back_iiwa" default="true"/>
 
     <arg name="table_surface_x" default="1.694"/>
     <arg name="table_surface_y" default="0.813"/>
@@ -16,8 +16,8 @@
 
     <!-- Description -->
     <include file="$(find air_hockey_description)/launch/air_hockey_bringup.launch">
-        <arg name="use_front" value="$(arg use_front)"/>
-        <arg name="use_back" value="$(arg use_back)"/>
+        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)"/>
+        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)"/>
         <arg name="hardware_interface" value="$(arg hardware_interface)"/>
     </include>
 
@@ -34,10 +34,10 @@
 
     <!-- Controllers -->
     <include file="$(find air_hockey_description)/launch/air_hockey_control.launch">
-        <arg name="use_front" value="$(arg use_front)" />
-        <arg name="use_back" value="$(arg use_back)" />
-        <arg name="front_controllers" value="joint_trajectory_controller"/>
-        <arg name="back_controllers" value="joint_trajectory_controller"/>
+        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />
+        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />
+        <arg name="front_controllers" value="joint_position_trajectory_controller"/>
+        <arg name="back_controllers" value="joint_position_trajectory_controller"/>
     </include>
 
     <group ns="iiwas_frame">
@@ -62,17 +62,17 @@
         <param name="robot_description"
                command="$(find xacro)/xacro '$(find air_hockey_description)/urdf/puck/model.urdf.xacro'"/>
         <node name="puck_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-urdf -model puck -param robot_description
-              -x 1.08075 -y 0.613 -z $(arg table_surface_z)"/>
+              args="-urdf -model puck -param robot_description -wait air_hockey_table
+              -x 1.08075 -y 1.013 -z $(arg table_surface_z)"/>
     </group>
 
-    <group ns="iiwa_front" if="$(arg use_front)">
+    <group ns="iiwa_front" if="$(arg use_front_iiwa)">
         <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
               args="-urdf -model iiwa_front -param robot_description -wait iiwas_frame
               -reference_frame iiwas_frame::front_base"/>
     </group>
 
-    <group ns="iiwa_back" if="$(arg use_back)">
+    <group ns="iiwa_back" if="$(arg use_back_iiwa)">
         <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
               args="-urdf -model iiwa_back -param robot_description -wait iiwas_frame
               -reference_frame iiwas_frame::back_base"/>
