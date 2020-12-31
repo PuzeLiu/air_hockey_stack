@@ -73,12 +73,12 @@ bool BezierHit::fit(const Vector2d& x0, const Vector2d& xf, const Vector2d& vf) 
 
 bool BezierHit::getPoint(double t) {
     if (t <= tHit_) {
-        z = phaseCoeff_[3] * pow(t, 3) + phaseCoeff_[4] * pow(t, 4);
+        z_ = phaseCoeff_[3] * pow(t, 3) + phaseCoeff_[4] * pow(t, 4);
         dz_dt_ = 3 * phaseCoeff_[3] * pow(t, 2) + 4 * phaseCoeff_[4] * pow(t, 3);
         dz_ddt_ = 6 * phaseCoeff_[3] * t + 12 * phaseCoeff_[4] * pow(t, 2);
 
-        x_ = xMiddle_ + pow((1 - z), 2) * (xStart_ - xMiddle_) + pow(z, 2) * (xHit_ - xMiddle_);
-        dx_dz_ = (2 * (1 - z) * (xMiddle_ - xStart_) + 2 * z * (xHit_ - xMiddle_));
+        x_ = xMiddle_ + pow((1 - z_), 2) * (xStart_ - xMiddle_) + pow(z_, 2) * (xHit_ - xMiddle_);
+        dx_dz_ = (2 * (1 - z_) * (xMiddle_ - xStart_) + 2 * z_ * (xHit_ - xMiddle_));
         dx_dt_ = dx_dz_ * dz_dt_;
         dx_ddz_ = 2 * (xHit_ - 2 * xMiddle_ + xStart_);
         dx_ddt_ = dx_ddz_ * pow(dz_dt_, 2) + dx_dz_ * dz_ddt_;

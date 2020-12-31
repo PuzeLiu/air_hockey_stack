@@ -8,12 +8,13 @@
 #include "observer.h"
 #include "iiwas_kinematics.h"
 
-#include "planner/bezierHit.h"
+#include "planner/bezier_hit.h"
+#include "planner/combinatorial_hit.h"
 
 #include "null_space_optimizer.h"
 
-#include "trajectory_msgs/MultiDOFJointTrajectory.h"
-#include "trajectory_msgs/JointTrajectory.h"
+#include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <trajectory_msgs/JointTrajectory.h>
 
 using namespace std;
 
@@ -34,13 +35,14 @@ namespace tactical_agent{
         void gotoHome();
 
     private:
-
         void updateTactic();
         bool generateTrajectory();
+        double updateGoal(Vector2d puckPos);
 
     private:
         ros::NodeHandle nh_;
         ros::Publisher jointTrajectoryPub_;
+        ros::Publisher cartTrajectoryPub_;
         double rate_;
         Tactics tacticState_;
         ObservationState observationState_;
@@ -59,6 +61,7 @@ namespace tactical_agent{
         Observer observer_;
         iiwas_kinematics::Kinematics* kinematics_;
         BezierHit* bezierHit_;
+        CombinatorialHit* combinatorialHit_;
         NullSpaceOptimizer* optimizer_;
 
     };

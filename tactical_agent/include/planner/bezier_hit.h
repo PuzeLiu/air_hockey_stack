@@ -37,7 +37,7 @@ namespace tactical_agent {
         double height_;
         double tHit_, tStop_;
         double aMax_;
-        double z, dz_dt_, dz_ddt_;        //Phase position, velocity, acceleration
+        double z_, dz_dt_, dz_ddt_;        //Phase position, velocity, acceleration
         Vector2d dx_dz_, dx_ddz_;       //Catesian velocity and acceleration w.r.t phase
         Vector2d x_, dx_dt_, dx_ddt_;    //Catesian velocity and acceleration w.r.t time
         Matrix<double, 5, 1> phaseCoeff_;

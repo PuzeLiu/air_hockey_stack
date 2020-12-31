@@ -145,12 +145,16 @@ set(SOURCE
     src/agent.cpp
     src/observer.cpp
     src/null_space_optimizer.cpp
-    src/planner/bezierHit.cpp
-    )
+   src/planner/bezier_hit.cpp
+    src/planner/combinatorial_hit.cpp)
 set(HEADERS
-    )
+   include/agent.h
+   include/observer.h
+   include/null_space_optimizer.h
+   include/planner/bezier_hit.h
+   include/planner/combinatorial_hit.h)
 
-add_executable(${PROJECT_NAME} ${SOURCE})
+add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

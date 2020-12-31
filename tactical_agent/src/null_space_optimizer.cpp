@@ -32,7 +32,7 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics* kinematics,
     jointViaPoint_.positions.resize(iiwas_kinematics::NUM_OF_JOINTS);
     jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
 
-    K_ << 100., 100., 100.;
+    K_ << 10., 10., 10.;
     weights_ << 40., 40., 20., 40., 10., 20., 1.;
 }
 
@@ -61,10 +61,10 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
             dxDes[2] = cartTraj.points[i].velocities[0].linear.z;
 
             if(!solveQP(xDes, dxDes, qCur, qNext, dqNext)){
-                ROS_INFO_STREAM("Optimization failed at time step: " << cartTraj.points[i].time_from_start.toSec());
-                ROS_INFO_STREAM("desired Position: " << xDes.transpose());
-                ROS_INFO_STREAM("desired Velocity: " << dxDes.transpose());
-                ROS_INFO_STREAM("Jacobian: " << jacobian_);
+//                ROS_INFO_STREAM("Optimization failed at time step: " << cartTraj.points[i].time_from_start.toSec());
+//                ROS_INFO_STREAM("desired Position: " << xDes.transpose());
+//                ROS_INFO_STREAM("desired Velocity: " << dxDes.transpose());
+//                ROS_INFO_STREAM("Jacobian: " << jacobian_);
                 return false;
             }
 
