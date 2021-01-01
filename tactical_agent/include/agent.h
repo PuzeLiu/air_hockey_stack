@@ -20,10 +20,10 @@ using namespace std;
 
 namespace tactical_agent{
     enum Tactics{
-        READY = 0, //!< go to home position
-        CUT = 1,   //!< defend the incoming puck to opponent's court regardless of direction
-        STOP = 2,  //!< stop the incoming puck in our court
-        SMASH = 3 //!< hit the static or slow-moving puck
+        READY = 0,    //!< go to home position
+        CUT = 1,      //!< defend the incoming puck to opponent's court regardless of direction
+        PREPARE = 2,  //!< adjust the puck's position when smash fails
+        SMASH = 3     //!< hit the static or slow-moving puck
     };
 
     class Agent{
@@ -32,12 +32,13 @@ namespace tactical_agent{
         ~Agent();
 
         void update();
-        void gotoHome();
+        void gotoInit();
 
     private:
         void updateTactic();
         bool generateTrajectory();
         double updateGoal(Vector2d puckPos);
+        void setTactic(Tactics tactic);
 
     private:
         ros::NodeHandle nh_;

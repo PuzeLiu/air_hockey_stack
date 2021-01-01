@@ -13,7 +13,7 @@ int main(int argc, char** argv){
     ros::Duration(2.).sleep();
 
     ROS_INFO_STREAM("Go to home position");
-    agent.gotoHome();
+    agent.gotoInit();
     ROS_INFO_STREAM("Start");
     while (ros::ok()){
         agent.update();

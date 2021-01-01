@@ -22,6 +22,8 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
             "joint_position_trajectory_controller/command", 1);
     cartTrajectoryPub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
+    tacticState_ = Tactics::READY;
+
     xHome_ << 0.6, 0.0;
     xGoal_ << 2.48, 0.1;
 
@@ -71,7 +73,7 @@ Agent::~Agent() {
     delete bezierHit_;
 }
 
-void Agent::gotoHome() {
+void Agent::gotoInit() {
     jointTrajectory_.points.clear();
     qHome_ << 1.4667675, 1.1785414, -1.502088, -0.99056375, 0.07174191, 1.7372178, -3.0764043;
     for (int i = 0; i < 7; ++i) {
@@ -97,32 +99,43 @@ void Agent::update() {
     observationState_ = observer_.getObservation();
     updateTactic();
     if (generateTrajectory()) {
-        gotoHome();
+
     }
 }
 
 void Agent::updateTactic() {
-    if(observationState_.puckPos.transform.translation.x < 1.2 &&
-            observationState_.puckPos.transform.translation.x > 0.7 &&
-            observationState_.puckVel.twist.linear.x < 1e-3 &&
-            observationState_.puckVel.twist.linear.y < 1e-3){
-        tacticState_ = Tactics::SMASH;
-    } else{
-        tacticState_ = Tactics::CUT;
+    if (observationState_.puckVelocity.norm() > 0.1) {
+        if (observationState_.puckVelocity.x() < 0) {
+            setTactic(Tactics::CUT);
+        } else {
+            setTactic(Tactics::READY);
+        }
+    } else if (observationState_.puckPosition.x() < 1.2 &&
+               observationState_.puckPosition.x() > 0.7) {
+        setTactic(Tactics::SMASH);
+    } else if (observationState_.puckPosition.x() <= 0.7) {
+        setTactic(Tactics::PREPARE);
+    } else {
+        setTactic(Tactics::READY);
+    }
+}
+
+void Agent::setTactic(Tactics tactic) {
+    if (tacticState_ != tactic) {
+        if (tactic == Tactics::READY) ROS_INFO_STREAM("Tactics changed: READY");
+        else if (tactic == Tactics::CUT) ROS_INFO_STREAM("Tactics changed: CUT");
+        else if (tactic == Tactics::PREPARE) ROS_INFO_STREAM("Tactics changed: PREPARE");
+        else if (tactic == Tactics::SMASH) ROS_INFO_STREAM("Tactics changed: SMASH");
+        tacticState_ = tactic;
     }
 }
 
 bool Agent::generateTrajectory() {
     if (tacticState_ == Tactics::SMASH) {
-        iiwas_kinematics::Kinematics::JointArrayType qCur;
-        for (size_t row = 0; row < observationState_.jointState.position.size() - 2; row++) {
-            qCur[row] = observationState_.jointState.position[row];
-        }
         Vector3d xCur;
-        kinematics_->forwardKinematics(qCur, xCur);
+        kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
         Vector2d xCur2d = xCur.block<2, 1>(0, 0);
-        Vector2d puckCur2d(observationState_.puckPos.transform.translation.x,
-                           observationState_.puckPos.transform.translation.y);
+        Vector2d puckCur2d = observationState_.puckPosition.block<2, 1>(0, 0);
         double vHitMag = 1.5;
 
         updateGoal(puckCur2d);
@@ -134,7 +147,7 @@ bool Agent::generateTrajectory() {
         for (size_t i = 0; i < 10; ++i) {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
-            if (!combinatorialHit_ ->plan(xCur2d, xHit, vHit, cartTrajectory_)){
+            if (!combinatorialHit_->plan(xCur2d, xHit, vHit, cartTrajectory_)) {
                 return false;
             }
 //            if (!bezierHit_->plan(xCur2d, xHit, vHit, cartTrajectory_)) {
@@ -148,19 +161,23 @@ bool Agent::generateTrajectory() {
                 continue;
             }
             jointTrajectoryPub_.publish(jointTrajectory_);
-            ros::Duration(jointTrajectory_.points.back().time_from_start.toSec() + 1).sleep();
+            ros::Duration(jointTrajectory_.points.back().time_from_start.toSec() + 0.1).sleep();
+            cartTrajectory_.points.clear();
             return true;
         }
         ROS_INFO_STREAM("Failed to find a feasible hitting movement");
+        tacticState_ = Tactics::PREPARE;
         return false;
+    } else if (tacticState_ == Tactics::READY) {
+
     }
     return false;
 }
 
-double Agent::updateGoal(Vector2d puckPos) {
-    if (puckPos(1) > 0.1) {
+double Agent::updateGoal(Vector2d puckPosition) {
+    if (puckPosition(1) > 0.1) {
         xGoal_(1) = -0.1;
-    } else if (puckPos(1) < -0.1) {
+    } else if (puckPosition(1) < -0.1) {
         xGoal_(1) = 0.1;
     } else {
         xGoal_(1) = 0.0;

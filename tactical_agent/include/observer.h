@@ -7,18 +7,28 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 
+#include <iiwas_kinematics.h>
+
 #include <sensor_msgs/JointState.h>
 
 #include <boost/thread.hpp>
 
+using namespace iiwas_kinematics;
 
 namespace tactical_agent {
 //    boost::mutex stateMutex;
 
     struct ObservationState {
-        sensor_msgs::JointState jointState;
-        geometry_msgs::TransformStamped puckPos;
-        geometry_msgs::TwistStamped puckVel;
+        Kinematics::JointArrayType jointPosition;
+        Kinematics::JointArrayType jointVelocity;
+        Vector3d puckPosition;
+        double puckYaw;
+        Vector3d puckVelocity;
+        double puckRotVelocity;
+        double time;
+//        sensor_msgs::JointState jointState;
+//        geometry_msgs::TransformStamped puckPos;
+//        geometry_msgs::TwistStamped puckVel;
     };
 
     class Observer {
@@ -29,7 +39,7 @@ namespace tactical_agent {
 
         void startObservation();
 
-        inline const ObservationState& getObservation() {return observationStates_;};
+        inline const ObservationState& getObservation() {return observationState_;};
 
     private:
         void jointStateCallback(const sensor_msgs::JointState::ConstPtr &msg);
@@ -41,7 +51,7 @@ namespace tactical_agent {
 
     private:
         boost::thread thread_;
-        ObservationState observationStates_;
+        ObservationState observationState_, observationStatePrev_;
 
         ros::NodeHandle nh_;
         ros::Rate rate_;
@@ -51,12 +61,10 @@ namespace tactical_agent {
 
         bool isInitialized;
 
-        geometry_msgs::TransformStamped tfPrev_;
-        double tf_dt_;
+        double dt_;
         std::string robotBaseName;
 
-        tf2::Quaternion quat_, quatPrev_, quatDiff_;
-        tf2::Vector3 vecDiff_;
+        Quaterniond quat_;
     };
 }
 

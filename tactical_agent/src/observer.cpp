@@ -30,7 +30,10 @@ Observer::~Observer() {
 }
 
 void Observer::jointStateCallback(const sensor_msgs::JointState_<std::allocator<void>>::ConstPtr &msg) {
-    observationStates_.jointState = *msg;
+    for (int i = 0; i < NUM_OF_JOINTS; ++i) {
+        observationState_.jointPosition[i] = msg->position[i];
+        observationState_.jointVelocity[i] = msg->velocity[i];
+    }
 }
 
 void Observer::startObservation() {
@@ -43,41 +46,41 @@ void Observer::startObservation() {
         }
         ros::spinOnce();
         rate_.sleep();
+        observationStatePrev_ = observationState_;
     }
 }
 
 void Observer::puckStateCallback(const geometry_msgs::TransformStamped msg) {
-    if (isInitialized) {
-        observationStates_.puckPos = msg;
-        observationStates_.puckVel.header = msg.header;
-        tfPrev_ = msg;
+    if (!isInitialized) {
+        observationState_.puckPosition.x() = msg.transform.translation.x;
+        observationState_.puckPosition.y() = msg.transform.translation.y;
+        observationState_.puckPosition.z() = msg.transform.translation.z;
+        quat_.x() = msg.transform.rotation.x;
+        quat_.y() = msg.transform.rotation.y;
+        quat_.z() = msg.transform.rotation.z;
+        quat_.w() = msg.transform.rotation.w;
+        observationState_.puckYaw = quat_.toRotationMatrix().eulerAngles(0, 1, 2)[2];
+        observationState_.time = msg.header.stamp.toSec();
+        isInitialized = true;
     }
     else {
-        tf_dt_ = (msg.header.stamp - tfPrev_.header.stamp).toSec();
+        observationState_.puckPosition.x() = msg.transform.translation.x;
+        observationState_.puckPosition.y() = msg.transform.translation.y;
+        observationState_.puckPosition.z() = msg.transform.translation.z;
+        quat_.x() = msg.transform.rotation.x;
+        quat_.y() = msg.transform.rotation.y;
+        quat_.z() = msg.transform.rotation.z;
+        quat_.w() = msg.transform.rotation.w;
+        observationState_.puckYaw = quat_.toRotationMatrix().eulerAngles(0, 1, 2)[2];
+        if (observationState_.time > msg.header.stamp.toSec()){
+            ROS_WARN_STREAM("Detect Time Jump Back, reset observation");
+            isInitialized = false;
+        }
+        observationState_.time = msg.header.stamp.toSec();
 
-        quat_.setValue(msg.transform.rotation.x,
-                       msg.transform.rotation.y,
-                       msg.transform.rotation.z,
-                       msg.transform.rotation.w);
-        quatPrev_.setValue(tfPrev_.transform.rotation.x,
-                           tfPrev_.transform.rotation.y,
-                           tfPrev_.transform.rotation.z,
-                           tfPrev_.transform.rotation.w);
-        quatDiff_ = quat_ * tf2::inverse(quatPrev_);
-        vecDiff_ = quatDiff_.getAxis() * (quatDiff_.getAngle() / tf_dt_);
+        dt_ = observationState_.time - observationStatePrev_.time;
 
-        observationStates_.puckVel.header = msg.header;
-        observationStates_.puckVel.twist.linear.x =
-                (msg.transform.translation.x - tfPrev_.transform.translation.x) / tf_dt_;
-        observationStates_.puckVel.twist.linear.y =
-                (msg.transform.translation.y - tfPrev_.transform.translation.y) / tf_dt_;
-        observationStates_.puckVel.twist.linear.z =
-                (msg.transform.translation.z - tfPrev_.transform.translation.z) / tf_dt_;
-        observationStates_.puckVel.twist.angular.x = vecDiff_.x();
-        observationStates_.puckVel.twist.angular.y = vecDiff_.y();
-        observationStates_.puckVel.twist.angular.z = vecDiff_.z();
-        observationStates_.puckPos = msg;
-
-        tfPrev_ = msg;
+        observationState_.puckVelocity = (observationState_.puckPosition - observationStatePrev_.puckPosition) / dt_;
+        observationState_.puckRotVelocity = (observationState_.puckYaw - observationStatePrev_.puckYaw) / dt_;
     }
 }

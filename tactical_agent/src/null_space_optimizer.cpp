@@ -47,9 +47,7 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
         Kinematics::JointArrayType qCur, qNext, dqNext;
 
         auto observationState = observer_->getObservation();
-        for (size_t row = 0; row < NUM_OF_JOINTS; row++) {
-            qCur[row] = observationState.jointState.position[row];
-        }
+        qCur = observationState.jointPosition;
 
         for (size_t i=0; i<cartTraj.points.size(); ++i){
             xDes[0] =  cartTraj.points[i].transforms[0].translation.x;
