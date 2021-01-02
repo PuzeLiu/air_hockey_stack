@@ -33,7 +33,7 @@ namespace tactical_agent {
         Vector2d boundLower_;
         Vector2d boundUpper_;
         Vector2d xStart_, xMiddle_, xHit_, vHit_, vHitNormalized_;    //Start point, middle point, final point, final velocity
-        double rate_;
+        double stepSize_;
         double height_;
         double tHit_, tStop_;
         double aMax_;

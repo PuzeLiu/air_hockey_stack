@@ -6,7 +6,7 @@ using namespace tactical_agent;
 CombinatorialHit::CombinatorialHit(Vector2d bound_lower, Vector2d bound_upper, double rate, double height) {
     boundLower_ = bound_lower;
     boundUpper_ = bound_upper;
-    rate_ = rate;
+    stepSize_ = 1 / rate;
     height_ = height;
 
     viaPoint_.transforms.resize(1);
@@ -30,21 +30,25 @@ bool CombinatorialHit::plan(const Vector2d &xStart, const Vector2d &xHit, const 
 
     double tCur = 0.;
     while (tCur < tStop_){
-        tCur += 1 / rate_;
+        tCur += stepSize_;
         if(getPoint(tCur)) {
             cartTraj.points.push_back(viaPoint_);
         }
     }
+    cartTraj.header.stamp = ros::Time::now();
     return true;
 }
 
 bool CombinatorialHit::getMiddlePoint() {
-    // Check both point are inside boundary
+    if (vHitMag_ < 1e-3){
+        cout << "Hit velocity should not less than: 1e-3" << endl;
+    }
+    if (xHit_[1] > boundUpper_[1]) {xHit_[1] = boundUpper_[1];}
+    else if (xHit_[1] < boundLower_[1]) {xHit_[1] = boundLower_[1];}
+
     for (int i = 0; i < 2; ++i) {
-        if (xStart_[i] < boundLower_[i] or xStart_[i] > boundUpper_[i] or
-            xHit_[i] < boundLower_[i] or xHit_[i] > boundUpper_[i] or
-            vHitMag_ == 0.) {
-            cout << "Planner Failed: points out of boundary!" << endl;
+        if (xStart_[i] < boundLower_[i] or xStart_[i] > boundUpper_[i] ) {
+            cout << "Planner Failed: Start points out of boundary!" << endl;
             return false;
         }
     }

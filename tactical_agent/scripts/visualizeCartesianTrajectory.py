@@ -5,7 +5,7 @@ import rosbag
 from trajectory_msgs.msg import MultiDOFJointTrajectory
 
 input_dir = os.path.abspath("/home/puze/Desktop")
-file_name = "2021-01-01-00-40-21.bag"
+file_name = "2021-01-01-17-30-18.bag"
 
 positions = []
 velocities = []
@@ -23,8 +23,7 @@ for topic, msg, t in bag.read_messages():
                               msg.points[i].velocities[0].linear.z])
             # accelerations.append([msg.points[i].accelerations[0].linear.x, msg.points[i].accelerations[0].linear.y,
             #                   msg.points[i].accelerations[0].linear.z])
-            time.append(msg.points[i].time_from_start.to_sec())
-        break
+            time.append(msg.header.stamp.to_sec() + msg.points[i].time_from_start.to_sec())
 
 positions = np.array(positions)
 velocities = np.array(velocities)

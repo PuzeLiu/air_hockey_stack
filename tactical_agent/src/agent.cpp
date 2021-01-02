@@ -11,18 +11,22 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
 
     bezierHit_ = new BezierHit(Vector2d(0.58, -0.47),
                                Vector2d(2.43, 0.47),
-                               rate_,
+                               rate,
                                universalJointHeight_);
     combinatorialHit_ = new CombinatorialHit(Vector2d(0.58, -0.45),
                                              Vector2d(2.43, 0.45),
-                                             rate_,
+                                             rate,
                                              universalJointHeight_);
+    stableDynamicsMotion_ = new StableDynamicsMotion(Vector2d(200.0, 200.0),
+                                                  Vector2d(1.0, 1.0),
+                                                  rate, universalJointHeight_);
 
     jointTrajectoryPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>(
             "joint_position_trajectory_controller/command", 1);
     cartTrajectoryPub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
     tacticState_ = Tactics::READY;
+    tacticChanged_ = false;
 
     xHome_ << 0.6, 0.0;
     xGoal_ << 2.48, 0.1;
@@ -101,16 +105,17 @@ void Agent::update() {
     if (generateTrajectory()) {
 
     }
+    rate_.sleep();
 }
 
 void Agent::updateTactic() {
-    if (observationState_.puckVelocity.norm() > 0.1) {
+    if (observationState_.puckVelocity.norm() > 0.01) {
         if (observationState_.puckVelocity.x() < 0) {
             setTactic(Tactics::CUT);
         } else {
             setTactic(Tactics::READY);
         }
-    } else if (observationState_.puckPosition.x() < 1.2 &&
+    } else if (observationState_.puckPosition.x() < 1.5 &&
                observationState_.puckPosition.x() > 0.7) {
         setTactic(Tactics::SMASH);
     } else if (observationState_.puckPosition.x() <= 0.7) {
@@ -127,6 +132,10 @@ void Agent::setTactic(Tactics tactic) {
         else if (tactic == Tactics::PREPARE) ROS_INFO_STREAM("Tactics changed: PREPARE");
         else if (tactic == Tactics::SMASH) ROS_INFO_STREAM("Tactics changed: SMASH");
         tacticState_ = tactic;
+        tacticChanged_ = true;
+    }
+    else{
+        tacticChanged_ = false;
     }
 }
 
@@ -153,23 +162,78 @@ bool Agent::generateTrajectory() {
 //            if (!bezierHit_->plan(xCur2d, xHit, vHit, cartTrajectory_)) {
 //                return false;
 //            }
-            cartTrajectoryPub_.publish(cartTrajectory_);
-
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
                 ROS_INFO_STREAM("Optimization Failed. Reduce the desired velocity");
                 vHit *= .8;
                 continue;
             }
+            cartTrajectoryPub_.publish(cartTrajectory_);
             jointTrajectoryPub_.publish(jointTrajectory_);
-            ros::Duration(jointTrajectory_.points.back().time_from_start.toSec() + 0.1).sleep();
-            cartTrajectory_.points.clear();
+            ros::Duration(jointTrajectory_.points.back().time_from_start.toSec()).sleep();
             return true;
         }
         ROS_INFO_STREAM("Failed to find a feasible hitting movement");
         tacticState_ = Tactics::PREPARE;
         return false;
     } else if (tacticState_ == Tactics::READY) {
+        if (tacticChanged_){
+            stableDynamicsMotion_->setStiffness(Vector2d(10.0, 10.0));
+        }
+        Vector3d xCur, vCur;
+        kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
+        Vector2d xCur2d = xCur.block<2, 1>(0, 0);
+        Kinematics::JacobianPosType jacobian;
+        kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
+        vCur = jacobian * observationState_.jointVelocity;
+        Vector2d vCur2d = vCur.block<2, 1>(0, 0);
 
+        for (int i = 0; i < 10; ++i) {
+            cartTrajectory_.points.clear();
+            jointTrajectory_.points.clear();
+            stableDynamicsMotion_->plan(xCur2d, vCur2d, xHome_, cartTrajectory_, 0.1);
+
+            if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
+                ROS_INFO_STREAM("Optimization Failed. Reduce the stiffness");
+                stableDynamicsMotion_->scaleStiffness(Vector2d(0.8, 0.8));
+                continue;
+            } else{
+                cartTrajectoryPub_.publish(cartTrajectory_);
+                jointTrajectoryPub_.publish(jointTrajectory_);
+                ros::Duration(jointTrajectory_.points.back().time_from_start.toSec()).sleep();
+                stableDynamicsMotion_->scaleStiffness(Vector2d(1.25, 1.25));
+                break;
+            }
+        }
+    } else if (tacticState_ == Tactics::CUT) {
+        if (tacticChanged_){
+            stableDynamicsMotion_->setStiffness(Vector2d(100.0, 100.0));
+        }
+        Vector3d xCur, vCur;
+        kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
+        Vector2d xCur2d = xCur.block<2, 1>(0, 0);
+        Kinematics::JacobianPosType jacobian;
+        kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
+        vCur = jacobian * observationState_.jointVelocity;
+        Vector2d vCur2d = vCur.block<2, 1>(0, 0);
+        Vector2d xGoal(0.7, observationState_.puckPosition(1));
+
+        for (int i = 0; i < 10; ++i) {
+            cartTrajectory_.points.clear();
+            jointTrajectory_.points.clear();
+            stableDynamicsMotion_->plan(xCur2d, vCur2d, xGoal, cartTrajectory_, 0.1);
+
+            if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
+                ROS_INFO_STREAM("Optimization Failed. Reduce the stiffness");
+                stableDynamicsMotion_->scaleStiffness(Vector2d(0.8, 0.8));
+                continue;
+            } else{
+                cartTrajectoryPub_.publish(cartTrajectory_);
+                jointTrajectoryPub_.publish(jointTrajectory_);
+                ros::Duration(jointTrajectory_.points.back().time_from_start.toSec()).sleep();
+                stableDynamicsMotion_->scaleStiffness(Vector2d(1.25, 1.25));
+                break;
+            }
+        }
     }
     return false;
 }

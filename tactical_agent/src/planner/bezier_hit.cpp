@@ -5,7 +5,7 @@ using namespace tactical_agent;
 BezierHit::BezierHit(Vector2d bound_lower, Vector2d bound_upper, double rate, double height) {
     boundLower_ = bound_lower;
     boundUpper_ = bound_upper;
-    rate_ = rate;
+    stepSize_ = 1 / rate;
     height_ = height;
     aMax_ = 5.;
 
@@ -22,7 +22,7 @@ bool BezierHit::plan(const Vector2d &xStart, const Vector2d &xHit, const Vector2
     double t = 0.;
 
     while (t <= tStop_){
-        t += 1 / rate_;
+        t += stepSize_;
         if(getPoint(t)) {
             cartTraj.points.push_back(viaPoint_);
         }

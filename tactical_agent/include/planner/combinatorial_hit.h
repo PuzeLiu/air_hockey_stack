@@ -30,7 +30,7 @@ private:
     Vector2d xStart_, xMiddle_, xHit_;             //! Start point, middle point, final point, final velocity
     Vector2d vecDir1_, vecDir2_;                   //! Unit vector of linear 1 and 2
     Vector2d xArcCenter_, xVia1_, xVia2_;          //! Via point of arc
-    double rate_;
+    double stepSize_;
     double height_;
     double vHitMag_;                               //! Magnitude of hitting velocity
     double tHit_, tStop_;

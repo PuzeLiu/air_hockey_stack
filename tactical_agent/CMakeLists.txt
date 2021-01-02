@@ -8,14 +8,14 @@ add_compile_options(-std=c++11)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    geometry_msgs
-    sensor_msgs
-    trajectory_msgs
-    tf2
-    tf2_ros
-    iiwas_kinematics
-    )
+   roscpp
+   geometry_msgs
+   sensor_msgs
+   trajectory_msgs
+   tf2
+   tf2_ros
+   iiwas_kinematics
+   )
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
@@ -110,10 +110,10 @@ find_package(OsqpEigen REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    INCLUDE_DIRS include
-    #  LIBRARIES tactical_agent
-    CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros
-    #  DEPENDS system_lib
+   INCLUDE_DIRS include
+   #  LIBRARIES tactical_agent
+   CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros
+   #  DEPENDS system_lib
 )
 
 ###########
@@ -123,8 +123,8 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
+   include
+   ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -141,18 +141,21 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 set(SOURCE
-    src/main.cpp
-    src/agent.cpp
-    src/observer.cpp
-    src/null_space_optimizer.cpp
+   src/main.cpp
+   src/agent.cpp
+   src/observer.cpp
+   src/null_space_optimizer.cpp
    src/planner/bezier_hit.cpp
-    src/planner/combinatorial_hit.cpp)
+   src/planner/combinatorial_hit.cpp
+   src/planner/stable_dynamics_motion.cpp)
 set(HEADERS
    include/agent.h
    include/observer.h
    include/null_space_optimizer.h
    include/planner/bezier_hit.h
-   include/planner/combinatorial_hit.h)
+   include/planner/combinatorial_hit.h
+
+   include/planner/stable_dynamics_motion.h)
 
 add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS})
 
@@ -168,10 +171,10 @@ add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-    osqp::osqp
-    OsqpEigen
-    )
+   ${catkin_LIBRARIES}
+   osqp::osqp
+   OsqpEigen
+   )
 
 #############
 ## Install ##

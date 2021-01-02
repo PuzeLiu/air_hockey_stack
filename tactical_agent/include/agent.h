@@ -10,6 +10,7 @@
 
 #include "planner/bezier_hit.h"
 #include "planner/combinatorial_hit.h"
+#include "planner/stable_dynamics_motion.h"
 
 #include "null_space_optimizer.h"
 
@@ -44,8 +45,9 @@ namespace tactical_agent{
         ros::NodeHandle nh_;
         ros::Publisher jointTrajectoryPub_;
         ros::Publisher cartTrajectoryPub_;
-        double rate_;
+        ros::Rate rate_;
         Tactics tacticState_;
+        bool tacticChanged_;
         ObservationState observationState_;
 
         iiwas_kinematics::Kinematics::JointArrayType qHome_;
@@ -61,8 +63,11 @@ namespace tactical_agent{
 
         Observer observer_;
         iiwas_kinematics::Kinematics* kinematics_;
+
         BezierHit* bezierHit_;
         CombinatorialHit* combinatorialHit_;
+        StableDynamicsMotion* stableDynamicsMotion_;
+
         NullSpaceOptimizer* optimizer_;
 
     };
