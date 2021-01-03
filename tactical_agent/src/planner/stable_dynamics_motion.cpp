@@ -26,8 +26,8 @@ bool StableDynamicsMotion::plan(const Vector2d &xCur, const Vector2d &vCur, cons
     xTmp_ = xCur;
     vTmp_ = vCur;
 
-    double t = 0;
-    while (t <= duration){
+    double t = 0.;
+    while (t < duration){
         t += stepSize_;
         xTmp_ += vTmp_ * stepSize_;
         vTmp_ += stepSize_ * (-damping_.cwiseProduct(vTmp_) - stiffness_.cwiseProduct(xTmp_ - xGoal));
@@ -56,4 +56,8 @@ void StableDynamicsMotion::scaleStiffness(const Vector2d &scale) {
 void StableDynamicsMotion::setStiffness(const Vector2d &stiffness) {
     stiffness_ = stiffness;
     damping_ = 2 * stiffness_.cwiseSqrt();
+}
+
+const Vector2d& StableDynamicsMotion::getStiffness() {
+    return stiffness_;
 }

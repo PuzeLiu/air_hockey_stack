@@ -5,7 +5,7 @@ import rosbag
 from trajectory_msgs.msg import MultiDOFJointTrajectory
 
 input_dir = os.path.abspath("/home/puze/Desktop")
-file_name = "2021-01-01-17-30-18.bag"
+file_name = "2021-01-03-01-29-26.bag"
 
 positions = []
 velocities = []

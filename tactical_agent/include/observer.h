@@ -9,7 +9,8 @@
 
 #include <iiwas_kinematics.h>
 
-#include <sensor_msgs/JointState.h>
+//#include <sensor_msgs/JointState.h>
+#include <control_msgs/JointTrajectoryControllerState.h>
 
 #include <boost/thread.hpp>
 
@@ -21,6 +22,8 @@ namespace tactical_agent {
     struct ObservationState {
         Kinematics::JointArrayType jointPosition;
         Kinematics::JointArrayType jointVelocity;
+        Kinematics::JointArrayType jointDesiredPosition;
+        Kinematics::JointArrayType jointDesiredVelocity;
         Vector3d puckPosition;
         double puckYaw;
         Vector3d puckVelocity;
@@ -42,7 +45,8 @@ namespace tactical_agent {
         inline const ObservationState& getObservation() {return observationState_;};
 
     private:
-        void jointStateCallback(const sensor_msgs::JointState::ConstPtr &msg);
+//        void jointStateCallback(const sensor_msgs::JointState::ConstPtr &msg);
+        void jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg);
 
         void puckStateCallback(const geometry_msgs::TransformStamped msg);
 

@@ -5,6 +5,8 @@
 #ifndef SRC_TACTICAL_AGENT_H
 #define SRC_TACTICAL_AGENT_H
 
+#include <random>
+
 #include "observer.h"
 #include "iiwas_kinematics.h"
 
@@ -59,6 +61,7 @@ namespace tactical_agent{
         double universalJointHeight_; //! Table height (0.1) + mallet height (0.095) - base height(0.03)
         double puckRadius_;
         double malletRadius_;
+        Matrix2d tableEdge_;
         Vector2d xGoal_;
 
         Observer observer_;
@@ -70,6 +73,9 @@ namespace tactical_agent{
 
         NullSpaceOptimizer* optimizer_;
 
+        double smashCount_;
+        std::mt19937 rng_;
+        std::uniform_int_distribution<int> dist_;
     };
 }
 

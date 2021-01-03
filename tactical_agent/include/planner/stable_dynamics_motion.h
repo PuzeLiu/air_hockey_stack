@@ -18,6 +18,7 @@ public:
 
     void scaleStiffness(const Vector2d& scale);
     void setStiffness(const Vector2d& stiffness);
+    const Vector2d& getStiffness();
 
 private:
     Vector2d stiffnessUpperBound_, stiffnessLowerBound_;

@@ -75,7 +75,6 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
 
             qCur = qNext;
         }
-        jointTraj.header.stamp = ros::Time::now();
         return true;
     } else {
         return false;
@@ -87,10 +86,10 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes, const Vector3d &dxDes, co
                                  Kinematics::JointArrayType &dqNext) {
     kinematics_->forwardKinematics(qCur, xCurPos_);
 
-    if ((xCurPos_ - xDes).norm() / stepSize_ > 2){
-        cout << "Optimization failed: the current position is too far from desired position" << endl;
-        return false;
-    }
+//    if ((xCurPos_ - xDes).norm() / stepSize_ > 2){
+//        cout << "Optimization failed: the current position is too far from desired position" << endl;
+//        return false;
+//    }
     kinematics_->jacobianPos(qCur, jacobian_);
     GetNullSpace(jacobian_, nullSpace_);
 
