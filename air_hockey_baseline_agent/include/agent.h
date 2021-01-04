@@ -19,7 +19,7 @@
 
 using namespace std;
 
-namespace tactical_agent{
+namespace AirHockey{
     enum Tactics{
         READY = 0,    //!< go to home position
         CUT = 1,      //!< defend the incoming puck to opponent's court regardless of direction

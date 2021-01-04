@@ -12,7 +12,7 @@
 using namespace std;
 using namespace Eigen;
 
-namespace tactical_agent {
+namespace AirHockey {
     class BezierHit {
     public:
         BezierHit(Vector2d bound_lower, Vector2d bound_upper, double rate, double height);

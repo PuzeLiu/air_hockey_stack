@@ -111,7 +111,7 @@ find_package(OsqpEigen REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-   #  LIBRARIES tactical_agent
+   #  LIBRARIES AirHockey
    CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros
    #  DEPENDS system_lib
 )
@@ -129,7 +129,7 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/tactical_agent.cpp
+#   src/${PROJECT_NAME}/AirHockey.cpp
 # )
 
 ## Add cmake target dependencies of the library

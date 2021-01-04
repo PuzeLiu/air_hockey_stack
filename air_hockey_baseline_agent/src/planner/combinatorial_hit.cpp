@@ -1,7 +1,7 @@
 #include "../../../air_hockey_baseline_agent/include/planner/combinatorial_hit.h"
 
 #include <Eigen/Geometry>
-using namespace tactical_agent;
+using namespace AirHockey;
 
 
 CombinatorialHit::CombinatorialHit(Vector2d bound_lower, Vector2d bound_upper, double rate, double height) {

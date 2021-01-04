@@ -6,7 +6,7 @@
 
 #include "../../air_hockey_baseline_agent/include/agent.h"
 
-using namespace tactical_agent;
+using namespace AirHockey;
 
 Observer::Observer(ros::NodeHandle nh, ros::Rate rate) : nh_(nh), rate_(rate), tfBuffer_(),
                                                          tfListener_(tfBuffer_) {

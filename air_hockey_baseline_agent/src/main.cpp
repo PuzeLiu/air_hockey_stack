@@ -2,7 +2,7 @@
 
 #include "../../air_hockey_baseline_agent/include/agent.h"
 
-using namespace tactical_agent;
+using namespace AirHockey;
 
 int main(int argc, char** argv){
     ros::init(argc, argv, "tactical_agent");

@@ -2,7 +2,7 @@
 
 #include <utility>
 
-using namespace tactical_agent;
+using namespace AirHockey;
 
 StableDynamicsMotion::StableDynamicsMotion(Vector2d stiffnessUpperBound, Vector2d stiffnessLowerBound,
                                            double rate, double height) :

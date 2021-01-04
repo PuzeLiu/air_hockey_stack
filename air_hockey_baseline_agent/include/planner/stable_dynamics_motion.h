@@ -7,7 +7,7 @@
 
 using namespace Eigen;
 
-namespace tactical_agent{
+namespace AirHockey{
 class StableDynamicsMotion {
 public:
     StableDynamicsMotion(Vector2d stiffnessUpperBound, Vector2d stiffnessLowerBound, double rate, double height);

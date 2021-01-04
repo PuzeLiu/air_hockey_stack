@@ -16,7 +16,7 @@
 
 using namespace iiwas_kinematics;
 
-namespace tactical_agent {
+namespace AirHockey {
 //    boost::mutex stateMutex;
 
     struct ObservationState {

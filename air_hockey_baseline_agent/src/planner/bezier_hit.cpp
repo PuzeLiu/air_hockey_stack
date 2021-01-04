@@ -1,6 +1,6 @@
 #include "../../../air_hockey_baseline_agent/include/planner/bezier_hit.h"
 
-using namespace tactical_agent;
+using namespace AirHockey;
 
 BezierHit::BezierHit(Vector2d bound_lower, Vector2d bound_upper, double rate, double height) {
     boundLower_ = bound_lower;

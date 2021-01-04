@@ -1,6 +1,6 @@
 #include "../../air_hockey_baseline_agent/include/agent.h"
 
-using namespace tactical_agent;
+using namespace AirHockey;
 
 Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(nh, ros::Rate(rate)), dist_(0, 2) {
     universalJointHeight_ = 0.165;

@@ -11,7 +11,7 @@
 #include "../../air_hockey_baseline_agent/include/observer.h"
 #include "iiwas_kinematics.h"
 
-namespace tactical_agent{
+namespace AirHockey{
 class NullSpaceOptimizer {
 public:
     NullSpaceOptimizer(iiwas_kinematics::Kinematics* kinematics, Observer* observer, bool closeLoop=false, double rate=100.);

@@ -26,7 +26,7 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 
-#include "air_hockey_puck_tracker/RosVisualization.hpp"
+#include "air_hockey_puck_tracker/VisualizationInterface.hpp"
 
 namespace AirHockey {
 

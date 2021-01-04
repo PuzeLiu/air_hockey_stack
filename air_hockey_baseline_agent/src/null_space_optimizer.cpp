@@ -1,6 +1,6 @@
 #include "../../air_hockey_baseline_agent/include/null_space_optimizer.h"
 
-using namespace tactical_agent;
+using namespace AirHockey;
 using namespace iiwas_kinematics;
 
 NullSpaceOptimizer::NullSpaceOptimizer(Kinematics* kinematics,

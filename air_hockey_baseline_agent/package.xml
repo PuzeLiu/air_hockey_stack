@@ -2,9 +2,9 @@
 <package format="2">
   <name>air_hockey_baseline_agent</name>
   <version>0.0.0</version>
-  <description>The tactical_agent package</description>
+  <description>The air hockey baseline agent package</description>
 
-    <maintainer email="puze@robot-learning.de">Puze Liu</maintainer>
+  <maintainer email="puze@robot-learning.de">Puze Liu</maintainer>
 
   <license>MIT</license>
 
