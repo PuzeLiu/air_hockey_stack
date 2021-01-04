@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(air_hockey_description)
+project(air_hockey_bringup)
 
 
 find_package(catkin REQUIRED)

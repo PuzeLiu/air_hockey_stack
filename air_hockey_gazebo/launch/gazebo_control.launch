@@ -13,7 +13,7 @@
         <arg name="back_controllers" value="$(arg back_controllers)"/>
     </include>
 
-    <rosparam file="$(find air_hockey_description)/control/air_hockey_control.yaml" command="load"/>
+    <rosparam file="$(find air_hockey_gazebo)/config/gazebo_control.yaml" command="load"/>
 
     <group ns="iiwa_front" if="$(arg use_front_iiwa)">
         <!-- load the controllers -->

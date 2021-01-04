@@ -15,7 +15,7 @@
     <arg name="table_surface_z" default="0.1"/>
 
     <!-- Description -->
-    <include file="$(find air_hockey_description)/launch/air_hockey_bringup.launch">
+    <include file="$(find air_hockey_description)/launch/air_hockey_description.launch">
         <arg name="use_front_iiwa" value="$(arg use_front_iiwa)"/>
         <arg name="use_back_iiwa" value="$(arg use_back_iiwa)"/>
         <arg name="hardware_interface" value="$(arg hardware_interface)"/>
@@ -33,7 +33,7 @@
     </include>
 
     <!-- Controllers -->
-    <include file="$(find air_hockey_description)/launch/air_hockey_control.launch">
+    <include file="$(find air_hockey_gazebo)/launch/gazebo_control.launch">
         <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />
         <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />
         <arg name="front_controllers" value="joint_position_trajectory_controller"/>

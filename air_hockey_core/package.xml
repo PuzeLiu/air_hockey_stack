@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>air_hockey_core</name>
+  <version>0.0.0</version>
+  <description>The air_hockey_core package</description>
+
+  <maintainer email="puze@robot-learning.de">Puze Liu</maintainer>
+
+  <license>MIT</license>
+
+  <author email="puze@robot-learning.de">Puze Liu</author>
+  <author email="davide@robot-learning.de">Davide tateo</author>
+
+  <url type="website">http://wiki.ros.org/air_hockey_core</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <exec_depend>air_hockey_bringup</exec_depend>
+  <exec_depend>air_hockey_gazebo</exec_depend>
+  <exec_depend>air_hockey_puck_tracker</exec_depend>
+  <exec_depend>air_hockey_baseline_agent</exec_depend>
+
+  <export>
+    <metapackage/>
+  </export>
+</package>

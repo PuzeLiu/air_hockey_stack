@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="use_front_iiwa" default="true"/>
+    <arg name="use_back_iiwa" default="true"/>
+
+    <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+    <arg name="iiwas_frame_urdf" default="$(find iiwas_description)/urdf/iiwas_frame.urdf.xacro"/>
+    <arg name="iiwa_urdf" default="$(find air_hockey_description)/urdf/iiwa_striker.urdf.xacro"/>
+    <arg name="table_urdf" default="$(find air_hockey_description)/urdf/air_hockey_table/model.urdf.xacro"/>
+    <arg name="puck_urdf" default="$(find air_hockey_description)/urdf/puck/model.urdf.xacro"/>
+
+    <arg name="table_surface_x" default="1.694"/>
+    <arg name="table_surface_y" default="0.813"/>
+    <arg name="table_surface_z" default="0.1"/>
+
+ 
+</launch>
