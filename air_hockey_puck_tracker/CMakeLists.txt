@@ -37,7 +37,13 @@ include_directories(include
         ${EIGEN3_INCLUDE_DIR}
         )
 
-add_executable(tracker_node src/main.cpp)
+add_executable(tracker_node
+			   src/SystemModel.cpp
+			   src/ObservationModel.cpp
+			   src/CollisionModel.cpp
+			   src/RosVisualization.cpp
+			   src/Validation.cpp
+	 		   src/main.cpp)
 
 add_dependencies(tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
         ${PROJECT_NAME}_generate_messages_cpp)

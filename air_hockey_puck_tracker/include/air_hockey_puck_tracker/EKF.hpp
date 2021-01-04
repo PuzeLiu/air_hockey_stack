@@ -27,11 +27,9 @@
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include <kalman/ExtendedKalmanFilter.hpp>
-#include "kalman/LinearizedMeasurementModel.hpp"
+#include <kalman/LinearizedMeasurementModel.hpp>
 
-#include "../../air_hockey_puck_tracker/include/ObservationModel.hpp"
-#include "../../air_hockey_puck_tracker/include/RosVisualization.hpp"
-#include "../../air_hockey_puck_tracker/include/SystemModel.hpp"
+#include "air_hockey_puck_tracker/ObservationModel.hpp"
 
 
 namespace AirHockey {
@@ -40,7 +38,7 @@ class EKF : public Kalman::ExtendedKalmanFilter<State>{
         typedef Measurement InnovationType;
         typedef Kalman::Covariance<Measurement> InnovationCovariance;
 
-        const State& update(ObservationModel& m, const Measurement& z){
+        inline const State& update(ObservationModel& m, const Measurement& z){
             m.updateJacobians( x );
 
             // COMPUTE KALMAN GAIN
@@ -62,7 +60,7 @@ class EKF : public Kalman::ExtendedKalmanFilter<State>{
             return this->getState();
         }
 
-        State& getState(){
+        inline State& getState(){
             return x;
         }
 
@@ -75,22 +73,22 @@ class EKF : public Kalman::ExtendedKalmanFilter<State>{
         //! Innovation Covariance
         InnovationCovariance S;
 
-        void calculateInnovation(ObservationModel& m, const Measurement& z){
+        inline void calculateInnovation(ObservationModel& m, const Measurement& z){
             mu = z - m.h(x);
             mu.theta() = atan2(sin(mu.theta()), cos(mu.theta()));
         }
 
     public:
-        const InnovationCovariance& getInnovationCovariance() {
+        inline const InnovationCovariance& getInnovationCovariance() {
             return S;
         }
 
-        const InnovationCovariance& updateInnovationCovariance(ObservationModel &m){
+        inline const InnovationCovariance& updateInnovationCovariance(ObservationModel &m){
             S = ( m.H * P * m.H.transpose() ) + ( m.V * m.getCovariance() * m.V.transpose() );
             return S;
         }
 
-        const InnovationType& getInnovation(){
+        inline const InnovationType& getInnovation(){
             return mu;
         }
     };

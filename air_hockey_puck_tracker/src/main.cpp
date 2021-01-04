@@ -24,14 +24,15 @@
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 
-#include "../../air_hockey_puck_tracker/include/CollisionModel.hpp"
-#include "../../air_hockey_puck_tracker/include/EKF.hpp"
-#include "../../air_hockey_puck_tracker/include/ObservationModel.hpp"
-#include "../../air_hockey_puck_tracker/include/RosVisualization.hpp"
-#include "../../air_hockey_puck_tracker/include/Validation.hpp"
+#include "air_hockey_puck_tracker/CollisionModel.hpp"
+#include "air_hockey_puck_tracker/EKF.hpp"
+#include "air_hockey_puck_tracker/ObservationModel.hpp"
+#include "air_hockey_puck_tracker/RosVisualization.hpp"
+#include "air_hockey_puck_tracker/Validation.hpp"
 
 
 using namespace AirHockey;
+using namespace std;
 
 void setCovariance(ros::NodeHandle &nh, Kalman::Covariance<State> &covDyn, Kalman::Covariance<Measurement> &covObs,
                    Kalman::Covariance<State> &covInit) {
@@ -39,13 +40,13 @@ void setCovariance(ros::NodeHandle &nh, Kalman::Covariance<State> &covDyn, Kalma
     covDyn.setIdentity();
     covInit.setIdentity();
 
-    T obsVarPos, obsVarAng, dynVarPos, dynVarVel, dynVarAngPos, dynVarAngVel;
-    nh.param<AirHockey::T>("observation_variance_position", obsVarPos, 1e-6);
-    nh.param<AirHockey::T>("observation_variance_angular", obsVarAng, 1e-6);
-    nh.param<AirHockey::T>("dynamic_variance_position", dynVarPos, 1e-4);
-    nh.param<AirHockey::T>("dynamic_variance_velocity", dynVarVel, 1e-2);
-    nh.param<AirHockey::T>("dynamic_variance_angular_position", dynVarAngPos, 1e-4);
-    nh.param<AirHockey::T>("dynamic_variance_angular_velocity", dynVarAngVel, 1e-2);
+    double obsVarPos, obsVarAng, dynVarPos, dynVarVel, dynVarAngPos, dynVarAngVel;
+    nh.param<double>("observation_variance_position", obsVarPos, 1e-6);
+    nh.param<double>("observation_variance_angular", obsVarAng, 1e-6);
+    nh.param<double>("dynamic_variance_position", dynVarPos, 1e-4);
+    nh.param<double>("dynamic_variance_velocity", dynVarVel, 1e-2);
+    nh.param<double>("dynamic_variance_angular_position", dynVarAngPos, 1e-4);
+    nh.param<double>("dynamic_variance_angular_velocity", dynVarAngVel, 1e-2);
     ROS_INFO_STREAM("Observer Variance Position: " << obsVarPos);
     ROS_INFO_STREAM("Observer Variance Angular Position: " << obsVarAng);
     ROS_INFO_STREAM("Dynamics Variance Position:" << dynVarPos);
@@ -80,11 +81,11 @@ int main(int argc, char **argv) {
 
     ROS_INFO_STREAM("Read System Parameters");
     int predict_steps;
-    AirHockey::T frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
-    nh.param<AirHockey::T>("friction_drag", frictionDrag, 0.1);
-    nh.param<AirHockey::T>("friction_sliding", frictionSliding, 0.0);
-    nh.param<AirHockey::T>("restitution_table", restitutionTable, 0.8);
-    nh.param<AirHockey::T>("restitution_mallet", restitutionMallet, 0.1);
+    double frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
+    nh.param<double>("friction_drag", frictionDrag, 0.1);
+    nh.param<double>("friction_sliding", frictionSliding, 0.0);
+    nh.param<double>("restitution_table", restitutionTable, 0.8);
+    nh.param<double>("restitution_mallet", restitutionMallet, 0.1);
     nh.param<int>("prediction_steps", predict_steps, 20);
 
     ROS_INFO_STREAM("Drag Parameter:" << frictionDrag);
