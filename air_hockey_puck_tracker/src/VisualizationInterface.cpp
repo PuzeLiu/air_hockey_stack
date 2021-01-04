@@ -146,7 +146,7 @@ void VisualizationInterface::visualize() {
 }
 
 void VisualizationInterface::setPredictionMarker(const State &state,
-		const EKF::InnovationCovariance &cov) {
+		const EKF_Wrapper::InnovationCovariance &cov) {
 	m_predictionMarker.pose.position.x = state.x();
 	m_predictionMarker.pose.position.y = state.y();
 	m_predictionMarker.pose.position.z = m_tableHeight;

@@ -21,8 +21,8 @@
  * SOFTWARE.
  */
 
-#ifndef PUCK_TRACKER_EKF_HPP
-#define PUCK_TRACKER_EKF_HPP
+#ifndef PUCK_TRACKER_EKF_WRAPPER_HPP
+#define PUCK_TRACKER_EKF_WRAPPER_HPP
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -33,7 +33,7 @@
 
 
 namespace AirHockey {
-class EKF : public Kalman::ExtendedKalmanFilter<State>{
+class EKF_Wrapper : public Kalman::ExtendedKalmanFilter<State>{
     public:
         typedef Measurement InnovationType;
         typedef Kalman::Covariance<Measurement> InnovationCovariance;
@@ -94,4 +94,4 @@ class EKF : public Kalman::ExtendedKalmanFilter<State>{
     };
 }
 
-#endif //PUCK_TRACKER_EKF_HPP
+#endif //PUCK_TRACKER_EKF_WRAPPER_HPP

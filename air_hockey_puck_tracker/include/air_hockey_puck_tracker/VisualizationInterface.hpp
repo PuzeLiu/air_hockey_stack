@@ -26,7 +26,7 @@
 #define PUCK_TRACKER_VISUALIZATION_INTERFACE_H
 
 #include <visualization_msgs/Marker.h>
-#include "air_hockey_puck_tracker/EKF.hpp"
+#include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
 
 
 namespace AirHockey{
@@ -46,7 +46,7 @@ public:
     void visualize();
 
     void setPredictionMarker(const State& state,
-                             const EKF::InnovationCovariance& cov);
+                             const EKF_Wrapper::InnovationCovariance& cov);
 };
 
 }

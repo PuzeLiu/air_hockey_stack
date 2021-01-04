@@ -78,7 +78,7 @@ void AirHockeyTable::setTransform(const tf::StampedTransform &transform) {
 	m_boundary.row(3) << offsetP2.x(), offsetP2.y(), offsetP1.x(), offsetP1.y();
 }
 
-bool AirHockeyTable::applyCollision(EKF::State &state) {
+bool AirHockeyTable::applyCollision(EKF_Wrapper::State &state) {
 	Vector2 p, vel;
 	p.x() = state.x();
 	p.y() = state.y();

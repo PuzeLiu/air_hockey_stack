@@ -25,9 +25,9 @@
 #include <tf/transform_listener.h>
 
 #include "air_hockey_puck_tracker/CollisionModel.hpp"
-#include "air_hockey_puck_tracker/EKF.hpp"
+#include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
 #include "air_hockey_puck_tracker/ObservationModel.hpp"
-#include "air_hockey_puck_tracker/RosVisualization.hpp"
+#include "air_hockey_puck_tracker/VisualizationInterface.hpp"
 #include "air_hockey_puck_tracker/Validation.hpp"
 
 
@@ -129,8 +129,8 @@ int main(int argc, char **argv) {
     u.dt() = rate.expectedCycleTime().toSec();
 
     //! Initialize Kalman Filter
-    EKF ekf;
-    EKF predictor;
+    EKF_Wrapper ekf;
+    EKF_Wrapper predictor;
     ekf.init(sInit);
     ekf.setCovariance(covInit);
     predictor.init(ekf.getState());
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
     Measurement measurementTmp;
 
     std::vector<Measurement> predictionBuffer;
-    std::vector<EKF::InnovationCovariance> innovationCovBuffer;
+    std::vector<EKF_Wrapper::InnovationCovariance> innovationCovBuffer;
 
     ROS_INFO_STREAM("Start Tracking.");
     bool reInit = true;

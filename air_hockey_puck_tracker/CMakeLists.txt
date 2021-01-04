@@ -9,13 +9,13 @@ find_package(Kalman REQUIRED)
 
 
 add_message_files(
-        FILES
-        InnovationMsg.msg
+    FILES
+    InnovationMsg.msg
 )
 
 generate_messages(
-        DEPENDENCIES
-        std_msgs actionlib_msgs geometry_msgs
+    DEPENDENCIES
+    std_msgs actionlib_msgs geometry_msgs
 )
 
 
@@ -24,8 +24,8 @@ generate_messages(
 ###################################
 
 catkin_package(
-        INCLUDE_DIRS include
-        #  DEPENDS system_lib
+    INCLUDE_DIRS include
+    #  DEPENDS system_lib
 )
 
 ###########
@@ -33,37 +33,37 @@ catkin_package(
 ###########
 
 include_directories(include
-        ${catkin_INCLUDE_DIRS}
-        ${EIGEN3_INCLUDE_DIR}
-        )
+    ${catkin_INCLUDE_DIRS}
+    ${EIGEN3_INCLUDE_DIR}
+    )
 
 add_executable(tracker_node
-			   src/SystemModel.cpp
-			   src/ObservationModel.cpp
-			   src/CollisionModel.cpp
-			   src/RosVisualization.cpp
-			   src/Validation.cpp
-	 		   src/main.cpp)
+    src/SystemModel.cpp
+    src/ObservationModel.cpp
+    src/CollisionModel.cpp
+    src/VisualizationInterface.cpp
+    src/Validation.cpp
+    src/main.cpp)
 
 add_dependencies(tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
-        ${PROJECT_NAME}_generate_messages_cpp)
+    ${PROJECT_NAME}_generate_messages_cpp)
 
 target_link_libraries(tracker_node
-        ${catkin_LIBRARIES}
-        ${Eigen3_LIBRARIES}
-        ${Kalman_LIBRARIES}
-        )
+    ${catkin_LIBRARIES}
+    ${Eigen3_LIBRARIES}
+    ${Kalman_LIBRARIES}
+    )
 
 #############
 ## Install ##
 #############
 
 install(TARGETS tracker_node
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-        )
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
 
 install(DIRECTORY include/${PROJECT_NAME}/
-        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-        FILES_MATCHING PATTERN "*.h"
-        )
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+    FILES_MATCHING PATTERN "*.h"
+    )
 

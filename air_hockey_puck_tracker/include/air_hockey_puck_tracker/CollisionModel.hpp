@@ -28,7 +28,7 @@
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
 
-#include "air_hockey_puck_tracker/EKF.hpp"
+#include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
 
 namespace AirHockey {
 
@@ -71,7 +71,7 @@ namespace AirHockey {
 
         inline BoundaryType getBoundary() { return m_boundary; }
 
-        bool applyCollision(EKF::State &state);
+        bool applyCollision(EKF_Wrapper::State &state);
 
     };
 
