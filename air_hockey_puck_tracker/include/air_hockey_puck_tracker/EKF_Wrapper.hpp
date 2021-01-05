@@ -24,8 +24,6 @@
 #ifndef PUCK_TRACKER_EKF_WRAPPER_HPP
 #define PUCK_TRACKER_EKF_WRAPPER_HPP
 
-#include <ros/ros.h>
-#include <tf/transform_listener.h>
 #include <kalman/ExtendedKalmanFilter.hpp>
 #include <kalman/LinearizedMeasurementModel.hpp>
 
@@ -75,7 +73,8 @@ class EKF_Wrapper : public Kalman::ExtendedKalmanFilter<State>{
 
         inline void calculateInnovation(ObservationModel& m, const Measurement& z){
             mu = z - m.h(x);
-            mu.theta() = atan2(sin(mu.theta()), cos(mu.theta()));
+            Eigen::Rotation2Dd rot(mu.theta());
+            mu.theta() = rot.smallestAngle();
         }
 
     public:

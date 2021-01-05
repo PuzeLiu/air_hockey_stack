@@ -42,6 +42,7 @@ add_executable(tracker_node
     src/CollisionModel.cpp
     src/VisualizationInterface.cpp
     src/Validation.cpp
+    src/PuckTracker.cpp
     src/main.cpp)
 
 add_dependencies(tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}

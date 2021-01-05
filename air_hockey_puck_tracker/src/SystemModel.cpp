@@ -48,7 +48,6 @@ SystemModel::S SystemModel::f(const S &x, const C &u) const {
 
 	x_.x() = x.x() + u.dt() * x.dx();
 	x_.y() = x.y() + u.dt() * x.dy();
-	x_.theta() = x.theta() + u.dt() * x.dtheta();
 	if (x.dx() != 0 && x.dy() != 0) {
 		x_.dx() = x.dx() - u.dt() * m_c * x.dx()
 				- u.dt() * m_d * x.dx() / abs(x.dx());
@@ -59,7 +58,8 @@ SystemModel::S SystemModel::f(const S &x, const C &u) const {
 		x_.dy() = x.dy() - u.dt() * m_c * x.dy();
 	}
 
-	x_.theta() = x.theta() + u.dt() * x.dtheta();
+	Eigen::Rotation2Dd rot(x.theta() + u.dt() * x.dtheta());
+	x_.theta() = rot.smallestAngle();
 	x_.dtheta() = x.dtheta();
 	// Return transitioned state vector
 	return x_;
@@ -73,5 +73,15 @@ void SystemModel::updateJacobians(const S &x, const C &u) {
 	this->F(S::DY, S::DY) = 1. - u.dt() * m_c;
 	this->F(S::THETA, S::DTHETA) = u.dt();
 }
+
+    double SystemModel::setAngle(double angle) const {
+        while (angle > M_PI){
+            angle -= M_PI * 2;
+        }
+        while (angle < - M_PI){
+            angle += M_PI * 2;
+        }
+        return angle;
+    }
 
 }

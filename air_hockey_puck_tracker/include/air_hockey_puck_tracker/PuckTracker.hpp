@@ -26,6 +26,8 @@
 
 #include <boost/thread.hpp>
 #include <tf2_ros/transform_listener.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 #include "SystemModel.hpp"
 #include "ObservationModel.hpp"
@@ -55,7 +57,7 @@ namespace AirHockey {
 
         void startTracking();
 
-    public:
+    private:
         ros::NodeHandle nh_;
         ros::Rate rate_;
 

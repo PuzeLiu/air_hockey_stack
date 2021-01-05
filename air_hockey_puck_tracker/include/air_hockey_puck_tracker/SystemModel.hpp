@@ -178,6 +178,8 @@ protected:
 	 * @param u The current system control input
 	 */
 	void updateJacobians(const S &x, const C &u);
+
+	double setAngle(double angle) const;
 };
 
 }

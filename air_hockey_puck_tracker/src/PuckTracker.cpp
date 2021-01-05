@@ -26,7 +26,8 @@
 using namespace AirHockey;
 
 PuckTracker::PuckTracker(ros::NodeHandle nh, ros::Rate rate) : nh_(nh), rate_(rate), tfBuffer_(),
-                                                               tfListener_(tfBuffer_) {
+                                                               tfListener_(tfBuffer_, nh_) {
+    tfBuffer_.setUsingDedicatedThread(true);
     init();
 }
 
@@ -50,19 +51,19 @@ const PuckPredictedState& PuckTracker::getPuckState() {
     predictedState_.state = puckPredictor_->getState();
     predictedState_.time = predictedTime_;
     predictionMutex_.unlock();
+    return predictedState_;
 }
 
 void PuckTracker::init() {
     ROS_INFO_STREAM("Namepsace: " << nh_.getNamespace());
 
     ROS_INFO_STREAM("Read System Parameters");
-
     double frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
-    nh_.param<double>("friction_drag", frictionDrag, 0.1);
-    nh_.param<double>("friction_sliding", frictionSliding, 0.0);
-    nh_.param<double>("restitution_table", restitutionTable, 0.8);
-    nh_.param<double>("restitution_mallet", restitutionMallet, 0.1);
-    nh_.param<int>("max_prediction_steps", maxPredictionSteps_, 20);
+    nh_.param<double>("/puck_tracker/friction_drag", frictionDrag, 0.1);
+    nh_.param<double>("/puck_tracker/friction_sliding", frictionSliding, 0.0);
+    nh_.param<double>("/puck_tracker/restitution_table", restitutionTable, 0.8);
+    nh_.param<double>("/puck_tracker/restitution_mallet", restitutionMallet, 0.1);
+    nh_.param<int>("/puck_tracker/max_prediction_steps", maxPredictionSteps_, 20);
 
     ROS_INFO_STREAM("Drag Parameter:" << frictionDrag);
     ROS_INFO_STREAM("Sliding Parameter: " << frictionSliding);
@@ -77,8 +78,9 @@ void PuckTracker::init() {
         nh_.shutdown();
     }
     ROS_INFO_STREAM("Wait for transform: /Table");
+    ros::Duration(1.0).sleep();
     try {
-        tfTableStatic_ = tfBuffer_.lookupTransform(robotBaseName_, "Table", ros::Time(0), ros::Duration(5.0));
+        tfTableStatic_ = tfBuffer_.lookupTransform(robotBaseName_, "Table", ros::Time(0), ros::Duration(1.0));
     } catch (tf2::TransformException &exception) {
         ROS_ERROR_STREAM("Could not transform " << robotBaseName_ << " to Table: " << exception.what());
         nh_.shutdown();
@@ -96,6 +98,7 @@ void PuckTracker::init() {
     sInit.setZero();
     kalmanFilter_->init(sInit);
     setCovariance();
+    u_.dt() = rate_.expectedCycleTime().toSec();
 }
 
 void PuckTracker::setCovariance() {
@@ -147,31 +150,18 @@ void PuckTracker::setCovariance() {
 void PuckTracker::startTracking() {
     ROS_INFO_STREAM("Wait for transform: /Puck");
     try {
-        tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Table", ros::Time(0), ros::Duration(5.0));
+        tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", ros::Time(0));
         tfPuckPrev_ = tfPuck_;
     } catch (tf2::TransformException &exception) {
-        ROS_ERROR_STREAM("Could not transform " << robotBaseName_ << " to Table: " << exception.what());
+        ROS_ERROR_STREAM("Could not transform " << robotBaseName_ << " to Puck: " << exception.what());
         nh_.shutdown();
     }
 
     while (nh_.ok()) {
+        auto t_start = ros::WallTime::now();
         //! predict step
-        u_.dt() = rate_.cycleTime().toSec();
-
         kalmanFilter_->predict(*systemModel_, u_);
         collisionModel_->m_table.applyCollision(kalmanFilter_->getState());
-
-        //! predict future step
-        puckPredictor_->init(kalmanFilter_->getState());
-        puckPredictor_->setCovariance(kalmanFilter_->getCovariance());
-        u_.dt() = rate_.expectedCycleTime().toSec();
-        predictionMutex_.lock();
-        for (int i = 0; i < maxPredictionSteps_; ++i) {
-            puckPredictor_->predict(*systemModel_, u_);
-            collisionModel_->m_table.applyCollision(puckPredictor_->getState());
-            predictedTime_ = i * rate_.expectedCycleTime().toSec();
-        }
-        predictionMutex_.unlock();
 
         //! Update step
         try {
@@ -180,12 +170,15 @@ void PuckTracker::startTracking() {
             if (tfPuck_.header.stamp > tfPuckPrev_.header.stamp){
                 measurement_.x() = tfPuck_.transform.translation.x;
                 measurement_.y() = tfPuck_.transform.translation.y;
-                Eigen::Quaterniond quat;
-                quat.x() = tfPuck_.transform.rotation.x;
-                quat.y() = tfPuck_.transform.rotation.y;
-                quat.z() = tfPuck_.transform.rotation.z;
-                quat.w() = tfPuck_.transform.rotation.w;
-                measurement_.theta() = quat.toRotationMatrix().eulerAngles(0, 1, 2)(2);
+                tf2::Quaternion quat;
+                quat.setX(tfPuck_.transform.rotation.x);
+                quat.setY(tfPuck_.transform.rotation.y);
+                quat.setZ(tfPuck_.transform.rotation.z);
+                quat.setW(tfPuck_.transform.rotation.w);
+                tf2::Matrix3x3 rotMat(quat);
+                double roll, pitch, yaw;
+                rotMat.getEulerYPR(yaw, pitch, roll);
+                measurement_.theta() = yaw;
                 kalmanFilter_->update(*observationModel_, measurement_);
                 tfPuckPrev_ = tfPuck_;
             }
@@ -193,6 +186,18 @@ void PuckTracker::startTracking() {
             ROS_ERROR_STREAM("Could not transform " << robotBaseName_ << " to Puck: " << exception.what());
         }
 
+//        //! predict future step
+//        puckPredictor_->init(kalmanFilter_->getState());
+//        puckPredictor_->setCovariance(kalmanFilter_->getCovariance());
+//        u_.dt() = rate_.expectedCycleTime().toSec();
+//        predictionMutex_.lock();
+//        for (int i = 0; i < maxPredictionSteps_; ++i) {
+//            puckPredictor_->predict(*systemModel_, u_);
+//            collisionModel_->m_table.applyCollision(puckPredictor_->getState());
+//            predictedTime_ = i * rate_.expectedCycleTime().toSec();
+//        }
+//        predictionMutex_.unlock();
+        ROS_INFO_STREAM("Time: " << (ros::WallTime::now() - t_start).toSec());
         rate_.sleep();
     }
 }
