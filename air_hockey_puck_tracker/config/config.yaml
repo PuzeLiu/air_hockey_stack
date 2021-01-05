@@ -1,4 +1,4 @@
-prediction_steps:
+max_prediction_steps:
   100
 friction_drag:
   0.13087578868418712

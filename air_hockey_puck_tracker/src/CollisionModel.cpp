@@ -49,13 +49,16 @@ AirHockeyTable::AirHockeyTable(double e, double dt) {
 AirHockeyTable::~AirHockeyTable() {
 }
 
-void AirHockeyTable::setTransform(const tf::StampedTransform &transform) {
-	m_center.x() = transform.getOrigin().x();
-	m_center.y() = transform.getOrigin().y();
-	m_z = transform.getOrigin().z();
-	double cos_theta = transform.getRotation().w();
-	double sin_theta = transform.getRotation().z();
-	m_yaw = std::atan2(sin_theta, cos_theta);
+void AirHockeyTable::setTransform(const geometry_msgs::TransformStamped &transform) {
+	m_center.x() = transform.transform.translation.x;
+	m_center.y() = transform.transform.translation.y;
+	m_z = transform.transform.translation.z;
+	Eigen::Quaterniond quat;
+	quat.x() = transform.transform.rotation.x;
+    quat.y() = transform.transform.rotation.y;
+    quat.z() = transform.transform.rotation.z;
+    quat.w() = transform.transform.rotation.w;
+    m_yaw = quat.toRotationMatrix().eulerAngles(0, 1, 2)[2];
 
 	Kalman::Matrix<double, 2, 2> rotation;
 	rotation(0, 0) = cos(m_yaw);
@@ -153,20 +156,25 @@ Mallet::Mallet(double e, double dt) {
 	m_e = 0.5;
 }
 
-void Mallet::setState(const tf::StampedTransform &tfMallet) {
-	double deltaT = tfMallet.stamp_.toSec() - t_prev;
+void Mallet::setState(const geometry_msgs::TransformStamped &tfMallet) {
+	double deltaT = tfMallet.header.stamp.toSec() - t_prev;
 
-	m_malletState.dx() = (tfMallet.getOrigin().x() - m_malletState.x())
+	m_malletState.dx() = (tfMallet.transform.translation.x - m_malletState.x())
 			/ deltaT;
-	m_malletState.dy() = (tfMallet.getOrigin().y() - m_malletState.y())
+	m_malletState.dy() = (tfMallet.transform.translation.y - m_malletState.y())
 			/ deltaT;
-	m_malletState.dtheta() = (tf::getYaw(tfMallet.getRotation())
-			- m_malletState.theta()) / deltaT;
+	Eigen::Quaterniond quat;
+	quat.x() = tfMallet.transform.rotation.x;
+    quat.y() = tfMallet.transform.rotation.y;
+    quat.z() = tfMallet.transform.rotation.z;
+    quat.w() = tfMallet.transform.rotation.w;
+    auto yaw = quat.toRotationMatrix().eulerAngles(0, 1, 2)(2);
+	m_malletState.dtheta() = (yaw - m_malletState.theta()) / deltaT;
 
-	m_malletState.x() = tfMallet.getOrigin().x();
-	m_malletState.y() = tfMallet.getOrigin().y();
-	m_malletState.theta() = tf::getYaw(tfMallet.getRotation());
-	t_prev = tfMallet.stamp_.toSec();
+	m_malletState.x() = tfMallet.transform.translation.x;
+	m_malletState.y() = tfMallet.transform.translation.y;
+	m_malletState.theta() = yaw;
+	t_prev = tfMallet.header.stamp.toSec();
 	m_malletStatePredict = m_malletState;
 }
 
@@ -222,7 +230,7 @@ bool Mallet::applyCollision(State &puckState) {
 	return false;
 }
 
-CollisionModel::CollisionModel(tf::StampedTransform &tfTable,
+CollisionModel::CollisionModel(geometry_msgs::TransformStamped &tfTable,
 		double &restitutionTable, double &restitutionMallet, double dt) :
 		m_table(restitutionTable, dt), m_mallet(restitutionMallet, dt) {
 	m_table.setTransform(tfTable);

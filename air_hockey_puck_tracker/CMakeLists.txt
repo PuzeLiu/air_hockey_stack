@@ -3,10 +3,9 @@ project(air_hockey_puck_tracker)
 
 add_compile_options(-std=c++11)
 
-find_package(catkin REQUIRED COMPONENTS roscpp rospy rosbag tf std_msgs geometry_msgs message_generation)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy rosbag tf2_ros geometry_msgs message_generation)
 find_package(Eigen3 REQUIRED)
 find_package(Kalman REQUIRED)
-
 
 add_message_files(
     FILES
@@ -53,6 +52,20 @@ target_link_libraries(tracker_node
     ${Eigen3_LIBRARIES}
     ${Kalman_LIBRARIES}
     )
+
+add_library(puck_tracker
+   src/PuckTracker.cpp
+   src/SystemModel.cpp
+   src/ObservationModel.cpp
+   src/CollisionModel.cpp
+   include/air_hockey_puck_tracker/EKF_Wrapper.hpp
+   )
+
+target_link_libraries(puck_tracker
+   ${catkin_LIBRARIES}
+   ${Eigen3_LIBRARIES}
+   ${Kalman_LIBRARIES}
+   )
 
 #############
 ## Install ##

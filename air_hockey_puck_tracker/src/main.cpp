@@ -22,7 +22,7 @@
  */
 
 #include <ros/ros.h>
-#include <tf/transform_listener.h>
+#include <tf2_ros/transform_listener.h>
 
 #include "air_hockey_puck_tracker/CollisionModel.hpp"
 #include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
@@ -76,7 +76,8 @@ void setCovariance(ros::NodeHandle &nh, Kalman::Covariance<State> &covDyn, Kalma
 int main(int argc, char **argv) {
     ros::init(argc, argv, "puck_tracker");
     ros::NodeHandle nh("~");
-    tf::TransformListener listener;
+    tf2_ros::Buffer buffer;
+    tf2_ros::TransformListener listener(buffer);
     ros::Rate rate(120);
 
     ROS_INFO_STREAM("Read System Parameters");
@@ -86,7 +87,7 @@ int main(int argc, char **argv) {
     nh.param<double>("friction_sliding", frictionSliding, 0.0);
     nh.param<double>("restitution_table", restitutionTable, 0.8);
     nh.param<double>("restitution_mallet", restitutionMallet, 0.1);
-    nh.param<int>("prediction_steps", predict_steps, 20);
+    nh.param<int>("max_prediction_steps", predict_steps, 20);
 
     ROS_INFO_STREAM("Drag Parameter:" << frictionDrag);
     ROS_INFO_STREAM("Sliding Parameter: " << frictionSliding);
@@ -96,10 +97,12 @@ int main(int argc, char **argv) {
 
     ROS_INFO_STREAM("Wait for the TF message: /Table");
 
-    tf::StampedTransform tfTable, tfPrev;
-
-    listener.waitForTransform("/world", "/Table", ros::Time(0), ros::Duration(30.0));
-    listener.lookupTransform("/world", "/Table", ros::Time(0), tfTable);
+    geometry_msgs::TransformStamped tfTable, tfPrev;
+    try {
+        tfTable = buffer.lookupTransform("world", "Table", ros::Time(0), ros::Duration(30.0));
+    } catch (tf2::TransformException &exception){
+        nh.shutdown();
+    }
 
     //! Kalman Filter Model
     SystemModel dynamicsModel(frictionDrag, frictionSliding);
@@ -118,12 +121,15 @@ int main(int argc, char **argv) {
 
     //! Initialize State and Control Vector
     ROS_INFO_STREAM("Wait for the TF message: /Puck");
-    listener.waitForTransform("/world", "/Puck", ros::Time(0), ros::Duration(30.0));
-    listener.lookupTransform("/world", "/Puck", ros::Time(0), tfPrev);
+    try {
+        tfPrev = buffer.lookupTransform("world", "Puck", ros::Time(0), ros::Duration(30.0));
+    } catch (tf2::TransformException &exception){
+        nh.shutdown();
+    }
     State sInit;
     sInit.setZero();
-    sInit.x() = tfPrev.getOrigin().x();
-    sInit.y() = tfPrev.getOrigin().y();
+    sInit.x() = tfPrev.transform.translation.x;
+    sInit.y() = tfPrev.transform.translation.y;
 
     Control u;
     u.dt() = rate.expectedCycleTime().toSec();
@@ -137,7 +143,7 @@ int main(int argc, char **argv) {
     predictor.setCovariance(ekf.getCovariance());
 
     //! Initialize visualization table height
-    VisualizationInterface visualizationInterface(nh, tfTable.getOrigin().z());
+    VisualizationInterface visualizationInterface(nh, tfTable.transform.translation.z);
 
     //! Initialize validation
     ValidationInterface validationInterface(nh, false);
@@ -159,13 +165,18 @@ int main(int argc, char **argv) {
                 auto time = ros::Time::now();
                 ekf.predict(dynamicsModel, u);
                 collisionModel.m_table.applyCollision(ekf.getState());
-                if (listener.waitForTransform("/world", "/Puck", time, rate.expectedCycleTime())) {
-                    tf::StampedTransform tfTmp;
-                    listener.lookupTransform("/world", "/Puck", time, tfTmp);
-                    double thetaTmp = tf::getYaw(tfTmp.getRotation());
-                    measurementTmp.x() = tfTmp.getOrigin().x();
-                    measurementTmp.y() = tfTmp.getOrigin().y();
-                    measurementTmp.theta() = thetaTmp;
+
+                geometry_msgs::TransformStamped tfTmp = buffer.lookupTransform("world", "Puck", ros::Time(0));
+                if (tfTmp.header.stamp > tfPrev.header.stamp) {
+                    Eigen::Quaterniond quatTmp;
+                    quatTmp.x() = tfTmp.transform.rotation.x;
+                    quatTmp.y() = tfTmp.transform.rotation.y;
+                    quatTmp.z() = tfTmp.transform.rotation.z;
+                    quatTmp.w() = tfTmp.transform.rotation.w;
+
+                    measurementTmp.x() = tfTmp.transform.translation.x;
+                    measurementTmp.y() = tfTmp.transform.translation.y;
+                    measurementTmp.theta() = quatTmp.toRotationMatrix().eulerAngles(0, 1, 2)[2];
 
                     ekf.update(observationModel, measurementTmp);
                     tfPrev = tfTmp;
@@ -176,11 +187,8 @@ int main(int argc, char **argv) {
         }
         else {
             auto time = ros::Time::now();
-            if (listener.waitForTransform("/world", "/Mallet", time, rate.expectedCycleTime())) {
-                tf::StampedTransform tfTmp;
-                listener.lookupTransform("/world", "/Mallet", time, tfTmp);
-                collisionModel.m_mallet.setState(tfTmp);
-            }
+            geometry_msgs::TransformStamped tfTmp = buffer.lookupTransform("world", "Mallet", ros::Time(0));
+            collisionModel.m_mallet.setState(tfTmp);
 
             //! predict step
             u.dt() = rate.cycleTime().toSec();
@@ -210,15 +218,18 @@ int main(int argc, char **argv) {
 
             //! Update step
             time = ros::Time::now();
-            if (listener.waitForTransform("/world", "/Puck", time, rate.expectedCycleTime())) {
-                tf::StampedTransform tfTmp;
-                listener.lookupTransform("/world", "/Puck", time, tfTmp);
+            tfTmp = buffer.lookupTransform("world", "Puck", ros::Time(0));
 
-                double thetaTmp = tf::getYaw(tfTmp.getRotation());
+            if (tfTmp.header.stamp > tfPrev.header.stamp) {
+                Eigen::Quaterniond quatTmp;
+                quatTmp.x() = tfTmp.transform.rotation.x;
+                quatTmp.y() = tfTmp.transform.rotation.y;
+                quatTmp.z() = tfTmp.transform.rotation.z;
+                quatTmp.w() = tfTmp.transform.rotation.w;
 
-                measurementTmp.x() = tfTmp.getOrigin().x();
-                measurementTmp.y() = tfTmp.getOrigin().y();
-                measurementTmp.theta() = thetaTmp;
+                measurementTmp.x() = tfTmp.transform.translation.x;
+                measurementTmp.y() = tfTmp.transform.translation.y;
+                measurementTmp.theta() = quatTmp.toRotationMatrix().eulerAngles(0, 1, 2)[2];
 
                 ekf.update(observationModel, measurementTmp);
 

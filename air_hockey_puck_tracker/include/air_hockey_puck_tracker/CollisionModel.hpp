@@ -26,7 +26,7 @@
 
 #include <math.h>
 #include <ros/ros.h>
-#include <tf/transform_listener.h>
+#include <geometry_msgs/TransformStamped.h>
 
 #include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
 
@@ -63,7 +63,7 @@ namespace AirHockey {
 
         ~AirHockeyTable();
 
-        void setTransform(const tf::StampedTransform &transform);
+        void setTransform(const geometry_msgs::TransformStamped &transform);
 
         inline Vector2 getCenter() { return m_center; }
 
@@ -94,7 +94,7 @@ namespace AirHockey {
 
         Mallet(double e, double dt);
 
-        void setState(const tf::StampedTransform &tfMallet);
+        void setState(const geometry_msgs::TransformStamped &tfMallet);
         void predict();
 
         bool applyCollision(State &puckState);
@@ -107,7 +107,7 @@ namespace AirHockey {
 
         Mallet m_mallet;
 
-        CollisionModel(tf::StampedTransform &tfTable, double &restitutionTable, double &restitutionMallet, double dt);
+        CollisionModel(geometry_msgs::TransformStamped &tfTable, double &restitutionTable, double &restitutionMallet, double dt);
 
         bool applyCollision(State &puckState);
 
