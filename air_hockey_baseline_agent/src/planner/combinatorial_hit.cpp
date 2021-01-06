@@ -44,14 +44,10 @@ bool CombinatorialHit::getMiddlePoint() {
     if (vHitMag_ < 1e-3){
         cout << "Hit velocity should not less than: 1e-3" << endl;
     }
-    if (xHit_[1] > boundUpper_[1]) {xHit_[1] = boundUpper_[1];}
-    else if (xHit_[1] < boundLower_[1]) {xHit_[1] = boundLower_[1];}
 
     for (int i = 0; i < 2; ++i) {
-        if (xStart_[i] < boundLower_[i] or xStart_[i] > boundUpper_[i] ) {
-            cout << "Planner Failed: Start points out of boundary!" << endl;
-            return false;
-        }
+        if (xStart_[i] < boundLower_[i]){xStart_[i] = boundLower_[i];}
+        else if (xStart_[i] > boundUpper_[i] ) {xStart_[i] = boundLower_[i];}
     }
 
     // Find Middle Point in hitting
