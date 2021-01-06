@@ -106,15 +106,17 @@ bool AirHockeyTable::applyCollision(EKF_Wrapper::State &state) {
 			if (cross2D(w, v) < 0
 					|| s >= 0 + 1e-4 && s <= 1 - 1e-4 && r >= 0 + 1e-4
 							&& r <= 1 - 1e-4) {
+			    boost::algorithm::clamp(s, 0, 1);
+                boost::algorithm::clamp(r, 0, 1);
+
 				double vtScalar = vel.dot(vecT);
 				double vnScalar = vel.dot(vecN);
 
 				// Velocity on next time step
-				double vtNextScalar = 2. / 3. * vtScalar
-						- m_puckRadius / 5 * dtheta; // - m_puckRadius / 3 * dtheta;
+				double vtNextScalar = 2. / 3. * vtScalar - m_puckRadius / 3 * dtheta;
 				double vnNextScalar = -m_e * vnScalar;
 				double dthetaNext = 1. / 3. * dtheta
-						- 2. / (3. * m_puckRadius) * vnScalar;
+						- 2. / (3. * m_puckRadius) * vtScalar;
 				Vector2 vNext = vnNextScalar * vecN + vtNextScalar * vecT;
 
 				// Position of intersection point
@@ -126,13 +128,10 @@ bool AirHockeyTable::applyCollision(EKF_Wrapper::State &state) {
 				// Angular Position of next point
 				double thetaNext = thetaInter + (1 - s) * dthetaNext * m_dt;
 
-				state.x() = pNext.x();
-				state.y() = pNext.y();
-				state.dx() = vNext.x();
-				state.dy() = vNext.y();
+				state.block<2, 1>(0, 0) = pNext;
+				state.block<2, 1>(2, 0) = vNext;
 				state.theta() = thetaNext;
 				state.dtheta() = dthetaNext;
-				ROS_INFO_STREAM("cur: "<< dtheta << "Next: " << dthetaNext);
 				return true;
 			}
 		}
@@ -140,7 +139,20 @@ bool AirHockeyTable::applyCollision(EKF_Wrapper::State &state) {
 	return false;
 }
 
-Mallet::Mallet(double e, double dt) {
+bool AirHockeyTable::isOutsideBoundary(Measurement &measurement) {
+    for (int i = 0; i < m_boundary.rows(); ++i) {
+        Vector2 p1 = m_boundary.block<1, 2>(i, 0);
+        Vector2 p2 = m_boundary.block<1, 2>(i, 2);
+
+        Vector2 pPuck = measurement.block<2, 1>(0, 0);
+        if (cross2D(p2 - p1, pPuck - p1) < -1e-6){
+            return true;
+        }
+    }
+    return false;
+}
+
+    Mallet::Mallet(double e, double dt) {
 	m_dt = dt;
 	t_prev = 0.;
 	m_malletState.setZero();

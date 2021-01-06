@@ -43,6 +43,7 @@ add_executable(tracker_node
     src/VisualizationInterface.cpp
     src/Validation.cpp
     src/PuckTracker.cpp
+    src/EKF_Wrapper.cpp
     src/main.cpp)
 
 add_dependencies(tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
@@ -59,7 +60,7 @@ add_library(puck_tracker
    src/SystemModel.cpp
    src/ObservationModel.cpp
    src/CollisionModel.cpp
-   include/air_hockey_puck_tracker/EKF_Wrapper.hpp
+   src/EKF_Wrapper.cpp
    )
 
 target_link_libraries(puck_tracker

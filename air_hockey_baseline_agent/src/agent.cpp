@@ -255,7 +255,7 @@ bool Agent::generateTrajectory() {
 
 double Agent::updateGoal(Vector2d puckPosition) {
     auto random_integer = dist_(rng_);
-    random_integer = 1;
+//    random_integer = 1;
     if (puckPosition(1) > 0.1) {
         xGoal_.x() = tableEdge_(0, 1);
         xGoal_.y() = -0.1;

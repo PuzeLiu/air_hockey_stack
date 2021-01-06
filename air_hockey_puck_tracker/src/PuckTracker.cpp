@@ -100,16 +100,18 @@ void PuckTracker::init() {
     setCovariance();
 
     u_.dt() = rate_.expectedCycleTime().toSec();
+
+    maxInnovationTolerance_ << 10, 10, 10 * M_PI;
+    maxInnovationTolerance_ *= u_.dt();
+    ROS_INFO_STREAM("Max Tolerance: " << maxInnovationTolerance_);
 }
 
 void PuckTracker::setCovariance() {
     Kalman::Covariance<State> covDyn;
     Kalman::Covariance<Measurement> covObs;
-    Kalman::Covariance<State> covInit;
 
     covObs.setIdentity();
     covDyn.setIdentity();
-    covInit.setIdentity();
 
     double obsVarPos, obsVarAng, dynVarPos, dynVarVel, dynVarAngPos, dynVarAngVel;
     nh_.param<double>("/puck_tracker/observation_variance_position", obsVarPos, 1e-6);
@@ -136,32 +138,17 @@ void PuckTracker::setCovariance() {
     covObs(1, 1) = obsVarPos;
     covObs(2, 2) = obsVarAng;
 
-    covInit(0, 0) = 0.5;
-    covInit(1, 1) = 0.5;
-    covInit(2, 2) = 1.0;
-    covInit(3, 3) = 1.0;
-    covInit(4, 4) = 0.5;
-    covInit(5, 5) = 1.0;
-
     systemModel_->setCovariance(covDyn);
     observationModel_->setCovariance(covObs);
-    kalmanFilter_->setCovariance(covInit);
 }
 
 void PuckTracker::startTracking() {
-    try {
-        tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", ros::Time::now(), ros::Duration(1.0));
-        stamp_ = tfPuck_.header.stamp;
-    } catch (tf2::TransformException &exception) {
-        ROS_ERROR_STREAM("Could not transform " << robotBaseName_ << " to Puck: " << exception.what());
-        nh_.shutdown();
-    }
+    reset();
 
     while (nh_.ok()) {
         //! predict step
         kalmanFilter_->predict(*systemModel_, u_);
         collisionModel_->applyCollision(kalmanFilter_->getState(), false);
-        ROS_INFO_STREAM("angular velocity: " << kalmanFilter_->getState().dtheta() );
         try {
             //! Update step
             stamp_ += rate_.expectedCycleTime();
@@ -179,7 +166,17 @@ void PuckTracker::startTracking() {
             double roll, pitch, yaw;
             rotMat.getEulerYPR(yaw, pitch, roll);
             measurement_.theta() = yaw;
-            kalmanFilter_->update(*observationModel_, measurement_);
+
+            //! Check if puck measurement outside the table range, if not, update.
+            if (!collisionModel_->m_table.isOutsideBoundary(measurement_)){
+                kalmanFilter_->update(*observationModel_, measurement_);
+                //! check if Innovation is in feasible range
+                auto mu = kalmanFilter_->getInnovation();
+                if ((maxInnovationTolerance_ - mu.cwiseAbs()).cwiseSign().sum() < mu.size()){
+                    ROS_INFO_STREAM("Innovation is too big. Reset the kalman filter, Innovation:" << mu.transpose());
+                    reset();
+                }
+            }
         } catch (tf2::TransformException &exception){
         }
     }
@@ -193,5 +190,40 @@ void PuckTracker::getPrediction() {
         puckPredictor_->predict(*systemModel_, u_);
         collisionModel_->applyCollision(puckPredictor_->getState(), false);
         predictedTime_ = i * rate_.expectedCycleTime().toSec();
+    }
+}
+
+void PuckTracker::reset() {
+    try {
+        tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", ros::Time::now(), ros::Duration(1.0));
+        stamp_ = tfPuck_.header.stamp;
+
+        State initState;
+        initState.x() = tfPuck_.transform.translation.x;
+        initState.y() = tfPuck_.transform.translation.y;
+        initState.dx() = 0.;
+        initState.dy() = 0.;
+
+        tf2::Quaternion quat;
+        quat.setX(tfPuck_.transform.rotation.x);
+        quat.setY(tfPuck_.transform.rotation.y);
+        quat.setZ(tfPuck_.transform.rotation.z);
+        quat.setW(tfPuck_.transform.rotation.w);
+        tf2::Matrix3x3 rotMat(quat);
+        double roll, pitch, yaw;
+        rotMat.getEulerYPR(yaw, pitch, roll);
+        initState.theta() = yaw;
+        initState.dtheta() = 0.;
+
+        kalmanFilter_->init(initState);
+
+        Kalman::Covariance<State> covInit;
+        covInit.setIdentity();
+        kalmanFilter_->setCovariance(covInit);
+        puckPredictor_->init(initState);
+        puckPredictor_->setCovariance(covInit);
+    } catch (tf2::TransformException &exception) {
+        ROS_ERROR_STREAM("Could not initialize transform " << robotBaseName_ << " to Puck: " << exception.what());
+        nh_.shutdown();
     }
 }

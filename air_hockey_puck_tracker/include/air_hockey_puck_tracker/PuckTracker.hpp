@@ -52,6 +52,8 @@ namespace AirHockey {
 
         const PuckPredictedState& getPredictedState();
 
+        void reset();
+
     private:
         void init();
 
@@ -79,7 +81,7 @@ namespace AirHockey {
 
         Control u_;
         int maxPredictionSteps_;
-        Measurement measurement_;
+        Measurement measurement_, maxInnovationTolerance_;
 
         PuckPredictedState predictedState_;
         double predictedTime_;

@@ -1,6 +1,6 @@
 puck_tracker:
   max_prediction_steps:
-    10
+    100
   friction_drag:
     0.13087578868418712
   friction_sliding:
@@ -16,8 +16,8 @@ puck_tracker:
   dynamic_variance_position:
     1.0e-6
   dynamic_variance_velocity:
-    1.0e-3
+    1.0e-4
   dynamic_variance_angular_position:
     1.0e-4
   dynamic_variance_angular_velocity:
-    1.0e-2
+    1.0e-4

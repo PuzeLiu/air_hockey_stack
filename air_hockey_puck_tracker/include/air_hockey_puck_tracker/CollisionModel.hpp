@@ -24,7 +24,7 @@
 #ifndef PUCK_TRACKER_COLLISIONMODEL_HPP
 #define PUCK_TRACKER_COLLISIONMODEL_HPP
 
-#include <math.h>
+#include <boost/algorithm/clamp.hpp>
 #include <ros/ros.h>
 #include <geometry_msgs/TransformStamped.h>
 
@@ -72,6 +72,8 @@ namespace AirHockey {
         inline BoundaryType getBoundary() { return m_boundary; }
 
         bool applyCollision(EKF_Wrapper::State &state);
+
+        bool isOutsideBoundary(Measurement &measurement);
 
     };
 

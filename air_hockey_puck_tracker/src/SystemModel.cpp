@@ -49,17 +49,14 @@ namespace AirHockey {
 
         x_.block<2, 1>(0, 0) = x.block<2, 1>(0, 0)
                                + u.dt() * x.block<2, 1>(2, 0);
-        x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0)
-                               - u.dt() * (m_c * x.block<2, 1>(2, 0));
 
-//        if (x.dx() != 0 && x.dy() != 0) {
-//            x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0)
-//                                   - u.dt() * (m_c * x.block<2, 1>(2, 0)
-//                                               + m_d * x.block<2, 1>(2, 0).cwiseSign());
-//
-//        } else {
-//            x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0) - u.dt() * m_c * x.block<2, 1>(2, 0);
-//        }
+        if (x.block<2, 1>(2, 0).norm() > 1e-6) {
+            x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0)
+                                   - u.dt() * (m_c * x.block<2, 1>(2, 0) +
+                                               m_d * x.block<2, 1>(2, 0).cwiseSign());
+        } else {
+            x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0) - u.dt() * m_c * x.block<2, 1>(2, 0);
+        }
 
         Eigen::Rotation2Dd rot(x.theta() + u.dt() * x.dtheta());
         x_.theta() = rot.smallestAngle();

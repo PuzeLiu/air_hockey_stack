@@ -24,6 +24,8 @@
 #ifndef PUCK_TRACKER_EKF_WRAPPER_HPP
 #define PUCK_TRACKER_EKF_WRAPPER_HPP
 
+#include <ros/ros.h>
+
 #include <kalman/ExtendedKalmanFilter.hpp>
 #include <kalman/LinearizedMeasurementModel.hpp>
 
@@ -31,35 +33,25 @@
 
 
 namespace AirHockey {
-class EKF_Wrapper : public Kalman::ExtendedKalmanFilter<State>{
+    class EKF_Wrapper : public Kalman::ExtendedKalmanFilter<State> {
     public:
         typedef Measurement InnovationType;
         typedef Kalman::Covariance<Measurement> InnovationCovariance;
 
-        inline const State& update(ObservationModel& m, const Measurement& z){
-            m.updateJacobians( x );
+        const State &update(ObservationModel &m, const Measurement &z);
 
-            // COMPUTE KALMAN GAIN
-            // compute innovation covariance
-            S = ( m.H * P * m.H.transpose() ) + ( m.V * m.getCovariance() * m.V.transpose() );
-
-            // compute kalman gain
-            KalmanGain<Measurement> K = P * m.H.transpose() * S.inverse();
-
-            // UPDATE STATE ESTIMATE AND COVARIANCE
-            // Update state using computed kalman gain and innovation
-            calculateInnovation(m, z);
-            x += K * ( mu );
-
-            // Update covariance
-            P -= K * m.H * P;
-
-            // return updated state estimate
-            return this->getState();
+        inline State &getState() {
+            return x;
         }
 
-        inline State& getState(){
-            return x;
+        inline const InnovationCovariance &getInnovationCovariance() {
+            return S;
+        }
+
+        const InnovationCovariance &updateInnovationCovariance(ObservationModel &m);
+
+        inline const InnovationType &getInnovation() {
+            return mu;
         }
 
     protected:
@@ -71,25 +63,8 @@ class EKF_Wrapper : public Kalman::ExtendedKalmanFilter<State>{
         //! Innovation Covariance
         InnovationCovariance S;
 
-        inline void calculateInnovation(ObservationModel& m, const Measurement& z){
-            mu = z - m.h(x);
-            Eigen::Rotation2Dd rot(mu.theta());
-            mu.theta() = rot.smallestAngle();
-        }
+        void calculateInnovation(ObservationModel &m, const Measurement &z);
 
-    public:
-        inline const InnovationCovariance& getInnovationCovariance() {
-            return S;
-        }
-
-        inline const InnovationCovariance& updateInnovationCovariance(ObservationModel &m){
-            S = ( m.H * P * m.H.transpose() ) + ( m.V * m.getCovariance() * m.V.transpose() );
-            return S;
-        }
-
-        inline const InnovationType& getInnovation(){
-            return mu;
-        }
     };
 }
 
