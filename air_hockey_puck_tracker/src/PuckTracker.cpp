@@ -71,16 +71,23 @@ void PuckTracker::init() {
     ROS_INFO_STREAM("Restitution Parameter of Mallet: " << restitutionMallet);
     ROS_INFO_STREAM("Prediction Steps: " << maxPredictionSteps_);
 
-    if (nh_.getNamespace() == "/iiwa_front") { robotBaseName_ = "F_link_0";}
-    else if (nh_.getNamespace() == "/iiwa_back") { robotBaseName_ = "B_link_0";}
+    if (nh_.getNamespace() == "/iiwa_front") {
+        robotBaseName_ = "F_link_0";
+        opponentMalletName_ = "B_striker_mallet_tip";
+    }
+    else if (nh_.getNamespace() == "/iiwa_back") {
+        robotBaseName_ = "B_link_0";
+        opponentMalletName_ = "F_striker_mallet_tip";
+    }
     else {
         ROS_ERROR_STREAM("node should run in namespace: /iiwa_front or /iiwa_back");
         nh_.shutdown();
     }
     ROS_INFO_STREAM("Wait for transform: /Table");
     ros::Duration(1.0).sleep();
+    geometry_msgs::TransformStamped tfStatic;
     try {
-        tfTableStatic_ = tfBuffer_.lookupTransform(robotBaseName_, "Table", ros::Time(0), ros::Duration(1.0));
+        tfStatic = tfBuffer_.lookupTransform(robotBaseName_, "Table", ros::Time(0), ros::Duration(1.0));
     } catch (tf2::TransformException &exception) {
         ROS_ERROR_STREAM("Could not transform " << robotBaseName_ << " to Table: " << exception.what());
         nh_.shutdown();
@@ -88,7 +95,7 @@ void PuckTracker::init() {
 
     systemModel_ = new SystemModel(frictionDrag, frictionSliding);
     observationModel_ = new ObservationModel;
-    collisionModel_ = new CollisionModel(tfTableStatic_, restitutionTable, restitutionMallet,
+    collisionModel_ = new CollisionModel(tfStatic, restitutionTable, restitutionMallet,
                                          rate_.expectedCycleTime().toSec());
     kalmanFilter_ = new EKF_Wrapper;
     puckPredictor_ = new EKF_Wrapper;
@@ -155,6 +162,9 @@ void PuckTracker::startTracking() {
             rate_.sleep();
             tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", stamp_, rate_.expectedCycleTime());
 
+            tfOpponentMallet = tfBuffer_.lookupTransform(robotBaseName_, opponentMalletName_, ros::Time(0));
+            collisionModel_->m_mallet.setState(tfOpponentMallet);
+
             measurement_.x() = tfPuck_.transform.translation.x;
             measurement_.y() = tfPuck_.transform.translation.y;
             tf2::Quaternion quat;
@@ -173,11 +183,12 @@ void PuckTracker::startTracking() {
                 //! check if Innovation is in feasible range
                 auto mu = kalmanFilter_->getInnovation();
                 if ((maxInnovationTolerance_ - mu.cwiseAbs()).cwiseSign().sum() < mu.size()){
-                    ROS_INFO_STREAM("Innovation is too big. Reset the kalman filter, Innovation:" << mu.transpose());
+                    ROS_WARN_STREAM("Innovation is too big. Reset the kalman filter, Innovation:" << mu.transpose());
                     reset();
                 }
             }
         } catch (tf2::TransformException &exception){
+            ROS_INFO_STREAM(exception.what());
         }
     }
 }

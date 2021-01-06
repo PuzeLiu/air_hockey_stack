@@ -25,8 +25,8 @@
 #define PUCK_TRACKER_COLLISIONMODEL_HPP
 
 #include <boost/algorithm/clamp.hpp>
-#include <ros/ros.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <tf2/LinearMath/Matrix3x3.h>
 
 #include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
 

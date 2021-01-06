@@ -21,10 +21,6 @@
  * SOFTWARE.
  */
 
-#include <math.h>
-#include <ros/ros.h>
-#include <tf/transform_listener.h>
-
 #include "air_hockey_puck_tracker/CollisionModel.hpp"
 
 using namespace std;
@@ -165,24 +161,28 @@ bool AirHockeyTable::isOutsideBoundary(Measurement &measurement) {
 
 void Mallet::setState(const geometry_msgs::TransformStamped &tfMallet) {
 	double deltaT = tfMallet.header.stamp.toSec() - t_prev;
+    if (deltaT > 0) {
+        m_malletState.dx() = (tfMallet.transform.translation.x - m_malletState.x())
+                             / deltaT;
+        m_malletState.dy() = (tfMallet.transform.translation.y - m_malletState.y())
+                             / deltaT;
+        tf2::Quaternion quat;
+        quat.setX(tfMallet.transform.rotation.x);
+        quat.setY(tfMallet.transform.rotation.y);
+        quat.setZ(tfMallet.transform.rotation.z);
+        quat.setW(tfMallet.transform.rotation.w);
+        tf2::Matrix3x3 rotMat(quat);
+        double roll, pitch, yaw;
+        rotMat.getEulerYPR(yaw, pitch, roll);
 
-	m_malletState.dx() = (tfMallet.transform.translation.x - m_malletState.x())
-			/ deltaT;
-	m_malletState.dy() = (tfMallet.transform.translation.y - m_malletState.y())
-			/ deltaT;
-	Eigen::Quaterniond quat;
-	quat.x() = tfMallet.transform.rotation.x;
-    quat.y() = tfMallet.transform.rotation.y;
-    quat.z() = tfMallet.transform.rotation.z;
-    quat.w() = tfMallet.transform.rotation.w;
-    auto yaw = quat.toRotationMatrix().eulerAngles(0, 1, 2)(2);
-	m_malletState.dtheta() = (yaw - m_malletState.theta()) / deltaT;
+        m_malletState.dtheta() = (yaw - m_malletState.theta()) / deltaT;
 
-	m_malletState.x() = tfMallet.transform.translation.x;
-	m_malletState.y() = tfMallet.transform.translation.y;
-	m_malletState.theta() = yaw;
-	t_prev = tfMallet.header.stamp.toSec();
-	m_malletStatePredict = m_malletState;
+        m_malletState.x() = tfMallet.transform.translation.x;
+        m_malletState.y() = tfMallet.transform.translation.y;
+        m_malletState.theta() = yaw;
+        t_prev = tfMallet.header.stamp.toSec();
+        m_malletStatePredict = m_malletState;
+    }
 }
 
 void Mallet::predict() {

@@ -70,8 +70,8 @@ namespace AirHockey {
 
         tf2_ros::TransformListener tfListener_;
         tf2_ros::Buffer tfBuffer_;
-        std::string robotBaseName_;
-        geometry_msgs::TransformStamped tfTableStatic_, tfPuck_;
+        std::string robotBaseName_, opponentMalletName_;
+        geometry_msgs::TransformStamped tfPuck_, tfOpponentMallet;
 
         EKF_Wrapper *kalmanFilter_;
         EKF_Wrapper *puckPredictor_;
