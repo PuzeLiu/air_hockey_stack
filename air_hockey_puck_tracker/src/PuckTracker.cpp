@@ -101,7 +101,7 @@ void PuckTracker::init() {
 
     u_.dt() = rate_.expectedCycleTime().toSec();
 
-    maxInnovationTolerance_ << 10, 10, 10 * M_PI;
+    maxInnovationTolerance_ << 10, 10, 20 * M_PI;
     maxInnovationTolerance_ *= u_.dt();
     ROS_INFO_STREAM("Max Tolerance: " << maxInnovationTolerance_);
 }

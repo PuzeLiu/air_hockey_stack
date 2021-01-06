@@ -113,7 +113,7 @@ bool AirHockeyTable::applyCollision(EKF_Wrapper::State &state) {
 				double vnScalar = vel.dot(vecN);
 
 				// Velocity on next time step
-				double vtNextScalar = 2. / 3. * vtScalar - m_puckRadius / 3 * dtheta;
+				double vtNextScalar = 2. / 3. * vtScalar - m_puckRadius / 5 * dtheta; // - m_puckRadius / 3 * dtheta;
 				double vnNextScalar = -m_e * vnScalar;
 				double dthetaNext = 1. / 3. * dtheta
 						- 2. / (3. * m_puckRadius) * vtScalar;

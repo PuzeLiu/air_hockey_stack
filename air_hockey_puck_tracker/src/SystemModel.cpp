@@ -28,7 +28,7 @@ namespace AirHockey {
     SystemModel::SystemModel(double c, double d) {
         m_c = c;
         m_d = d;
-        m_spin = 0.05;
+        m_spin = 0.1;
     }
 
 /**
