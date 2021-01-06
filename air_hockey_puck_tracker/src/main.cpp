@@ -42,12 +42,9 @@ int main(int argc, char **argv) {
 
     puckTracker.start();
     while (ros::ok()){
-        auto state = puckTracker.getPuckState();
-        ROS_INFO_STREAM(state.state.transpose());
-//        visualizationInterface.setPredictionMarker();
-        visualizationInterface.visualize();
+        visualizationInterface.update(puckTracker);
         ros::spinOnce();
-        ros::Duration(0.1).sleep();
+        ros::Rate(100).sleep();
     }
 
     nh.shutdown();

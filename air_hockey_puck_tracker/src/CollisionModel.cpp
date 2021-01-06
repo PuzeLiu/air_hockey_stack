@@ -60,11 +60,7 @@ void AirHockeyTable::setTransform(const geometry_msgs::TransformStamped &transfo
     quat.w() = transform.transform.rotation.w;
     m_yaw = quat.toRotationMatrix().eulerAngles(0, 1, 2)[2];
 
-	Kalman::Matrix<double, 2, 2> rotation;
-	rotation(0, 0) = cos(m_yaw);
-	rotation(0, 1) = sin(m_yaw);
-	rotation(1, 0) = -sin(m_yaw);
-	rotation(1, 1) = cos(m_yaw);
+    Eigen::Rotation2D<double> rotation(m_yaw);
 
 	Vector2 vecTmp, offsetP1, offsetP2, offsetP3, offsetP4;
 	vecTmp << -(m_length / 2 - m_puckRadius), -(m_width / 2 - m_puckRadius);
@@ -83,10 +79,8 @@ void AirHockeyTable::setTransform(const geometry_msgs::TransformStamped &transfo
 
 bool AirHockeyTable::applyCollision(EKF_Wrapper::State &state) {
 	Vector2 p, vel;
-	p.x() = state.x();
-	p.y() = state.y();
-	vel.x() = state.dx();
-	vel.y() = state.dy();
+	p = state.block<2, 1>(0, 0);
+	vel = state.block<2, 1>(2, 0);
 	double theta = state.theta();
 	double dtheta = state.dtheta();
 
@@ -138,6 +132,7 @@ bool AirHockeyTable::applyCollision(EKF_Wrapper::State &state) {
 				state.dy() = vNext.y();
 				state.theta() = thetaNext;
 				state.dtheta() = dthetaNext;
+				ROS_INFO_STREAM("cur: "<< dtheta << "Next: " << dthetaNext);
 				return true;
 			}
 		}
@@ -236,9 +231,11 @@ CollisionModel::CollisionModel(geometry_msgs::TransformStamped &tfTable,
 	m_table.setTransform(tfTable);
 }
 
-bool CollisionModel::applyCollision(State &puckState) {
-	m_table.applyCollision(puckState);
-	return (m_mallet.applyCollision(puckState));
+bool CollisionModel::applyCollision(State &puckState, const bool& checkMallet) {
+    if (checkMallet){
+        m_mallet.applyCollision(puckState);
+    }
+	return m_table.applyCollision(puckState);
 }
 
 }

@@ -139,6 +139,8 @@ public:
 	double m_c;
 	//! Friction coefficient for sliding movement
 	double m_d;
+    //! Friction coefficient for spinning movement
+    double m_spin;
 
 	/**
 	 * Constructor of the dynamic model
@@ -178,8 +180,6 @@ protected:
 	 * @param u The current system control input
 	 */
 	void updateJacobians(const S &x, const C &u);
-
-	double setAngle(double angle) const;
 };
 
 }

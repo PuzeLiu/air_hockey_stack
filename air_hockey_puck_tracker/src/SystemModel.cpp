@@ -25,10 +25,11 @@
 
 namespace AirHockey {
 
-SystemModel::SystemModel(double c, double d) {
-	m_c = c;
-	m_d = d;
-}
+    SystemModel::SystemModel(double c, double d) {
+        m_c = c;
+        m_d = d;
+        m_spin = 0.05;
+    }
 
 /**
  * @brief Definition of (non-linear) state transition function
@@ -42,46 +43,39 @@ SystemModel::SystemModel(double c, double d) {
  * @param [in] u The control vector input
  * @returns The (predicted) system state in the next time-step
  */
-SystemModel::S SystemModel::f(const S &x, const C &u) const {
-	//! Predicted state vector after transition
-	S x_;
+    SystemModel::S SystemModel::f(const S &x, const C &u) const {
+        //! Predicted state vector after transition
+        S x_;
 
-	x_.x() = x.x() + u.dt() * x.dx();
-	x_.y() = x.y() + u.dt() * x.dy();
-	if (x.dx() != 0 && x.dy() != 0) {
-		x_.dx() = x.dx() - u.dt() * m_c * x.dx()
-				- u.dt() * m_d * x.dx() / abs(x.dx());
-		x_.dy() = x.dy() - u.dt() * m_c * x.dy()
-				- u.dt() * m_d * x.dy() / abs(x.dy());
-	} else {
-		x_.dx() = x.dx() - u.dt() * m_c * x.dx();
-		x_.dy() = x.dy() - u.dt() * m_c * x.dy();
-	}
+        x_.block<2, 1>(0, 0) = x.block<2, 1>(0, 0)
+                               + u.dt() * x.block<2, 1>(2, 0);
+        x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0)
+                               - u.dt() * (m_c * x.block<2, 1>(2, 0));
 
-	Eigen::Rotation2Dd rot(x.theta() + u.dt() * x.dtheta());
-	x_.theta() = rot.smallestAngle();
-	x_.dtheta() = x.dtheta();
-	// Return transitioned state vector
-	return x_;
-}
+//        if (x.dx() != 0 && x.dy() != 0) {
+//            x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0)
+//                                   - u.dt() * (m_c * x.block<2, 1>(2, 0)
+//                                               + m_d * x.block<2, 1>(2, 0).cwiseSign());
+//
+//        } else {
+//            x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0) - u.dt() * m_c * x.block<2, 1>(2, 0);
+//        }
 
-void SystemModel::updateJacobians(const S &x, const C &u) {
-	this->F.setIdentity();
-	this->F(S::X, S::DX) = u.dt();
-	this->F(S::Y, S::DY) = u.dt();
-	this->F(S::DX, S::DX) = 1. - u.dt() * m_c;
-	this->F(S::DY, S::DY) = 1. - u.dt() * m_c;
-	this->F(S::THETA, S::DTHETA) = u.dt();
-}
+        Eigen::Rotation2Dd rot(x.theta() + u.dt() * x.dtheta());
+        x_.theta() = rot.smallestAngle();
+        x_.dtheta() = x.dtheta() - u.dt() * (m_spin * x.dtheta());
+        // Return transitioned state vector
+        return x_;
+    }
 
-    double SystemModel::setAngle(double angle) const {
-        while (angle > M_PI){
-            angle -= M_PI * 2;
-        }
-        while (angle < - M_PI){
-            angle += M_PI * 2;
-        }
-        return angle;
+    void SystemModel::updateJacobians(const S &x, const C &u) {
+        this->F.setIdentity();
+        this->F(S::X, S::DX) = u.dt();
+        this->F(S::Y, S::DY) = u.dt();
+        this->F(S::DX, S::DX) = 1. - u.dt() * m_c;
+        this->F(S::DY, S::DY) = 1. - u.dt() * m_c;
+        this->F(S::THETA, S::DTHETA) = u.dt();
+        this->F(S::DTHETA, S::DTHETA) = 1. - u.dt() * m_spin;
     }
 
 }

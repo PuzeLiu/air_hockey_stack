@@ -109,7 +109,7 @@ namespace AirHockey {
 
         CollisionModel(geometry_msgs::TransformStamped &tfTable, double &restitutionTable, double &restitutionMallet, double dt);
 
-        bool applyCollision(State &puckState);
+        bool applyCollision(State &puckState, const bool& checkMallet);
 
     };
 

@@ -27,12 +27,23 @@
 
 #include <visualization_msgs/Marker.h>
 #include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
+#include "air_hockey_puck_tracker/PuckTracker.hpp"
 
 
 namespace AirHockey{
-
+class PuckTracker;
 class VisualizationInterface{
 public:
+    VisualizationInterface(const ros::NodeHandle& nh, double tableHeight);
+
+    void update(PuckTracker& predictor);
+
+private:
+    void visualize();
+    void setPredictionMarker(const State& state,
+                             const EKF_Wrapper::InnovationCovariance& cov);
+
+private:
     ros::NodeHandle m_nh;
 
     ros::Publisher m_markerPub;
@@ -40,13 +51,6 @@ public:
     visualization_msgs::Marker m_tableMarker, m_puckMarker, m_puckMarkerIndicator, m_malletMarker, m_predictionMarker;
 
     double m_tableHeight;
-
-    VisualizationInterface(const ros::NodeHandle& nh, double tableHeight);
-
-    void visualize();
-
-    void setPredictionMarker(const State& state,
-                             const EKF_Wrapper::InnovationCovariance& cov);
 };
 
 }

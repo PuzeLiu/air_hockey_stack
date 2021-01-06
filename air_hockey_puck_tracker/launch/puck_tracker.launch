@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-    <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load"/>
+    <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
 
 <!--    <node name="rviz" pkg="rviz" type="rviz"-->
 <!--          args="-d $(find puck_tracker)/rviz/config.rviz"/>-->

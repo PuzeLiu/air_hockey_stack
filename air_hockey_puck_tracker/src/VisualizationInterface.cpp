@@ -140,7 +140,7 @@ VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh,
 void VisualizationInterface::visualize() {
 	m_markerPub.publish(m_tableMarker);
 	m_markerPub.publish(m_puckMarker);
-	m_markerPub.publish(m_malletMarker);
+//	m_markerPub.publish(m_malletMarker);
 	m_markerPub.publish(m_predictionMarker);
 	m_markerPub.publish(m_puckMarkerIndicator);
 }
@@ -150,7 +150,7 @@ void VisualizationInterface::setPredictionMarker(const State &state,
 	m_predictionMarker.pose.position.x = state.x();
 	m_predictionMarker.pose.position.y = state.y();
 	m_predictionMarker.pose.position.z = m_tableHeight;
-	tf::Quaternion quaternion;
+	tf2::Quaternion quaternion;
 	quaternion.setRPY(0., 0., state.theta());
 	m_predictionMarker.pose.orientation.x = quaternion.x();
 	m_predictionMarker.pose.orientation.y = quaternion.y();
@@ -159,6 +159,15 @@ void VisualizationInterface::setPredictionMarker(const State &state,
 
 	m_predictionMarker.scale.x = std::sqrt(cov(0, 0)) * 1.96;
 	m_predictionMarker.scale.y = std::sqrt(cov(1, 1)) * 1.96;
+}
+
+
+void VisualizationInterface::update(PuckTracker& puckTracker) {
+    puckTracker.getPrediction();
+    m_predictionMarker.header.frame_id = puckTracker.robotBaseName_;
+    puckTracker.puckPredictor_->updateInnovationCovariance(*puckTracker.observationModel_);
+    setPredictionMarker(puckTracker.puckPredictor_->getState(), puckTracker.puckPredictor_->getInnovationCovariance());
+    visualize();
 }
 
 }

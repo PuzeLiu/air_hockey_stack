@@ -33,6 +33,7 @@
 #include "ObservationModel.hpp"
 #include "CollisionModel.hpp"
 #include "EKF_Wrapper.hpp"
+#include "VisualizationInterface.hpp"
 
 namespace AirHockey {
     struct PuckPredictedState{
@@ -41,6 +42,7 @@ namespace AirHockey {
     };
 
     class PuckTracker {
+    private: friend class VisualizationInterface;
     public:
         PuckTracker(ros::NodeHandle nh, ros::Rate rate);
 
@@ -48,7 +50,7 @@ namespace AirHockey {
 
         void start();
 
-        const PuckPredictedState& getPuckState();
+        const PuckPredictedState& getPredictedState();
 
     private:
         void init();
@@ -57,14 +59,17 @@ namespace AirHockey {
 
         void startTracking();
 
+        void getPrediction();
+
     private:
         ros::NodeHandle nh_;
         ros::Rate rate_;
+        ros::Time stamp_;
 
         tf2_ros::TransformListener tfListener_;
         tf2_ros::Buffer tfBuffer_;
         std::string robotBaseName_;
-        geometry_msgs::TransformStamped tfTableStatic_, tfPuck_, tfPuckPrev_;
+        geometry_msgs::TransformStamped tfTableStatic_, tfPuck_;
 
         EKF_Wrapper *kalmanFilter_;
         EKF_Wrapper *puckPredictor_;

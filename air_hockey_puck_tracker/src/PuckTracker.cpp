@@ -46,11 +46,11 @@ void PuckTracker::start() {
     thread_ = boost::thread(&PuckTracker::startTracking, this);
 }
 
-const PuckPredictedState& PuckTracker::getPuckState() {
-    predictionMutex_.lock();
+const PuckPredictedState& PuckTracker::getPredictedState() {
+    getPrediction();
     predictedState_.state = puckPredictor_->getState();
+    puckPredictor_->getCovarianceSquareRoot();
     predictedState_.time = predictedTime_;
-    predictionMutex_.unlock();
     return predictedState_;
 }
 
@@ -98,6 +98,7 @@ void PuckTracker::init() {
     sInit.setZero();
     kalmanFilter_->init(sInit);
     setCovariance();
+
     u_.dt() = rate_.expectedCycleTime().toSec();
 }
 
@@ -111,12 +112,12 @@ void PuckTracker::setCovariance() {
     covInit.setIdentity();
 
     double obsVarPos, obsVarAng, dynVarPos, dynVarVel, dynVarAngPos, dynVarAngVel;
-    nh_.param<double>("observation_variance_position", obsVarPos, 1e-6);
-    nh_.param<double>("observation_variance_angular", obsVarAng, 1e-6);
-    nh_.param<double>("dynamic_variance_position", dynVarPos, 1e-4);
-    nh_.param<double>("dynamic_variance_velocity", dynVarVel, 1e-2);
-    nh_.param<double>("dynamic_variance_angular_position", dynVarAngPos, 1e-4);
-    nh_.param<double>("dynamic_variance_angular_velocity", dynVarAngVel, 1e-2);
+    nh_.param<double>("/puck_tracker/observation_variance_position", obsVarPos, 1e-6);
+    nh_.param<double>("/puck_tracker/observation_variance_angular", obsVarAng, 1e-6);
+    nh_.param<double>("/puck_tracker/dynamic_variance_position", dynVarPos, 1e-4);
+    nh_.param<double>("/puck_tracker/dynamic_variance_velocity", dynVarVel, 1e-2);
+    nh_.param<double>("/puck_tracker/dynamic_variance_angular_position", dynVarAngPos, 1e-4);
+    nh_.param<double>("/puck_tracker/dynamic_variance_angular_velocity", dynVarAngVel, 1e-2);
     ROS_INFO_STREAM("Observer Variance Position: " << obsVarPos);
     ROS_INFO_STREAM("Observer Variance Angular Position: " << obsVarAng);
     ROS_INFO_STREAM("Dynamics Variance Position:" << dynVarPos);
@@ -148,56 +149,49 @@ void PuckTracker::setCovariance() {
 }
 
 void PuckTracker::startTracking() {
-    ROS_INFO_STREAM("Wait for transform: /Puck");
     try {
-        tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", ros::Time(0));
-        tfPuckPrev_ = tfPuck_;
+        tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", ros::Time::now(), ros::Duration(1.0));
+        stamp_ = tfPuck_.header.stamp;
     } catch (tf2::TransformException &exception) {
         ROS_ERROR_STREAM("Could not transform " << robotBaseName_ << " to Puck: " << exception.what());
         nh_.shutdown();
     }
 
     while (nh_.ok()) {
-        auto t_start = ros::WallTime::now();
         //! predict step
         kalmanFilter_->predict(*systemModel_, u_);
-        collisionModel_->m_table.applyCollision(kalmanFilter_->getState());
-
-        //! Update step
+        collisionModel_->applyCollision(kalmanFilter_->getState(), false);
+        ROS_INFO_STREAM("angular velocity: " << kalmanFilter_->getState().dtheta() );
         try {
-            tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", ros::Time(0));
+            //! Update step
+            stamp_ += rate_.expectedCycleTime();
+            rate_.sleep();
+            tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", stamp_, rate_.expectedCycleTime());
 
-            if (tfPuck_.header.stamp > tfPuckPrev_.header.stamp){
-                measurement_.x() = tfPuck_.transform.translation.x;
-                measurement_.y() = tfPuck_.transform.translation.y;
-                tf2::Quaternion quat;
-                quat.setX(tfPuck_.transform.rotation.x);
-                quat.setY(tfPuck_.transform.rotation.y);
-                quat.setZ(tfPuck_.transform.rotation.z);
-                quat.setW(tfPuck_.transform.rotation.w);
-                tf2::Matrix3x3 rotMat(quat);
-                double roll, pitch, yaw;
-                rotMat.getEulerYPR(yaw, pitch, roll);
-                measurement_.theta() = yaw;
-                kalmanFilter_->update(*observationModel_, measurement_);
-                tfPuckPrev_ = tfPuck_;
-            }
+            measurement_.x() = tfPuck_.transform.translation.x;
+            measurement_.y() = tfPuck_.transform.translation.y;
+            tf2::Quaternion quat;
+            quat.setX(tfPuck_.transform.rotation.x);
+            quat.setY(tfPuck_.transform.rotation.y);
+            quat.setZ(tfPuck_.transform.rotation.z);
+            quat.setW(tfPuck_.transform.rotation.w);
+            tf2::Matrix3x3 rotMat(quat);
+            double roll, pitch, yaw;
+            rotMat.getEulerYPR(yaw, pitch, roll);
+            measurement_.theta() = yaw;
+            kalmanFilter_->update(*observationModel_, measurement_);
         } catch (tf2::TransformException &exception){
-            ROS_ERROR_STREAM("Could not transform " << robotBaseName_ << " to Puck: " << exception.what());
         }
+    }
+}
 
-//        //! predict future step
-//        puckPredictor_->init(kalmanFilter_->getState());
-//        puckPredictor_->setCovariance(kalmanFilter_->getCovariance());
-//        u_.dt() = rate_.expectedCycleTime().toSec();
-//        predictionMutex_.lock();
-//        for (int i = 0; i < maxPredictionSteps_; ++i) {
-//            puckPredictor_->predict(*systemModel_, u_);
-//            collisionModel_->m_table.applyCollision(puckPredictor_->getState());
-//            predictedTime_ = i * rate_.expectedCycleTime().toSec();
-//        }
-//        predictionMutex_.unlock();
-        ROS_INFO_STREAM("Time: " << (ros::WallTime::now() - t_start).toSec());
-        rate_.sleep();
+void PuckTracker::getPrediction() {
+    //! predict future steps
+    puckPredictor_->init(kalmanFilter_->getState());
+    puckPredictor_->setCovariance(kalmanFilter_->getCovariance());
+    for (int i = 0; i < maxPredictionSteps_; ++i) {
+        puckPredictor_->predict(*systemModel_, u_);
+        collisionModel_->applyCollision(puckPredictor_->getState(), false);
+        predictedTime_ = i * rate_.expectedCycleTime().toSec();
     }
 }

@@ -33,8 +33,7 @@ ObservationModel::ObservationModel() {
 
 Measurement ObservationModel::h(const State &x) const {
 	Measurement measurement;
-	measurement.x() = x.x();
-	measurement.y() = x.y();
+	measurement.block<2, 1>(0, 0) = x.block<2, 1>(0, 0);
 	measurement.theta() = x.theta();
 	return measurement;
 }
