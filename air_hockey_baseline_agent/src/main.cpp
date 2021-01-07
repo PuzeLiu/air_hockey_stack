@@ -9,13 +9,7 @@ int main(int argc, char** argv){
     ros::NodeHandle nh("/");
     Agent agent(nh, 100.0);
 
-    ros::Duration(2.).sleep();
+    agent.start();
 
-    ROS_INFO_STREAM("Go to home position");
-    agent.gotoInit();
-    ROS_INFO_STREAM("Start");
-    while (ros::ok()){
-        agent.update();
-    }
     return 0;
 }

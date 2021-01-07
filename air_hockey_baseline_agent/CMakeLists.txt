@@ -24,7 +24,6 @@ find_package(Eigen3 REQUIRED)
 find_package(osqp REQUIRED)
 find_package(OsqpEigen REQUIRED)
 
-
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
 ## See http://ros.org/doc/api/catkin/html/user_guide/setup_dot_py.html
@@ -112,7 +111,7 @@ find_package(OsqpEigen REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-#   LIBRARIES air_hockey_puck_tracker
+   LIBRARIES air_hockey_puck_tracker
    CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros air_hockey_puck_tracker
    #  DEPENDS system_lib
 )

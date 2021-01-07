@@ -106,29 +106,28 @@ void Agent::update() {
     observationState_ = observer_.getObservation();
     updateTactic();
     if (generateTrajectory()) {
-
     }
     rate_.sleep();
 }
 
 void Agent::updateTactic() {
-    if (observationState_.puckPosition.x() < tableEdge_(0, 0) ||
-        observationState_.puckPosition.x() > tableEdge_(0, 1)) {
+    if (observationState_.puckPredictedState.state.x() < tableEdge_(0, 0) ||
+        observationState_.puckPredictedState.state.x() > tableEdge_(0, 1)) {
         setTactic(Tactics::READY);
     } else {
-        if (observationState_.puckVelocity.norm() > 0.01) {
-            if (observationState_.puckVelocity.x() < 0.01) {
+        if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > 0.01) {
+            if (observationState_.puckPredictedState.state.dx() < 0.01) {
                 setTactic(Tactics::CUT);
             } else {
                 setTactic(Tactics::READY);
             }
-        } else if (observationState_.puckPosition.x() < 1.5 &&
-                   observationState_.puckPosition.x() > 0.7 &&
+        } else if (observationState_.puckPredictedState.state.x() < 1.5 &&
+                   observationState_.puckPredictedState.state.x() > 0.7 &&
                    tacticState_ != Tactics::PREPARE) {
             if (tacticState_ == Tactics::SMASH) { smashCount_ += 1; }
             else { smashCount_ = 0; }
             setTactic(Tactics::SMASH);
-        } else if (observationState_.puckPosition.x() <= 0.7 ||
+        } else if (observationState_.puckPredictedState.state.x() <= 0.7 ||
                    tacticState_ == Tactics::PREPARE) {
             setTactic(Tactics::PREPARE);
         } else {
@@ -155,7 +154,7 @@ bool Agent::generateTrajectory() {
         Vector3d xCur;
         kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
         Vector2d xCur2d = xCur.block<2, 1>(0, 0);
-        Vector2d puckCur2d = observationState_.puckPosition.block<2, 1>(0, 0);
+        Vector2d puckCur2d = observationState_.puckPredictedState.state.block<2, 1>(0, 0);
         double vHitMag = 1.5;
 
         updateGoal(puckCur2d);
@@ -229,7 +228,7 @@ bool Agent::generateTrajectory() {
         kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
         vCur = jacobian * observationState_.jointVelocity;
         Vector2d vCur2d = vCur.block<2, 1>(0, 0);
-        xGoal_ <<0.7, observationState_.puckPosition(1);
+        xGoal_ <<0.7, observationState_.puckPredictedState.state.y();
         for (int i = 0; i < 10; ++i) {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
@@ -276,4 +275,17 @@ double Agent::updateGoal(Vector2d puckPosition) {
         ROS_INFO_STREAM("Strategy: Middle");
     }
     return 0;
+}
+
+void Agent::start() {
+    ROS_INFO_STREAM("Go to home position");
+    ros::Duration(2.).sleep();
+    gotoInit();
+    ROS_INFO_STREAM("Start");
+    observer_.start();
+
+    while (ros::ok()){
+        update();
+        rate_.sleep();
+    }
 }

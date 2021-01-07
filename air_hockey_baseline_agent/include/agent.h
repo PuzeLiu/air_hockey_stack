@@ -32,6 +32,8 @@ namespace AirHockey{
         Agent(ros::NodeHandle nh, double rate);
         ~Agent();
 
+        void start();
+
         void update();
         void gotoInit();
 
