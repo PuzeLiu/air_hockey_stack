@@ -1,4 +1,4 @@
-#include "../../../air_hockey_baseline_agent/include/planner/bezier_hit.h"
+#include "planner/bezier_hit.h"
 
 using namespace AirHockey;
 

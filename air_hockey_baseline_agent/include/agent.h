@@ -11,11 +11,11 @@
 
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <trajectory_msgs/JointTrajectory.h>
-#include "../../air_hockey_baseline_agent/include/null_space_optimizer.h"
-#include "../../air_hockey_baseline_agent/include/observer.h"
-#include "../../air_hockey_baseline_agent/include/planner/bezier_hit.h"
-#include "../../air_hockey_baseline_agent/include/planner/combinatorial_hit.h"
-#include "../../air_hockey_baseline_agent/include/planner/stable_dynamics_motion.h"
+#include "null_space_optimizer.h"
+#include "observer.h"
+#include "planner/bezier_hit.h"
+#include "planner/combinatorial_hit.h"
+#include "planner/stable_dynamics_motion.h"
 
 using namespace std;
 

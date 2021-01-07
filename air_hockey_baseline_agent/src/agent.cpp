@@ -1,4 +1,4 @@
-#include "../../air_hockey_baseline_agent/include/agent.h"
+#include "agent.h"
 
 using namespace AirHockey;
 

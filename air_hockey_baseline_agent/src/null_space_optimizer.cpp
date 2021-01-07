@@ -1,4 +1,4 @@
-#include "../../air_hockey_baseline_agent/include/null_space_optimizer.h"
+#include "null_space_optimizer.h"
 
 using namespace AirHockey;
 using namespace iiwas_kinematics;

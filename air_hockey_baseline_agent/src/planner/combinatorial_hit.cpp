@@ -1,4 +1,4 @@
-#include "../../../air_hockey_baseline_agent/include/planner/combinatorial_hit.h"
+#include "planner/combinatorial_hit.h"
 
 #include <Eigen/Geometry>
 using namespace AirHockey;

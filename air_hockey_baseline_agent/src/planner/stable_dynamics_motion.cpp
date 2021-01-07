@@ -1,4 +1,4 @@
-#include "../../../air_hockey_baseline_agent/include/planner/stable_dynamics_motion.h"
+#include "planner/stable_dynamics_motion.h"
 
 #include <utility>
 

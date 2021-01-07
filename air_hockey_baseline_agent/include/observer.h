@@ -13,6 +13,7 @@
 #include <control_msgs/JointTrajectoryControllerState.h>
 
 #include <boost/thread.hpp>
+#include "air_hockey_puck_tracker/PuckTracker.hpp"
 
 using namespace iiwas_kinematics;
 
@@ -24,6 +25,7 @@ namespace AirHockey {
         Kinematics::JointArrayType jointVelocity;
         Kinematics::JointArrayType jointDesiredPosition;
         Kinematics::JointArrayType jointDesiredVelocity;
+        PuckPredictedState puckPredictedState;
         Vector3d puckPosition;
         double puckYaw;
         Vector3d puckVelocity;

@@ -8,7 +8,7 @@
 #include <osqp/osqp.h>
 #include <OsqpEigen/OsqpEigen.h>
 
-#include "../../air_hockey_baseline_agent/include/observer.h"
+#include "observer.h"
 #include "iiwas_kinematics.h"
 
 namespace AirHockey{

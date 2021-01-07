@@ -1,10 +1,4 @@
-//
-// Created by puze on 27.12.20.
-//
-
-#include "../../air_hockey_baseline_agent/include/observer.h"
-
-#include "../../air_hockey_baseline_agent/include/agent.h"
+#include "observer.h"
 
 using namespace AirHockey;
 

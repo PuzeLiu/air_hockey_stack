@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
    tf2
    tf2_ros
    iiwas_kinematics
+   air_hockey_puck_tracker
    )
 
 ## System dependencies are found with CMake's conventions
@@ -111,8 +112,8 @@ find_package(OsqpEigen REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-   #  LIBRARIES AirHockey
-   CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros
+#   LIBRARIES air_hockey_puck_tracker
+   CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros air_hockey_puck_tracker
    #  DEPENDS system_lib
 )
 
@@ -154,7 +155,6 @@ set(HEADERS
    include/null_space_optimizer.h
    include/planner/bezier_hit.h
    include/planner/combinatorial_hit.h
-
    include/planner/stable_dynamics_motion.h)
 
 add_executable(${PROJECT_NAME} ${SOURCE} ${HEADERS})
