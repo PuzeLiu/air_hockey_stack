@@ -24,6 +24,7 @@ generate_messages(
 
 catkin_package(
     INCLUDE_DIRS include
+    LIBRARIES puck_tracker
     CATKIN_DEPENDS roscpp geometry_msgs tf2 tf2_ros message_runtime
     #  DEPENDS system_lib
 )
@@ -43,6 +44,7 @@ add_library(puck_tracker
     src/ObservationModel.cpp
     src/CollisionModel.cpp
     src/EKF_Wrapper.cpp
+    src/VisualizationInterface.cpp
     )
 
 add_dependencies(puck_tracker
@@ -57,7 +59,6 @@ target_link_libraries(puck_tracker
     )
 
 add_executable(tracker_node
-    src/VisualizationInterface.cpp
     src/main.cpp)
 
 add_dependencies(tracker_node

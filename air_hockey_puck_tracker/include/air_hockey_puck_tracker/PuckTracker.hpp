@@ -37,14 +37,15 @@
 
 namespace AirHockey {
     struct PuckPredictedState{
+        ros::Time stamp;
         State state;
-        double time;
+        double predictedTime;
     };
 
     class PuckTracker {
     private: friend class VisualizationInterface;
     public:
-        PuckTracker(ros::NodeHandle nh, ros::Rate rate);
+        PuckTracker(ros::NodeHandle nh, ros::Rate rate=ros::Rate(120.));
 
         ~PuckTracker();
 
@@ -78,6 +79,7 @@ namespace AirHockey {
         SystemModel *systemModel_;
         ObservationModel *observationModel_;
         CollisionModel *collisionModel_;
+        VisualizationInterface* visualizer_;
 
         Control u_;
         int maxPredictionSteps_;

@@ -40,6 +40,7 @@ PuckTracker::~PuckTracker() {
     delete systemModel_;
     delete observationModel_;
     delete collisionModel_;
+    delete visualizer_;
 }
 
 void PuckTracker::start() {
@@ -48,9 +49,11 @@ void PuckTracker::start() {
 
 const PuckPredictedState& PuckTracker::getPredictedState() {
     getPrediction();
+    visualizer_->update(*puckPredictor_, *observationModel_);
     predictedState_.state = puckPredictor_->getState();
     puckPredictor_->getCovarianceSquareRoot();
-    predictedState_.time = predictedTime_;
+    predictedState_.predictedTime = predictedTime_;
+    predictedState_.stamp = ros::Time::now();
     return predictedState_;
 }
 
@@ -99,6 +102,7 @@ void PuckTracker::init() {
                                          rate_.expectedCycleTime().toSec());
     kalmanFilter_ = new EKF_Wrapper;
     puckPredictor_ = new EKF_Wrapper;
+    visualizer_ = new VisualizationInterface(nh_, 0.1, robotBaseName_);
 
     //! Initialize Kalman Filter
     State sInit;

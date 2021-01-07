@@ -208,7 +208,6 @@ bool Mallet::applyCollision(State &puckState) {
 	double t = distToGo / (vRelative.dot(pRelative) / pRelative.norm());
 
 	if (t > 0 && t < 1) {
-	    ROS_INFO_STREAM("t: " << t);
 		Vector2 pPuckCollide = pPuck + t * vRelative;
 
 		Vector2 vecN = pPuckCollide - pMallet;

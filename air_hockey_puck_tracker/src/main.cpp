@@ -24,7 +24,6 @@
 #include <ros/ros.h>
 
 #include "air_hockey_puck_tracker/PuckTracker.hpp"
-#include "air_hockey_puck_tracker/VisualizationInterface.hpp"
 #include "air_hockey_puck_tracker/Validation.hpp"
 
 
@@ -38,13 +37,11 @@ int main(int argc, char **argv) {
     ros::Rate rate(120);
 
     PuckTracker puckTracker(nh, rate);
-    VisualizationInterface visualizationInterface(nh, 0.1);
 
     puckTracker.start();
     while (ros::ok()){
-        visualizationInterface.update(puckTracker);
-        ros::spinOnce();
-        ros::Rate(100).sleep();
+        puckTracker.getPredictedState();
+        rate.sleep();
     }
 
     nh.shutdown();
