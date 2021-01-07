@@ -66,6 +66,7 @@
               -x 1.08075 -y 1.013 -z $(arg table_surface_z)"/>
     </group>
 
+    <!-- Spawn Gazebo Model -->
     <group ns="iiwa_front" if="$(arg use_front_iiwa)">
         <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
               args="-urdf -model iiwa_front -param robot_description -wait iiwas_frame
@@ -77,4 +78,8 @@
               args="-urdf -model iiwa_back -param robot_description -wait iiwas_frame
               -reference_frame iiwas_frame::back_base"/>
     </group>
+
+    <!-- Start Air Hockey Referee -->
+    <node pkg="air_hockey_referee" type="air_hockey_referee" name="air_hockey_referee" output="screen"/>
+
 </launch>
