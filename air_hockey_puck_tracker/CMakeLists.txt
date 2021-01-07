@@ -24,6 +24,7 @@ generate_messages(
 
 catkin_package(
     INCLUDE_DIRS include
+    CATKIN_DEPENDS roscpp geometry_msgs tf2 tf2_ros message_runtime
     #  DEPENDS system_lib
 )
 
@@ -36,38 +37,42 @@ include_directories(include
     ${EIGEN3_INCLUDE_DIR}
     )
 
-add_executable(tracker_node
+add_library(puck_tracker
+    src/PuckTracker.cpp
     src/SystemModel.cpp
     src/ObservationModel.cpp
     src/CollisionModel.cpp
-    src/VisualizationInterface.cpp
-    src/Validation.cpp
-    src/PuckTracker.cpp
     src/EKF_Wrapper.cpp
+    )
+
+add_dependencies(puck_tracker
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
+    ${PROJECT_NAME}_generate_messages_cpp)
+
+target_link_libraries(puck_tracker
+    ${catkin_LIBRARIES}
+    ${Eigen3_LIBRARIES}
+    ${Kalman_LIBRARIES}
+    )
+
+add_executable(tracker_node
+    src/VisualizationInterface.cpp
     src/main.cpp)
 
-add_dependencies(tracker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS}
+add_dependencies(tracker_node
+    ${${PROJECT_NAME}_EXPORTED_TARGETS}
+    ${catkin_EXPORTED_TARGETS}
     ${PROJECT_NAME}_generate_messages_cpp)
 
 target_link_libraries(tracker_node
     ${catkin_LIBRARIES}
     ${Eigen3_LIBRARIES}
     ${Kalman_LIBRARIES}
+    puck_tracker
     )
 
-add_library(puck_tracker
-   src/PuckTracker.cpp
-   src/SystemModel.cpp
-   src/ObservationModel.cpp
-   src/CollisionModel.cpp
-   src/EKF_Wrapper.cpp
-   )
 
-target_link_libraries(puck_tracker
-   ${catkin_LIBRARIES}
-   ${Eigen3_LIBRARIES}
-   ${Kalman_LIBRARIES}
-   )
 
 #############
 ## Install ##

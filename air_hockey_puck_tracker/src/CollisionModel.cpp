@@ -197,36 +197,32 @@ void Mallet::predict() {
 bool Mallet::applyCollision(State &puckState) {
 	Vector2 pPuck = puckState.block<2, 1>(0, 0);
 	Vector2 vPuck = puckState.block<2, 1>(2, 0);
-	Vector2 pPuckNext = pPuck + vPuck * m_dt;
 
 	Vector2 pMallet = m_malletStatePredict.block<2, 1>(0, 0);
-	Vector2 vMallet = m_malletStatePredict.block<2, 1>(2, 0);
-	Vector2 pMalletNext = pMallet + vMallet * m_dt;
+    Vector2 vMallet = m_malletStatePredict.block<2, 1>(2, 0);
 
-	Vector2 vRelative = m_dt * (vMallet - vPuck);
+	Vector2 vRelative = m_dt * vPuck;
 	Vector2 pRelative = pMallet - pPuck;
 
 	double distToGo = pRelative.norm() - m_radiusPuck - m_radiusMallet;
 	double t = distToGo / (vRelative.dot(pRelative) / pRelative.norm());
 
 	if (t > 0 && t < 1) {
-		Vector2 pPuckCollide = pPuck + t * vPuck * m_dt;
-		Vector2 pMalletCollide = pMallet + t * vMallet * m_dt;
+	    ROS_INFO_STREAM("t: " << t);
+		Vector2 pPuckCollide = pPuck + t * vRelative;
 
-		Vector2 vNorm = pPuckCollide - pMalletCollide;
+		Vector2 vecN = pPuckCollide - pMallet;
 
 		Eigen::Rotation2D<double> rot(-M_PI_2);
-		Vector2 vecN = vNorm / vNorm.norm();
+		vecN.normalize();
 		Vector2 vecT = rot * vecN;
 		double vtScalarPuck = vPuck.dot(vecT);
 		double vnScalarPuck = vPuck.dot(vecN);
 		double vtScalarMallet = vMallet.dot(vecT);
 		double vnScalarMallet = vMallet.dot(vecN);
 
-		double vtScalarPuckNext = 2. / 3. * vtScalarPuck
-				+ 1. / 3. * vtScalarMallet;
-		double vnScalarPuckNext = -m_e * vnScalarPuck
-				+ (1 + m_e) * vnScalarMallet;
+		double vtScalarPuckNext = 2. / 3. * vtScalarPuck + 1. / 3. * vtScalarMallet;
+		double vnScalarPuckNext = -m_e * vnScalarPuck + (1 + m_e) * vnScalarMallet;
 
 		Vector2 vPuckNext = vtScalarPuckNext * vecT + vnScalarPuckNext * vecN;
 		//! Update the state

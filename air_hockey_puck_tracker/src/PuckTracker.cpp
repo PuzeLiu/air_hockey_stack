@@ -155,15 +155,12 @@ void PuckTracker::startTracking() {
     while (nh_.ok()) {
         //! predict step
         kalmanFilter_->predict(*systemModel_, u_);
-        collisionModel_->applyCollision(kalmanFilter_->getState(), false);
+        collisionModel_->applyCollision(kalmanFilter_->getState(), true);
         try {
-            //! Update step
+            //! Update puck state
             stamp_ += rate_.expectedCycleTime();
             rate_.sleep();
             tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", stamp_, rate_.expectedCycleTime());
-
-            tfOpponentMallet = tfBuffer_.lookupTransform(robotBaseName_, opponentMalletName_, ros::Time(0));
-            collisionModel_->m_mallet.setState(tfOpponentMallet);
 
             measurement_.x() = tfPuck_.transform.translation.x;
             measurement_.y() = tfPuck_.transform.translation.y;
@@ -177,6 +174,10 @@ void PuckTracker::startTracking() {
             rotMat.getEulerYPR(yaw, pitch, roll);
             measurement_.theta() = yaw;
 
+            //! Update mallet state
+            tfOpponentMallet = tfBuffer_.lookupTransform(robotBaseName_, opponentMalletName_, ros::Time(0));
+            collisionModel_->m_mallet.setState(tfOpponentMallet);
+
             //! Check if puck measurement outside the table range, if not, update.
             if (!collisionModel_->m_table.isOutsideBoundary(measurement_)){
                 kalmanFilter_->update(*observationModel_, measurement_);
@@ -188,7 +189,6 @@ void PuckTracker::startTracking() {
                 }
             }
         } catch (tf2::TransformException &exception){
-            ROS_INFO_STREAM(exception.what());
         }
     }
 }
@@ -199,7 +199,7 @@ void PuckTracker::getPrediction() {
     puckPredictor_->setCovariance(kalmanFilter_->getCovariance());
     for (int i = 0; i < maxPredictionSteps_; ++i) {
         puckPredictor_->predict(*systemModel_, u_);
-        collisionModel_->applyCollision(puckPredictor_->getState(), false);
+        collisionModel_->applyCollision(puckPredictor_->getState(), true);
         predictedTime_ = i * rate_.expectedCycleTime().toSec();
     }
 }
