@@ -67,13 +67,13 @@ namespace AirHockey{
         Observer observer_;
         iiwas_kinematics::Kinematics* kinematics_;
 
-        BezierHit* bezierHit_;
         CombinatorialHit* combinatorialHit_;
         StableDynamicsMotion* stableDynamicsMotion_;
 
         NullSpaceOptimizer* optimizer_;
 
         double smashCount_;
+        double maxPredictionTime_;
         std::mt19937 rng_;
         std::uniform_int_distribution<int> dist_;
     };

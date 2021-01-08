@@ -7,14 +7,14 @@ using namespace AirHockey;
 StableDynamicsMotion::StableDynamicsMotion(Vector2d stiffnessUpperBound, Vector2d stiffnessLowerBound,
                                            double rate, double height) :
                                      height_(height){
-    stiffnessUpperBound_ = std::move(stiffnessUpperBound);
-    stiffnessLowerBound_ = std::move(stiffnessLowerBound);
+    stiffnessUpperBound_ = stiffnessUpperBound;
+    stiffnessLowerBound_ = stiffnessLowerBound;
     stepSize_ = 1 / rate;
 
     viaPoint_.transforms.resize(1);
     viaPoint_.velocities.resize(1);
 
-    setStiffness(stiffnessLowerBound);
+    setStiffness(stiffnessUpperBound);
 }
 
 StableDynamicsMotion::~StableDynamicsMotion() {

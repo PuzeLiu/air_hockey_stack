@@ -9,7 +9,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
     Vector2d tablePos;
     tablePos << 1.504, 0;
     tableEdge_ << tablePos.x() - 0.98, tablePos.x() + 0.98,
-                 tablePos.y() - 0.52, tablePos.y() + 0.52;
+            tablePos.y() - 0.52, tablePos.y() + 0.52;
     smashCount_ = 0;
 
     rng_.seed(0);
@@ -18,14 +18,11 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
                                                    Quaterniond(1.0, 0.0, 0.0, 0.0));
     optimizer_ = new NullSpaceOptimizer(kinematics_, &observer_, false);
 
-    bezierHit_ = new BezierHit(Vector2d(tableEdge_(0, 0) + malletRadius_, tableEdge_(1, 0) + malletRadius_),
-                               Vector2d(tableEdge_(0, 1) - malletRadius_, tableEdge_(1, 1) - malletRadius_),
-                               rate,
-                               universalJointHeight_);
-    combinatorialHit_ = new CombinatorialHit(Vector2d(tableEdge_(0, 0) + malletRadius_, tableEdge_(1, 0) + malletRadius_),
-                                             Vector2d(tableEdge_(0, 1) - malletRadius_, tableEdge_(1, 1) - malletRadius_),
-                                             rate,
-                                             universalJointHeight_);
+    combinatorialHit_ = new CombinatorialHit(
+            Vector2d(tableEdge_(0, 0) + malletRadius_, tableEdge_(1, 0) + malletRadius_),
+            Vector2d(tableEdge_(0, 1) - malletRadius_, tableEdge_(1, 1) - malletRadius_),
+            rate,
+            universalJointHeight_);
     stableDynamicsMotion_ = new StableDynamicsMotion(Vector2d(300.0, 300.0),
                                                      Vector2d(1.0, 1.0),
                                                      rate, universalJointHeight_);
@@ -34,8 +31,6 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
             "joint_position_trajectory_controller/command", 1);
     cartTrajectoryPub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
-    tacticState_ = Tactics::READY;
-    tacticChanged_ = false;
 
     xHome_ << 0.58, 0.0;
     xGoal_ << 2.484, 0.0;
@@ -51,7 +46,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
     kinematics_->forwardKinematics(qHome_, xRef, quatHome);
     kinematics_->getRedundancy(qHome_, gc, psi);
     xRef << xHome_[0], xHome_[1], universalJointHeight_;
-    if(!kinematics_->inverseKinematics(xRef, quatHome, gc, psi, qHome_)){
+    if (!kinematics_->inverseKinematics(xRef, quatHome, gc, psi, qHome_)) {
         ROS_INFO_STREAM("No feasible solution!");
     }
 
@@ -73,11 +68,20 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
 
     jointViaPoint_.positions.resize(iiwas_kinematics::NUM_OF_JOINTS);
     jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
+
+    tacticState_ = Tactics::READY;
+    observationState_.gameStatus = 0;           //! Initial game status wit STOP;
+    tacticChanged_ = true;
+
+    double frequency;
+    int max_prediction_steps;
+    nh_.param<double>("/puck_tracker/frequency", frequency, 120.);
+    nh_.param<int>("/puck_tracker/max_prediction_steps", max_prediction_steps, 120);
+    maxPredictionTime_ = maxPredictionTime_ / frequency;
 }
 
 Agent::~Agent() {
     delete kinematics_;
-    delete bezierHit_;
 }
 
 void Agent::gotoInit() {
@@ -103,7 +107,6 @@ void Agent::gotoInit() {
 }
 
 void Agent::update() {
-    observationState_ = observer_.getObservation();
     updateTactic();
     if (generateTrajectory()) {
     }
@@ -111,12 +114,13 @@ void Agent::update() {
 }
 
 void Agent::updateTactic() {
-    if (observationState_.puckPredictedState.state.x() < tableEdge_(0, 0) ||
-        observationState_.puckPredictedState.state.x() > tableEdge_(0, 1)) {
+    observationState_ = observer_.getObservation();
+    if (observationState_.gameStatus != 1) {
+        //! If game is not START
         setTactic(Tactics::READY);
     } else {
         if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > 0.01) {
-            if (observationState_.puckPredictedState.state.dx() < 0.01) {
+            if (observationState_.puckPredictedState.predictedTime < maxPredictionTime_) {
                 setTactic(Tactics::CUT);
             } else {
                 setTactic(Tactics::READY);
@@ -133,6 +137,29 @@ void Agent::updateTactic() {
         } else {
             setTactic(Tactics::READY);
         }
+//        if (observationState_.puckPredictedState.state.x() < tableEdge_(0, 0) ||
+//            observationState_.puckPredictedState.state.x() > tableEdge_(0, 1)) {
+//            setTactic(Tactics::READY);
+//        } else {
+//            if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > 0.01) {
+//                if (observationState_.puckPredictedState.state.dx() < 0.01) {
+//                    setTactic(Tactics::CUT);
+//                } else {
+//                    setTactic(Tactics::READY);
+//                }
+//            } else if (observationState_.puckPredictedState.state.x() < 1.5 &&
+//                       observationState_.puckPredictedState.state.x() > 0.7 &&
+//                       tacticState_ != Tactics::PREPARE) {
+//                if (tacticState_ == Tactics::SMASH) { smashCount_ += 1; }
+//                else { smashCount_ = 0; }
+//                setTactic(Tactics::SMASH);
+//            } else if (observationState_.puckPredictedState.state.x() <= 0.7 ||
+//                       tacticState_ == Tactics::PREPARE) {
+//                setTactic(Tactics::PREPARE);
+//            } else {
+//                setTactic(Tactics::READY);
+//            }
+//        }
     }
 }
 
@@ -188,6 +215,7 @@ bool Agent::generateTrajectory() {
         return false;
     } else if (tacticState_ == Tactics::READY) {
         if (tacticChanged_) {
+            ROS_INFO_STREAM("Reset stiffness READY");
             stableDynamicsMotion_->setStiffness(Vector2d(200.0, 200.0));
         }
         Vector3d xCur, vCur;
@@ -204,7 +232,8 @@ bool Agent::generateTrajectory() {
             stableDynamicsMotion_->plan(xCur2d, vCur2d, xHome_, cartTrajectory_, 0.1);
 
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
-                ROS_INFO_STREAM("Optimization Failed. Reduce the READY stiffness: " << stableDynamicsMotion_->getStiffness());
+                ROS_INFO_STREAM("Optimization Failed. Reduce the READY stiffness: "
+                                        << stableDynamicsMotion_->getStiffness().transpose());
                 stableDynamicsMotion_->scaleStiffness(Vector2d(0.8, 0.8));
                 continue;
             } else {
@@ -228,14 +257,16 @@ bool Agent::generateTrajectory() {
         kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
         vCur = jacobian * observationState_.jointVelocity;
         Vector2d vCur2d = vCur.block<2, 1>(0, 0);
-        xGoal_ <<0.7, observationState_.puckPredictedState.state.y();
+        xGoal_ << 0.7, observationState_.puckPredictedState.state.y();
         for (int i = 0; i < 10; ++i) {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
             stableDynamicsMotion_->plan(xCur2d, vCur2d, xGoal_, cartTrajectory_, 0.1);
 
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
-                ROS_INFO_STREAM("Optimization Failed. Reduce the CUT stiffness: " << stableDynamicsMotion_->getStiffness());
+                ROS_INFO_STREAM(
+                        "Optimization Failed. Reduce the CUT stiffness: "
+                                << stableDynamicsMotion_->getStiffness().transpose());
                 stableDynamicsMotion_->scaleStiffness(Vector2d(0.8, 0.8));
                 continue;
             } else {
@@ -260,7 +291,7 @@ double Agent::updateGoal(Vector2d puckPosition) {
         xGoal_.y() = -0.1;
     } else if (puckPosition(1) < -0.1) {
         xGoal_.x() = tableEdge_(0, 1);
-        xGoal_.y() = -0.1;
+        xGoal_.y() = 0.1;
     } else {
         xGoal_.x() = tableEdge_(0, 1);
         xGoal_.y() = 0.0;
@@ -268,7 +299,7 @@ double Agent::updateGoal(Vector2d puckPosition) {
     if (random_integer == 1) {
         ROS_INFO_STREAM("Strategy: Right");
         xGoal_.y() = 2 * (tableEdge_(1, 0) + puckRadius_) - xGoal_.y();
-    } else if (random_integer == 2){
+    } else if (random_integer == 2) {
         ROS_INFO_STREAM("Strategy: Left");
         xGoal_.y() = 2 * (tableEdge_(1, 1) - puckRadius_) - xGoal_.y();
     } else {
@@ -284,7 +315,7 @@ void Agent::start() {
     ROS_INFO_STREAM("Start");
     observer_.start();
 
-    while (ros::ok()){
+    while (ros::ok()) {
         update();
         rate_.sleep();
     }

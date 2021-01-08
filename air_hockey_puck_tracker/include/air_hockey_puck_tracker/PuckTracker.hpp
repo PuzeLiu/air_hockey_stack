@@ -45,7 +45,7 @@ namespace AirHockey {
     class PuckTracker {
     private: friend class VisualizationInterface;
     public:
-        PuckTracker(ros::NodeHandle nh, ros::Rate rate=ros::Rate(120.));
+        PuckTracker(ros::NodeHandle nh);
 
         ~PuckTracker();
 
@@ -66,7 +66,7 @@ namespace AirHockey {
 
     private:
         ros::NodeHandle nh_;
-        ros::Rate rate_;
+        ros::Rate* rate_;
         ros::Time stamp_;
 
         tf2_ros::TransformListener tfListener_;
@@ -87,9 +87,9 @@ namespace AirHockey {
 
         PuckPredictedState predictedState_;
         double predictedTime_;
+        double defendingLine_;
 
         boost::thread thread_;
-        boost::mutex predictionMutex_;
     };
 }
 

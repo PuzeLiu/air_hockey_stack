@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh("/");
     ros::Rate rate(120);
 
-    PuckTracker puckTracker(nh, rate);
+    PuckTracker puckTracker(nh);
 
     puckTracker.start();
     while (ros::ok()){

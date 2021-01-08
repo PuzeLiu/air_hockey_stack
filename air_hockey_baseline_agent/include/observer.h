@@ -8,6 +8,7 @@
 
 //#include <sensor_msgs/JointState.h>
 #include <control_msgs/JointTrajectoryControllerState.h>
+#include <std_msgs/Int8.h>
 
 #include "air_hockey_puck_tracker/PuckTracker.hpp"
 
@@ -21,6 +22,7 @@ namespace AirHockey {
         Kinematics::JointArrayType jointDesiredPosition;
         Kinematics::JointArrayType jointDesiredVelocity;
         PuckPredictedState puckPredictedState;
+        int8_t gameStatus;
     };
 
     class Observer {
@@ -35,6 +37,7 @@ namespace AirHockey {
 
     private:
         void jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg);
+        void refereeStatusCallback(const std_msgs::Int8::ConstPtr &msg);
 
         void getObservationCallback();
 
@@ -44,6 +47,7 @@ namespace AirHockey {
         ros::NodeHandle nh_;
         ros::Rate rate_;
         ros::Subscriber jointSub_;
+        ros::Subscriber refereeSub_;
         AirHockey::PuckTracker  puckTracker_;
     };
 }

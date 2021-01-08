@@ -25,8 +25,7 @@
 
 using namespace AirHockey;
 
-PuckTracker::PuckTracker(ros::NodeHandle nh, ros::Rate rate) : nh_(nh), rate_(rate), tfBuffer_(),
-                                                               tfListener_(tfBuffer_, nh_) {
+PuckTracker::PuckTracker(ros::NodeHandle nh) : nh_(nh), tfBuffer_(), tfListener_(tfBuffer_, nh_) {
     tfBuffer_.setUsingDedicatedThread(true);
     init();
 }
@@ -35,6 +34,7 @@ PuckTracker::~PuckTracker() {
     if (thread_.joinable()) {
         thread_.join();
     }
+    delete rate_;
     delete kalmanFilter_;
     delete puckPredictor_;
     delete systemModel_;
@@ -61,18 +61,20 @@ void PuckTracker::init() {
     ROS_INFO_STREAM("Namepsace: " << nh_.getNamespace());
 
     ROS_INFO_STREAM("Read System Parameters");
-    double frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
+    double frequency, frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
     nh_.param<double>("/puck_tracker/friction_drag", frictionDrag, 0.1);
     nh_.param<double>("/puck_tracker/friction_sliding", frictionSliding, 0.0);
     nh_.param<double>("/puck_tracker/restitution_table", restitutionTable, 0.8);
     nh_.param<double>("/puck_tracker/restitution_mallet", restitutionMallet, 0.1);
     nh_.param<int>("/puck_tracker/max_prediction_steps", maxPredictionSteps_, 20);
+    nh_.param<double>("/puck_tracker/frequency", frequency, 120.);
 
     ROS_INFO_STREAM("Drag Parameter:" << frictionDrag);
     ROS_INFO_STREAM("Sliding Parameter: " << frictionSliding);
     ROS_INFO_STREAM("Restitution Parameter of Wall: " << restitutionTable);
     ROS_INFO_STREAM("Restitution Parameter of Mallet: " << restitutionMallet);
     ROS_INFO_STREAM("Prediction Steps: " << maxPredictionSteps_);
+    ROS_INFO_STREAM("Update Frequency:" << frequency);
 
     if (nh_.getNamespace() == "/iiwa_front") {
         robotBaseName_ = "F_link_0";
@@ -96,10 +98,11 @@ void PuckTracker::init() {
         nh_.shutdown();
     }
 
+    rate_ = new ros::Rate(frequency);
     systemModel_ = new SystemModel(frictionDrag, frictionSliding);
     observationModel_ = new ObservationModel;
     collisionModel_ = new CollisionModel(tfStatic, restitutionTable, restitutionMallet,
-                                         rate_.expectedCycleTime().toSec());
+                                         rate_->expectedCycleTime().toSec());
     kalmanFilter_ = new EKF_Wrapper;
     puckPredictor_ = new EKF_Wrapper;
     visualizer_ = new VisualizationInterface(nh_, 0.1, robotBaseName_);
@@ -110,11 +113,12 @@ void PuckTracker::init() {
     kalmanFilter_->init(sInit);
     setCovariance();
 
-    u_.dt() = rate_.expectedCycleTime().toSec();
+    u_.dt() = rate_->expectedCycleTime().toSec();
 
     maxInnovationTolerance_ << 10, 10, 20 * M_PI;
     maxInnovationTolerance_ *= u_.dt();
-    ROS_INFO_STREAM("Max Tolerance: " << maxInnovationTolerance_);
+
+    defendingLine_ = 0.7;
 }
 
 void PuckTracker::setCovariance() {
@@ -162,9 +166,9 @@ void PuckTracker::startTracking() {
         collisionModel_->applyCollision(kalmanFilter_->getState(), true);
         try {
             //! Update puck state
-            stamp_ += rate_.expectedCycleTime();
-            rate_.sleep();
-            tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", stamp_, rate_.expectedCycleTime());
+            stamp_ += rate_->expectedCycleTime();
+            rate_->sleep();
+            tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", stamp_, rate_->expectedCycleTime());
 
             measurement_.x() = tfPuck_.transform.translation.x;
             measurement_.y() = tfPuck_.transform.translation.y;
@@ -201,10 +205,14 @@ void PuckTracker::getPrediction() {
     //! predict future steps
     puckPredictor_->init(kalmanFilter_->getState());
     puckPredictor_->setCovariance(kalmanFilter_->getCovariance());
+    bool should_defend = (puckPredictor_->getState().x() > defendingLine_);
     for (int i = 0; i < maxPredictionSteps_; ++i) {
+        if (should_defend && puckPredictor_->getState().x() < defendingLine_){
+            break;
+        }
         puckPredictor_->predict(*systemModel_, u_);
         collisionModel_->applyCollision(puckPredictor_->getState(), true);
-        predictedTime_ = i * rate_.expectedCycleTime().toSec();
+        predictedTime_ = (i+1) * rate_->expectedCycleTime().toSec();
     }
 }
 

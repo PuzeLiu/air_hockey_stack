@@ -4,7 +4,7 @@ using namespace AirHockey;
 
 Observer::Observer(ros::NodeHandle nh, ros::Rate rate) : nh_(nh), rate_(rate), puckTracker_(nh){
     jointSub_ = nh_.subscribe("joint_position_trajectory_controller/state", 1, &Observer::jointStateCallback, this);
-    ROS_INFO_STREAM("Namepsace: " << nh_.getNamespace());
+    refereeSub_ = nh_.subscribe("/air_hockey_referee/status", 1, &Observer::refereeStatusCallback, this);
 }
 
 void Observer::start(){
@@ -29,4 +29,8 @@ const ObservationState& Observer::getObservation() {
         ros::spinOnce();
     }
     return observationState_;
+}
+
+void Observer::refereeStatusCallback(const std_msgs::Int8::ConstPtr &msg) {
+    observationState_.gameStatus = msg->data;
 }
