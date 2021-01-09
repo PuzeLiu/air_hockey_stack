@@ -121,10 +121,18 @@ VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh,
 	m_predictionMarker.scale.x = 0.1;
 	m_predictionMarker.scale.y = 0.1;
 	m_predictionMarker.scale.z = 0.02;
-	m_predictionMarker.color.r = 0.0;
-	m_predictionMarker.color.g = 0.0;
-	m_predictionMarker.color.b = 1.0;
-	m_predictionMarker.color.a = 0.2;
+    if (robotBaseName_ == "F_link_0"){
+        m_predictionMarker.color.r = 0.0;
+        m_predictionMarker.color.g = 0.0;
+        m_predictionMarker.color.b = 1.0;
+        m_predictionMarker.color.a = 0.2;
+    } else {
+        m_predictionMarker.color.r = 0.0;
+        m_predictionMarker.color.g = 1.0;
+        m_predictionMarker.color.b = 0.0;
+        m_predictionMarker.color.a = 0.2;
+    }
+
 	m_predictionMarker.pose.position.x = 0.0;
 	m_predictionMarker.pose.position.y = 0.0;
 	m_predictionMarker.pose.position.z = m_tableHeight;
