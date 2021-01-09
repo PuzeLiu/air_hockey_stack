@@ -16,6 +16,7 @@
 #include "planner/bezier_hit.h"
 #include "planner/combinatorial_hit.h"
 #include "planner/stable_dynamics_motion.h"
+#include "planner/cubic_linear_motion.h"
 
 using namespace std;
 
@@ -40,6 +41,11 @@ namespace AirHockey{
     private:
         void updateTactic();
         bool generateTrajectory();
+        bool startHit();
+        bool startCut();
+        bool startReady();
+        bool startPrepare();
+
         double updateGoal(Vector2d puckPos);
         void setTactic(Tactics tactic);
 
@@ -53,7 +59,7 @@ namespace AirHockey{
         ObservationState observationState_;
 
         iiwas_kinematics::Kinematics::JointArrayType qHome_;
-        Vector2d xHome_;
+        Vector2d xHome_, xGoal_, xCutPrev_;
         trajectory_msgs::MultiDOFJointTrajectory cartTrajectory_;
         trajectory_msgs::JointTrajectory jointTrajectory_;
         trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
@@ -62,15 +68,17 @@ namespace AirHockey{
         double puckRadius_;
         double malletRadius_;
         Matrix2d tableEdge_;
-        Vector2d xGoal_;
 
         Observer observer_;
         iiwas_kinematics::Kinematics* kinematics_;
 
         CombinatorialHit* combinatorialHit_;
         StableDynamicsMotion* stableDynamicsMotion_;
+        CubicLinearMotion* cubicLinearMotion_;
 
         NullSpaceOptimizer* optimizer_;
+
+        ros::Time trajStopTime_;
 
         double smashCount_;
         double maxPredictionTime_;

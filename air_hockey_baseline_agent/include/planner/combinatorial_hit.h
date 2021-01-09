@@ -21,7 +21,7 @@ private:
     bool getMiddlePoint();
     bool getArcCenter();
     void fitPhase();
-    bool getPoint(const double t);
+    void getPoint(const double t);
 
 private:
     Vector2d boundLower_;

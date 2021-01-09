@@ -1,6 +1,8 @@
 #include "planner/cubic_linear_motion.h"
 
-AirHockey::CubicLinearMotion::CubicLinearMotion(double rate, double height) {
+using namespace AirHockey;
+
+CubicLinearMotion::CubicLinearMotion(double rate, double height) {
     stepSize_ = 1 / rate;
     height_ = height;
 
@@ -8,20 +10,17 @@ AirHockey::CubicLinearMotion::CubicLinearMotion(double rate, double height) {
     viaPoint_.velocities.resize(1);
 }
 
+CubicLinearMotion::~CubicLinearMotion() {
+
+}
+
 bool
-AirHockey::CubicLinearMotion::plan(Vector2d pStart, Vector2d vStart, Vector2d pStop, Vector2d vStop, double tStop,
+CubicLinearMotion::plan(const Vector2d& pStart, const Vector2d& vStart, const Vector2d& pStop, const Vector2d& vStop, double tStop,
                                    trajectory_msgs::MultiDOFJointTrajectory &cartTraj) {
     coefficients_.col(0) = pStart;
     coefficients_.col(1) = vStart;
-    coefficients_.col(2) = (-3.0 * vStart + 3.0 * pStop - 2.0 * vStart * tStop - vStop * tStop) / pow(tStop, 2);
-    coefficients_.col(3) = (2.0 * vStart - 2.0 * pStop + vStart * tStop + vStop * tStop) / pow(tStop, 3);
-//    for (int i = 0; i < 2; ++i) {
-//        coefficients_(i, 0) = pStart(i);
-//        coefficients_(i, 1) = vStart(i);
-//        coefficients_(i, 2) =
-//                (-3.0 * pStart(i) + 3.0 * pStop(i) - 2.0 * vStart(i) * tStop - vStop(i) * tStop) / pow(tStop, 2);
-//        coefficients_(i, 3) = (2.0 * pStart(i) - 2.0 * pStop(i) + vStart(i) * tStop + vStop(i) * tStop) / pow(tStop, 3);
-//    }
+    coefficients_.col(2) = (-3.0 * pStart + 3.0 * pStop - 2.0 * vStart * tStop - vStop * tStop) / pow(tStop, 2);
+    coefficients_.col(3) = (2.0 * pStart - 2.0 * pStop + vStart * tStop + vStop * tStop) / pow(tStop, 3);
 
     double t = 0.;
     while (t <= tStop) {

@@ -15,7 +15,12 @@ class CubicLinearMotion {
 public:
     CubicLinearMotion(double rate, double height);
     ~CubicLinearMotion();
-    bool plan(Vector2d pStart, Vector2d vStart, Vector2d pStop, Vector2d vStop, double tStop, trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
+    bool plan(const Vector2d& pStart,
+              const Vector2d& vStart,
+              const Vector2d& pStop,
+              const Vector2d& vStop,
+              double tStop,
+              trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
 
 private:
     double stepSize_;

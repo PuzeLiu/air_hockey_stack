@@ -30,12 +30,15 @@ bool CombinatorialHit::plan(const Vector2d &xStart, const Vector2d &xHit, const 
     fitPhase();
 
     double tCur = 0.;
-    while (tCur < tStop_){
+    while (tCur <= tStop_){
         tCur += stepSize_;
-        if(getPoint(tCur)) {
-            cartTraj.points.push_back(viaPoint_);
-        }
+        getPoint(tCur);
+        cartTraj.points.push_back(viaPoint_);
     }
+    //! Append one additional point
+    tCur += stepSize_;
+    getPoint(tCur);
+    cartTraj.points.push_back(viaPoint_);
     cartTraj.header.stamp = ros::Time::now();
     return true;
 }
@@ -116,7 +119,7 @@ void CombinatorialHit::fitPhase() {
     stopPhaseCoeff_[4] = vHitMag_ / 2 / pow(tStop_-tHit_, 3);
 }
 
-bool CombinatorialHit::getPoint(const double t) {
+void CombinatorialHit::getPoint(const double t) {
     if (t <= tHit_){
         z_ = phaseCoeff_[3] * pow(t, 3) + phaseCoeff_[4] * pow(t, 4);
         dz_dt_ = 3 * phaseCoeff_[3] * pow(t, 2) + 4 * phaseCoeff_[4] * pow(t, 3);
@@ -144,7 +147,11 @@ bool CombinatorialHit::getPoint(const double t) {
         x_ = xHit_ + z_ * vecDir2_;
         dx_dt_ = dz_dt_ * vecDir2_;
     } else{
-        return false;
+        z_ = stopPhaseCoeff_[1] * (tStop_ - tHit_) + stopPhaseCoeff_[3] * pow(tStop_ - tHit_, 3) + stopPhaseCoeff_[4] * pow(tStop_ - tHit_, 4);
+        dz_dt_ = stopPhaseCoeff_[1] + 3 * stopPhaseCoeff_[3] * pow(tStop_ - tHit_, 2) + 4 * stopPhaseCoeff_[4] * pow(tStop_ - tHit_, 3);
+
+        x_ = xHit_ + z_ * vecDir2_;
+        dx_dt_ = dz_dt_ * vecDir2_;
     }
     viaPoint_.transforms[0].translation.x = x_[0];
     viaPoint_.transforms[0].translation.y = x_[1];
@@ -153,5 +160,4 @@ bool CombinatorialHit::getPoint(const double t) {
     viaPoint_.velocities[0].linear.y = dx_dt_[1];
     viaPoint_.velocities[0].linear.z = 0.0;
     viaPoint_.time_from_start = ros::Duration(t);
-    return true;
 }

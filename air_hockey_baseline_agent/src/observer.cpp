@@ -24,10 +24,8 @@ void Observer::jointStateCallback(const control_msgs::JointTrajectoryControllerS
 }
 
 const ObservationState& Observer::getObservation() {
-    if (nh_.ok()){
-        observationState_.puckPredictedState = puckTracker_.getPredictedState();
-        ros::spinOnce();
-    }
+    observationState_.puckPredictedState = puckTracker_.getPredictedState();
+    ros::spinOnce();
     return observationState_;
 }
 
