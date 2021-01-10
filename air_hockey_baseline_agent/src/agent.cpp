@@ -72,7 +72,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
     jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
 
     tacticState_ = Tactics::READY;
-    observationState_.gameStatus = 0;           //! Initial game status wit STOP;
+    observationState_.gameStatus.status = 0;           //! Initial game status wit STOP;
     tacticChanged_ = true;
 
     double frequency;
@@ -124,17 +124,17 @@ void Agent::update() {
 
 void Agent::updateTactic() {
     observationState_ = observer_.getObservation();
-    if (observationState_.gameStatus != 1) {
+    if (observationState_.gameStatus.status != 1) {
         //! If game is not START
         setTactic(Tactics::READY);
     } else {
-        if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > 0.01) {
+        if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > 0.05) {
             if (observationState_.puckPredictedState.predictedTime < maxPredictionTime_ - 1e-6) {
                 setTactic(Tactics::CUT);
             } else {
                 setTactic(Tactics::READY);
             }
-        } else if (observationState_.puckPredictedState.state.x() < 1.5 &&
+        } else if (observationState_.puckPredictedState.state.x() < 1.3 &&
                    observationState_.puckPredictedState.state.x() > 0.7 &&
                    tacticState_ != Tactics::PREPARE) {
             if (tacticState_ == Tactics::SMASH) { smashCount_ += 1; }
@@ -254,7 +254,7 @@ bool Agent::startCut() {
     Vector2d xCut;
     xCut << 0.7, observationState_.puckPredictedState.state.y();
 
-    if (tacticChanged_ || ros::Time::now() > trajStopTime_ || (xCut - xCutPrev_).norm() > puckRadius_) {
+    if (tacticChanged_ || ros::Time::now() > trajStopTime_ || (xCut - xCutPrev_).norm() > (puckRadius_ + malletRadius_)) {
         xCutPrev_ = xCut;
 
         Vector3d xCur, vCur;
@@ -276,6 +276,7 @@ bool Agent::startCut() {
             jointTrajectory_.points.clear();
             cubicLinearMotion_->plan(xCur2d, vCur2d, xCut,Vector2d(0., 0.), tStop, cartTrajectory_);
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
+                ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
                 tStop += 0.1;
             } else {
                 jointTrajectory_.header.stamp = ros::Time::now();
@@ -328,23 +329,26 @@ bool Agent::startCut() {
 
 bool Agent::startReady() {
     if (tacticChanged_ || ros::Time::now() > trajStopTime_) {
+        observationState_ = observer_.getObservation();
+
         Vector3d xCur, vCur;
         Vector2d xCur2d, vCur2d;
         Kinematics::JacobianPosType jacobian;
+        kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
+        xCur2d = xCur.block<2, 1>(0, 0);
+
+        kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
+        vCur = jacobian * observationState_.jointVelocity;
+        vCur2d = vCur.block<2, 1>(0, 0);
+
         double tStop = 0.8;
         for (int i = 0; i < 10; ++i) {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
-            observationState_ = observer_.getObservation();
-            kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
-            xCur2d = xCur.block<2, 1>(0, 0);
-
-            kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
-            vCur = jacobian * observationState_.jointVelocity;
-            vCur2d = vCur.block<2, 1>(0, 0);
 
             cubicLinearMotion_->plan(xCur2d, vCur2d, xHome_,Vector2d(0., 0.), tStop, cartTrajectory_);
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
+                ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
                 tStop += 0.1;
             } else {
                 jointTrajectory_.header.stamp = ros::Time::now();
@@ -354,7 +358,6 @@ bool Agent::startReady() {
                 return true;
             }
         }
-        cartTrajectoryPub_.publish(cartTrajectory_);
         ROS_INFO_STREAM("Optimization Failed. Unable to find trajectory for Ready");
         return false;
     }

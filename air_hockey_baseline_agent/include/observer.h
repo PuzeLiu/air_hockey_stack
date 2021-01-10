@@ -6,11 +6,10 @@
 
 #include <iiwas_kinematics.h>
 
-//#include <sensor_msgs/JointState.h>
 #include <control_msgs/JointTrajectoryControllerState.h>
-#include <std_msgs/Int8.h>
 
 #include "air_hockey_puck_tracker/PuckTracker.hpp"
+#include "air_hockey_referee/GameStatus.h"
 
 using namespace iiwas_kinematics;
 
@@ -22,7 +21,7 @@ namespace AirHockey {
         Kinematics::JointArrayType jointDesiredPosition;
         Kinematics::JointArrayType jointDesiredVelocity;
         PuckPredictedState puckPredictedState;
-        int8_t gameStatus;
+        air_hockey_referee::GameStatus gameStatus;
     };
 
     class Observer {
@@ -37,7 +36,7 @@ namespace AirHockey {
 
     private:
         void jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg);
-        void refereeStatusCallback(const std_msgs::Int8::ConstPtr &msg);
+        void refereeStatusCallback(const air_hockey_referee::GameStatus::ConstPtr &msg);
 
         void getObservationCallback();
 

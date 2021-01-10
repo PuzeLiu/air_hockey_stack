@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
     tf2_ros
     iiwas_kinematics
     air_hockey_puck_tracker
+    air_hockey_referee
     )
 
 ## System dependencies are found with CMake's conventions
@@ -112,7 +113,7 @@ find_package(OsqpEigen REQUIRED)
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES air_hockey_puck_tracker
-    CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros air_hockey_puck_tracker
+    CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros air_hockey_puck_tracker air_hockey_referee
     #  DEPENDS system_lib
 )
 

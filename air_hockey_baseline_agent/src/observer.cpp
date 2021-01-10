@@ -29,6 +29,6 @@ const ObservationState& Observer::getObservation() {
     return observationState_;
 }
 
-void Observer::refereeStatusCallback(const std_msgs::Int8::ConstPtr &msg) {
-    observationState_.gameStatus = msg->data;
+void Observer::refereeStatusCallback(const air_hockey_referee::GameStatus::ConstPtr &msg) {
+    observationState_.gameStatus = *msg;
 }
