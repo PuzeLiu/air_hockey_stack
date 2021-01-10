@@ -8,6 +8,8 @@ Panels:
         - /Status1
         - /TF1/Frames1
         - /RobotModel4
+        - /Marker1
+        - /Marker1/Namespaces1
       Splitter Ratio: 0.5743494629859924
     Tree Height: 719
   - Class: rviz/Selection
@@ -203,7 +205,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         F_striker_mallet:
           Alpha: 1
           Show Axes: false
@@ -283,7 +284,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         B_striker_mallet:
           Alpha: 1
           Show Axes: false
@@ -372,6 +372,17 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /iiwa_front/marker
+      Name: Marker
+      Namespaces:
+        Prediction: true
+        Puck: true
+        Puck_Indicator: true
+        Table: false
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
