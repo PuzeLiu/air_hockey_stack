@@ -8,11 +8,13 @@ project(air_hockey_referee)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    tf2
-    tf2_ros
-    air_hockey_puck_tracker
-    )
+   roscpp
+   tf2
+   tf2_ros
+   std_msgs
+   gazebo_msgs
+   message_generation
+   )
 find_package(Eigen3 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
@@ -49,18 +51,18 @@ find_package(Eigen3 REQUIRED)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+   FILES
+   GameStatus.msg
+)
 
 ## Generate services in the 'srv' folder
-# add_service_files(
-#   FILES
-#   Service1.srv
-#   Service2.srv
-# )
+add_service_files(
+   FILES
+   StartGame.srv
+   PauseGame.srv
+   ResetGazeboPuck.srv
+)
 
 ## Generate actions in the 'action' folder
 # add_action_files(
@@ -70,10 +72,10 @@ find_package(Eigen3 REQUIRED)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+generate_messages(
+   DEPENDENCIES
+   std_msgs  # Or other packages containing msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -105,10 +107,10 @@ find_package(Eigen3 REQUIRED)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-    #  INCLUDE_DIRS include
-    #  LIBRARIES air_hockey_referee
-    CATKIN_DEPENDS roscpp tf2 tf2_ros air_hockey_puck_tracker
-    #  DEPENDS system_lib
+   INCLUDE_DIRS include
+   #  LIBRARIES air_hockey_referee
+   CATKIN_DEPENDS roscpp tf2 tf2_ros std_msgs message_runtime gazebo_msgs
+   #  DEPENDS system_lib
 )
 
 ###########
@@ -118,9 +120,9 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
-    ${EIGEN3_INCLUDE_DIR}
+   include
+   ${catkin_INCLUDE_DIRS}
+   ${EIGEN3_INCLUDE_DIR}
 )
 
 ## Declare a C++ library
@@ -137,8 +139,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(${PROJECT_NAME}
-    src/main.cpp
-    src/referee.cpp)
+   src/main.cpp
+   src/referee.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -148,13 +150,13 @@ add_executable(${PROJECT_NAME}
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-    ${Eigen3_LIBRARIES}
-    )
+   ${catkin_LIBRARIES}
+   ${Eigen3_LIBRARIES}
+   )
 
 #############
 ## Install ##

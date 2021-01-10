@@ -8,13 +8,18 @@
 #include <ros/ros.h>
 #include <std_msgs/Int8.h>
 #include <tf2_ros/transform_listener.h>
-#include "air_hockey_puck_tracker/CollisionModel.hpp"
+#include <Eigen/Dense>
+#include "air_hockey_referee/GameStatus.h"
+#include "air_hockey_referee/StartGame.h"
+#include "air_hockey_referee/PauseGame.h"
+#include "air_hockey_referee/ResetGazeboPuck.h"
+#include <gazebo_msgs/SetModelState.h>
 
 namespace AirHockey{
     enum GameStatus {
         STOP = 0,
         START = 1,
-        GOAL = 2,
+        PAUSE = 2,
     };
 class Referee {
 public:
@@ -22,17 +27,26 @@ public:
     ~Referee();
 
     void update();
+
+private:
+    bool serviceStartCallback(air_hockey_referee::StartGame::Request &req, air_hockey_referee::StartGame::Response &res);
+    bool servicePauseCallback(air_hockey_referee::PauseGame::Request &req, air_hockey_referee::PauseGame::Response &res);
+    bool serviceResetGazeboPuckCallback(air_hockey_referee::ResetGazeboPuck::Request &req, air_hockey_referee::ResetGazeboPuck::Response &res);
+
 private:
     ros::NodeHandle nh_;
     tf2_ros::Buffer tfBuffer_;
     tf2_ros::TransformListener tfListener_;
     ros::Publisher statusPub_;
+    ros::ServiceServer serviceStart_, servicePause_, serviceReset_;
+    ros::ServiceClient clientResetGazeboPuck_;
 
-    geometry_msgs::TransformStamped tfTable_, tfPuck_;
+    geometry_msgs::TransformStamped tfPuck_, tfTable_;
 
-    AirHockeyTable air_hockey_table_;
+    double tableLength_, tableWidth_, goalWidth_, puckRadius_;
+    air_hockey_referee::GameStatus gameStatusMsg_;
 
-    int status_;
+
     ros::Time stampPrev_;
 };
 }
