@@ -353,8 +353,9 @@ void Agent::loadParam() {
 
     double frequency;
     int max_prediction_steps;
-    nh_.getParam("air_hockey/puck_tracker/frequency", frequency);
-    nh_.getParam("air_hockey/puck_tracker/max_prediction_steps", max_prediction_steps);
+    nh_.getParam("/air_hockey/puck_tracker/frequency", frequency);
+    nh_.getParam("/air_hockey/puck_tracker/max_prediction_steps", max_prediction_steps);
+
     maxPredictionTime_ = max_prediction_steps / frequency;
 
     nh_.getParam("/air_hockey/agent/max_hit_velocity", vHitMax_);

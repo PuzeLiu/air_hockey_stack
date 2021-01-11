@@ -16,8 +16,6 @@
 
     <!-- Description -->
     <include file="$(find air_hockey_description)/launch/air_hockey_description.launch">
-        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)"/>
-        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)"/>
         <arg name="hardware_interface" value="$(arg hardware_interface)"/>
     </include>
 
@@ -40,6 +38,7 @@
         <arg name="back_controllers" value="joint_position_trajectory_controller"/>
     </include>
 
+    <!-- Spawn Gazebo Model -->
     <group ns="iiwas_frame">
         <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
             <param name="publish_frequency" type="double" value="50.0"/>
@@ -66,7 +65,6 @@
               -x 1.08075 -y 1.013 -z $(arg table_surface_z)"/>
     </group>
 
-    <!-- Spawn Gazebo Model -->
     <group ns="iiwa_front" if="$(arg use_front_iiwa)">
         <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
               args="-urdf -model iiwa_front -param robot_description -wait iiwas_frame

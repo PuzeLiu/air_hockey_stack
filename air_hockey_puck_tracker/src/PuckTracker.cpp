@@ -62,12 +62,12 @@ void PuckTracker::init() {
 
     ROS_INFO_STREAM("Read System Parameters");
     double frequency, frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
-    nh_.param<double>("/puck_tracker/friction_drag", frictionDrag, 0.1);
-    nh_.param<double>("/puck_tracker/friction_sliding", frictionSliding, 0.0);
-    nh_.param<double>("/puck_tracker/restitution_table", restitutionTable, 0.8);
-    nh_.param<double>("/puck_tracker/restitution_mallet", restitutionMallet, 0.1);
-    nh_.param<int>("/puck_tracker/max_prediction_steps", maxPredictionSteps_, 20);
-    nh_.param<double>("/puck_tracker/frequency", frequency, 120.);
+    nh_.param<double>("/air_hockey/puck_tracker/friction_drag", frictionDrag, 0.1);
+    nh_.param<double>("/air_hockey/puck_tracker/friction_sliding", frictionSliding, 0.0);
+    nh_.param<double>("/air_hockey/puck_tracker/restitution_table", restitutionTable, 0.8);
+    nh_.param<double>("/air_hockey/puck_tracker/restitution_mallet", restitutionMallet, 0.1);
+    nh_.param<int>("/air_hockey/puck_tracker/max_prediction_steps", maxPredictionSteps_, 20);
+    nh_.param<double>("/air_hockey/puck_tracker/frequency", frequency, 120.);
 
     ROS_INFO_STREAM("Drag Parameter:" << frictionDrag);
     ROS_INFO_STREAM("Sliding Parameter: " << frictionSliding);
@@ -129,12 +129,12 @@ void PuckTracker::setCovariance() {
     covDyn.setIdentity();
 
     double obsVarPos, obsVarAng, dynVarPos, dynVarVel, dynVarAngPos, dynVarAngVel;
-    nh_.param<double>("/puck_tracker/observation_variance_position", obsVarPos, 1e-6);
-    nh_.param<double>("/puck_tracker/observation_variance_angular", obsVarAng, 1e-6);
-    nh_.param<double>("/puck_tracker/dynamic_variance_position", dynVarPos, 1e-4);
-    nh_.param<double>("/puck_tracker/dynamic_variance_velocity", dynVarVel, 1e-2);
-    nh_.param<double>("/puck_tracker/dynamic_variance_angular_position", dynVarAngPos, 1e-4);
-    nh_.param<double>("/puck_tracker/dynamic_variance_angular_velocity", dynVarAngVel, 1e-2);
+    nh_.param<double>("/air_hockey/puck_tracker/observation_variance_position", obsVarPos, 1e-6);
+    nh_.param<double>("/air_hockey/puck_tracker/observation_variance_angular", obsVarAng, 1e-6);
+    nh_.param<double>("/air_hockey/puck_tracker/dynamic_variance_position", dynVarPos, 1e-4);
+    nh_.param<double>("/air_hockey/puck_tracker/dynamic_variance_velocity", dynVarVel, 1e-2);
+    nh_.param<double>("/air_hockey/puck_tracker/dynamic_variance_angular_position", dynVarAngPos, 1e-4);
+    nh_.param<double>("/air_hockey/puck_tracker/dynamic_variance_angular_velocity", dynVarAngVel, 1e-2);
     ROS_INFO_STREAM("Observer Variance Position: " << obsVarPos);
     ROS_INFO_STREAM("Observer Variance Angular Position: " << obsVarAng);
     ROS_INFO_STREAM("Dynamics Variance Position:" << dynVarPos);

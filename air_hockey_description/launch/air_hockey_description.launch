@@ -1,8 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="use_front_iiwa" default="true"/>
-    <arg name="use_back_iiwa" default="true"/>
-
     <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
     <arg name="iiwas_frame_urdf" default="$(find iiwas_description)/urdf/iiwas_frame.urdf.xacro"/>
     <arg name="iiwa_urdf" default="$(find air_hockey_description)/urdf/iiwa_striker.urdf.xacro"/>
