@@ -1,17 +1,50 @@
 <?xml version="1.0"?>
 <launch>
     <arg name="use_front_iiwa" default="true"/>
-    <arg name="use_back_iiwa" default="true"/>
+    <arg name="use_back_iiwa" default="false"/>
+    <arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
+    <arg name="machine_name" default="realtime" />
+    <arg name="machine_address" default="192.168.10.1" />
+    <arg name="front_controllers" default="joint_torque_trajectory_controller"/>
+    <arg name="back_controllers" default="joint_torque_trajectory_controller"/>
 
-    <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
-    <arg name="iiwas_frame_urdf" default="$(find iiwas_description)/urdf/iiwas_frame.urdf.xacro"/>
-    <arg name="iiwa_urdf" default="$(find air_hockey_description)/urdf/iiwa_striker.urdf.xacro"/>
-    <arg name="table_urdf" default="$(find air_hockey_description)/urdf/air_hockey_table/model.urdf.xacro"/>
-    <arg name="puck_urdf" default="$(find air_hockey_description)/urdf/puck/model.urdf.xacro"/>
+    <include file="$(find air_hockey_description)/launch/air_hockey_description.launch">
+    </include>
 
-    <arg name="table_surface_x" default="1.694"/>
-    <arg name="table_surface_y" default="0.813"/>
-    <arg name="table_surface_z" default="0.1"/>
+    <node name="rviz" pkg="rviz" type="rviz"
+          args="-d $(find air_hockey_description)/rviz/air_hockey.rviz"/>
 
- 
+    <group ns="iiwas_frame">
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+    </group>
+
+    <group ns="air_hockey_table">
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+    </group>
+
+    <group ns="puck">
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+    </group>
+
+    <include file="$(find ias_optitrack_bridge)/launch/optitrack_tf.launch">
+        <arg name="output" value="log"/>
+    </include>
+
+    <machine name="$(arg machine_name)" user="puze" address="$(arg machine_address)"
+             env-loader="~/catkin_ws/src/iiwas_core/iiwas_bringup/env.sh" timeout="10.0" default="false"/>
+
+    <include file="$(find iiwas_bringup)/launch/iiwas_barebone.launch">
+        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />
+        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />
+        <arg name="machine_name" value="$(arg machine_name)" />
+        <arg name="front_controllers" value="$(arg front_controllers)" />
+        <arg name="back_controllers" value="$(arg back_controllers)" />
+    </include>
+
 </launch>

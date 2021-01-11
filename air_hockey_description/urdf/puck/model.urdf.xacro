@@ -4,6 +4,7 @@
         <color rgba="1.0 0.0 0.0 1"/>
     </material>
 
+    <xacro:arg name="parent" default="world"/>
     <xacro:property name="puck_radius" value="0.03165"/>
     <xacro:property name="puck_height" value="0.0049"/>
 
@@ -12,13 +13,12 @@
     <xacro:property name="rolling_friction" value="0.8"/>
     <xacro:property name="spinning_friction" value="0.04"/>
 
-    <xacro:macro name="puck">
-        <link name="base">
-        </link>
+    <xacro:macro name="puck" params="parent">
+        <link name="${parent}"/>
 
         <joint name="base_joint" type="fixed">
             <origin xyz="0 0 ${puck_height/2}" rpy="0 0 0"/>
-            <parent link="base"/>
+            <parent link="${parent}"/>
             <child link="link"/>
         </joint>
 
@@ -81,6 +81,6 @@
 
     </xacro:macro>
 
-    <xacro:puck/>
+    <xacro:puck parent="$(arg parent)"/>
 </robot>
 

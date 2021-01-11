@@ -6,9 +6,8 @@
     <arg name="table_urdf" default="$(find air_hockey_description)/urdf/air_hockey_table/model.urdf.xacro"/>
     <arg name="puck_urdf" default="$(find air_hockey_description)/urdf/puck/model.urdf.xacro"/>
 
-    <arg name="table_surface_x" default="1.694"/>
-    <arg name="table_surface_y" default="0.813"/>
-    <arg name="table_surface_z" default="0.1"/>
+    <arg name="table_parent" default="Table"/>
+    <arg name="puck_parent" default="Puck"/>
 
     <rosparam file="$(find air_hockey_description)/config/config.yaml" command="load" subst_value="true"/>
 
@@ -18,8 +17,12 @@
     </group>
 
     <group ns="air_hockey_table">
-        <param name="robot_description" command="$(find xacro)/xacro '$(arg table_urdf)'
-        table_surface_x:=$(arg table_surface_x) table_surface_y:=$(arg table_surface_y) table_surface_z:=$(arg table_surface_z)"/>
+        <param name="robot_description" command="$(find xacro)/xacro '$(arg table_urdf)' parent:=$(arg table_parent)"/>
+    </group>
+
+    <group ns="puck">
+        <param name="robot_description"
+               command="$(find xacro)/xacro '$(find air_hockey_description)/urdf/puck/model.urdf.xacro' parent:=$(arg puck_parent)"/>
     </group>
 
     <group ns="iiwa_front">
