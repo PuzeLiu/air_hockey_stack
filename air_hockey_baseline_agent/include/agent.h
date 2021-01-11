@@ -39,6 +39,7 @@ namespace AirHockey{
         void gotoInit();
 
     private:
+        void loadParam();
         void updateTactic();
         bool generateTrajectory();
         bool startHit();
@@ -64,16 +65,19 @@ namespace AirHockey{
         trajectory_msgs::JointTrajectory jointTrajectory_;
         trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 
-        double universalJointHeight_; //! Table height (0.1) + mallet height (0.095) - base height(0.03)
+        double universalJointHeight_;
         double puckRadius_;
         double malletRadius_;
         Matrix2d tableEdge_;
+
+        double defendLine_;
+        double vHitMax_, vDefendMin_, tDefendMin_;
+        Vector2d hitRange_;
 
         Observer observer_;
         iiwas_kinematics::Kinematics* kinematics_;
 
         CombinatorialHit* combinatorialHit_;
-        StableDynamicsMotion* stableDynamicsMotion_;
         CubicLinearMotion* cubicLinearMotion_;
 
         NullSpaceOptimizer* optimizer_;

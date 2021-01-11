@@ -13,6 +13,8 @@
     <arg name="table_surface_y" default="0.813"/>
     <arg name="table_surface_z" default="0.1"/>
 
+    <rosparam file="$(find air_hockey_description)/config/config.yaml" command="load" subst_value="true"/>
+
     <group ns="iiwas_frame">
         <param name="robot_description"
                command="$(find xacro)/xacro '$(arg iiwas_frame_urdf)'"/>

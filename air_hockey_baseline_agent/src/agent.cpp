@@ -3,19 +3,12 @@
 using namespace AirHockey;
 
 Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(nh, ros::Rate(rate)), dist_(0, 2) {
-    universalJointHeight_ = 0.165;
-    puckRadius_ = 0.03165;
-    malletRadius_ = 0.04815;
-    Vector2d tablePos;
-    tablePos << 1.504, 0;
-    tableEdge_ << tablePos.x() - 0.98, tablePos.x() + 0.98,
-            tablePos.y() - 0.52, tablePos.y() + 0.52;
+    loadParam();
+
     smashCount_ = 0;
 
     rng_.seed(0);
 
-    kinematics_ = new iiwas_kinematics::Kinematics(Vector3d(0.0, 0.0, 0.515),
-                                                   Quaterniond(1.0, 0.0, 0.0, 0.0));
     optimizer_ = new NullSpaceOptimizer(kinematics_, &observer_, false);
 
     combinatorialHit_ = new CombinatorialHit(
@@ -23,34 +16,26 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
             Vector2d(tableEdge_(0, 1) - malletRadius_, tableEdge_(1, 1) - malletRadius_),
             rate,
             universalJointHeight_);
-    stableDynamicsMotion_ = new StableDynamicsMotion(Vector2d(300.0, 300.0),
-                                                     Vector2d(1.0, 1.0),
-                                                     rate, universalJointHeight_);
     cubicLinearMotion_ = new CubicLinearMotion(rate, universalJointHeight_);
 
     jointTrajectoryPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>(
             "joint_position_trajectory_controller/command", 1);
     cartTrajectoryPub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
-
-    xHome_ << 0.58, 0.0;
-    xGoal_ << 2.484, 0.0;
-    xCutPrev_ << 0.7, 0.0;
-
     cartTrajectory_.joint_names.push_back("x");
     cartTrajectory_.joint_names.push_back("y");
     cartTrajectory_.joint_names.push_back("z");
 
-    qHome_ << 1.4568405, 1.410468, -1.6053885, -1.0593628, 0.34509358, 1.6828097, 0.;
-    Vector3d xRef, gc;
-    Quaterniond quatHome;
-    double psi;
-    kinematics_->forwardKinematics(qHome_, xRef, quatHome);
-    kinematics_->getRedundancy(qHome_, gc, psi);
-    xRef << xHome_[0], xHome_[1], universalJointHeight_;
-    if (!kinematics_->inverseKinematics(xRef, quatHome, gc, psi, qHome_)) {
-        ROS_INFO_STREAM("No feasible solution!");
-    }
+//    qHome_ << 1.4568405, 1.410468, -1.6053885, -1.0593628, 0.34509358, 1.6828097, 0.;
+//    Vector3d xRef, gc;
+//    Quaterniond quatHome;
+//    double psi;
+//    kinematics_->forwardKinematics(qHome_, xRef, quatHome);
+//    kinematics_->getRedundancy(qHome_, gc, psi);
+//    xRef << xHome_[0], xHome_[1], universalJointHeight_;
+//    if (!kinematics_->inverseKinematics(xRef, quatHome, gc, psi, qHome_)) {
+//        ROS_INFO_STREAM("No feasible solution!");
+//    }
 
     std::string ns_prefix;
     if (nh.getNamespace() == "/iiwa_front") {
@@ -75,13 +60,6 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
     observationState_.gameStatus.status = 0;           //! Initial game status wit STOP;
     tacticChanged_ = true;
 
-    double frequency;
-    int max_prediction_steps;
-    nh_.param<double>("/puck_tracker/frequency", frequency, 120.);
-    nh_.param<int>("/puck_tracker/max_prediction_steps", max_prediction_steps, 20);
-
-    maxPredictionTime_ = max_prediction_steps / frequency;
-    ROS_INFO_STREAM("Max Prediction Time: " << maxPredictionTime_);
     trajStopTime_ = ros::Time::now();
 }
 
@@ -89,20 +67,19 @@ Agent::~Agent() {
     delete kinematics_;
     delete optimizer_;
     delete combinatorialHit_;
-    delete stableDynamicsMotion_;
     delete cubicLinearMotion_;
 }
 
 void Agent::gotoInit() {
     jointTrajectory_.points.clear();
-    qHome_ << 1.4667675, 1.1785414, -1.502088, -0.99056375, 0.07174191, 1.7372178, -3.0764043;
+    qHome_ << 1.4667675, 1.1785414, -1.502088, -0.99056375, 0.07174191, 1.7372178, 0.;
     for (int i = 0; i < 7; ++i) {
         jointViaPoint_.positions[i] = qHome_[i];
         jointViaPoint_.velocities[i] = 0.;
     }
     jointViaPoint_.time_from_start = ros::Duration(3.0);
     jointTrajectory_.points.push_back(jointViaPoint_);
-    qHome_ << 1.5076244, 1.3209599, -1.4323518, -1.1279348, 0.17179422, 1.6073319, -2.9473362;
+    qHome_ << 1.5076244, 1.3209599, -1.4323518, -1.1279348, 0.17179422, 1.6073319, 0.;
     for (int i = 0; i < 7; ++i) {
         jointViaPoint_.positions[i] = qHome_[i];
         jointViaPoint_.velocities[i] = 0.;
@@ -128,19 +105,19 @@ void Agent::updateTactic() {
         //! If game is not START
         setTactic(Tactics::READY);
     } else {
-        if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > 0.05) {
+        if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > vDefendMin_) {
             if (observationState_.puckPredictedState.predictedTime < maxPredictionTime_ - 1e-6) {
                 setTactic(Tactics::CUT);
             } else {
                 setTactic(Tactics::READY);
             }
-        } else if (observationState_.puckPredictedState.state.x() < 1.3 &&
-                   observationState_.puckPredictedState.state.x() > 0.7 &&
+        } else if (observationState_.puckPredictedState.state.x() < hitRange_[1] &&
+                   observationState_.puckPredictedState.state.x() > hitRange_[0] &&
                    tacticState_ != Tactics::PREPARE) {
             if (tacticState_ == Tactics::SMASH) { smashCount_ += 1; }
             else { smashCount_ = 0; }
             setTactic(Tactics::SMASH);
-        } else if (observationState_.puckPredictedState.state.x() <= 0.7 ||
+        } else if (observationState_.puckPredictedState.state.x() <= hitRange_[0] ||
                    tacticState_ == Tactics::PREPARE) {
             setTactic(Tactics::PREPARE);
         } else {
@@ -219,13 +196,12 @@ bool Agent::startHit() {
     kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
     Vector2d xCur2d = xCur.block<2, 1>(0, 0);
     Vector2d puckCur2d = observationState_.puckPredictedState.state.block<2, 1>(0, 0);
-    double vHitMag = 1.5;
 
     updateGoal(puckCur2d);
     Vector2d vHit = (xGoal_ - puckCur2d).normalized();
     Vector2d xHit = puckCur2d - vHit * (puckRadius_ + malletRadius_ + 0.005);
 
-    vHit *= vHitMag;
+    vHit *= vHitMax_;
 
     for (size_t i = 0; i < 10; ++i) {
         cartTrajectory_.points.clear();
@@ -252,9 +228,10 @@ bool Agent::startHit() {
 bool Agent::startCut() {
     observationState_ = observer_.getObservation();
     Vector2d xCut;
-    xCut << 0.7, observationState_.puckPredictedState.state.y();
+    xCut << defendLine_, observationState_.puckPredictedState.state.y();
 
-    if (tacticChanged_ || ros::Time::now() > trajStopTime_ || (xCut - xCutPrev_).norm() > (puckRadius_ + malletRadius_)) {
+    if (tacticChanged_ || ros::Time::now() > trajStopTime_ ||
+        (xCut - xCutPrev_).norm() > (puckRadius_ + malletRadius_)) {
         xCutPrev_ = xCut;
 
         Vector3d xCur, vCur;
@@ -267,14 +244,15 @@ bool Agent::startCut() {
         vCur = jacobian * observationState_.jointVelocity;
         vCur2d = vCur.block<2, 1>(0, 0);
 
-        double tStop = boost::algorithm::clamp(observationState_.puckPredictedState.predictedTime - 0.3, 0.3, maxPredictionTime_);
+        double tStop = boost::algorithm::clamp(observationState_.puckPredictedState.predictedTime - 0.3, tDefendMin_,
+                                               maxPredictionTime_);
 
         ROS_INFO_STREAM("Update Plan for CUT");
 
         for (int i = 0; i < 10; ++i) {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
-            cubicLinearMotion_->plan(xCur2d, vCur2d, xCut,Vector2d(0., 0.), tStop, cartTrajectory_);
+            cubicLinearMotion_->plan(xCur2d, vCur2d, xCut, Vector2d(0., 0.), tStop, cartTrajectory_);
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
                 ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
                 tStop += 0.1;
@@ -291,40 +269,6 @@ bool Agent::startCut() {
         return false;
     }
     return false;
-
-
-
-
-//    if (tacticChanged_) {
-//        stableDynamicsMotion_->setStiffness(Vector2d(200.0, 200.0));
-//    }
-//    Vector3d xCur, vCur;
-//    kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
-//    Vector2d xCur2d = xCur.block<2, 1>(0, 0);
-//    Kinematics::JacobianPosType jacobian;
-//    kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
-//    vCur = jacobian * observationState_.jointVelocity;
-//    Vector2d vCur2d = vCur.block<2, 1>(0, 0);
-//    xGoal_ << 0.7, observationState_.puckPredictedState.state.y();
-//    for (int i = 0; i < 10; ++i) {
-//        cartTrajectory_.points.clear();
-//        jointTrajectory_.points.clear();
-//        stableDynamicsMotion_->plan(xCur2d, vCur2d, xGoal_, cartTrajectory_, 0.1);
-//
-//        if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
-//            ROS_INFO_STREAM(
-//                    "Optimization Failed. Reduce the CUT stiffness: "
-//                            << stableDynamicsMotion_->getStiffness().transpose());
-//            stableDynamicsMotion_->scaleStiffness(Vector2d(0.8, 0.8));
-//            continue;
-//        } else {
-//            jointTrajectory_.header.stamp = ros::Time::now();
-//            jointTrajectoryPub_.publish(jointTrajectory_);
-//            cartTrajectoryPub_.publish(cartTrajectory_);
-//            ros::Duration(jointTrajectory_.points.back().time_from_start.toSec()).sleep();
-//            break;
-//        }
-//    }
 }
 
 bool Agent::startReady() {
@@ -346,7 +290,7 @@ bool Agent::startReady() {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
 
-            cubicLinearMotion_->plan(xCur2d, vCur2d, xHome_,Vector2d(0., 0.), tStop, cartTrajectory_);
+            cubicLinearMotion_->plan(xCur2d, vCur2d, xHome_, Vector2d(0., 0.), tStop, cartTrajectory_);
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
                 ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
                 tStop += 0.1;
@@ -362,42 +306,61 @@ bool Agent::startReady() {
         return false;
     }
     return false;
-
-
-//    if (tacticChanged_) {
-//        ROS_INFO_STREAM("Reset stiffness READY");
-//        stableDynamicsMotion_->setStiffness(Vector2d(200.0, 200.0));
-//    }
-//    Vector3d xCur, vCur;
-//    kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
-//    Vector2d xCur2d = xCur.block<2, 1>(0, 0);
-//    Kinematics::JacobianPosType jacobian;
-//    kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
-//    vCur = jacobian * observationState_.jointVelocity;
-//    Vector2d vCur2d = vCur.block<2, 1>(0, 0);
-//
-//    for (int i = 0; i < 10; ++i) {
-//        cartTrajectory_.points.clear();
-//        jointTrajectory_.points.clear();
-//        stableDynamicsMotion_->plan(xCur2d, vCur2d, xHome_, cartTrajectory_, 0.1);
-//
-//        if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
-//            ROS_INFO_STREAM("Optimization Failed. Reduce the READY stiffness: "
-//                                    << stableDynamicsMotion_->getStiffness().transpose());
-//            stableDynamicsMotion_->scaleStiffness(Vector2d(0.8, 0.8));
-//            continue;
-//        } else {
-//            jointTrajectory_.header.stamp = ros::Time::now();
-//            jointTrajectoryPub_.publish(jointTrajectory_);
-//            cartTrajectoryPub_.publish(cartTrajectory_);
-////                stableDynamicsMotion_->scaleStiffness(Vector2d(1.25, 1.25));
-//            ros::Duration(jointTrajectory_.points.back().time_from_start.toSec()).sleep();
-////                rate_.sleep();
-//            break;
-//        }
-//    }
 }
 
 bool Agent::startPrepare() {
     return false;
+}
+
+void Agent::loadParam() {
+    nh_.getParam("/air_hockey/universal_joint_height", universalJointHeight_);
+    nh_.getParam("/air_hockey/mallet_radius", malletRadius_);
+    nh_.getParam("/air_hockey/puck_radius", puckRadius_);
+
+    std::vector<double> tcp_position_vec;
+    std::vector<double> tcp_quaternion_vec;
+    nh_.getParam("/air_hockey/agent/tcp_position", tcp_position_vec);
+    nh_.getParam("/air_hockey/agent/tcp_quaternion", tcp_quaternion_vec);
+    Vector3d tcp_position_eigen;
+    tcp_position_eigen.x() = tcp_position_vec[0];
+    tcp_position_eigen.y() = tcp_position_vec[1];
+    tcp_position_eigen.z() = tcp_position_vec[2];
+    Quaterniond tcp_quaternion_eigen;
+    tcp_quaternion_eigen.w() = tcp_quaternion_vec[0];
+    tcp_quaternion_eigen.x() = tcp_quaternion_vec[1];
+    tcp_quaternion_eigen.y() = tcp_quaternion_vec[2];
+    tcp_quaternion_eigen.z() = tcp_quaternion_vec[3];
+    kinematics_ = new iiwas_kinematics::Kinematics(tcp_position_eigen, tcp_quaternion_eigen);
+
+    Vector2d tablePos;
+    tablePos << 1.504, 0;
+    double table_length, table_width;
+    nh_.getParam("/air_hockey/table_length", table_length);
+    nh_.getParam("/air_hockey/table_width", table_width);
+    tableEdge_ << tablePos.x() - table_length / 2, tablePos.x() + table_length / 2,
+                  tablePos.y() - table_width / 2, tablePos.y() + table_width / 2;
+
+    std::vector<double> xTmp;
+    nh_.getParam("/air_hockey/agent/home", xTmp);
+    xHome_ << xTmp[0], xTmp[1];
+    nh_.getParam("/air_hockey/agent/goal", xTmp);
+    xGoal_ << xTmp[0], xTmp[1];
+    nh_.getParam("/air_hockey/agent/hit_range", xTmp);
+    hitRange_ << xTmp[0], xTmp[1];
+
+    nh_.getParam("/air_hockey/agent/defend_line", defendLine_);
+    xCutPrev_ << defendLine_, 0.0;
+
+    double frequency;
+    int max_prediction_steps;
+    nh_.getParam("air_hockey/puck_tracker/frequency", frequency);
+    nh_.getParam("air_hockey/puck_tracker/max_prediction_steps", max_prediction_steps);
+    maxPredictionTime_ = max_prediction_steps / frequency;
+
+    nh_.getParam("/air_hockey/agent/max_hit_velocity", vHitMax_);
+
+    nh_.getParam("/air_hockey/agent/min_defend_velocity", vDefendMin_);
+
+    nh_.getParam("/air_hockey/agent/min_defend_time", tDefendMin_);
+
 }

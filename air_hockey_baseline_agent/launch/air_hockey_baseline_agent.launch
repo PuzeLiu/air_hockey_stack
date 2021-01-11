@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="use_front_iiwa" default="true"/>
+    <arg name="use_back_iiwa" default="false"/>
+
+    <rosparam file="$(find air_hockey_baseline_agent)/config/config.yaml" command="load" subst_value="true"/>
+
+    <group ns="iiwa_front" if="$(arg use_front_iiwa)">
+        <node pkg="air_hockey_baseline_agent" type="air_hockey_baseline_agent" name="air_hockey_baseline_agent" output="screen"/>
+    </group>
+
+    <group ns="iiwa_back" if="$(arg use_back_iiwa)">
+        <node pkg="air_hockey_baseline_agent" type="air_hockey_baseline_agent" name="air_hockey_baseline_agent" output="screen"/>
+    </group>
+
+</launch>
