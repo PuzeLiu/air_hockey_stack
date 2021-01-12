@@ -81,8 +81,8 @@ namespace AirHockey {
                 double s = cross2D(v, w) / denominator;
                 double r = cross2D(u, w) / denominator;
                 if (cross2D(w, v) < 0
-                    || s >= 0 + 1e-4 && s <= 1 - 1e-4 && r >= 0 + 1e-4
-                       && r <= 1 - 1e-4) {
+                    || (s >= 0 + 1e-4 && s <= 1 - 1e-4 && r >= 0 + 1e-4
+                       && r <= 1 - 1e-4)) {
                     boost::algorithm::clamp(s, 0, 1);
                     boost::algorithm::clamp(r, 0, 1);
 

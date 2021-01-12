@@ -6,6 +6,8 @@ PuckTFPublisher::PuckTFPublisher() {
     ROS_INFO_STREAM_NAMED("puck_tf_publisher", "Start PuckTFPublisher Constructor");
     transformMsg_.header.frame_id = "world";
     transformMsg_.child_frame_id = "Puck";
+    update_rate_ = 0.;
+    update_period_ = 0.;
 }
 
 PuckTFPublisher::~PuckTFPublisher() {
