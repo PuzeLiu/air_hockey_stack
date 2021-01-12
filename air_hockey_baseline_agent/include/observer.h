@@ -26,7 +26,7 @@ namespace AirHockey {
 
     class Observer {
     public:
-        Observer(ros::NodeHandle nh, ros::Rate rate = ros::Rate(100));
+        Observer(ros::NodeHandle nh, ros::Rate rate, double defendLine);
 
         ~Observer();
 

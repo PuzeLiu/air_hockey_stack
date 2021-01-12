@@ -11,6 +11,7 @@
 
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <trajectory_msgs/JointTrajectory.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include "null_space_optimizer.h"
 #include "observer.h"
 #include "planner/bezier_hit.h"
@@ -49,12 +50,18 @@ namespace AirHockey{
 
         double updateGoal(Vector2d puckPos);
         void setTactic(Tactics tactic);
+        void applyTransform(trajectory_msgs::MultiDOFJointTrajectory& cartesianTrajectory);
+        void applyInverseTransform(Vector3d& v_in);
+        void applyInverseRotation(Vector3d& v_in);
 
     private:
         ros::NodeHandle nh_;
         ros::Publisher jointTrajectoryPub_;
         ros::Publisher cartTrajectoryPub_;
         ros::Rate rate_;
+        tf2_ros::Buffer tfBuffer_;
+        tf2_ros::TransformListener tfListener_;
+        geometry_msgs::TransformStamped tfRobot2Table_, tfRobot2TableInverse_;
         Tactics tacticState_;
         bool tacticChanged_;
         ObservationState observationState_;
@@ -66,15 +73,14 @@ namespace AirHockey{
         trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 
         double universalJointHeight_;
-        double puckRadius_;
-        double malletRadius_;
-        Matrix2d tableEdge_;
+        double puckRadius_, malletRadius_;
+        double tableLength_, tableWidth_;
 
         double defendLine_;
         double vHitMax_, vDefendMin_, tDefendMin_;
         Vector2d hitRange_;
 
-        Observer observer_;
+        Observer* observer_;
         iiwas_kinematics::Kinematics* kinematics_;
 
         CombinatorialHit* combinatorialHit_;

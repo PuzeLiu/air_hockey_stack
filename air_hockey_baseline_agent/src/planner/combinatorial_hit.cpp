@@ -1,6 +1,7 @@
 #include "planner/combinatorial_hit.h"
 
 #include <Eigen/Geometry>
+#include <boost/algorithm/clamp.hpp>
 using namespace AirHockey;
 
 
@@ -49,8 +50,8 @@ bool CombinatorialHit::getMiddlePoint() {
     }
 
     for (int i = 0; i < 2; ++i) {
-        if (xStart_[i] < boundLower_[i]){xStart_[i] = boundLower_[i];}
-        else if (xStart_[i] > boundUpper_[i] ) {xStart_[i] = boundLower_[i];}
+        xStart_[i] = boost::algorithm::clamp(xStart_[i], boundLower_[i], boundUpper_[i]);
+        xHit_[i] = boost::algorithm::clamp(xHit_[i], boundLower_[i], boundUpper_[i]);
     }
 
     // Find Middle Point in hitting
@@ -95,6 +96,8 @@ bool CombinatorialHit::getArcCenter() {
 
     if ((xArcCenter_ - (xVia2_ + vecNorm2 * arcRadius_)).norm() > 1e-6 ||
         l1_ * l2_ > 1e-6){
+        cout<<((xArcCenter_ - (xVia2_ + vecNorm2 * arcRadius_)).norm() > 1e-6) << endl;
+        cout<< l1_ << "  l2: "<< l2_ << endl;
         cout<< "Center is wrong" << endl;
         return false;
     }

@@ -130,7 +130,7 @@ namespace AirHockey {
 
             Vector2 v1 = (p2 - p1).normalized();
             Vector2 v2 = (pPuck - p1).normalized();
-            if (cross2D(v1, v2) < -1e-6) {
+            if (cross2D(v1, v2) < -1e-3) {
                 return true;
             }
         }

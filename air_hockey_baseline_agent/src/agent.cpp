@@ -2,18 +2,20 @@
 
 using namespace AirHockey;
 
-Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(nh, ros::Rate(rate)), dist_(0, 2) {
+Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2),
+                                                tfBuffer_(), tfListener_(tfBuffer_) {
     loadParam();
 
     smashCount_ = 0;
 
     rng_.seed(0);
 
-    optimizer_ = new NullSpaceOptimizer(kinematics_, &observer_, false);
+    observer_ = new Observer(nh, ros::Rate(rate), defendLine_);
+    optimizer_ = new NullSpaceOptimizer(kinematics_, observer_, false);
 
     combinatorialHit_ = new CombinatorialHit(
-            Vector2d(tableEdge_(0, 0) + malletRadius_, tableEdge_(1, 0) + malletRadius_),
-            Vector2d(tableEdge_(0, 1) - malletRadius_, tableEdge_(1, 1) - malletRadius_),
+            Vector2d(malletRadius_, -tableWidth_ / 2 + malletRadius_),
+            Vector2d(tableLength_ - malletRadius_, tableWidth_ / 2 - malletRadius_),
             rate,
             universalJointHeight_);
     cubicLinearMotion_ = new CubicLinearMotion(rate, universalJointHeight_);
@@ -26,25 +28,25 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
     cartTrajectory_.joint_names.push_back("y");
     cartTrajectory_.joint_names.push_back("z");
 
-//    qHome_ << 1.4568405, 1.410468, -1.6053885, -1.0593628, 0.34509358, 1.6828097, 0.;
-//    Vector3d xRef, gc;
-//    Quaterniond quatHome;
-//    double psi;
-//    kinematics_->forwardKinematics(qHome_, xRef, quatHome);
-//    kinematics_->getRedundancy(qHome_, gc, psi);
-//    xRef << xHome_[0], xHome_[1], universalJointHeight_;
-//    if (!kinematics_->inverseKinematics(xRef, quatHome, gc, psi, qHome_)) {
-//        ROS_INFO_STREAM("No feasible solution!");
-//    }
-
     std::string ns_prefix;
     if (nh.getNamespace() == "/iiwa_front") {
         ns_prefix = 'F';
+        tfRobot2Table_ = tfBuffer_.lookupTransform("F_link_0", "TableHome", ros::Time(0), ros::Duration(10.0));
+        tfRobot2TableInverse_.header = tfRobot2Table_.header;
+        tf2::Stamped<tf2::Transform> tmp;
+        tf2::fromMsg(tfRobot2Table_, tmp);
+        tfRobot2TableInverse_.transform = tf2::toMsg(tmp.inverse());
     } else if (nh.getNamespace() == "/iiwa_back") {
         ns_prefix = 'B';
+        tfRobot2Table_ = tfBuffer_.lookupTransform("B_link_0", "TableAway", ros::Time(0), ros::Duration(10.0));
+        tfRobot2TableInverse_.header = tfRobot2Table_.header;
+        tf2::Stamped<tf2::Transform> tmp;
+        tf2::fromMsg(tfRobot2Table_, tmp);
+        tfRobot2TableInverse_.transform = tf2::toMsg(tmp.inverse());
     } else {
         ROS_ERROR_STREAM("Run the node under the namespace: iiwa_front / iiwa_back");
     }
+
     jointTrajectory_.joint_names.push_back(ns_prefix + "_joint_1");
     jointTrajectory_.joint_names.push_back(ns_prefix + "_joint_2");
     jointTrajectory_.joint_names.push_back(ns_prefix + "_joint_3");
@@ -65,6 +67,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), observer_(
 
 Agent::~Agent() {
     delete kinematics_;
+    delete observer_;
     delete optimizer_;
     delete combinatorialHit_;
     delete cubicLinearMotion_;
@@ -100,8 +103,8 @@ void Agent::update() {
 }
 
 void Agent::updateTactic() {
-    observationState_ = observer_.getObservation();
-    if (observationState_.gameStatus.status != 1) {
+    observationState_ = observer_->getObservation();
+    if (observationState_.gameStatus.status != 2) {
         //! If game is not START
         setTactic(Tactics::READY);
     } else {
@@ -153,23 +156,23 @@ bool Agent::generateTrajectory() {
 
 double Agent::updateGoal(Vector2d puckPosition) {
     auto random_integer = dist_(rng_);
-//    random_integer = 1;
+    random_integer = 0;
     if (puckPosition(1) > 0.1) {
-        xGoal_.x() = tableEdge_(0, 1);
+        xGoal_.x() = tableLength_;
         xGoal_.y() = -0.1;
     } else if (puckPosition(1) < -0.1) {
-        xGoal_.x() = tableEdge_(0, 1);
+        xGoal_.x() = tableLength_;
         xGoal_.y() = 0.1;
     } else {
-        xGoal_.x() = tableEdge_(0, 1);
+        xGoal_.x() = tableLength_;
         xGoal_.y() = 0.0;
     }
     if (random_integer == 1) {
         ROS_INFO_STREAM("Strategy: Right");
-        xGoal_.y() = 2 * (tableEdge_(1, 0) + puckRadius_) - xGoal_.y();
+        xGoal_.y() = -2 * (tableWidth_ / 2 - puckRadius_) - xGoal_.y();
     } else if (random_integer == 2) {
         ROS_INFO_STREAM("Strategy: Left");
-        xGoal_.y() = 2 * (tableEdge_(1, 1) - puckRadius_) - xGoal_.y();
+        xGoal_.y() = 2 * (tableWidth_ / 2 - puckRadius_) - xGoal_.y();
     } else {
         ROS_INFO_STREAM("Strategy: Middle");
     }
@@ -181,7 +184,7 @@ void Agent::start() {
     ros::Duration(2.).sleep();
     gotoInit();
     ROS_INFO_STREAM("Start");
-    observer_.start();
+    observer_->start();
 
     while (ros::ok()) {
         update();
@@ -190,10 +193,11 @@ void Agent::start() {
 }
 
 bool Agent::startHit() {
-    observationState_ = observer_.getObservation();
+    observationState_ = observer_->getObservation();
 
     Vector3d xCur;
     kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
+    applyInverseTransform(xCur);
     Vector2d xCur2d = xCur.block<2, 1>(0, 0);
     Vector2d puckCur2d = observationState_.puckPredictedState.state.block<2, 1>(0, 0);
 
@@ -209,6 +213,7 @@ bool Agent::startHit() {
         if (!combinatorialHit_->plan(xCur2d, xHit, vHit, cartTrajectory_)) {
             return false;
         }
+        applyTransform(cartTrajectory_);
         if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
             ROS_INFO_STREAM("Optimization Failed. Reduce the desired velocity");
             vHit *= .8;
@@ -226,7 +231,7 @@ bool Agent::startHit() {
 }
 
 bool Agent::startCut() {
-    observationState_ = observer_.getObservation();
+    observationState_ = observer_->getObservation();
     Vector2d xCut;
     xCut << defendLine_, observationState_.puckPredictedState.state.y();
 
@@ -239,9 +244,11 @@ bool Agent::startCut() {
         Kinematics::JacobianPosType jacobian;
 
         kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
+        applyInverseTransform(xCur);
         xCur2d = xCur.block<2, 1>(0, 0);
         kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
         vCur = jacobian * observationState_.jointVelocity;
+        applyInverseRotation(vCur);
         vCur2d = vCur.block<2, 1>(0, 0);
 
         double tStop = boost::algorithm::clamp(observationState_.puckPredictedState.predictedTime - 0.3, tDefendMin_,
@@ -253,6 +260,7 @@ bool Agent::startCut() {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
             cubicLinearMotion_->plan(xCur2d, vCur2d, xCut, Vector2d(0., 0.), tStop, cartTrajectory_);
+            applyTransform(cartTrajectory_);
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
                 ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
                 tStop += 0.1;
@@ -273,16 +281,18 @@ bool Agent::startCut() {
 
 bool Agent::startReady() {
     if (tacticChanged_ || ros::Time::now() > trajStopTime_) {
-        observationState_ = observer_.getObservation();
+        observationState_ = observer_->getObservation();
 
         Vector3d xCur, vCur;
         Vector2d xCur2d, vCur2d;
         Kinematics::JacobianPosType jacobian;
         kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
+        applyInverseTransform(xCur);
         xCur2d = xCur.block<2, 1>(0, 0);
 
         kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
         vCur = jacobian * observationState_.jointVelocity;
+        applyInverseRotation(vCur);
         vCur2d = vCur.block<2, 1>(0, 0);
 
         double tStop = 0.8;
@@ -291,6 +301,7 @@ bool Agent::startReady() {
             jointTrajectory_.points.clear();
 
             cubicLinearMotion_->plan(xCur2d, vCur2d, xHome_, Vector2d(0., 0.), tStop, cartTrajectory_);
+            applyTransform(cartTrajectory_);
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
                 ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
                 tStop += 0.1;
@@ -313,9 +324,13 @@ bool Agent::startPrepare() {
 }
 
 void Agent::loadParam() {
-    nh_.getParam("/air_hockey/universal_joint_height", universalJointHeight_);
+    nh_.getParam("/air_hockey/table_length", tableLength_);
+    nh_.getParam("/air_hockey/table_width", tableWidth_);
     nh_.getParam("/air_hockey/mallet_radius", malletRadius_);
     nh_.getParam("/air_hockey/puck_radius", puckRadius_);
+
+
+    nh_.getParam("/air_hockey/agent/universal_joint_height", universalJointHeight_);
 
     std::vector<double> tcp_position_vec;
     std::vector<double> tcp_quaternion_vec;
@@ -334,11 +349,6 @@ void Agent::loadParam() {
 
     Vector2d tablePos;
     tablePos << 1.504, 0;
-    double table_length, table_width;
-    nh_.getParam("/air_hockey/table_length", table_length);
-    nh_.getParam("/air_hockey/table_width", table_width);
-    tableEdge_ << tablePos.x() - table_length / 2, tablePos.x() + table_length / 2,
-                  tablePos.y() - table_width / 2, tablePos.y() + table_width / 2;
 
     std::vector<double> xTmp;
     nh_.getParam("/air_hockey/agent/home", xTmp);
@@ -363,5 +373,43 @@ void Agent::loadParam() {
     nh_.getParam("/air_hockey/agent/min_defend_velocity", vDefendMin_);
 
     nh_.getParam("/air_hockey/agent/min_defend_time", tDefendMin_);
+}
 
+void Agent::applyTransform(trajectory_msgs::MultiDOFJointTrajectory &cartesianTrajectory) {
+    geometry_msgs::Point tmp;
+    for (int i = 0; i < cartesianTrajectory.points.size(); ++i) {
+        tmp.x = cartesianTrajectory.points[i].transforms[0].translation.x;
+        tmp.y = cartesianTrajectory.points[i].transforms[0].translation.y;
+        tmp.z = cartesianTrajectory.points[i].transforms[0].translation.z;
+
+        tf2::doTransform(tmp, tmp, tfRobot2Table_);
+
+        cartesianTrajectory.points[i].transforms[0].translation.x = tmp.x;
+        cartesianTrajectory.points[i].transforms[0].translation.y = tmp.y;
+        cartesianTrajectory.points[i].transforms[0].translation.z = tmp.z;
+    }
+}
+
+void Agent::applyInverseTransform(Vector3d &v_in_out) {
+    geometry_msgs::Point point;
+    point.x = v_in_out.x();
+    point.y = v_in_out.y();
+    point.z = v_in_out.z();
+    tf2::doTransform(point, point, tfRobot2TableInverse_);
+    v_in_out.x() = point.x;
+    v_in_out.y() = point.y;
+    v_in_out.z() = point.z;
+}
+
+void Agent::applyInverseRotation(Vector3d &v_in_out) {
+    geometry_msgs::Vector3 point;
+    point.x = v_in_out.x();
+    point.y = v_in_out.y();
+    point.z = v_in_out.z();
+
+    tf2::doTransform(point, point, tfRobot2TableInverse_);
+
+    v_in_out.x() = point.x;
+    v_in_out.y() = point.y;
+    v_in_out.z() = point.z;
 }

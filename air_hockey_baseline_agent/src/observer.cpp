@@ -2,9 +2,9 @@
 
 using namespace AirHockey;
 
-Observer::Observer(ros::NodeHandle nh, ros::Rate rate) : nh_(nh), rate_(rate), puckTracker_(nh){
+Observer::Observer(ros::NodeHandle nh, ros::Rate rate, double defendLine) : nh_(nh), rate_(rate), puckTracker_(nh, defendLine){
     jointSub_ = nh_.subscribe("joint_position_trajectory_controller/state", 1, &Observer::jointStateCallback, this);
-    refereeSub_ = nh_.subscribe("/air_hockey_referee/status", 1, &Observer::refereeStatusCallback, this);
+    refereeSub_ = nh_.subscribe("/air_hockey_referee/game_status", 1, &Observer::refereeStatusCallback, this);
 }
 
 void Observer::start(){

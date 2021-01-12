@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
     trajectory_msgs
     tf2
     tf2_ros
+    tf2_geometry_msgs
     iiwas_kinematics
     air_hockey_puck_tracker
     air_hockey_referee
@@ -113,7 +114,7 @@ find_package(OsqpEigen REQUIRED)
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES air_hockey_puck_tracker
-    CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros air_hockey_puck_tracker air_hockey_referee
+    CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros tf2_geometry_msgs air_hockey_puck_tracker air_hockey_referee
     #  DEPENDS system_lib
 )
 
