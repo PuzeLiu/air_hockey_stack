@@ -1,5 +1,5 @@
 <library path="src">
-  <class name="IiiwasManager" type="iiwas_rqt.iiwas_manager.IiwasManager" base_class_type="rqt_gui_py::Plugin">
+  <class name="AirHockeyManager" type="air_hockey_rqt.air_hockey_manager.AirHockeyManager" base_class_type="rqt_gui_py::Plugin">
     <description>
      	User interface to use the Iiwas robot.
     </description>
@@ -9,9 +9,9 @@
         <icon type="theme">folder</icon>
         <statustip>Plugins related to robot tools.</statustip>
       </group>
-      <label>IIwas Manager</label>
+      <label>Air Hockey Manager</label>
       <icon type="file">resource/icon.png</icon>
-      <statustip>Manage Iiwas robot</statustip>
+      <statustip>Manage Air Hockey Game</statustip>
     </qtgui>
   </class>
 </library>

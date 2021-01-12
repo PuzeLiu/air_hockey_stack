@@ -11,6 +11,7 @@
 #include <Eigen/Dense>
 #include "air_hockey_referee/GameStatus.h"
 #include "air_hockey_referee/StartGame.h"
+#include "air_hockey_referee/StopGame.h"
 #include "air_hockey_referee/PauseGame.h"
 #include "air_hockey_referee/ResetGazeboPuck.h"
 #include <gazebo_msgs/SetModelState.h>
@@ -18,8 +19,8 @@
 namespace AirHockey{
     enum GameStatus {
         STOP = 0,
-        START = 1,
-        PAUSE = 2,
+        PAUSE = 1,
+		START = 2,
     };
 class Referee {
 public:
@@ -31,14 +32,15 @@ public:
 private:
     bool serviceStartCallback(air_hockey_referee::StartGame::Request &req, air_hockey_referee::StartGame::Response &res);
     bool servicePauseCallback(air_hockey_referee::PauseGame::Request &req, air_hockey_referee::PauseGame::Response &res);
-    bool serviceResetGazeboPuckCallback(air_hockey_referee::ResetGazeboPuck::Request &req, air_hockey_referee::ResetGazeboPuck::Response &res);
+    bool serviceStopCallback(air_hockey_referee::StopGame::Request &req, air_hockey_referee::StopGame::Response &res);
+    bool serviceResetCallback(air_hockey_referee::ResetGazeboPuck::Request &req, air_hockey_referee::ResetGazeboPuck::Response &res);
 
 private:
     ros::NodeHandle nh_;
     tf2_ros::Buffer tfBuffer_;
     tf2_ros::TransformListener tfListener_;
     ros::Publisher statusPub_;
-    ros::ServiceServer serviceStart_, servicePause_, serviceReset_;
+    ros::ServiceServer serviceStart_, serviceStop_, servicePause_, serviceReset_;
     ros::ServiceClient clientResetGazeboPuck_;
 
     geometry_msgs::TransformStamped tfPuck_, tfTable_;

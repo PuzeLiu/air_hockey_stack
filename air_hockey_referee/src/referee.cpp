@@ -3,10 +3,11 @@
 using namespace AirHockey;
 
 Referee::Referee(ros::NodeHandle nh) : nh_(nh), tfBuffer_(), tfListener_(tfBuffer_) {
-    statusPub_ = nh_.advertise<air_hockey_referee::GameStatus>("status", 1);
-    serviceStart_ = nh_.advertiseService("StartGame", &Referee::serviceStartCallback, this);
-    servicePause_ = nh_.advertiseService("PauseGame", &Referee::servicePauseCallback, this);
-    serviceReset_ = nh_.advertiseService("ResetGazeboPuck", &Referee::serviceResetGazeboPuckCallback, this);
+    statusPub_ = nh_.advertise<air_hockey_referee::GameStatus>("game_status", 1);
+    serviceStart_ = nh_.advertiseService("start_game", &Referee::serviceStartCallback, this);
+    servicePause_ = nh_.advertiseService("pause_game", &Referee::servicePauseCallback, this);
+    servicePause_ = nh_.advertiseService("stop_game", &Referee::serviceStopCallback, this);
+    serviceReset_ = nh_.advertiseService("reset_robot", &Referee::serviceResetCallback, this);
     clientResetGazeboPuck_ = nh_.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
 
     try {
@@ -23,8 +24,8 @@ Referee::Referee(ros::NodeHandle nh) : nh_(nh), tfBuffer_(), tfListener_(tfBuffe
     puckRadius_ = 0.03165;
 
     gameStatusMsg_.status = GameStatus::STOP;
-    gameStatusMsg_.score_front = 0;
-    gameStatusMsg_.score_back = 0;
+    gameStatusMsg_.score_home = 0;
+    gameStatusMsg_.score_away = 0;
 
     stampPrev_ = ros::Time::now();
 }
@@ -48,14 +49,14 @@ void Referee::update() {
                     abs(tfPuck_.transform.translation.y) < goalWidth_ / 2) {
                     ROS_INFO_STREAM("Back Goal");
                     gameStatusMsg_.status = GameStatus::PAUSE;
-                    gameStatusMsg_.score_back += 1;
+                    gameStatusMsg_.score_away += 1;
                     statusPub_.publish(gameStatusMsg_);
                     ROS_INFO_STREAM(gameStatusMsg_);
                 } else if (tfPuck_.transform.translation.x > (tableLength_ / 2 - puckRadius_ + 1e-2) &&
                            abs(tfPuck_.transform.translation.y) < goalWidth_ / 2) {
                     ROS_INFO_STREAM("Front Goal");
                     gameStatusMsg_.status = GameStatus::PAUSE;
-                    gameStatusMsg_.score_front += 1;
+                    gameStatusMsg_.score_home += 1;
                     statusPub_.publish(gameStatusMsg_);
                     ROS_INFO_STREAM(gameStatusMsg_);
                 }
@@ -76,14 +77,14 @@ bool Referee::serviceStartCallback(air_hockey_referee::StartGame::Request &req,
         gameStatusMsg_.status = GameStatus::START;
         statusPub_.publish(gameStatusMsg_);
         res.success = true;
-        res.msg = "";
+        res.msg = "Game started";
         return true;
     }
 }
 
 bool Referee::servicePauseCallback(air_hockey_referee::PauseGame::Request &req,
                                    air_hockey_referee::PauseGame::Response &res) {
-    if (gameStatusMsg_.status == GameStatus::PAUSE){
+    if (gameStatusMsg_.status != GameStatus::START){
         res.success = false;
         res.msg = "PauseGame service fail, already paused";
         return true;
@@ -91,12 +92,28 @@ bool Referee::servicePauseCallback(air_hockey_referee::PauseGame::Request &req,
         gameStatusMsg_.status = GameStatus::PAUSE;
         statusPub_.publish(gameStatusMsg_);
         res.success = true;
-        res.msg = "";
+        res.msg = "Game paused";
         return true;
     }
 }
 
-bool Referee::serviceResetGazeboPuckCallback(air_hockey_referee::ResetGazeboPuck::Request &req,
+bool Referee::serviceStopCallback(air_hockey_referee::StopGame::Request &req,
+                                  air_hockey_referee::StopGame::Response &res) {
+    if (gameStatusMsg_.status == GameStatus::STOP){
+        res.success = false;
+        res.msg = "StopGame service fail, already paused";
+        return true;
+    } else {
+        gameStatusMsg_.status = GameStatus::STOP;
+        statusPub_.publish(gameStatusMsg_);
+        res.success = true;
+        res.msg = "Game stopped";
+        return true;
+    }
+}
+
+
+bool Referee::serviceResetCallback(air_hockey_referee::ResetGazeboPuck::Request &req,
                                    air_hockey_referee::ResetGazeboPuck::Response &res) {
     gazebo_msgs::SetModelState::Request puckStateReq;
     gazebo_msgs::SetModelState::Response puckStateRes;

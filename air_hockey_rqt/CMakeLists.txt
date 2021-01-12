@@ -16,7 +16,7 @@ install(DIRECTORY resource
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-catkin_install_python(PROGRAMS scripts/iiwas_rqt
+catkin_install_python(PROGRAMS scripts/air_hockey_rqt
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

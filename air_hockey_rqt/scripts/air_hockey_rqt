@@ -2,9 +2,9 @@
 
 import sys
 
-from iiwas_rqt.iiwas_manager import IiwasManager
+from air_hockey_rqt.air_hockey_manager import AirHockeyManager
 from rqt_gui.main import Main
 
-plugin = 'iiwas_rqt'
+plugin = 'air_hockey_rqt'
 main = Main(filename=plugin)
 sys.exit(main.main(standalone=plugin))

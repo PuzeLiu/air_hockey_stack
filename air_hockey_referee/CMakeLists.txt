@@ -60,8 +60,9 @@ add_message_files(
 add_service_files(
    FILES
    StartGame.srv
+   StopGame.srv
    PauseGame.srv
-   ResetGazeboPuck.srv
+   ResetRobot.srv
 )
 
 ## Generate actions in the 'action' folder
