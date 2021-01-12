@@ -5,7 +5,7 @@ air_hockey:
     tcp_quaternion: [ 1.0, 0.0, 0.0, 0.0 ]  # [ w, x, y, z ]
     home: [0.58, 0.0]
     goal: [2.484, 0.0]
-    defend_line: 0.7
+    defend_line: 0.2
     hit_range: [0.7, 1.3]
     max_hit_velocity: 1.5
     min_defend_velocity: 0.05

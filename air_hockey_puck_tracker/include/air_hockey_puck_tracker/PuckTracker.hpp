@@ -45,7 +45,7 @@ namespace AirHockey {
     class PuckTracker {
     private: friend class VisualizationInterface;
     public:
-        PuckTracker(ros::NodeHandle nh);
+        PuckTracker(ros::NodeHandle nh, double defendLine=0.0);
 
         ~PuckTracker();
 
@@ -71,7 +71,7 @@ namespace AirHockey {
 
         tf2_ros::TransformListener tfListener_;
         tf2_ros::Buffer tfBuffer_;
-        std::string robotBaseName_, opponentMalletName_;
+        std::string opponentMalletName_;
         geometry_msgs::TransformStamped tfPuck_, tfOpponentMallet;
 
         EKF_Wrapper *kalmanFilter_;
@@ -79,7 +79,7 @@ namespace AirHockey {
         SystemModel *systemModel_;
         ObservationModel *observationModel_;
         CollisionModel *collisionModel_;
-        VisualizationInterface* visualizer_;
+        VisualizationInterface *visualizer_;
 
         Control u_;
         int maxPredictionSteps_;
@@ -88,6 +88,7 @@ namespace AirHockey {
         PuckPredictedState predictedState_;
         double predictedTime_;
         double defendingLine_;
+        double tableLength_, tableWidth_;
 
         boost::thread thread_;
     };

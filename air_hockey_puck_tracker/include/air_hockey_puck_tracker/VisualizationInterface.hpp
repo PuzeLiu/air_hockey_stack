@@ -32,7 +32,7 @@
 namespace AirHockey{
 class VisualizationInterface{
 public:
-    VisualizationInterface(const ros::NodeHandle& nh, double tableHeight, std::string robotBaseName);
+    VisualizationInterface(const ros::NodeHandle& nh);
 
     void update(EKF_Wrapper& predictor, ObservationModel& observationModel);
 
@@ -46,10 +46,7 @@ private:
 
     ros::Publisher m_markerPub;
 
-    visualization_msgs::Marker m_tableMarker, m_puckMarker, m_puckMarkerIndicator, m_malletMarker, m_predictionMarker;
-
-    double m_tableHeight;
-    std::string robotBaseName_;
+    visualization_msgs::Marker m_predictionMarker;
 };
 
 }

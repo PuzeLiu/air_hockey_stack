@@ -38,8 +38,6 @@ namespace AirHockey {
         void jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg);
         void refereeStatusCallback(const air_hockey_referee::GameStatus::ConstPtr &msg);
 
-        void getObservationCallback();
-
     private:
         ObservationState observationState_, observationStatePrev_;
 

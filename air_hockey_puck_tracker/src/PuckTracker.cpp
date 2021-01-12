@@ -25,8 +25,9 @@
 
 using namespace AirHockey;
 
-PuckTracker::PuckTracker(ros::NodeHandle nh) : nh_(nh), tfBuffer_(), tfListener_(tfBuffer_, nh_) {
+PuckTracker::PuckTracker(ros::NodeHandle nh, double defendLine) : nh_(nh), tfBuffer_(), tfListener_(tfBuffer_) {
     tfBuffer_.setUsingDedicatedThread(true);
+    defendingLine_ = defendLine;
     init();
 }
 
@@ -47,7 +48,7 @@ void PuckTracker::start() {
     thread_ = boost::thread(&PuckTracker::startTracking, this);
 }
 
-const PuckPredictedState& PuckTracker::getPredictedState() {
+const PuckPredictedState &PuckTracker::getPredictedState() {
     getPrediction();
     visualizer_->update(*puckPredictor_, *observationModel_);
     predictedState_.state = puckPredictor_->getState();
@@ -58,9 +59,14 @@ const PuckPredictedState& PuckTracker::getPredictedState() {
 }
 
 void PuckTracker::init() {
-    ROS_INFO_STREAM("Namepsace: " << nh_.getNamespace());
+    ROS_INFO_STREAM("Read Air Hockey Parameters");
+    double malletRadius, puckRadius;
+    nh_.param<double>("/air_hockey/mallet_radius", malletRadius, 0.04815);
+    nh_.param<double>("/air_hockey/puck_radius", puckRadius, 0.03065);
+    nh_.param<double>("/air_hockey/table_length", tableLength_, 1.96);
+    nh_.param<double>("/air_hockey/table_width", tableWidth_, 1.02);
 
-    ROS_INFO_STREAM("Read System Parameters");
+    ROS_INFO_STREAM("Read Puck Tracker Parameters");
     double frequency, frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
     nh_.param<double>("/air_hockey/puck_tracker/friction_drag", frictionDrag, 0.1);
     nh_.param<double>("/air_hockey/puck_tracker/friction_sliding", frictionSliding, 0.0);
@@ -69,43 +75,30 @@ void PuckTracker::init() {
     nh_.param<int>("/air_hockey/puck_tracker/max_prediction_steps", maxPredictionSteps_, 20);
     nh_.param<double>("/air_hockey/puck_tracker/frequency", frequency, 120.);
 
-    ROS_INFO_STREAM("Drag Parameter:" << frictionDrag);
-    ROS_INFO_STREAM("Sliding Parameter: " << frictionSliding);
-    ROS_INFO_STREAM("Restitution Parameter of Wall: " << restitutionTable);
-    ROS_INFO_STREAM("Restitution Parameter of Mallet: " << restitutionMallet);
-    ROS_INFO_STREAM("Prediction Steps: " << maxPredictionSteps_);
-    ROS_INFO_STREAM("Update Frequency:" << frequency);
-
     if (nh_.getNamespace() == "/iiwa_front") {
-        robotBaseName_ = "F_link_0";
         opponentMalletName_ = "B_striker_mallet_tip";
-    }
-    else if (nh_.getNamespace() == "/iiwa_back") {
-        robotBaseName_ = "B_link_0";
+    } else if (nh_.getNamespace() == "/iiwa_back") {
         opponentMalletName_ = "F_striker_mallet_tip";
+    } else {
     }
-    else {
-        ROS_ERROR_STREAM("node should run in namespace: /iiwa_front or /iiwa_back");
-        nh_.shutdown();
-    }
+
     ROS_INFO_STREAM("Wait for transform: /Table");
     ros::Duration(1.0).sleep();
-    geometry_msgs::TransformStamped tfStatic;
     try {
-        tfStatic = tfBuffer_.lookupTransform(robotBaseName_, "Table", ros::Time(0), ros::Duration(1.0));
+        tfBuffer_.lookupTransform("world", "Table", ros::Time(0), ros::Duration(1.0));
     } catch (tf2::TransformException &exception) {
-        ROS_ERROR_STREAM("Could not transform " << robotBaseName_ << " to Table: " << exception.what());
-        nh_.shutdown();
+        ROS_ERROR_STREAM("Could not transform world to Table: " << exception.what());
+        ros::shutdown();
     }
 
     rate_ = new ros::Rate(frequency);
     systemModel_ = new SystemModel(frictionDrag, frictionSliding);
     observationModel_ = new ObservationModel;
-    collisionModel_ = new CollisionModel(tfStatic, restitutionTable, restitutionMallet,
-                                         rate_->expectedCycleTime().toSec());
+    collisionModel_ = new CollisionModel(tableLength_, tableWidth_, puckRadius, malletRadius,
+                                         restitutionTable, restitutionMallet, rate_->expectedCycleTime().toSec());
     kalmanFilter_ = new EKF_Wrapper;
     puckPredictor_ = new EKF_Wrapper;
-    visualizer_ = new VisualizationInterface(nh_, 0.1, robotBaseName_);
+    visualizer_ = new VisualizationInterface(nh_);
 
     //! Initialize Kalman Filter
     State sInit;
@@ -117,8 +110,6 @@ void PuckTracker::init() {
 
     maxInnovationTolerance_ << 10, 10, 20 * M_PI;
     maxInnovationTolerance_ *= u_.dt();
-
-    defendingLine_ = 0.7;
 }
 
 void PuckTracker::setCovariance() {
@@ -168,7 +159,7 @@ void PuckTracker::startTracking() {
             //! Update puck state
             stamp_ += rate_->expectedCycleTime();
             rate_->sleep();
-            tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", stamp_, rate_->expectedCycleTime());
+            tfPuck_ = tfBuffer_.lookupTransform("Table", "Puck", stamp_, rate_->expectedCycleTime());
 
             measurement_.x() = tfPuck_.transform.translation.x;
             measurement_.y() = tfPuck_.transform.translation.y;
@@ -183,20 +174,20 @@ void PuckTracker::startTracking() {
             measurement_.theta() = yaw;
 
             //! Update mallet state
-            tfOpponentMallet = tfBuffer_.lookupTransform(robotBaseName_, opponentMalletName_, ros::Time(0));
+            tfOpponentMallet = tfBuffer_.lookupTransform("Table", opponentMalletName_, ros::Time(0));
             collisionModel_->m_mallet.setState(tfOpponentMallet);
 
             //! Check if puck measurement outside the table range, if not, update.
-            if (!collisionModel_->m_table.isOutsideBoundary(measurement_)){
+            if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
                 kalmanFilter_->update(*observationModel_, measurement_);
                 //! check if Innovation is in feasible range
                 auto mu = kalmanFilter_->getInnovation();
-                if ((maxInnovationTolerance_ - mu.cwiseAbs()).cwiseSign().sum() < mu.size()){
+                if (maxInnovationTolerance_.x() < mu.x() || maxInnovationTolerance_.y() < mu.y()){
                     ROS_WARN_STREAM("Innovation is too big. Reset the kalman filter, Innovation:" << mu.transpose());
                     reset();
                 }
             }
-        } catch (tf2::TransformException &exception){
+        } catch (tf2::TransformException &exception) {
         }
     }
 }
@@ -205,20 +196,40 @@ void PuckTracker::getPrediction() {
     //! predict future steps
     puckPredictor_->init(kalmanFilter_->getState());
     puckPredictor_->setCovariance(kalmanFilter_->getCovariance());
-    bool should_defend = (puckPredictor_->getState().x() > defendingLine_);
-    for (int i = 0; i < maxPredictionSteps_; ++i) {
-        if (should_defend && puckPredictor_->getState().x() < defendingLine_){
-            break;
+    if (defendingLine_ <= 0.0) {
+        for (int i = 0; i < maxPredictionSteps_; ++i) {
+            puckPredictor_->predict(*systemModel_, u_);
+            collisionModel_->applyCollision(puckPredictor_->getState(), true);
+            predictedTime_ = (i + 1) * rate_->expectedCycleTime().toSec();
         }
-        puckPredictor_->predict(*systemModel_, u_);
-        collisionModel_->applyCollision(puckPredictor_->getState(), true);
-        predictedTime_ = (i+1) * rate_->expectedCycleTime().toSec();
+    } else {
+        bool should_defend;
+        if (nh_.getNamespace() == "/iiwa_front") {
+            should_defend = (puckPredictor_->getState().x() > -tableLength_ / 2 + defendingLine_);
+        } else {
+            should_defend = (puckPredictor_->getState().x() < tableLength_ / 2 - defendingLine_);
+        }
+        for (int i = 0; i < maxPredictionSteps_; ++i) {
+            if (should_defend) {
+                if (nh_.getNamespace() == "/iiwa_front" &&
+                    puckPredictor_->getState().x() < -tableLength_ / 2 + defendingLine_) {
+                    break;
+                } else if (nh_.getNamespace() == "/iiwa_back" &&
+                           puckPredictor_->getState().x() > tableLength_ / 2 - defendingLine_) {
+                    break;
+                }
+            }
+
+            puckPredictor_->predict(*systemModel_, u_);
+            collisionModel_->applyCollision(puckPredictor_->getState(), true);
+            predictedTime_ = (i + 1) * rate_->expectedCycleTime().toSec();
+        }
     }
 }
 
 void PuckTracker::reset() {
     try {
-        tfPuck_ = tfBuffer_.lookupTransform(robotBaseName_, "Puck", ros::Time::now(), ros::Duration(1.0));
+        tfPuck_ = tfBuffer_.lookupTransform("Table", "Puck", ros::Time::now(), ros::Duration(1.0));
         stamp_ = tfPuck_.header.stamp;
 
         State initState;
@@ -246,7 +257,7 @@ void PuckTracker::reset() {
         puckPredictor_->init(initState);
         puckPredictor_->setCovariance(covInit);
     } catch (tf2::TransformException &exception) {
-        ROS_ERROR_STREAM("Could not initialize transform " << robotBaseName_ << " to Puck: " << exception.what());
+        ROS_ERROR_STREAM("Could not initialize transform world to Puck: " << exception.what());
         nh_.shutdown();
     }
 }

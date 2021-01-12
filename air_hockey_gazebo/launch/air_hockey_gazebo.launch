@@ -55,7 +55,7 @@
               args="-urdf -model air_hockey_table -param robot_description
               -x $(arg table_surface_x) -y $(arg table_surface_y) -z $(arg table_surface_z)"/>
         <node name="table_tf_publisher" pkg="tf" type="static_transform_publisher"
-              args="$(arg table_surface_x) $(arg table_surface_y) $(arg table_surface_z) 0 0 0 /world /Table 100"/>
+              args="$(arg table_surface_x) $(arg table_surface_y) $(arg table_surface_z) 0 0 0 /world /Table 120"/>
     </group>
 
     <group ns="puck">

@@ -36,14 +36,9 @@ namespace AirHockey {
 
     class AirHockeyTable {
     public:
-
         //! BoundaryType of 4 lines, each row is line between <x1, y1, x2, y2>
         typedef Kalman::Matrix<double, 4, 4> BoundaryType;
     protected:
-        Vector2 m_center;
-        double m_z;
-        double m_yaw;
-
         //! Table length: X-direction, width: Y-direction
         double m_length;
         double m_width;
@@ -59,15 +54,9 @@ namespace AirHockey {
         BoundaryType m_boundary;
 
     public:
-        AirHockeyTable(double e, double dt = 1 / 120.);
+        AirHockeyTable(double length, double width, double puckRadius, double restitution, double dt = 1 / 120.);
 
         ~AirHockeyTable();
-
-        void setTransform(const geometry_msgs::TransformStamped &transform);
-
-        inline Vector2 getCenter() { return m_center; }
-
-        inline double getYaw() { return m_yaw; }
 
         inline BoundaryType getBoundary() { return m_boundary; }
 
@@ -92,12 +81,11 @@ namespace AirHockey {
         //! restitution coefficient
         double m_e;
 
-        State m_malletState, m_malletStatePredict;
+        State m_malletState;
 
-        Mallet(double e, double dt);
+        Mallet(double puckRadius, double malletRadius, double restitution, double dt);
 
         void setState(const geometry_msgs::TransformStamped &tfMallet);
-        void predict();
 
         bool applyCollision(State &puckState);
     };
@@ -109,7 +97,8 @@ namespace AirHockey {
 
         Mallet m_mallet;
 
-        CollisionModel(geometry_msgs::TransformStamped &tfTable, double &restitutionTable, double &restitutionMallet, double dt);
+        CollisionModel(double tableLength, double tableWidth, double puckRadius, double malletRadius,
+                       double &restitutionTable, double &restitutionMallet, double dt);
 
         bool applyCollision(State &puckState, const bool& checkMallet);
 
