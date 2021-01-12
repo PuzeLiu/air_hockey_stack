@@ -71,8 +71,8 @@ namespace AirHockey {
 
         tf2_ros::TransformListener tfListener_;
         tf2_ros::Buffer tfBuffer_;
-        std::string opponentMalletName_;
-        geometry_msgs::TransformStamped tfPuck_, tfOpponentMallet;
+        std::string opponentMalletName_, tableRefName_;
+        geometry_msgs::TransformStamped tfPuck_, tfOpponentMallet_;
 
         EKF_Wrapper *kalmanFilter_;
         EKF_Wrapper *puckPredictor_;
@@ -89,6 +89,8 @@ namespace AirHockey {
         double predictedTime_;
         double defendingLine_;
         double tableLength_, tableWidth_;
+
+        bool doPrediction_;
 
         boost::thread thread_;
     };

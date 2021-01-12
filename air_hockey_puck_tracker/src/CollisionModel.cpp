@@ -39,11 +39,16 @@ namespace AirHockey {
         m_e = e;
         m_dt = dt;
 
-        Vector2 offsetP1, offsetP2, offsetP3, offsetP4;
+        Vector2 ref, offsetP1, offsetP2, offsetP3, offsetP4;
+        ref << length / 2, 0;
         offsetP1 << -(m_length / 2 - m_puckRadius), -(m_width / 2 - m_puckRadius);
         offsetP2 << -(m_length / 2 - m_puckRadius), (m_width / 2 - m_puckRadius);
         offsetP3 << (m_length / 2 - m_puckRadius), -(m_width / 2 - m_puckRadius);
         offsetP4 << (m_length / 2 - m_puckRadius), (m_width / 2 - m_puckRadius);
+        offsetP1 = ref + offsetP1;
+        offsetP2 = ref + offsetP2;
+        offsetP3 = ref + offsetP3;
+        offsetP4 = ref + offsetP4;
         m_boundary.row(0) << offsetP1.x(), offsetP1.y(), offsetP3.x(), offsetP3.y();
         m_boundary.row(1) << offsetP3.x(), offsetP3.y(), offsetP4.x(), offsetP4.y();
         m_boundary.row(2) << offsetP4.x(), offsetP4.y(), offsetP2.x(), offsetP2.y();

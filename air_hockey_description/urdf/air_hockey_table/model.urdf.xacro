@@ -12,6 +12,7 @@
 
     <xacro:arg name="parent" default="world"/>
 
+    <xacro:property name="M_PI" value="3.1415926535897931"/>
     <xacro:property name="table_base_length" value="2.14"/>
     <xacro:property name="table_base_width" value="1.22"/>
     <xacro:property name="table_base_height" value="0.11"/>
@@ -56,6 +57,20 @@
                 <spinning_friction value="0.0"/>
             </contact>
         </link>
+
+        <joint name="base_home_joint" type="fixed">
+            <origin xyz="-${table_base_length / 2 - table_rim_horizon_length} 0 0" rpy="0 0 0"/>
+            <parent link="${parent}"/>
+            <child link="TableHome"/>
+        </joint>
+        <link name="TableHome"/>
+
+        <joint name="base_away_joint" type="fixed">
+            <origin xyz="${table_base_length / 2 - table_rim_horizon_length} 0 0" rpy="0 0 ${M_PI}"/>
+            <parent link="${parent}"/>
+            <child link="TableAway"/>
+        </joint>
+        <link name="TableAway"/>
 
         <joint name="base_down_rim_l" type="fixed">
             <origin rpy="0.0 0.0 0.0" xyz="${(table_base_length - table_rim_horizon_length) / 2}

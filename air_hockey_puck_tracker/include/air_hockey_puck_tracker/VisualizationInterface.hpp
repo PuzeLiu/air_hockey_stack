@@ -32,7 +32,7 @@
 namespace AirHockey{
 class VisualizationInterface{
 public:
-    VisualizationInterface(const ros::NodeHandle& nh);
+    VisualizationInterface(const ros::NodeHandle& nh, const std::string& tableRefName);
 
     void update(EKF_Wrapper& predictor, ObservationModel& observationModel);
 
