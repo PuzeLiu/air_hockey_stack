@@ -123,16 +123,10 @@ namespace AirHockey {
     }
 
     bool AirHockeyTable::isOutsideBoundary(Measurement &measurement) {
-        for (int i = 0; i < m_boundary.rows(); ++i) {
-            Vector2 p1 = m_boundary.block<1, 2>(i, 0);
-            Vector2 p2 = m_boundary.block<1, 2>(i, 2);
-            Vector2 pPuck = measurement.block<2, 1>(0, 0);
-
-            Vector2 v1 = (p2 - p1).normalized();
-            Vector2 v2 = (pPuck - p1).normalized();
-            if (cross2D(v1, v2) < -1e-3) {
-                return true;
-            }
+        if (abs(measurement.y()) > m_width/2 - m_puckRadius + 0.01 ||
+            measurement.x() < -0.01 ||
+            measurement.x() > m_length - m_puckRadius + 0.01){
+            return true;
         }
         return false;
     }
