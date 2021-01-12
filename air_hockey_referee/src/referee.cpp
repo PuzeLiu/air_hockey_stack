@@ -17,11 +17,10 @@ Referee::Referee(ros::NodeHandle nh) : nh_(nh), tfBuffer_(), tfListener_(tfBuffe
         ros::shutdown();
     }
 
-    tableLength_ = 1.96;
-    tableWidth_ = 1.04;
-    goalWidth_ = 0.25;
-
-    puckRadius_ = 0.03165;
+    nh_.param("/air_hockey/table_length", tableLength_, 1.96);
+    nh_.param("/air_hockey/table_width", tableWidth_, 1.04);
+    nh_.param("/air_hockey/goal_width", goalWidth_, 0.25);
+    nh_.param("/air_hockey/puck_radius", puckRadius_, 0.03065);
 
     gameStatusMsg_.status = GameStatus::STOP;
     gameStatusMsg_.score_home = 0;
