@@ -45,14 +45,14 @@ void Referee::update() {
             stampPrev_ = tfPuck_.header.stamp;
             if (gameStatusMsg_.status == GameStatus::START) {
 //                ROS_INFO_STREAM("Check Goal");
-                if (tfPuck_.transform.translation.x < -(tableLength_ / 2 - puckRadius_ + 1e-2) &&
+                if (tfPuck_.transform.translation.x < -(tableLength_ / 2 + 1e-2) &&
                     abs(tfPuck_.transform.translation.y) < goalWidth_ / 2) {
                     ROS_INFO_STREAM("Back Goal");
                     gameStatusMsg_.status = GameStatus::PAUSE;
                     gameStatusMsg_.score_away += 1;
                     statusPub_.publish(gameStatusMsg_);
                     ROS_INFO_STREAM(gameStatusMsg_);
-                } else if (tfPuck_.transform.translation.x > (tableLength_ / 2 - puckRadius_ + 1e-2) &&
+                } else if (tfPuck_.transform.translation.x > (tableLength_ / 2 + 1e-2) &&
                            abs(tfPuck_.transform.translation.y) < goalWidth_ / 2) {
                     ROS_INFO_STREAM("Front Goal");
                     gameStatusMsg_.status = GameStatus::PAUSE;
