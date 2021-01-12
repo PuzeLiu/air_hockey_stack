@@ -30,11 +30,11 @@
 
 namespace AirHockey {
 
-VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh) :
+VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh, const std::string& tableRefName) :
 		m_nh(nh) {
 	m_markerPub = m_nh.advertise < visualization_msgs::Marker > ("marker", 10);
 
-	m_predictionMarker.header.frame_id = "Table";
+	m_predictionMarker.header.frame_id = tableRefName;
 	m_predictionMarker.ns = "Prediction";
 	m_predictionMarker.type = visualization_msgs::Marker::CYLINDER;
 	m_predictionMarker.action = visualization_msgs::Marker::MODIFY;
@@ -84,7 +84,6 @@ void VisualizationInterface::setPredictionMarker(const State &state,
 }
 
     void VisualizationInterface::update(EKF_Wrapper& puckPredictor, ObservationModel& observationModel) {
-    m_predictionMarker.header.frame_id = "Table";
     puckPredictor.updateInnovationCovariance(observationModel);
     setPredictionMarker(puckPredictor.getState(), puckPredictor.getInnovationCovariance());
     visualize();

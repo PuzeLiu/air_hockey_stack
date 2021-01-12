@@ -75,11 +75,12 @@ void PuckTracker::init() {
     nh_.param<int>("/air_hockey/puck_tracker/max_prediction_steps", maxPredictionSteps_, 20);
     nh_.param<double>("/air_hockey/puck_tracker/frequency", frequency, 120.);
 
-    if (nh_.getNamespace() == "/iiwa_front") {
-        opponentMalletName_ = "B_striker_mallet_tip";
-    } else if (nh_.getNamespace() == "/iiwa_back") {
+    if (nh_.getNamespace() == "/iiwa_back") {
+        tableRefName_ = "TableAway";
         opponentMalletName_ = "F_striker_mallet_tip";
     } else {
+        tableRefName_ = "TableHome";
+        opponentMalletName_ = "B_striker_mallet_tip";
     }
 
     ROS_INFO_STREAM("Wait for transform: /Table");
@@ -98,7 +99,7 @@ void PuckTracker::init() {
                                          restitutionTable, restitutionMallet, rate_->expectedCycleTime().toSec());
     kalmanFilter_ = new EKF_Wrapper;
     puckPredictor_ = new EKF_Wrapper;
-    visualizer_ = new VisualizationInterface(nh_);
+    visualizer_ = new VisualizationInterface(nh_, tableRefName_);
 
     //! Initialize Kalman Filter
     State sInit;
@@ -110,6 +111,8 @@ void PuckTracker::init() {
 
     maxInnovationTolerance_ << 10, 10, 20 * M_PI;
     maxInnovationTolerance_ *= u_.dt();
+
+    doPrediction_ = true;
 }
 
 void PuckTracker::setCovariance() {
@@ -152,15 +155,17 @@ void PuckTracker::startTracking() {
     reset();
 
     while (nh_.ok()) {
-        //! predict step
-        kalmanFilter_->predict(*systemModel_, u_);
-        collisionModel_->applyCollision(kalmanFilter_->getState(), true);
+        if (doPrediction_) {
+            //! predict step
+            kalmanFilter_->predict(*systemModel_, u_);
+            collisionModel_->applyCollision(kalmanFilter_->getState(), true);
+        }
+
         try {
             //! Update puck state
             stamp_ += rate_->expectedCycleTime();
             rate_->sleep();
-            tfPuck_ = tfBuffer_.lookupTransform("Table", "Puck", stamp_, rate_->expectedCycleTime());
-
+            tfPuck_ = tfBuffer_.lookupTransform(tableRefName_, "Puck", stamp_, rate_->expectedCycleTime());
             measurement_.x() = tfPuck_.transform.translation.x;
             measurement_.y() = tfPuck_.transform.translation.y;
             tf2::Quaternion quat;
@@ -174,18 +179,21 @@ void PuckTracker::startTracking() {
             measurement_.theta() = yaw;
 
             //! Update mallet state
-            tfOpponentMallet = tfBuffer_.lookupTransform("Table", opponentMalletName_, ros::Time(0));
-            collisionModel_->m_mallet.setState(tfOpponentMallet);
+            tfOpponentMallet_ = tfBuffer_.lookupTransform(tableRefName_, opponentMalletName_, ros::Time(0));
+            collisionModel_->m_mallet.setState(tfOpponentMallet_);
 
             //! Check if puck measurement outside the table range, if not, update.
             if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
+                doPrediction_ = true;
                 kalmanFilter_->update(*observationModel_, measurement_);
                 //! check if Innovation is in feasible range
                 auto mu = kalmanFilter_->getInnovation();
-                if (maxInnovationTolerance_.x() < mu.x() || maxInnovationTolerance_.y() < mu.y()){
+                if (maxInnovationTolerance_.x() < mu.x() || maxInnovationTolerance_.y() < mu.y()) {
                     ROS_WARN_STREAM("Innovation is too big. Reset the kalman filter, Innovation:" << mu.transpose());
                     reset();
                 }
+            } else {
+                doPrediction_ = false;
             }
         } catch (tf2::TransformException &exception) {
         }
@@ -193,43 +201,38 @@ void PuckTracker::startTracking() {
 }
 
 void PuckTracker::getPrediction() {
-    //! predict future steps
-    puckPredictor_->init(kalmanFilter_->getState());
-    puckPredictor_->setCovariance(kalmanFilter_->getCovariance());
-    if (defendingLine_ <= 0.0) {
-        for (int i = 0; i < maxPredictionSteps_; ++i) {
-            puckPredictor_->predict(*systemModel_, u_);
-            collisionModel_->applyCollision(puckPredictor_->getState(), true);
-            predictedTime_ = (i + 1) * rate_->expectedCycleTime().toSec();
-        }
-    } else {
-        bool should_defend;
-        if (nh_.getNamespace() == "/iiwa_front") {
-            should_defend = (puckPredictor_->getState().x() > -tableLength_ / 2 + defendingLine_);
-        } else {
-            should_defend = (puckPredictor_->getState().x() < tableLength_ / 2 - defendingLine_);
-        }
-        for (int i = 0; i < maxPredictionSteps_; ++i) {
-            if (should_defend) {
-                if (nh_.getNamespace() == "/iiwa_front" &&
-                    puckPredictor_->getState().x() < -tableLength_ / 2 + defendingLine_) {
-                    break;
-                } else if (nh_.getNamespace() == "/iiwa_back" &&
-                           puckPredictor_->getState().x() > tableLength_ / 2 - defendingLine_) {
-                    break;
-                }
+    if (doPrediction_) {
+        //! predict future steps
+        puckPredictor_->init(kalmanFilter_->getState());
+        puckPredictor_->setCovariance(kalmanFilter_->getCovariance());
+        if (defendingLine_ <= 0.0) {
+            //! If not consider defending line, do maximum steps prediction
+            for (int i = 0; i < maxPredictionSteps_; ++i) {
+                puckPredictor_->predict(*systemModel_, u_);
+                collisionModel_->applyCollision(puckPredictor_->getState(), true);
+                predictedTime_ = (i + 1) * rate_->expectedCycleTime().toSec();
             }
+        } else {
+            //! If consider defending line
+            bool should_defend = (puckPredictor_->getState().x() > defendingLine_);
+            for (int i = 0; i < maxPredictionSteps_; ++i) {
+                if (should_defend) {
+                    if ( puckPredictor_->getState().x() < defendingLine_) {
+                        break;
+                    }
+                }
 
-            puckPredictor_->predict(*systemModel_, u_);
-            collisionModel_->applyCollision(puckPredictor_->getState(), true);
-            predictedTime_ = (i + 1) * rate_->expectedCycleTime().toSec();
+                puckPredictor_->predict(*systemModel_, u_);
+                collisionModel_->applyCollision(puckPredictor_->getState(), true);
+                predictedTime_ = (i + 1) * rate_->expectedCycleTime().toSec();
+            }
         }
     }
 }
 
 void PuckTracker::reset() {
     try {
-        tfPuck_ = tfBuffer_.lookupTransform("Table", "Puck", ros::Time::now(), ros::Duration(1.0));
+        tfPuck_ = tfBuffer_.lookupTransform(tableRefName_, "Puck", ros::Time::now(), ros::Duration(1.0));
         stamp_ = tfPuck_.header.stamp;
 
         State initState;
