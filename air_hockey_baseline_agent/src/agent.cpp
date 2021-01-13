@@ -21,7 +21,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2
     cubicLinearMotion_ = new CubicLinearMotion(rate, universalJointHeight_);
 
     jointTrajectoryPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>(
-            "joint_position_trajectory_controller/command", 1);
+            controllerName_ + "/command", 1);
     cartTrajectoryPub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
     cartTrajectory_.joint_names.push_back("x");
@@ -80,14 +80,14 @@ void Agent::gotoInit() {
         jointViaPoint_.positions[i] = qHome_[i];
         jointViaPoint_.velocities[i] = 0.;
     }
-    jointViaPoint_.time_from_start = ros::Duration(3.0);
+    jointViaPoint_.time_from_start = ros::Duration(5.0);
     jointTrajectory_.points.push_back(jointViaPoint_);
     qHome_ << 1.5076244, 1.3209599, -1.4323518, -1.1279348, 0.17179422, 1.6073319, 0.;
     for (int i = 0; i < 7; ++i) {
         jointViaPoint_.positions[i] = qHome_[i];
         jointViaPoint_.velocities[i] = 0.;
     }
-    jointViaPoint_.time_from_start = ros::Duration(5.0);
+    jointViaPoint_.time_from_start = ros::Duration(7.0);
     jointTrajectory_.points.push_back(jointViaPoint_);
 
     jointTrajectory_.header.stamp = ros::Time::now();
@@ -294,7 +294,7 @@ bool Agent::startReady() {
         applyInverseRotation(vCur);
         vCur2d = vCur.block<2, 1>(0, 0);
 
-        double tStop = 0.8;
+        double tStop = 1.2;
         for (int i = 0; i < 10; ++i) {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
@@ -372,6 +372,7 @@ void Agent::loadParam() {
     nh_.getParam("/air_hockey/agent/min_defend_velocity", vDefendMin_);
 
     nh_.getParam("/air_hockey/agent/min_defend_time", tDefendMin_);
+    nh_.getParam("/air_hockey/agent/controller", controllerName_);
 }
 
 void Agent::applyTransform(trajectory_msgs::MultiDOFJointTrajectory &cartesianTrajectory) {

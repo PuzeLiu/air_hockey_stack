@@ -6,7 +6,7 @@ Referee::Referee(ros::NodeHandle nh) : nh_(nh), tfBuffer_(), tfListener_(tfBuffe
     statusPub_ = nh_.advertise<air_hockey_referee::GameStatus>("game_status", 1);
     serviceStart_ = nh_.advertiseService("start_game", &Referee::serviceStartCallback, this);
     servicePause_ = nh_.advertiseService("pause_game", &Referee::servicePauseCallback, this);
-    servicePause_ = nh_.advertiseService("stop_game", &Referee::serviceStopCallback, this);
+    serviceStop_ = nh_.advertiseService("stop_game", &Referee::serviceStopCallback, this);
     serviceReset_ = nh_.advertiseService("reset_robot", &Referee::serviceResetCallback, this);
     clientResetGazeboPuck_ = nh_.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
 
@@ -17,10 +17,10 @@ Referee::Referee(ros::NodeHandle nh) : nh_(nh), tfBuffer_(), tfListener_(tfBuffe
         ros::shutdown();
     }
 
-    nh_.param("/air_hockey/table_length", tableLength_, 1.96);
-    nh_.param("/air_hockey/table_width", tableWidth_, 1.04);
+    nh_.param("/air_hockey/table_length", tableLength_, 1.956);
+    nh_.param("/air_hockey/table_width", tableWidth_, 1.042);
     nh_.param("/air_hockey/goal_width", goalWidth_, 0.25);
-    nh_.param("/air_hockey/puck_radius", puckRadius_, 0.03065);
+    nh_.param("/air_hockey/puck_radius", puckRadius_, 0.03165);
 
     gameStatusMsg_.status = GameStatus::STOP;
     gameStatusMsg_.score_home = 0;

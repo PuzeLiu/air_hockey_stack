@@ -1,6 +1,6 @@
 air_hockey:
   mallet_radius: 0.04815
-  puck_radius: 0.03065
-  table_length: 1.96
-  table_width: 1.04
+  puck_radius: 0.03165
+  table_length: 1.956
+  table_width: 1.042
   goal_width: 0.25

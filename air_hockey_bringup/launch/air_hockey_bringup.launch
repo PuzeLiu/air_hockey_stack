@@ -39,6 +39,9 @@
     <machine name="$(arg machine_name)" user="puze" address="$(arg machine_address)"
              env-loader="~/catkin_ws/src/iiwas_core/iiwas_bringup/env.sh" timeout="10.0" default="false"/>
 
+    <!-- Start Air Hockey Referee -->
+    <node pkg="air_hockey_referee" type="air_hockey_referee" name="air_hockey_referee" output="screen"/>
+
     <include file="$(find iiwas_bringup)/launch/iiwas_barebone.launch">
         <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />
         <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />

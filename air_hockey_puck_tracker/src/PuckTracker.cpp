@@ -62,9 +62,9 @@ void PuckTracker::init() {
     ROS_INFO_STREAM("Read Air Hockey Parameters");
     double malletRadius, puckRadius;
     nh_.param<double>("/air_hockey/mallet_radius", malletRadius, 0.04815);
-    nh_.param<double>("/air_hockey/puck_radius", puckRadius, 0.03065);
-    nh_.param<double>("/air_hockey/table_length", tableLength_, 1.96);
-    nh_.param<double>("/air_hockey/table_width", tableWidth_, 1.02);
+    nh_.param<double>("/air_hockey/puck_radius", puckRadius, 0.03165);
+    nh_.param<double>("/air_hockey/table_length", tableLength_, 1.956);
+    nh_.param<double>("/air_hockey/table_width", tableWidth_, 1.042);
 
     ROS_INFO_STREAM("Read Puck Tracker Parameters");
     double frequency, frictionDrag, frictionSliding, restitutionTable, restitutionMallet;

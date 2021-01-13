@@ -72,12 +72,13 @@ namespace AirHockey{
         trajectory_msgs::JointTrajectory jointTrajectory_;
         trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 
-        double universalJointHeight_;
         double puckRadius_, malletRadius_;
         double tableLength_, tableWidth_;
 
         double defendLine_;
+        double universalJointHeight_;
         double vHitMax_, vDefendMin_, tDefendMin_;
+        std::string controllerName_;
         Vector2d hitRange_;
 
         Observer* observer_;

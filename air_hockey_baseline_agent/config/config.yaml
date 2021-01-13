@@ -6,8 +6,9 @@ air_hockey:
     home: [0.06, 0.0]
     defend_line: 0.2
     hit_range: [0.1, 0.9]
-    universal_joint_height: 0.095
+    universal_joint_height: 0.095 #0.091
     max_hit_velocity: 1.5
     min_defend_velocity: 0.05
     min_defend_time: 0.3
+    controller: joint_torque_trajectory_controller
     q_init: [1.4667675, 1.1785414, -1.502088, -0.99056375, 0.07174191, 1.7372178, 0.]

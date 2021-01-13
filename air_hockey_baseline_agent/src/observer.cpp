@@ -3,7 +3,9 @@
 using namespace AirHockey;
 
 Observer::Observer(ros::NodeHandle nh, ros::Rate rate, double defendLine) : nh_(nh), rate_(rate), puckTracker_(nh, defendLine){
-    jointSub_ = nh_.subscribe("joint_position_trajectory_controller/state", 1, &Observer::jointStateCallback, this);
+    std::string controllerName;
+    nh_.getParam("/air_hockey/agent/controller", controllerName);
+    jointSub_ = nh_.subscribe(controllerName + "/state", 1, &Observer::jointStateCallback, this);
     refereeSub_ = nh_.subscribe("/air_hockey_referee/game_status", 1, &Observer::refereeStatusCallback, this);
 }
 

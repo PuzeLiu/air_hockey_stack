@@ -5,6 +5,9 @@
 
     <rosparam file="$(find air_hockey_baseline_agent)/config/config.yaml" command="load" subst_value="true"/>
 
+    <!-- Load Parameters of kalman filter -->
+    <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
+
     <group ns="iiwa_front" if="$(arg use_front_iiwa)">
         <node pkg="air_hockey_baseline_agent" type="air_hockey_baseline_agent" name="air_hockey_baseline_agent" output="screen"/>
     </group>
