@@ -82,6 +82,9 @@
     <!-- Start Air Hockey Referee -->
     <node pkg="air_hockey_referee" type="air_hockey_referee" name="air_hockey_referee" output="screen"/>
 
+    <!-- Start Air Hockey rqt -->
+    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
+
     <!-- Load Parameters of kalman filter -->
     <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
 

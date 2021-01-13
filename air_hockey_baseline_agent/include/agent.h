@@ -18,6 +18,7 @@
 #include "planner/combinatorial_hit.h"
 #include "planner/stable_dynamics_motion.h"
 #include "planner/cubic_linear_motion.h"
+#include "air_hockey_referee/referee.h"
 
 using namespace std;
 
@@ -38,6 +39,7 @@ namespace AirHockey{
 
         void update();
         void gotoInit();
+        void gotoHome();
 
     private:
         void loadParam();
@@ -50,7 +52,8 @@ namespace AirHockey{
 
         double updateGoal(Vector2d puckPos);
         void setTactic(Tactics tactic);
-        void applyTransform(trajectory_msgs::MultiDOFJointTrajectory& cartesianTrajectory);
+        void transformTrajectory(trajectory_msgs::MultiDOFJointTrajectory& cartesianTrajectory);
+        void applyForwardTransform(Vector3d& v_in);
         void applyInverseTransform(Vector3d& v_in);
         void applyInverseRotation(Vector3d& v_in);
 
@@ -63,10 +66,10 @@ namespace AirHockey{
         tf2_ros::TransformListener tfListener_;
         geometry_msgs::TransformStamped tfRobot2Table_, tfRobot2TableInverse_;
         Tactics tacticState_;
-        bool tacticChanged_;
+        bool tacticChanged_, started_;
         ObservationState observationState_;
 
-        iiwas_kinematics::Kinematics::JointArrayType qHome_;
+        iiwas_kinematics::Kinematics::JointArrayType qRef_, qHome_, qInit_;
         Vector2d xHome_, xGoal_, xCutPrev_;
         trajectory_msgs::MultiDOFJointTrajectory cartTrajectory_;
         trajectory_msgs::JointTrajectory jointTrajectory_;
