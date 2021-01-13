@@ -112,8 +112,8 @@ bool Referee::serviceStopCallback(air_hockey_referee::StopGame::Request &req,
 }
 
 
-bool Referee::serviceResetCallback(air_hockey_referee::ResetGazeboPuck::Request &req,
-                                   air_hockey_referee::ResetGazeboPuck::Response &res) {
+bool Referee::serviceResetCallback(air_hockey_referee::ResetRobot::Request &req,
+                                   air_hockey_referee::ResetRobot::Response &res) {
     gazebo_msgs::SetModelState::Request puckStateReq;
     gazebo_msgs::SetModelState::Response puckStateRes;
     puckStateReq.model_state.model_name = "puck";

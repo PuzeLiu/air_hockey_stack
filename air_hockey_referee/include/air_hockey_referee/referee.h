@@ -13,7 +13,7 @@
 #include "air_hockey_referee/StartGame.h"
 #include "air_hockey_referee/StopGame.h"
 #include "air_hockey_referee/PauseGame.h"
-#include "air_hockey_referee/ResetGazeboPuck.h"
+#include "air_hockey_referee/ResetRobot.h"
 #include <gazebo_msgs/SetModelState.h>
 
 namespace AirHockey{
@@ -33,7 +33,7 @@ private:
     bool serviceStartCallback(air_hockey_referee::StartGame::Request &req, air_hockey_referee::StartGame::Response &res);
     bool servicePauseCallback(air_hockey_referee::PauseGame::Request &req, air_hockey_referee::PauseGame::Response &res);
     bool serviceStopCallback(air_hockey_referee::StopGame::Request &req, air_hockey_referee::StopGame::Response &res);
-    bool serviceResetCallback(air_hockey_referee::ResetGazeboPuck::Request &req, air_hockey_referee::ResetGazeboPuck::Response &res);
+    bool serviceResetCallback(air_hockey_referee::ResetRobot::Request &req, air_hockey_referee::ResetRobot::Response &res);
 
 private:
     ros::NodeHandle nh_;
