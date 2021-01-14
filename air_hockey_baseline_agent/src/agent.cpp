@@ -14,8 +14,8 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2
     optimizer_ = new NullSpaceOptimizer(kinematics_, observer_, false);
 
     combinatorialHit_ = new CombinatorialHit(
-            Vector2d(malletRadius_, -tableWidth_ / 2 + malletRadius_),
-            Vector2d(tableLength_ - malletRadius_, tableWidth_ / 2 - malletRadius_),
+            Vector2d(malletRadius_, -tableWidth_ / 2 + malletRadius_ + 0.02),
+            Vector2d(tableLength_ - malletRadius_, tableWidth_ / 2 - malletRadius_ - 0.02),
             rate, universalJointHeight_);
     cubicLinearMotion_ = new CubicLinearMotion(rate, universalJointHeight_);
 
