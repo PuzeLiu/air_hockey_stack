@@ -42,6 +42,9 @@
     <!-- Start Air Hockey Referee -->
     <node pkg="air_hockey_referee" type="air_hockey_referee" name="air_hockey_referee" output="screen"/>
 
+    <!-- Start Air Hockey rqt -->
+    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
+
     <include file="$(find iiwas_bringup)/launch/iiwas_barebone.launch">
         <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />
         <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />

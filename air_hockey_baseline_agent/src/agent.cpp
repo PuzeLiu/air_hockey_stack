@@ -167,7 +167,7 @@ void Agent::setTactic(Tactics tactic) {
 bool Agent::generateTrajectory() {
     if (observationState_.gameStatus.status == GameStatus::START){
         if (started_){
-            if (tacticState_ == Tactics::SMASH and smashCount_ > 10) {
+            if (tacticState_ == Tactics::SMASH and smashCount_ == 10) {
                 return startHit();
             } else if (tacticState_ == Tactics::READY) {
                 return startReady();
@@ -191,6 +191,7 @@ bool Agent::generateTrajectory() {
 
 double Agent::updateGoal(Vector2d puckPosition) {
     auto random_integer = dist_(rng_);
+    random_integer = 0;
     if (puckPosition(1) > 0.1) {
         xGoal_.x() = tableLength_;
         xGoal_.y() = -0.1;
@@ -327,7 +328,7 @@ bool Agent::startReady() {
         applyInverseRotation(vCur);
         vCur2d = vCur.block<2, 1>(0, 0);
 
-        double tStop = 1.2;
+        double tStop = 2.0;
         for (int i = 0; i < 10; ++i) {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
