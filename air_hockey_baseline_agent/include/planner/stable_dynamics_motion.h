@@ -14,7 +14,7 @@ public:
     ~StableDynamicsMotion();
 
     bool plan(const Vector2d& xCur, const Vector2d& vCur, const Vector2d& xGoal,
-              trajectory_msgs::MultiDOFJointTrajectory& cartTraj, double duration = 0.1);
+              trajectory_msgs::MultiDOFJointTrajectory& cartTraj, double tStop = 0.1);
 
     void scaleStiffness(const Vector2d& scale);
     void setStiffness(const Vector2d& stiffness);

@@ -19,11 +19,19 @@ bool BezierHit::plan(const Vector2d &xStart, const Vector2d &xHit, const Vector2
     if(!fit(xStart, xHit, vHit)){
         return false;
     }
-    double t = 0.;
 
+    double t_prev;
+    if (cartTraj.points.size() == 0){
+        t_prev = 0.;
+    } else {
+        t_prev = cartTraj.points.back().time_from_start.toSec();
+    }
+
+    double t = 0.;
     while (t <= tStop_){
         t += stepSize_;
         if(getPoint(t)) {
+            viaPoint_.time_from_start = ros::Duration(t + t_prev);
             cartTraj.points.push_back(viaPoint_);
         }
     }
@@ -100,6 +108,5 @@ bool BezierHit::getPoint(double t) {
     viaPoint_.accelerations[0].linear.x = dx_ddt_[0];
     viaPoint_.accelerations[0].linear.y = dx_ddt_[1];
     viaPoint_.accelerations[0].linear.z = 0.0;
-    viaPoint_.time_from_start = ros::Duration(t);
     return true;
 }

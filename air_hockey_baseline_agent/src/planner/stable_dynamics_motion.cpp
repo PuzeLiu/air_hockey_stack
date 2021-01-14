@@ -22,12 +22,19 @@ StableDynamicsMotion::~StableDynamicsMotion() {
 }
 
 bool StableDynamicsMotion::plan(const Vector2d &xCur, const Vector2d &vCur, const Vector2d &xGoal,
-                                trajectory_msgs::MultiDOFJointTrajectory &cartTraj, double duration) {
+                                trajectory_msgs::MultiDOFJointTrajectory &cartTraj, double tStop) {
     xTmp_ = xCur;
     vTmp_ = vCur;
 
+    double t_prev;
+    if (cartTraj.points.size() == 0){
+        t_prev = 0.;
+    } else {
+        t_prev = cartTraj.points.back().time_from_start.toSec();
+    }
+
     double t = 0.;
-    while (t < duration){
+    while (t < tStop){
         t += stepSize_;
         xTmp_ += vTmp_ * stepSize_;
         vTmp_ += stepSize_ * (-damping_.cwiseProduct(vTmp_) - stiffness_.cwiseProduct(xTmp_ - xGoal));
@@ -38,7 +45,7 @@ bool StableDynamicsMotion::plan(const Vector2d &xCur, const Vector2d &vCur, cons
         viaPoint_.velocities[0].linear.x = vTmp_[0];
         viaPoint_.velocities[0].linear.y = vTmp_[1];
         viaPoint_.velocities[0].linear.z = 0.0;
-        viaPoint_.time_from_start = ros::Duration(t);
+        viaPoint_.time_from_start = ros::Duration(t + t_prev);
         cartTraj.points.push_back(viaPoint_);
     }
     cartTraj.header.stamp = ros::Time::now();

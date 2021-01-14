@@ -30,15 +30,25 @@ bool CombinatorialHit::plan(const Vector2d &xStart, const Vector2d &xHit, const 
     if (!getArcCenter()){ return false;}
     fitPhase();
 
-    double tCur = 0.;
-    while (tCur <= tStop_){
-        tCur += stepSize_;
-        getPoint(tCur);
+    double t_prev;
+    if (cartTraj.points.size() == 0){
+        t_prev = 0.;
+    } else {
+        t_prev = cartTraj.points.back().time_from_start.toSec();
+    }
+
+    double t = 0.;
+
+    while (t <= tStop_){
+        t += stepSize_;
+        getPoint(t);
+        viaPoint_.time_from_start = ros::Duration(t + t_prev);
         cartTraj.points.push_back(viaPoint_);
     }
     //! Append one additional point
-    tCur += stepSize_;
-    getPoint(tCur);
+    t += stepSize_;
+    getPoint(t);
+    viaPoint_.time_from_start = ros::Duration(t + t_prev);
     cartTraj.points.push_back(viaPoint_);
     cartTraj.header.stamp = ros::Time::now();
     return true;
@@ -162,5 +172,4 @@ void CombinatorialHit::getPoint(const double t) {
     viaPoint_.velocities[0].linear.x = dx_dt_[0];
     viaPoint_.velocities[0].linear.y = dx_dt_[1];
     viaPoint_.velocities[0].linear.z = 0.0;
-    viaPoint_.time_from_start = ros::Duration(t);
 }

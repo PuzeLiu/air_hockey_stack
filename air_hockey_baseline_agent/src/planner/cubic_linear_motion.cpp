@@ -22,10 +22,16 @@ CubicLinearMotion::plan(const Vector2d& pStart, const Vector2d& vStart, const Ve
     coefficients_.col(2) = (-3.0 * pStart + 3.0 * pStop - 2.0 * vStart * tStop - vStop * tStop) / pow(tStop, 2);
     coefficients_.col(3) = (2.0 * pStart - 2.0 * pStop + vStart * tStop + vStop * tStop) / pow(tStop, 3);
 
+    double t_prev;
+    if (cartTraj.points.size() == 0){
+        t_prev = 0.;
+    } else {
+        t_prev = cartTraj.points.back().time_from_start.toSec();
+    }
+
     double t = 0.;
     while (t <= tStop) {
         t += stepSize_;
-//        xTmp_ = coefficients_.col(0);
         xTmp_ = coefficients_.col(0) + coefficients_.col(1) * t + coefficients_.col(2) * pow(t, 2) + coefficients_.col(3) * pow(t, 3);
         vTmp_ = coefficients_.col(1) + 2 * coefficients_.col(2) * t + 3 * coefficients_.col(3) * pow(t, 2);
 
@@ -35,7 +41,7 @@ CubicLinearMotion::plan(const Vector2d& pStart, const Vector2d& vStart, const Ve
         viaPoint_.velocities[0].linear.x = vTmp_[0];
         viaPoint_.velocities[0].linear.y = vTmp_[1];
         viaPoint_.velocities[0].linear.z = 0.0;
-        viaPoint_.time_from_start = ros::Duration(t);
+        viaPoint_.time_from_start = ros::Duration(t + t_prev);
         cartTraj.points.push_back(viaPoint_);
     }
     cartTraj.header.stamp = ros::Time::now();

@@ -112,12 +112,12 @@ void Agent::gotoHome() {
         jointViaPoint_.positions[i] = qHome_[i];
         jointViaPoint_.velocities[i] = 0.;
     }
-    jointViaPoint_.time_from_start = ros::Duration(5.0);
+    jointViaPoint_.time_from_start = ros::Duration(2.0);
     jointTrajectory_.points.push_back(jointViaPoint_);
 
     jointTrajectory_.header.stamp = ros::Time::now();
     jointTrajectoryPub_.publish(jointTrajectory_);
-    ros::Duration(6.0).sleep();
+    ros::Duration(3.0).sleep();
 }
 
 void Agent::update() {
@@ -167,7 +167,7 @@ void Agent::setTactic(Tactics tactic) {
 bool Agent::generateTrajectory() {
     if (observationState_.gameStatus.status == GameStatus::START){
         if (started_){
-            if (tacticState_ == Tactics::SMASH and smashCount_ == 10) {
+            if (tacticState_ == Tactics::SMASH and smashCount_ > 10) {
                 return startHit();
             } else if (tacticState_ == Tactics::READY) {
                 return startReady();
@@ -228,38 +228,61 @@ void Agent::start() {
 bool Agent::startHit() {
     observationState_ = observer_->getObservation();
 
-    Vector3d xCur;
-    kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
-    applyInverseTransform(xCur);
-    Vector2d xCur2d = xCur.block<2, 1>(0, 0);
-    Vector2d puckCur2d = observationState_.puckPredictedState.state.block<2, 1>(0, 0);
+    if (ros::Time::now() > trajStopTime_ ) {
+        Vector3d xCur;
+        kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
+        applyInverseTransform(xCur);
+        Vector2d xCur2d = xCur.block<2, 1>(0, 0);
+        Vector2d puckCur2d = observationState_.puckPredictedState.state.block<2, 1>(0, 0);
 
-    updateGoal(puckCur2d);
-    Vector2d vHit = (xGoal_ - puckCur2d).normalized();
-    Vector2d xHit = puckCur2d - vHit * (puckRadius_ + malletRadius_ + 0.005);
+        updateGoal(puckCur2d);
+        Vector2d vHit = (xGoal_ - puckCur2d).normalized();
+        Vector2d xHit = puckCur2d - vHit * (puckRadius_ + malletRadius_ + 0.005);
 
-    vHit *= vHitMax_;
+        vHit *= vHitMax_;
+        double tStop = 2.0;
 
-    for (size_t i = 0; i < 10; ++i) {
-        cartTrajectory_.points.clear();
-        jointTrajectory_.points.clear();
-        if (!combinatorialHit_->plan(xCur2d, xHit, vHit, cartTrajectory_)) {
-            return false;
+        for (size_t i = 0; i < 10; ++i) {
+            cartTrajectory_.points.clear();
+            jointTrajectory_.points.clear();
+            if (!combinatorialHit_->plan(xCur2d, xHit, vHit, cartTrajectory_)) {
+                return false;
+            }
+            if (i==0){
+                cartTrajectoryPub_.publish(cartTrajectory_);
+            }
+
+            Vector2d xStop;
+            xStop << cartTrajectory_.points.back().transforms[0].translation.x,
+                     cartTrajectory_.points.back().transforms[0].translation.y;
+
+            cubicLinearMotion_->plan(xStop, Vector2d(0., 0.), xHome_, Vector2d(0., 0.), tStop, cartTrajectory_);
+            if (i==0){
+                ROS_INFO_STREAM("Hit: " << xHit.transpose());
+                ROS_INFO_STREAM("Stop: " << xStop.transpose());
+                cartTrajectoryPub_.publish(cartTrajectory_);
+            }
+            transformTrajectory(cartTrajectory_);
+            if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
+                vHit *= .8;
+                tStop += 0.1;
+                ROS_INFO_STREAM("Optimization Failed. Reduce the velocity: " << vHit.transpose());
+                continue;
+            } else{
+                cartTrajectoryPub_.publish(cartTrajectory_);
+                jointTrajectory_.header.stamp = ros::Time::now();
+                jointTrajectoryPub_.publish(jointTrajectory_);
+                trajStopTime_ = jointTrajectory_.header.stamp +
+                                ros::Duration(jointTrajectory_.points.back().time_from_start);
+                return true;
+            }
+
+
         }
-        transformTrajectory(cartTrajectory_);
-        if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
-            ROS_INFO_STREAM("Optimization Failed. Reduce the desired velocity");
-            vHit *= .8;
-            continue;
-        }
-        cartTrajectoryPub_.publish(cartTrajectory_);
-        jointTrajectory_.header.stamp = ros::Time::now();
-        jointTrajectoryPub_.publish(jointTrajectory_);
-        ros::Duration(jointTrajectory_.points.back().time_from_start.toSec()).sleep();
-        return true;
+        ROS_INFO_STREAM("Failed to find a feasible hitting movement");
+        setTactic(Tactics::PREPARE);
+        return false;
     }
-    ROS_INFO_STREAM("Failed to find a feasible hitting movement");
-    setTactic(Tactics::PREPARE);
     return false;
 }
 
