@@ -40,7 +40,9 @@
              env-loader="~/catkin_ws/src/iiwas_core/iiwas_bringup/env.sh" timeout="10.0" default="false"/>
 
     <!-- Start Air Hockey Referee -->
-    <node pkg="air_hockey_referee" type="air_hockey_referee" name="air_hockey_referee" output="screen"/>
+    <node pkg="air_hockey_referee" type="air_hockey_referee" name="air_hockey_referee" output="screen">
+        <param name="gazebo" value="false"/>
+    </node>
 
     <!-- Start Air Hockey rqt -->
     <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
