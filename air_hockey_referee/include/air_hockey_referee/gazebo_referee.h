@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020 Davide Tateo, Puze Liu
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,26 +21,30 @@
  * SOFTWARE.
  */
 
-#include <ros/ros.h>
-#include "air_hockey_referee/gazebo_referee.h"
+#ifndef GAZEBO_REFEREE_H
+#define GAZEBO_REFEREE_H
 
-using namespace AirHockey;
-using namespace std;
+#include "air_hockey_referee/referee.h"
+#include <gazebo_msgs/SetModelState.h>
+
+namespace AirHockey{
+
+class GazeboReferee : public Referee {
+public:
+	GazeboReferee(ros::NodeHandle nh);
+    virtual ~GazeboReferee();
+
+protected:
+    bool resetPuck(std::string &res);
+
+private:
+    ros::ServiceClient clientResetGazeboPuck;
+
+};
 
 
-int main(int argc, char **argv) {
-    ros::init(argc, argv, "air_hockey_referee");
-    ros::NodeHandle nh("~");
-    ros::Rate rate(200);
-    ros::Duration(1.0).sleep();
 
-    GazeboReferee referee(nh);
-
-    while (ros::ok()){
-        referee.update();
-        rate.sleep();
-    }
-
-    return 0;
 }
 
+
+#endif /* GAZEBO_REFEREE_H */

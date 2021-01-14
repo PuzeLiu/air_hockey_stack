@@ -21,26 +21,41 @@
  * SOFTWARE.
  */
 
-#include <ros/ros.h>
 #include "air_hockey_referee/gazebo_referee.h"
 
-using namespace AirHockey;
-using namespace std;
+using namespace ros;
 
+namespace AirHockey{
 
-int main(int argc, char **argv) {
-    ros::init(argc, argv, "air_hockey_referee");
-    ros::NodeHandle nh("~");
-    ros::Rate rate(200);
-    ros::Duration(1.0).sleep();
-
-    GazeboReferee referee(nh);
-
-    while (ros::ok()){
-        referee.update();
-        rate.sleep();
-    }
-
-    return 0;
+GazeboReferee::GazeboReferee(NodeHandle nh) : Referee(nh) {
+    clientResetGazeboPuck = nh.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
 }
+
+GazeboReferee::~GazeboReferee() {
+
+}
+
+bool GazeboReferee::resetPuck(std::string& msg)
+{
+	gazebo_msgs::SetModelState::Request puckStateReq;
+	gazebo_msgs::SetModelState::Response puckStateRes;
+	puckStateReq.model_state.model_name = "puck";
+	puckStateReq.model_state.reference_frame = "air_hockey_table::Table";
+	puckStateReq.model_state.pose.position.z = 0.0565;
+	Eigen::Vector2d vec;
+	vec.setRandom();
+	puckStateReq.model_state.pose.position.x = vec.x() * (tableLength - 2 * puckRadius) / 2;
+	puckStateReq.model_state.pose.position.y = vec.y() * (tableWidth - 2 * puckRadius) / 2;
+
+	clientResetGazeboPuck.call(puckStateReq, puckStateRes);
+
+	if(!puckStateRes.success) {
+		msg = puckStateRes.status_message;
+	}
+
+	return puckStateRes.success;
+}
+
+}
+
 
