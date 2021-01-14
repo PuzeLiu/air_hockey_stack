@@ -51,6 +51,8 @@ void Referee::update() {
                     gameStatusMsg.score_away += 1;
                     statusPub.publish(gameStatusMsg);
                     ROS_INFO_STREAM(gameStatusMsg);
+                    string msg;
+                    resetPuck();
                 } else if (tfPuck.transform.translation.x > (tableLength / 2 + 1e-2) &&
                            abs(tfPuck.transform.translation.y) < goalWidth / 2) {
                     ROS_INFO_STREAM("Front Goal");
@@ -58,6 +60,7 @@ void Referee::update() {
                     gameStatusMsg.score_home += 1;
                     statusPub.publish(gameStatusMsg);
                     ROS_INFO_STREAM(gameStatusMsg);
+                    resetPuck();
                 }
             }
         }
@@ -113,11 +116,10 @@ bool Referee::serviceStopCallback(air_hockey_referee::StopGame::Request &req,
     }
 }
 
-
 bool Referee::serviceResetCallback(air_hockey_referee::ResetRobot::Request &req,
                                    air_hockey_referee::ResetRobot::Response &res) {
 	string msg;
-	bool success = resetPuck(msg);
+	bool success = resetPuck(&msg);
 
 	res.success = success;
 

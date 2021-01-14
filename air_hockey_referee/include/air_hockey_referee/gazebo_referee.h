@@ -35,7 +35,7 @@ public:
     virtual ~GazeboReferee();
 
 protected:
-    bool resetPuck(std::string &res);
+    bool resetPuck(std::string* res = nullptr);
 
 private:
     ros::ServiceClient clientResetGazeboPuck;

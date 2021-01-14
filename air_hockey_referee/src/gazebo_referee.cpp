@@ -35,7 +35,7 @@ GazeboReferee::~GazeboReferee() {
 
 }
 
-bool GazeboReferee::resetPuck(std::string& msg)
+bool GazeboReferee::resetPuck(std::string* msg)
 {
 	gazebo_msgs::SetModelState::Request puckStateReq;
 	gazebo_msgs::SetModelState::Response puckStateRes;
@@ -49,8 +49,8 @@ bool GazeboReferee::resetPuck(std::string& msg)
 
 	clientResetGazeboPuck.call(puckStateReq, puckStateRes);
 
-	if(!puckStateRes.success) {
-		msg = puckStateRes.status_message;
+	if(msg != nullptr && !puckStateRes.success) {
+		*msg = puckStateRes.status_message;
 	}
 
 	return puckStateRes.success;

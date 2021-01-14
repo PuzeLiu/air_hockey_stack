@@ -48,7 +48,7 @@ public:
     void update();
 
 protected:
-    virtual bool resetPuck(std::string& msg) = 0;
+    virtual bool resetPuck(std::string* msg = nullptr) = 0;
 
 private:
     bool serviceStartCallback(air_hockey_referee::StartGame::Request &req, air_hockey_referee::StartGame::Response &res);
