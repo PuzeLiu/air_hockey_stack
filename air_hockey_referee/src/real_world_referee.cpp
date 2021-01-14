@@ -21,39 +21,20 @@
  * SOFTWARE.
  */
 
-#include <ros/ros.h>
-#include "air_hockey_referee/gazebo_referee.h"
 #include "air_hockey_referee/real_world_referee.h"
 
-using namespace AirHockey;
-using namespace std;
+namespace AirHockey{
 
+    RealWorldReferee::RealWorldReferee(ros::NodeHandle nh_) : Referee(nh_) {
 
-int main(int argc, char **argv) {
-    ros::init(argc, argv, "air_hockey_referee");
-    ros::NodeHandle nh("~");
-    ros::Rate rate(200);
-    ros::Duration(1.0).sleep();
-
-    bool useGazebo;
-    nh.getParam("gazebo", useGazebo);
-    if (useGazebo){
-        ROS_INFO_STREAM("##########Use gazebo");
-        GazeboReferee referee(nh);
-        while (ros::ok()){
-            referee.update();
-            rate.sleep();
-        }
-    } else{
-        ROS_INFO_STREAM("##########Use Real Robot");
-        RealWorldReferee referee(nh);
-        while (ros::ok()){
-            referee.update();
-            rate.sleep();
-        }
     }
 
+    RealWorldReferee::~RealWorldReferee() {
 
-    return 0;
+    }
+
+    bool RealWorldReferee::resetPuck(std::string *res) {
+        //! Do not reset puck for real world
+        return true;
+    }
 }
-

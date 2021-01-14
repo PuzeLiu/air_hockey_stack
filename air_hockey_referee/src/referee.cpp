@@ -76,11 +76,19 @@ bool Referee::serviceStartCallback(air_hockey_referee::StartGame::Request &req,
         res.msg = "StartGame service fail, already started";
         return true;
     } else {
-        gameStatusMsg.status = GameStatus::START;
-        statusPub.publish(gameStatusMsg);
-        res.success = true;
-        res.msg = "Game started";
-        return true;
+        tfPuck = tfBuffer.lookupTransform("Table", "Puck", ros::Time(0), ros::Duration(1.0));
+        if (abs(tfPuck.transform.translation.x) < (tableLength / 2 + 1e-2) &&
+            abs(tfPuck.transform.translation.y) < (tableWidth / 2 + 1e-2) &&
+            abs(tfPuck.transform.translation.z) < 3e-2){
+            gameStatusMsg.status = GameStatus::START;
+            statusPub.publish(gameStatusMsg);
+            res.success = true;
+            res.msg = "Game started";
+            return true;
+        } else {
+            res.success = false;
+            res.msg = "StartGame service fail, puck is not detected on the table";
+        }
     }
 }
 
@@ -103,7 +111,7 @@ bool Referee::serviceStopCallback(air_hockey_referee::StopGame::Request &req,
                                   air_hockey_referee::StopGame::Response &res) {
     if (gameStatusMsg.status == GameStatus::STOP){
         res.success = false;
-        res.msg = "StopGame service fail, already paused";
+        res.msg = "StopGame service fail, already stopped";
         return true;
     } else {
         gameStatusMsg.status = GameStatus::STOP;
@@ -124,10 +132,12 @@ bool Referee::serviceResetCallback(air_hockey_referee::ResetRobot::Request &req,
 	res.success = success;
 
 	if(res.success) {
-		res.msg = "Robot state reseted";
+		res.msg = "Robot state reset";
 	} else {
 		res.msg = msg;
 	}
+    gameStatusMsg.status = GameStatus::STOP;
+    statusPub.publish(gameStatusMsg);
 
     return true;
 }

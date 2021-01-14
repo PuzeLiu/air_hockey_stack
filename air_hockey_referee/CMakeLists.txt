@@ -128,7 +128,8 @@ include_directories(
 add_executable(${PROJECT_NAME}
    src/main.cpp
    src/referee.cpp
-   src/gazebo_referee.cpp)
+   src/gazebo_referee.cpp
+   src/real_world_referee.cpp)
 
 
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
