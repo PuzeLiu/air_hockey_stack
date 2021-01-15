@@ -90,6 +90,8 @@ bool Referee::serviceStartCallback(air_hockey_referee::StartGame::Request &req,
             res.msg = "StartGame service fail, puck is not detected on the table";
         }
     }
+
+    return true;
 }
 
 bool Referee::servicePauseCallback(air_hockey_referee::PauseGame::Request &req,
