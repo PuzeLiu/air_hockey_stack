@@ -38,20 +38,21 @@ namespace AirHockey{
         void start();
 
         void update();
-        void gotoInit();
-        void gotoHome();
+
 
     private:
         void loadParam();
         void updateTactic();
-        bool generateTrajectory();
-        bool startHit();
-        bool startCut();
-        bool startReady();
-        bool startPrepare();
+        void generateTrajectory();
+        void startHit(bool restart);
+        void startCut(bool restart);
+        void startReady(bool restart);
+        void startPrepare(bool restart);
+        void gotoInit(bool restart);
+        void gotoHome(bool restart);
 
         double updateGoal(Vector2d puckPos);
-        void setTactic(Tactics tactic);
+        bool setTactic(Tactics tactic);
         void transformTrajectory(trajectory_msgs::MultiDOFJointTrajectory& cartesianTrajectory);
         void applyForwardTransform(Vector3d& v_in);
         void applyInverseTransform(Vector3d& v_in);
@@ -66,8 +67,8 @@ namespace AirHockey{
         tf2_ros::TransformListener tfListener_;
         geometry_msgs::TransformStamped tfRobot2Table_, tfRobot2TableInverse_;
         Tactics tacticState_;
-        bool tacticChanged_, started_;
         ObservationState observationState_;
+        GameStatus gameStatusPrev_;
 
         iiwas_kinematics::Kinematics::JointArrayType qRef_, qHome_, qInit_;
         Vector2d xHome_, xGoal_, xCutPrev_;

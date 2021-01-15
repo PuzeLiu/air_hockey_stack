@@ -58,9 +58,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2
     jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
 
     tacticState_ = Tactics::READY;
-    observationState_.gameStatus.status = GameStatus::STOP;
-    tacticChanged_ = true;
-    started_ = false;
+    gameStatusPrev_ = GameStatus::STOP;
 
     Vector3d xTmp, gc;
     Quaterniond quatTmp;
@@ -71,13 +69,13 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2
 
     xTmp << xHome_[0], xHome_[1], universalJointHeight_ + 0.2;
     applyForwardTransform(xTmp);
-    if (!kinematics_->inverseKinematics(xTmp, quatTmp, gc, psi, qInit_)){
+    if (!kinematics_->inverseKinematics(xTmp, quatTmp, gc, psi, qInit_)) {
         ROS_ERROR_STREAM("Inverse Kinematics fail, unable to find solution for INIT position");
     }
 
     xTmp << xHome_[0], xHome_[1], universalJointHeight_;
     applyForwardTransform(xTmp);
-    if (!kinematics_->inverseKinematics(xTmp, quatTmp, gc, psi, qHome_)){
+    if (!kinematics_->inverseKinematics(xTmp, quatTmp, gc, psi, qHome_)) {
         ROS_ERROR_STREAM("Inverse Kinematics fail, unable to find solution for HOME position");
     }
 
@@ -92,101 +90,129 @@ Agent::~Agent() {
     delete cubicLinearMotion_;
 }
 
-void Agent::gotoInit() {
-    jointTrajectory_.points.clear();
-    for (int i = 0; i < 7; ++i) {
-        jointViaPoint_.positions[i] = qInit_[i];
-        jointViaPoint_.velocities[i] = 0.;
+void Agent::start() {
+    ros::Duration(2.).sleep();
+    ROS_INFO_STREAM("Agent Start");
+    observer_->start();
+    ROS_INFO_STREAM("Go to initial position");
+    gotoInit(true);
+    ros::Duration(5.0).sleep();
+
+    while (ros::ok()) {
+        update();
     }
-    jointViaPoint_.time_from_start = ros::Duration(5.0);
-    jointTrajectory_.points.push_back(jointViaPoint_);
-
-    jointTrajectory_.header.stamp = ros::Time::now();
-    jointTrajectoryPub_.publish(jointTrajectory_);
-    ros::Duration(6.0).sleep();
-}
-
-void Agent::gotoHome() {
-    jointTrajectory_.points.clear();
-    for (int i = 0; i < 7; ++i) {
-        jointViaPoint_.positions[i] = qHome_[i];
-        jointViaPoint_.velocities[i] = 0.;
-    }
-    jointViaPoint_.time_from_start = ros::Duration(2.0);
-    jointTrajectory_.points.push_back(jointViaPoint_);
-
-    jointTrajectory_.header.stamp = ros::Time::now();
-    jointTrajectoryPub_.publish(jointTrajectory_);
-    ros::Duration(3.0).sleep();
 }
 
 void Agent::update() {
-    updateTactic();
-    if (generateTrajectory()) {
+    observationState_ = observer_->getObservation();
+    bool gameStatusChanged = (observationState_.gameStatus.status != gameStatusPrev_);
+    if (gameStatusChanged){
+        gameStatusPrev_ = static_cast<GameStatus>(observationState_.gameStatus.status);
+        if (observationState_.gameStatus.status == GameStatus::START){
+            gotoHome(true);
+        } else if (observationState_.gameStatus.status == GameStatus::PAUSE){
+            startReady(true);
+        } else {
+            gotoInit(true);
+        }
+    } else {
+        if (observationState_.gameStatus.status == GameStatus::START) {
+            updateTactic();
+        }
+//        else if (observationState_.gameStatus.status == GameStatus::PAUSE) {
+//            startReady(false);
+//        } else {
+//            gotoInit(false);
+//        }
     }
     rate_.sleep();
 }
 
 void Agent::updateTactic() {
-    observationState_ = observer_->getObservation();
-    if (observationState_.gameStatus.status == GameStatus::START && started_) {
-        if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > vDefendMin_) {
-            if (observationState_.puckPredictedState.predictedTime < maxPredictionTime_ - 1e-6) {
-                setTactic(Tactics::CUT);
-            } else {
-                setTactic(Tactics::READY);
-            }
-        } else if (observationState_.puckPredictedState.state.x() < hitRange_[1] &&
-                   observationState_.puckPredictedState.state.x() > hitRange_[0] &&
-                   tacticState_ != Tactics::PREPARE) {
-            if (tacticState_ == Tactics::SMASH) { smashCount_ += 1; }
-            else { smashCount_ = 0; }
-            setTactic(Tactics::SMASH);
-        } else if (observationState_.puckPredictedState.state.x() <= hitRange_[0] ||
-                   tacticState_ == Tactics::PREPARE) {
-            setTactic(Tactics::PREPARE);
+    if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > vDefendMin_) {
+        if (observationState_.puckPredictedState.predictedTime < maxPredictionTime_ - 1e-6) {
+            bool restart = setTactic(Tactics::CUT);
+            startCut(restart);
         } else {
-            setTactic(Tactics::READY);
+            bool restart = setTactic(Tactics::READY);
+            startReady(restart);
         }
-    }
-}
-
-void Agent::setTactic(Tactics tactic) {
-    if (tacticState_ != tactic) {
-        if (tactic == Tactics::READY) ROS_INFO_STREAM("Tactics changed: READY");
-        else if (tactic == Tactics::CUT) ROS_INFO_STREAM("Tactics changed: CUT");
-        else if (tactic == Tactics::PREPARE) ROS_INFO_STREAM("Tactics changed: PREPARE");
-        else if (tactic == Tactics::SMASH) ROS_INFO_STREAM("Tactics changed: SMASH");
-        tacticState_ = tactic;
-        tacticChanged_ = true;
+    } else if (observationState_.puckPredictedState.state.x() < hitRange_[1] &&
+               observationState_.puckPredictedState.state.x() > hitRange_[0] &&
+               tacticState_ != Tactics::PREPARE) {
+        bool restart = setTactic(Tactics::SMASH);
+        startHit(restart);
+    } else if (observationState_.puckPredictedState.state.x() <= hitRange_[0] ||
+               tacticState_ == Tactics::PREPARE) {
+        bool restart = setTactic(Tactics::PREPARE);
+        startPrepare(restart);
     } else {
-        tacticChanged_ = false;
+        bool restart = setTactic(Tactics::READY);
+        startReady(restart);
     }
 }
 
-bool Agent::generateTrajectory() {
-    if (observationState_.gameStatus.status == GameStatus::START){
-        if (started_){
-            if (tacticState_ == Tactics::SMASH and smashCount_ > 10) {
-                return startHit();
-            } else if (tacticState_ == Tactics::READY) {
-                return startReady();
-            } else if (tacticState_ == Tactics::CUT) {
-                return startCut();
+bool Agent::setTactic(Tactics tactic) {
+    if (tacticState_ != tactic) {
+        if (tactic == Tactics::READY) {
+            if (tacticState_ == Tactics::SMASH && ros::Time::now() < trajStopTime_){
+                return false;
             } else {
-                return startPrepare();
+                tacticState_ = tactic;
+                ROS_INFO_STREAM("Tactics changed: READY");
+                return true;
             }
-        } else {
-            gotoHome();
-            started_ = true;
         }
-    } else if (observationState_.gameStatus.status == GameStatus::PAUSE){
-        setTactic(Tactics::READY);
-    } else if (observationState_.gameStatus.status == GameStatus::STOP){
-        started_ = false;
-        gotoInit();
+        else if (tactic == Tactics::CUT) {
+            tacticState_ = tactic;
+            ROS_INFO_STREAM("Tactics changed: CUT");
+            return true;
+        }
+        else if (tactic == Tactics::PREPARE) {
+            tacticState_ = tactic;
+            ROS_INFO_STREAM("Tactics changed: PREPARE");
+            return true;
+        }
+        else if (tactic == Tactics::SMASH) {
+            tacticState_ = tactic;
+            ROS_INFO_STREAM("Tactics changed: SMASH");
+            return true;
+        }
     }
-    return true;
+    return false;
+}
+
+void Agent::gotoInit(bool restart) {
+    if (restart || ros::Time::now() > trajStopTime_){
+        jointTrajectory_.points.clear();
+        for (int i = 0; i < 7; ++i) {
+            jointViaPoint_.positions[i] = qInit_[i];
+            jointViaPoint_.velocities[i] = 0.;
+        }
+        jointViaPoint_.time_from_start = ros::Duration(5.0);
+        jointTrajectory_.points.push_back(jointViaPoint_);
+
+        jointTrajectory_.header.stamp = ros::Time::now();
+        jointTrajectoryPub_.publish(jointTrajectory_);
+        trajStopTime_ = jointTrajectory_.header.stamp + ros::Duration(5.0);
+    }
+}
+
+void Agent::gotoHome(bool restart) {
+    if (restart || ros::Time::now() > trajStopTime_){
+        jointTrajectory_.points.clear();
+        for (int i = 0; i < 7; ++i) {
+            jointViaPoint_.positions[i] = qHome_[i];
+            jointViaPoint_.velocities[i] = 0.;
+        }
+        jointViaPoint_.time_from_start = ros::Duration(2.0);
+        jointTrajectory_.points.push_back(jointViaPoint_);
+
+        jointTrajectory_.header.stamp = ros::Time::now();
+        jointTrajectoryPub_.publish(jointTrajectory_);
+        trajStopTime_ = jointTrajectory_.header.stamp + ros::Duration(2.0);
+        ros::Duration(2.0).sleep();
+    }
 }
 
 double Agent::updateGoal(Vector2d puckPosition) {
@@ -214,21 +240,9 @@ double Agent::updateGoal(Vector2d puckPosition) {
     return 0;
 }
 
-void Agent::start() {
-    ros::Duration(2.).sleep();
-    ROS_INFO_STREAM("Agent Start");
-    observer_->start();
-
-    while (ros::ok()) {
-        update();
-        rate_.sleep();
-    }
-}
-
-bool Agent::startHit() {
-    observationState_ = observer_->getObservation();
-
-    if (ros::Time::now() > trajStopTime_ ) {
+void Agent::startHit(bool restart) {
+    if (restart || ros::Time::now() > trajStopTime_) {
+        ROS_INFO_STREAM("Start Planning! ");
         Vector3d xCur;
         kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
         applyInverseTransform(xCur);
@@ -246,52 +260,39 @@ bool Agent::startHit() {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
             if (!combinatorialHit_->plan(xCur2d, xHit, vHit, cartTrajectory_)) {
-                return false;
-            }
-            if (i==0){
-                cartTrajectoryPub_.publish(cartTrajectory_);
+                return;
             }
 
             Vector2d xStop;
             xStop << cartTrajectory_.points.back().transforms[0].translation.x,
-                     cartTrajectory_.points.back().transforms[0].translation.y;
+                    cartTrajectory_.points.back().transforms[0].translation.y;
 
             cubicLinearMotion_->plan(xStop, Vector2d(0., 0.), xHome_, Vector2d(0., 0.), tStop, cartTrajectory_);
-            if (i==0){
-                ROS_INFO_STREAM("Hit: " << xHit.transpose());
-                ROS_INFO_STREAM("Stop: " << xStop.transpose());
-                cartTrajectoryPub_.publish(cartTrajectory_);
-            }
             transformTrajectory(cartTrajectory_);
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
                 vHit *= .8;
                 tStop += 0.1;
                 ROS_INFO_STREAM("Optimization Failed. Reduce the velocity: " << vHit.transpose());
                 continue;
-            } else{
+            } else {
                 cartTrajectoryPub_.publish(cartTrajectory_);
                 jointTrajectory_.header.stamp = ros::Time::now();
                 jointTrajectoryPub_.publish(jointTrajectory_);
                 trajStopTime_ = jointTrajectory_.header.stamp +
                                 ros::Duration(jointTrajectory_.points.back().time_from_start);
-                return true;
+                return;
             }
-
-
         }
         ROS_INFO_STREAM("Failed to find a feasible hitting movement");
         setTactic(Tactics::PREPARE);
-        return false;
     }
-    return false;
 }
 
-bool Agent::startCut() {
-    observationState_ = observer_->getObservation();
+void Agent::startCut(bool restart) {
     Vector2d xCut;
     xCut << defendLine_, observationState_.puckPredictedState.state.y();
 
-    if (tacticChanged_ || ros::Time::now() > trajStopTime_ ||
+    if (restart || ros::Time::now() > trajStopTime_ ||
         (xCut - xCutPrev_).norm() > (puckRadius_ + malletRadius_)) {
         xCutPrev_ = xCut;
 
@@ -325,19 +326,16 @@ bool Agent::startCut() {
                 jointTrajectoryPub_.publish(jointTrajectory_);
                 cartTrajectoryPub_.publish(cartTrajectory_);
                 trajStopTime_ = jointTrajectory_.header.stamp + ros::Duration(tStop);
-                return true;
+                return;
             }
         }
         cartTrajectoryPub_.publish(cartTrajectory_);
         ROS_INFO_STREAM("Optimization Failed. Unable to find trajectory for Cut");
-        return false;
     }
-    return false;
 }
 
-bool Agent::startReady() {
-    if (tacticChanged_ || ros::Time::now() > trajStopTime_) {
-        observationState_ = observer_->getObservation();
+void Agent::startReady(bool restart) {
+    if (restart || ros::Time::now() > trajStopTime_) {
 
         Vector3d xCur, vCur;
         Vector2d xCur2d, vCur2d;
@@ -366,17 +364,56 @@ bool Agent::startReady() {
                 jointTrajectoryPub_.publish(jointTrajectory_);
                 cartTrajectoryPub_.publish(cartTrajectory_);
                 trajStopTime_ = jointTrajectory_.header.stamp + ros::Duration(tStop);
-                return true;
+                return;
             }
         }
         ROS_INFO_STREAM("Optimization Failed. Unable to find trajectory for Ready");
-        return false;
     }
-    return false;
 }
 
-bool Agent::startPrepare() {
-    return false;
+void Agent::startPrepare(bool restart) {
+    if (restart || ros::Time::now() > trajStopTime_) {
+
+        Vector3d xCur, vCur;
+        Vector2d xCur2d, vCur2d, xPuck, xPrepare;
+        Kinematics::JacobianPosType jacobian;
+        kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
+        applyInverseTransform(xCur);
+        xCur2d = xCur.block<2, 1>(0, 0);
+
+        kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
+        vCur = jacobian * observationState_.jointVelocity;
+        applyInverseRotation(vCur);
+        vCur2d = vCur.block<2, 1>(0, 0);
+
+        xPuck = observationState_.puckPredictedState.state.block<2, 1>(0, 0);
+        xPrepare = (xPuck - xCur2d).normalized() * (malletRadius_ + puckRadius_) + xPuck;
+        xPrepare.x() = boost::algorithm::clamp(xPrepare.x(), malletRadius_ + 0.02, tableLength_ - malletRadius_ - 0.02);
+        xPrepare.y() = boost::algorithm::clamp(xPrepare.y(),
+                                               -tableWidth_ / 2 + malletRadius_ + 0.02,
+                                               tableWidth_ / 2 - malletRadius_ - 0.02);
+
+
+        double tStop = 2.0;
+        for (int i = 0; i < 10; ++i) {
+            cartTrajectory_.points.clear();
+            jointTrajectory_.points.clear();
+
+            cubicLinearMotion_->plan(xCur2d, vCur2d, xPrepare, Vector2d(0., 0.), tStop, cartTrajectory_);
+            transformTrajectory(cartTrajectory_);
+            if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, jointTrajectory_)) {
+                ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
+                tStop += 0.1;
+            } else {
+                jointTrajectory_.header.stamp = ros::Time::now();
+                jointTrajectoryPub_.publish(jointTrajectory_);
+                cartTrajectoryPub_.publish(cartTrajectory_);
+                trajStopTime_ = jointTrajectory_.header.stamp + ros::Duration(tStop);
+                return;
+            }
+        }
+        ROS_INFO_STREAM("Optimization Failed. Unable to find trajectory for Ready");
+    }
 }
 
 void Agent::loadParam() {
