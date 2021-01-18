@@ -28,7 +28,6 @@ CubicLinearMotion::plan(const Vector2d& pStart, const Vector2d& vStart, const Ve
     } else {
         t_prev = cartTraj.points.back().time_from_start.toSec();
     }
-
     double t = 0.;
     while (t <= tStop) {
         t += stepSize_;
