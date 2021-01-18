@@ -132,13 +132,15 @@ void Agent::updateTactic() {
             bool restart = setTactic(Tactics::READY);
             startReady(restart);
         }
-    } else if (observationState_.puckPredictedState.state.x() < hitRange_[1] &&
+    }
+    else if (observationState_.puckPredictedState.state.x() < hitRange_[1] &&
                observationState_.puckPredictedState.state.x() > hitRange_[0] &&
                tacticState_ != Tactics::PREPARE) {
         if (observationState_.puckPredictedState.state.y() > tableWidth_ / 2 - puckRadius_ - malletRadius_ - 0.02 ||
             observationState_.puckPredictedState.state.y() <-tableWidth_ / 2 + puckRadius_ + malletRadius_ + 0.02){
             bool restart = setTactic(Tactics::PREPARE);
             startPrepare(restart);
+//            startPrepareNew(restart);
         } else {
             bool restart = setTactic(Tactics::SMASH);
             if (smashCount_ > 10){
@@ -149,6 +151,7 @@ void Agent::updateTactic() {
                tacticState_ == Tactics::PREPARE) {
         bool restart = setTactic(Tactics::PREPARE);
         startPrepare(restart);
+//        startPrepareNew(restart);
     } else {
         bool restart = setTactic(Tactics::READY);
         startReady(restart);
@@ -469,34 +472,27 @@ void Agent::startPrepare(bool restart) {
 }
 
 void Agent::startPrepareNew(bool restart) {
-    if (restart || ros::Time::now() > trajStopTime_) {
-        Vector3d xCur, vCur;
-        Vector2d xCur2d, vCur2d, xPuck, xPrepare;
-        Kinematics::JacobianPosType jacobian;
+    if (ros::Time::now() > trajStopTime_) {
+        Vector3d xCur;
         kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
         applyInverseTransform(xCur);
-        xCur2d = xCur.block<2, 1>(0, 0);
 
-        kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
-        vCur = jacobian * observationState_.jointVelocity;
-        applyInverseRotation(vCur);
-        vCur2d = vCur.block<2, 1>(0, 0);
-
-        xPuck = observationState_.puckPredictedState.state.block<2, 1>(0, 0);
-//        xPrepare = (xPuck - xCur2d).normalized() * (malletRadius_ + puckRadius_) + xPuck;
-        xPrepare = xPuck;
-        xPrepare.x() = boost::algorithm::clamp(xPrepare.x(), malletRadius_ + 0.02, tableLength_ - malletRadius_ - 0.02);
-        xPrepare.y() = boost::algorithm::clamp(xPrepare.y(),
-                                               -tableWidth_ / 2 + malletRadius_ + 0.02,
-                                               tableWidth_ / 2 - malletRadius_ - 0.02);
-
+        Vector3d xLiftUp, xSetDown;
+        xLiftUp = observationState_.puckPredictedState.state.block<3, 1>(0, 0);
+        xLiftUp.x() = boost::algorithm::clamp(xLiftUp.x(), malletRadius_ + 0.02, tableLength_ - malletRadius_ - 0.02);
+        xLiftUp.y() = boost::algorithm::clamp(xLiftUp.y(),-tableWidth_ / 2 + malletRadius_ + 0.02,tableWidth_ / 2 - malletRadius_ - 0.02);
+        xLiftUp.z() = prepareHeight_;
+        xSetDown = xLiftUp;
+        xSetDown.z() = universalJointHeight_ + puckHeight_;
 
         double tStop = 2.0;
         for (int i = 0; i < 10; ++i) {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
 
-            cubicLinearMotion_->plan(xCur2d, vCur2d, xPrepare, Vector2d(0., 0.), tStop, cartTrajectory_);
+            cubicLinearMotion_->plan(xCur, Vector3d(0., 0., 0.), xLiftUp, Vector3d(0., 0., 0.), tStop, cartTrajectory_);
+            cubicLinearMotion_->plan(xLiftUp, Vector3d(0., 0., 0.), xSetDown, Vector3d(0., 0., 0.), tStop, cartTrajectory_);
+            cubicLinearMotion_->plan(xSetDown, Vector3d(0., 0., 0.), xPrepare_, Vector3d(0., 0., 0.), tStop, cartTrajectory_);
             transformTrajectory(cartTrajectory_);
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, observationState_.jointPosition, jointTrajectory_)) {
                 ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
@@ -505,7 +501,8 @@ void Agent::startPrepareNew(bool restart) {
                 jointTrajectory_.header.stamp = ros::Time::now();
                 jointTrajectoryPub_.publish(jointTrajectory_);
                 cartTrajectoryPub_.publish(cartTrajectory_);
-                trajStopTime_ = jointTrajectory_.header.stamp + ros::Duration(tStop);
+                trajStopTime_ = jointTrajectory_.header.stamp + ros::Duration(3 * tStop);
+                ros::Duration(3 * tStop).sleep();
                 return;
             }
         }
@@ -518,9 +515,10 @@ void Agent::loadParam() {
     nh_.getParam("/air_hockey/table_width", tableWidth_);
     nh_.getParam("/air_hockey/mallet_radius", malletRadius_);
     nh_.getParam("/air_hockey/puck_radius", puckRadius_);
-
+    nh_.getParam("/air_hockey/puck_height", puckHeight_);
 
     nh_.getParam("/air_hockey/agent/universal_joint_height", universalJointHeight_);
+    nh_.getParam("/air_hockey/agent/prepare_height", prepareHeight_);
 
     std::vector<double> tcp_position_vec;
     std::vector<double> tcp_quaternion_vec;
@@ -540,6 +538,8 @@ void Agent::loadParam() {
     std::vector<double> xTmp;
     nh_.getParam("/air_hockey/agent/home", xTmp);
     xHome_ << xTmp[0], xTmp[1];
+    nh_.getParam("/air_hockey/agent/prepare", xTmp);
+    xPrepare_ << xTmp[0], xTmp[1], universalJointHeight_ + puckHeight_;
     nh_.getParam("/air_hockey/agent/goal", xTmp);
     xGoal_ << xTmp[0], xTmp[1];
     nh_.getParam("/air_hockey/agent/hit_range", xTmp);

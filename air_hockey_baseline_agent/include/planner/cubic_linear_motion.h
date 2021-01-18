@@ -22,14 +22,21 @@ public:
               double tStop,
               trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
 
+    bool plan(const Vector3d& pStart,
+              const Vector3d& vStart,
+              const Vector3d& pStop,
+              const Vector3d& vStop,
+              double tStop,
+              trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
+
 private:
     double stepSize_;
     double height_;
 
-    Vector2d xTmp_, vTmp_;
+
     trajectory_msgs::MultiDOFJointTrajectoryPoint viaPoint_;
 
-    Matrix<double, 2, 4> coefficients_;
+
 
 };
 }
