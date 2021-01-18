@@ -3,7 +3,6 @@
 using namespace gazebo;
 
 PuckTFPublisher::PuckTFPublisher() {
-    ROS_INFO_STREAM_NAMED("puck_tf_publisher", "Start PuckTFPublisher Constructor");
     transformMsg_.header.frame_id = "world";
     transformMsg_.child_frame_id = "Puck";
     update_rate_ = 0.;
@@ -33,17 +32,12 @@ void PuckTFPublisher::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
                        this->robot_namespace_.c_str() );
     } else {
         this->robot_namespace_ = _sdf->GetElement ( "robotNamespace" )->Get<std::string>();
-        if ( this->robot_namespace_.empty() ) this->robot_namespace_ = model_->GetName ();
     }
-    if ( !robot_namespace_.empty() ) this->robot_namespace_ += "/";
     rosnode_ = boost::shared_ptr<ros::NodeHandle> ( new ros::NodeHandle ( this->robot_namespace_ ) );
 
     this->update_rate_ = 100.0;
-    if ( !_sdf->HasElement ( "updateRate" ) ) {
-        ROS_WARN_NAMED("puck_tf_publisher", "PuckTFPublisher Plugin (ns = %s) missing <updateRate>, defaults to %f",
-                       this->robot_namespace_.c_str(), this->update_rate_ );
-    } else {
-        this->update_rate_ = _sdf->GetElement ( "updateRate" )->Get<double>();
+    if (_model->GetSDF()->HasElement("updateRate")){
+        this->update_rate_ = _model->GetSDF()->Get<double>("updateRate");
     }
 
     // Initialize update rate stuff

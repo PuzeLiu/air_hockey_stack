@@ -37,8 +37,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GAZEBO_CXX_FLAGS}")
 
 
 add_library(puck_tf_plugin SHARED plugin/puck_tf_publisher_plugin.cc)
+add_library(universal_joint_plugin SHARED plugin/universal_joint_plugin.cc)
 
 target_link_libraries(puck_tf_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+target_link_libraries(universal_joint_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
 #############
 ## Install ##

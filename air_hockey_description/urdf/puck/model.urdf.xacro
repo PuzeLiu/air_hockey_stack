@@ -75,6 +75,7 @@
         </gazebo>
 
         <gazebo>
+            <updateRate>100.0</updateRate>
             <plugin name="puck_tf_plugin" filename="libpuck_tf_plugin.so">
             </plugin>
         </gazebo>

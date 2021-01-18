@@ -17,13 +17,13 @@
 
     <group ns="iiwa_front" if="$(arg use_front_iiwa)">
         <!-- load the controllers -->
-        <node name="controller_striker_spawner" pkg="controller_manager" type="spawner" respawn="true"
-              output="screen" args="striker_controller"/>
+<!--        <node name="controller_striker_spawner" pkg="controller_manager" type="spawner" respawn="true"-->
+<!--              output="screen" args="striker_controller"/>-->
     </group>
 
     <group ns="iiwa_back" if="$(arg use_back_iiwa)">
         <!-- load the controllers -->
-        <node name="controller_striker_spawner" pkg="controller_manager" type="spawner" respawn="true"
-              output="screen" args="striker_controller"/>
+<!--        <node name="controller_striker_spawner" pkg="controller_manager" type="spawner" respawn="true"-->
+<!--              output="screen" args="striker_controller"/>-->
     </group>
 </launch>
