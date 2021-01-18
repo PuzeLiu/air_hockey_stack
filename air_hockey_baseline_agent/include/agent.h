@@ -48,6 +48,7 @@ namespace AirHockey{
         void startCut(bool restart);
         void startReady(bool restart);
         void startPrepare(bool restart);
+        void startPrepareNew(bool restart);
         void gotoInit(bool restart);
         void gotoHome(bool restart);
 

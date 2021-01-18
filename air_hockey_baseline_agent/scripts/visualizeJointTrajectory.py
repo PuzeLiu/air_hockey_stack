@@ -6,8 +6,8 @@ from trajectory_msgs.msg import JointTrajectory
 import torch
 from iiwas_kinematics import KinematicsTorch
 
-input_dir = os.path.abspath("/home/puze/Desktop")
-file_name = "2021-01-16-15-36-44.bag"
+input_dir = os.path.abspath("/home/puze/air_hockey_record")
+file_name = "2021-01-18-11-09-50.bag"
 
 desired_positions = []
 desired_velocities = []

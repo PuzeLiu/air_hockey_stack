@@ -8,9 +8,8 @@ Panels:
         - /Status1
         - /TF1/Frames1
         - /AirHockeyTable1/Links1
-        - /Puck1
       Splitter Ratio: 0.5743494629859924
-    Tree Height: 719
+    Tree Height: 746
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -56,10 +55,110 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        B_link_0:
+          Value: false
+        B_link_1:
+          Value: false
+        B_link_2:
+          Value: false
+        B_link_3:
+          Value: false
+        B_link_4:
+          Value: false
+        B_link_5:
+          Value: false
+        B_link_6:
+          Value: false
+        B_link_7:
+          Value: false
+        B_link_ee:
+          Value: false
+        B_striker_base:
+          Value: false
+        B_striker_joint_link:
+          Value: false
+        B_striker_mallet:
+          Value: false
+        B_striker_mallet_tip:
+          Value: false
+        F_link_0:
+          Value: false
+        F_link_1:
+          Value: false
+        F_link_2:
+          Value: false
+        F_link_3:
+          Value: false
+        F_link_4:
+          Value: false
+        F_link_5:
+          Value: false
+        F_link_6:
+          Value: false
+        F_link_7:
+          Value: false
+        F_link_ee:
+          Value: false
+        F_striker_base:
+          Value: false
+        F_striker_joint_link:
+          Value: false
+        F_striker_mallet:
+          Value: false
+        F_striker_mallet_tip:
+          Value: false
+        Puck:
+          Value: false
+        Table:
+          Value: false
+        TableAway:
+          Value: false
+        TableHome:
+          Value: false
+        back_base:
+          Value: false
+        front_base:
+          Value: false
+        h_bar_back_in:
+          Value: false
+        h_bar_back_out:
+          Value: false
+        h_bar_front_in:
+          Value: false
+        h_bar_front_out:
+          Value: false
+        iiwa_frame_origin:
+          Value: false
+        link:
+          Value: false
+        t_base:
+          Value: false
+        t_down_rim_l:
+          Value: false
+        t_down_rim_r:
+          Value: false
+        t_down_rim_top:
+          Value: false
+        t_left_rim:
+          Value: false
+        t_right_rim:
+          Value: false
+        t_up_rim_l:
+          Value: false
+        t_up_rim_r:
+          Value: false
+        t_up_rim_top:
+          Value: false
+        v_bar_left:
+          Value: false
+        v_bar_right:
+          Value: false
+        world:
+          Value: false
       Marker Alpha: 1
       Marker Scale: 0.5
       Name: TF
@@ -67,9 +166,75 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        world:
+          Puck:
+            link:
+              {}
+          Table:
+            TableAway:
+              {}
+            TableHome:
+              {}
+            t_base:
+              t_down_rim_l:
+                {}
+              t_down_rim_r:
+                {}
+              t_down_rim_top:
+                {}
+              t_left_rim:
+                {}
+              t_right_rim:
+                {}
+              t_up_rim_l:
+                {}
+              t_up_rim_r:
+                {}
+              t_up_rim_top:
+                {}
+          iiwa_frame_origin:
+            back_base:
+              B_link_0:
+                B_link_1:
+                  B_link_2:
+                    B_link_3:
+                      B_link_4:
+                        B_link_5:
+                          B_link_6:
+                            B_link_7:
+                              B_link_ee:
+                                B_striker_base:
+                                  B_striker_joint_link:
+                                    B_striker_mallet:
+                                      B_striker_mallet_tip:
+                                        {}
+            front_base:
+              F_link_0:
+                F_link_1:
+                  F_link_2:
+                    F_link_3:
+                      F_link_4:
+                        F_link_5:
+                          F_link_6:
+                            F_link_7:
+                              F_link_ee:
+                                F_striker_base:
+                                  F_striker_joint_link:
+                                    F_striker_mallet:
+                                      F_striker_mallet_tip:
+                                        {}
+            h_bar_back_in:
+              {}
+            h_bar_front_in:
+              {}
+            h_bar_front_out:
+              v_bar_left:
+                {}
+              v_bar_right:
+                h_bar_back_out:
+                  {}
       Update Interval: 0
-      Value: false
+      Value: true
     - Alpha: 1
       Class: rviz/Axes
       Enabled: true
@@ -316,6 +481,18 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        Table:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        TableAway:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        TableHome:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         t_base:
           Alpha: 1
           Show Axes: false
@@ -361,10 +538,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        world:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
       Name: AirHockeyTable
       Robot Description: air_hockey_table/robot_description
       TF Prefix: ""
@@ -385,7 +558,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        base:
+        link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -408,7 +581,7 @@ Visualization Manager:
   Global Options:
     Background Color: 0; 0; 0
     Default Light: true
-    Fixed Frame: world
+    Fixed Frame: F_link_0
     Frame Rate: 30
   Name: root
   Tools:
@@ -432,7 +605,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.8738350868225098
+      Distance: 5.442459583282471
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -455,10 +628,10 @@ Visualization Manager:
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1016
+  Height: 1043
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000024e0000035afc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d0000035a000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610100000270000000160000000000000000000000010000010f0000035afc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d0000035a000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007380000003efc0100000002fb0000000800540069006d0065010000000000000738000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000003cf0000035a00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000024e00000375fc0200000009fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000375000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610100000270000000160000000000000000000000010000010f00000375fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d00000375000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003efc0100000002fb0000000800540069006d0065010000000000000780000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000004170000037500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -467,6 +640,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 1848
-  X: 72
-  Y: 27
+  Width: 1920
+  X: 0
+  Y: 0

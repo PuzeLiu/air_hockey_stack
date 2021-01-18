@@ -5,7 +5,7 @@ import rosbag
 from trajectory_msgs.msg import MultiDOFJointTrajectory
 
 input_dir = os.path.abspath("/home/puze/air_hockey_record")
-file_name = "2021-01-15-19-05-15.bag"
+file_name = "2021-01-18-11-05-14.bag"
 
 positions = []
 velocities = []
@@ -14,7 +14,7 @@ time = []
 
 bag = rosbag.Bag(os.path.join(input_dir, file_name))
 for topic, msg, t in bag.read_messages():
-    if topic == "/iiwa_front/cartesian_trajectory":
+    if topic == "/iiwa_back/cartesian_trajectory":
         msg:MultiDOFJointTrajectory
         for i in range(msg.points.__len__()):
             positions.append([msg.points[i].transforms[0].translation.x, msg.points[i].transforms[0].translation.y,
