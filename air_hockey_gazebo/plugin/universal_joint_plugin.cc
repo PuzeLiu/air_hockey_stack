@@ -34,6 +34,13 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPt
         ROS_ERROR_STREAM_NAMED("Universal Joint Plugin" , "No namespace for the iiwa. Use /iiwa_front or /iiwa_back.");
     }
 
+    gazebo::common::PID pid;
+    pid.SetPGain(10.);
+    pid.SetIGain(1.0);
+    pid.SetDGain(0.1);
+    this->model_->GetJointController()->SetPositionPID(jointName1_, pid);
+    this->model_->GetJointController()->SetPositionPID(jointName1_, pid);
+
     this->updateConnection = event::Events::ConnectWorldUpdateBegin (boost::bind ( &UniversalJointPlugin::OnUpdate, this));
 }
 
@@ -45,16 +52,16 @@ void UniversalJointPlugin::OnUpdate() {
     auto pose = poseBase.Inverse() * poseEETip2World;
     auto quat = pose.Rot();
 
-    double q1 = atan2(2 * (quat.Y() * quat.Z() + quat.W() * quat.X()),
-                      - pow(quat.W(), 2) + pow(quat.X(), 2) + pow(quat.Y(), 2) - pow(quat.Z(), 2));
-    double q2 = asin(ignition::math::clamp<double>((quat.W() * quat.Y() - quat.X(), quat.Z()) * 2, -1, 1));
-    
-    if (q1 > M_PI_2){
-        q1 -= M_PI;
-    } else if (q1 < - M_PI_2){
-        q1 += M_PI;
+    double q1, q2;
+    if (pow(quat.W(), 2) - pow(quat.X(), 2) - pow(quat.Y(), 2) + pow(quat.Z(), 2) != 0){
+        q1 = atan(-2 * (quat.W() * quat.Y() - quat.X() * quat.Z()) /
+                (pow(quat.W(), 2) - pow(quat.X(), 2) - pow(quat.Y(), 2) + pow(quat.Z(), 2)));
+    } else {
+        q1 = M_PI_2;
     }
 
-    ROS_INFO_STREAM("success: "<< this->model_->GetJointController()->SetPositionTarget(jointName1_, q1));
-    ROS_INFO_STREAM("success: "<< this->model_->GetJointController()->SetPositionTarget(jointName2_, 0));
+    q2 = asin(ignition::math::clamp<double>((quat.W() * quat.X() - quat.Y(), quat.Z()) * 2, -1, 1));
+
+    this->model_->GetJointController()->SetPositionTarget(jointName1_, q1);
+    this->model_->GetJointController()->SetPositionTarget(jointName2_, q2);
 }
