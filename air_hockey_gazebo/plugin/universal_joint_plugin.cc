@@ -36,8 +36,8 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPt
 
     gazebo::common::PID pid;
     pid.SetPGain(10.);
-    pid.SetIGain(1.0);
-    pid.SetDGain(0.1);
+    pid.SetIGain(0.);
+    pid.SetDGain(1);
     this->model_->GetJointController()->SetPositionPID(jointName1_, pid);
     this->model_->GetJointController()->SetPositionPID(jointName1_, pid);
 
@@ -64,4 +64,5 @@ void UniversalJointPlugin::OnUpdate() {
 
     this->model_->GetJointController()->SetPositionTarget(jointName1_, q1);
     this->model_->GetJointController()->SetPositionTarget(jointName2_, q2);
+    this->model_->GetJointController()->Update();
 }

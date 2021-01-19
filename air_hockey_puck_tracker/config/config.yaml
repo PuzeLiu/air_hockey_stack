@@ -17,10 +17,10 @@ air_hockey:
     observation_variance_angular:
       2.5e-7
     dynamic_variance_position:
-      1.0e-6
+      1.0e-8
     dynamic_variance_velocity:
-      1.0e-4
+      1.0e-5
     dynamic_variance_angular_position:
-      1.0e-4
+      1.0e-8
     dynamic_variance_angular_velocity:
-      1.0e-4
+      1.0e-5
