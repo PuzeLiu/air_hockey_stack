@@ -22,7 +22,7 @@
     <xacro:iiwa14 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)" parent="$(arg parent)">
         <origin xyz="0 0 ${base_height/2}" rpy="$(arg base_rpy)" />
     </xacro:iiwa14>
-    <xacro:striker hardware_interface="hardware_interface/EffortJointInterface" robot_name="$(arg robot_name)"/>
+    <xacro:striker hardware_interface="hardware_interface/PositionJointInterface" robot_name="$(arg robot_name)"/>
 
     <gazebo reference="$(arg parent)">
         <kinematic>true</kinematic>

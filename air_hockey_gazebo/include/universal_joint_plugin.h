@@ -24,7 +24,7 @@ namespace gazebo {
         ignition::math::Pose3d pose_;
 
         std::string robotNamespace_, robotBaseLinkName_;
-        std::string eeTipLinkName_;
+        std::string eeLinkName_;
         std::string jointName1_;
         std::string jointName2_;
     };
