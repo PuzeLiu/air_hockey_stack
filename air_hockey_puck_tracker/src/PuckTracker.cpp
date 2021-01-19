@@ -65,6 +65,7 @@ void PuckTracker::init() {
     nh_.param<double>("/air_hockey/puck_radius", puckRadius, 0.03165);
     nh_.param<double>("/air_hockey/table_length", tableLength_, 1.956);
     nh_.param<double>("/air_hockey/table_width", tableWidth_, 1.042);
+    nh_.param<double>("/air_hockey/goal_width", goalWidth_, 0.25);
 
     ROS_INFO_STREAM("Read Puck Tracker Parameters");
     double frequency, frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
@@ -95,7 +96,7 @@ void PuckTracker::init() {
     rate_ = new ros::Rate(frequency);
     systemModel_ = new SystemModel(frictionDrag, frictionSliding);
     observationModel_ = new ObservationModel;
-    collisionModel_ = new CollisionModel(tableLength_, tableWidth_, puckRadius, malletRadius,
+    collisionModel_ = new CollisionModel(tableLength_, tableWidth_, goalWidth_, puckRadius, malletRadius,
                                          restitutionTable, restitutionMallet, rate_->expectedCycleTime().toSec());
     kalmanFilter_ = new EKF_Wrapper;
     puckPredictor_ = new EKF_Wrapper;

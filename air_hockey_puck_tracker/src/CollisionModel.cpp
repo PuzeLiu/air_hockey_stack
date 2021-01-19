@@ -31,10 +31,11 @@ namespace AirHockey {
         return v1.x() * v2.y() - v1.y() * v2.x();
     }
 
-    AirHockeyTable::AirHockeyTable(double length, double width, double puckRadius, double e, double dt) {
+    AirHockeyTable::AirHockeyTable(double length, double width, double goalWidth, double puckRadius, double e, double dt) {
         m_length = length;
         m_width = width;
         m_puckRadius = puckRadius;
+        m_goalWidth = goalWidth;
 
         m_e = e;
         m_dt = dt;
@@ -42,13 +43,14 @@ namespace AirHockey {
         Vector2 ref, offsetP1, offsetP2, offsetP3, offsetP4;
         ref << length / 2, 0;
         offsetP1 << -(m_length / 2 - m_puckRadius), -(m_width / 2 - m_puckRadius);
-        offsetP2 << -(m_length / 2 - m_puckRadius), (m_width / 2 - m_puckRadius);
-        offsetP3 << (m_length / 2 - m_puckRadius), -(m_width / 2 - m_puckRadius);
-        offsetP4 << (m_length / 2 - m_puckRadius), (m_width / 2 - m_puckRadius);
-        offsetP1 = ref + offsetP1;
-        offsetP2 = ref + offsetP2;
-        offsetP3 = ref + offsetP3;
-        offsetP4 = ref + offsetP4;
+        offsetP2 << -(m_length / 2 - m_puckRadius),  (m_width / 2 - m_puckRadius);
+        offsetP3 <<  (m_length / 2 - m_puckRadius), -(m_width / 2 - m_puckRadius);
+        offsetP4 <<  (m_length / 2 - m_puckRadius),  (m_width / 2 - m_puckRadius);
+        offsetP1 += ref;
+        offsetP2 += ref;
+        offsetP3 += ref;
+        offsetP4 += ref;
+
         m_boundary.row(0) << offsetP1.x(), offsetP1.y(), offsetP3.x(), offsetP3.y();
         m_boundary.row(1) << offsetP3.x(), offsetP3.y(), offsetP4.x(), offsetP4.y();
         m_boundary.row(2) << offsetP4.x(), offsetP4.y(), offsetP2.x(), offsetP2.y();
@@ -65,6 +67,12 @@ namespace AirHockey {
         vel = state.block<2, 1>(2, 0);
         double theta = state.theta();
         double dtheta = state.dtheta();
+
+        if (abs(p.y()) < m_goalWidth / 2 - m_puckRadius && p.x() < m_boundary(0, 0)){
+            return false;
+        } else if (abs(p.y()) < m_goalWidth / 2 - m_puckRadius && p.x() > m_boundary(0, 2)){
+            return false;
+        }
 
         for (int i = 0; i < m_boundary.rows(); ++i) {
             Vector2 p1 = m_boundary.block<1, 2>(i, 0);
@@ -88,8 +96,6 @@ namespace AirHockey {
                 if (cross2D(w, v) < 0
                     || (s >= 0 + 1e-4 && s <= 1 - 1e-4 && r >= 0 + 1e-4
                        && r <= 1 - 1e-4)) {
-                    boost::algorithm::clamp(s, 0, 1);
-                    boost::algorithm::clamp(r, 0, 1);
 
                     double vtScalar = vel.dot(vecT);
                     double vnScalar = vel.dot(vecN);
@@ -204,9 +210,9 @@ namespace AirHockey {
         return false;
     }
 
-    CollisionModel::CollisionModel(double tableLength, double tableWidth, double puckRadius, double malletRadius,
+    CollisionModel::CollisionModel(double tableLength, double tableWidth, double goalWidth, double puckRadius, double malletRadius,
                                    double &restitutionTable, double &restitutionMallet, double dt) :
-            m_table(tableLength, tableWidth, puckRadius, restitutionTable, dt), m_mallet(puckRadius, malletRadius, restitutionMallet, dt) {
+            m_table(tableLength, tableWidth, goalWidth, puckRadius, restitutionTable, dt), m_mallet(puckRadius, malletRadius, restitutionMallet, dt) {
 
     }
 

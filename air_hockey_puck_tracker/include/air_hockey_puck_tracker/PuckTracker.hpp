@@ -88,7 +88,7 @@ namespace AirHockey {
         PuckPredictedState predictedState_;
         double predictedTime_;
         double defendingLine_;
-        double tableLength_, tableWidth_;
+        double tableLength_, tableWidth_, goalWidth_;
 
         bool doPrediction_;
 

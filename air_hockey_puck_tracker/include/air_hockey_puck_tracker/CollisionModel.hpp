@@ -42,6 +42,7 @@ namespace AirHockey {
         //! Table length: X-direction, width: Y-direction
         double m_length;
         double m_width;
+        double m_goalWidth;
 
         //! step size
         double m_dt;
@@ -54,11 +55,9 @@ namespace AirHockey {
         BoundaryType m_boundary;
 
     public:
-        AirHockeyTable(double length, double width, double puckRadius, double restitution, double dt = 1 / 120.);
+        AirHockeyTable(double length, double width, double goalWidth, double puckRadius, double restitution, double dt = 1 / 120.);
 
         ~AirHockeyTable();
-
-        inline BoundaryType getBoundary() { return m_boundary; }
 
         bool applyCollision(EKF_Wrapper::State &state);
 
@@ -97,7 +96,7 @@ namespace AirHockey {
 
         Mallet m_mallet;
 
-        CollisionModel(double tableLength, double tableWidth, double puckRadius, double malletRadius,
+        CollisionModel(double tableLength, double tableWidth, double goalWidth, double puckRadius, double malletRadius,
                        double &restitutionTable, double &restitutionMallet, double dt);
 
         bool applyCollision(State &puckState, const bool& checkMallet);
