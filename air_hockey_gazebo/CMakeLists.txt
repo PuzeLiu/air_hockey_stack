@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf2
   gazebo_ros
+    sensor_msgs
 )
 
 find_package(gazebo REQUIRED)
@@ -41,6 +42,9 @@ add_library(universal_joint_plugin SHARED plugin/universal_joint_plugin.cc)
 
 target_link_libraries(puck_tf_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(universal_joint_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+
+add_executable(universal_joint_state_publisher plugin/universal_joint_state_publisher.cpp)
+target_link_libraries(universal_joint_state_publisher ${catkin_LIBRARIES})
 
 #############
 ## Install ##
