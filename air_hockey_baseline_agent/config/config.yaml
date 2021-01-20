@@ -6,7 +6,7 @@ air_hockey:
     home: [0.08, 0.0]
     prepare: [0.4, 0.0]
     defend_line: 0.2
-    hit_range: [0.1, 0.95]
+    hit_range: [0.2, 0.95]
     universal_joint_height:  0.095 # 0.085 #
     prepare_height:  0.195    # height of second joint - universal joint height: 0.29 - 0.095 = 0.195
     max_hit_velocity: 1.2

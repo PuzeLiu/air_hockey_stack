@@ -43,14 +43,18 @@ namespace AirHockey{
     private:
         void loadParam();
         void updateTactic();
-        void generateTrajectory();
         void startHit(bool restart);
         void startCut(bool restart);
         void startReady(bool restart);
         void startPrepare(bool restart);
         void startPrepareNew(bool restart);
+        void startPrepareCombinatorial(bool restart);
         void gotoInit(bool restart);
         void gotoHome(bool restart);
+        bool planReturnTraj(const double &vReadyMax,
+                              trajectory_msgs::MultiDOFJointTrajectoryPoint& lastPoint,
+                              trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
+                              trajectory_msgs::JointTrajectory &jointTrajReturn);
 
         double updateGoal(Vector2d puckPos);
         bool setTactic(Tactics tactic);
