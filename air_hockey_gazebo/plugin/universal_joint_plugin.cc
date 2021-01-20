@@ -34,12 +34,12 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPt
         ROS_ERROR_STREAM_NAMED("Universal Joint Plugin" , "No namespace for the iiwa. Use /iiwa_front or /iiwa_back.");
     }
 
-    gazebo::common::PID pid;
-    pid.SetPGain(10.);
-    pid.SetIGain(0.);
-    pid.SetDGain(1);
+    gazebo::common::PID pid(1, 0, 0.0);
     this->model_->GetJointController()->SetPositionPID(jointName1_, pid);
-    this->model_->GetJointController()->SetPositionPID(jointName1_, pid);
+    this->model_->GetJointController()->SetVelocityPID(jointName1_, gazebo::common::PID(0, 0, 0));
+    this->model_->GetJointController()->SetPositionPID(jointName2_, pid);
+    this->model_->GetJointController()->SetVelocityPID(jointName2_, gazebo::common::PID(0, 0, 0));
+    debugCounter_ = 0;
 
     this->updateConnection = event::Events::ConnectWorldUpdateBegin (boost::bind ( &UniversalJointPlugin::OnUpdate, this));
 }
@@ -54,15 +54,28 @@ void UniversalJointPlugin::OnUpdate() {
 
     double q1, q2;
     if (pow(quat.W(), 2) - pow(quat.X(), 2) - pow(quat.Y(), 2) + pow(quat.Z(), 2) != 0){
-        q1 = atan(-2 * (quat.W() * quat.Y() - quat.X() * quat.Z()) /
+        q1 = atan2(-2 * (quat.W() * quat.Y() - quat.X() * quat.Z()),
                 (pow(quat.W(), 2) - pow(quat.X(), 2) - pow(quat.Y(), 2) + pow(quat.Z(), 2)));
-    } else {
-        q1 = M_PI_2;
+    }
+
+    if (q1 < -M_PI_2){
+        q1 += M_PI;
+    } else if (q1 > M_PI_2){
+        q1 -= M_PI;
     }
 
     q2 = asin(ignition::math::clamp<double>((quat.W() * quat.X() - quat.Y(), quat.Z()) * 2, -1, 1));
 
     this->model_->GetJointController()->SetPositionTarget(jointName1_, q1);
     this->model_->GetJointController()->SetPositionTarget(jointName2_, q2);
-    this->model_->GetJointController()->Update();
+    model_->GetJointController()->Update();
+//    debugCounter_ +=1;
+//    if (robotNamespace_ == "/iiwa_front/" && debugCounter_ > 100){
+//        debugCounter_ = 0;
+//        ROS_INFO_STREAM("[Desired ]" << " q1: " << q1 << " q2: " << q2);
+//        ROS_INFO_STREAM("[Actual  ]" << " q1: " << model_->GetJoint(jointName1_)->Position(0) << " q2: " << model_->GetJoint(jointName2_)->Position(0));
+//        ROS_INFO_STREAM("[Command ]" << " q1: " << model_->GetJoint(jointName1_)->GetForce(0) << " q2: " << model_->GetJoint(jointName2_)->GetForce(0));
+//        ROS_INFO_STREAM("[Velocity]" << " q1: " << model_->GetJoint(jointName1_)->GetVelocity(0) << " q2: " << model_->GetJoint(jointName2_)->GetVelocity(0));
+//    }
+
 }

@@ -27,6 +27,8 @@ namespace gazebo {
         std::string eeLinkName_;
         std::string jointName1_;
         std::string jointName2_;
+
+        int debugCounter_;
     };
     GZ_REGISTER_MODEL_PLUGIN(UniversalJointPlugin)
 }
