@@ -45,7 +45,7 @@
                 <restitution value="${restitution}"/>
                 <lateral_friction value="${lateral_friction}"/>
                 <rolling_friction value="0.0"/>
-                <spinning_friction value="0.0"/>
+                <spinning_friction value="0.02"/>
             </contact>
         </link>
 
@@ -54,11 +54,14 @@
                 <surface>
                     <bounce>
                         <restitution_coefficient>${restitution}</restitution_coefficient>
-                        <threshold>0.0</threshold>
+                        <threshold>0.01</threshold>
                     </bounce>
                     <friction>
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                        <torsional>
+                            <surface_radius>${puck_radius}</surface_radius>
+                        </torsional>
                         <ode>
                             <mu>${lateral_friction}</mu>
                             <mu2>${lateral_friction}</mu2>
@@ -66,7 +69,8 @@
                     </friction>
                     <contact>
                         <ode>
-                            <max_vel>100</max_vel>
+                            <kp>1e9</kp>
+                            <max_vel>1</max_vel>
                         </ode>
                     </contact>
                 </surface>
