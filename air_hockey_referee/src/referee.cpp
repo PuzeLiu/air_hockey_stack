@@ -44,6 +44,11 @@ void Referee::update() {
             stampPrev = tfPuck.header.stamp;
             if (gameStatusMsg.status == GameStatus::START) {
 //                ROS_INFO_STREAM("Check Goal");
+                if (abs(tfPuck.transform.translation.z) > 0.05){
+                    ROS_INFO_STREAM("Detect Puck is not on the Table, Game Paused");
+                    gameStatusMsg.status = GameStatus::PAUSE;
+                    statusPub.publish(gameStatusMsg);
+                }
                 if (tfPuck.transform.translation.x < -(tableLength / 2 + 1e-2) &&
                     abs(tfPuck.transform.translation.y) < goalWidth / 2) {
                     ROS_INFO_STREAM("Back Goal");
