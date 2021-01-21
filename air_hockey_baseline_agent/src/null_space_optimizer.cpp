@@ -47,8 +47,6 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
         Vector3d xDes, dxDes;
         Kinematics::JointArrayType qCur, qNext, dqNext;
 
-//        auto observationState = observer_->getObservation();
-//        qCur = observationState.jointPosition;
         qCur = qStart;
 
         for (size_t i = 0; i < cartTraj.points.size(); ++i) {
@@ -87,8 +85,6 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
         Vector3d xDes, dxDes;
         Kinematics::JointArrayType qCur, qNext, dqNext;
 
-//        auto observationState = observer_->getObservation();
-//        qCur = observationState.jointPosition;
         qCur = qStart;
 
         for (size_t i = 0; i < cartTraj.points.size(); ++i) {
