@@ -13,7 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   tf2
   gazebo_ros
-    sensor_msgs
+  sensor_msgs
 )
 
 find_package(gazebo REQUIRED)
@@ -25,7 +25,6 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-
 include_directories(
         include
         ${catkin_INCLUDE_DIRS}
@@ -36,14 +35,12 @@ link_directories(${GAZEBO_LIBRARY_DIRS})
 list(APPEND CMAKE_CXX_FLAGS "${GAZEBO_CXX_FLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GAZEBO_CXX_FLAGS}")
 
-
-add_library(puck_tf_plugin SHARED plugin/puck_tf_publisher_plugin.cc)
-add_library(universal_joint_plugin SHARED plugin/universal_joint_plugin.cc)
+add_executable(universal_joint_state_publisher src/universal_joint_state_publisher.cpp)
+add_library(universal_joint_plugin SHARED src/universal_joint_plugin.cc)
+add_library(puck_tf_plugin SHARED src/puck_tf_publisher_plugin.cc)
 
 target_link_libraries(puck_tf_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 target_link_libraries(universal_joint_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
-
-add_executable(universal_joint_state_publisher plugin/universal_joint_state_publisher.cpp)
 target_link_libraries(universal_joint_state_publisher ${catkin_LIBRARIES})
 
 #############

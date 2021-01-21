@@ -5,6 +5,7 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/common/common.hh>
 #include <ros/ros.h>
+#include <sensor_msgs/JointState.h>
 #include <ignition/math.hh>
 
 namespace gazebo {
@@ -16,11 +17,16 @@ namespace gazebo {
         void OnUpdate ();
 
     private:
+        ros::NodeHandle nh_;
+        ros::Publisher jointStatePub_;
+        sensor_msgs::JointState universalJointState_;
+
         // Pointer to the update event connection
         event::ConnectionPtr updateConnection;
         // Pointer to the model
         physics::ModelPtr model_;
         physics::WorldPtr world_;
+        physics::JointControllerPtr jointController_;
         ignition::math::Pose3d pose_;
 
         std::string robotNamespace_, robotBaseLinkName_;
@@ -29,7 +35,9 @@ namespace gazebo {
         std::string jointName2_;
 
         int debugCounter_;
+        bool started_;
     };
+
     GZ_REGISTER_MODEL_PLUGIN(UniversalJointPlugin)
 }
 

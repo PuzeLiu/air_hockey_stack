@@ -17,8 +17,8 @@ void PuckTFPublisher::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
     if (!ros::isInitialized())
     {
-        ROS_FATAL_STREAM("A ROS node for Gazebo has not been initialized, unable to load plugin. "
-                                 << "Load the Gazebo system plugin 'libgazebo_ros_api_plugin.so' in the gazebo_ros package)");
+        ROS_FATAL_STREAM("A ROS node for Gazebo has not been initialized, unable to load src. "
+                                 << "Load the Gazebo system src 'libgazebo_ros_api_plugin.so' in the gazebo_ros package)");
         return;
     }
     ROS_INFO_STREAM_NAMED("puck_tf_publisher", "Start Puck_TF_Publisher");
