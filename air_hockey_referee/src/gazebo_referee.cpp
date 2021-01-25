@@ -41,7 +41,7 @@ bool GazeboReferee::resetPuck(std::string* msg)
 	gazebo_msgs::SetModelState::Response puckStateRes;
 	puckStateReq.model_state.model_name = "puck";
 	puckStateReq.model_state.reference_frame = "air_hockey_table::Table";
-	puckStateReq.model_state.pose.position.z = 0.0565;
+	puckStateReq.model_state.pose.position.z = 0.03;
 	Eigen::Vector2d vec;
 	vec.setRandom();
 	puckStateReq.model_state.pose.position.x = vec.x() * (tableLength - 2 * puckRadius) / 2;
@@ -56,6 +56,17 @@ bool GazeboReferee::resetPuck(std::string* msg)
 	return puckStateRes.success;
 }
 
+void GazeboReferee::update() {
+    Referee::update();
+    if (gameStatusMsg.status == GameStatus::PAUSE){
+        ros::Duration(3.0).sleep();
+        resetPuck(nullptr);
+        if (isPuckOnTable()) {
+            gameStatusMsg.status = GameStatus::START;
+            statusPub.publish(gameStatusMsg);
+            ROS_INFO_STREAM("Game Restarted");
+        }
+    }
 }
 
-
+}

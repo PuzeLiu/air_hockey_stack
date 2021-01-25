@@ -34,6 +34,8 @@ public:
 	GazeboReferee(ros::NodeHandle nh);
     virtual ~GazeboReferee();
 
+    void update();
+
 protected:
     bool resetPuck(std::string* res = nullptr);
 
