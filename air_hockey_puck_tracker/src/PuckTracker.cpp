@@ -58,6 +58,10 @@ const PuckPredictedState &PuckTracker::getPredictedState() {
     return predictedState_;
 }
 
+const State& PuckTracker::getEstimatedState(){
+    return kalmanFilter_->getState();
+}
+
 void PuckTracker::init() {
     ROS_INFO_STREAM("Read Air Hockey Parameters");
     double malletRadius, puckRadius;

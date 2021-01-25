@@ -7,6 +7,8 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2
     loadParam();
 
     smashCount_ = 0;
+    cutCount_ = 0;
+    cutPrevY_ = 0.0;
 
     rng_.seed(0);
 
@@ -20,7 +22,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2
     cubicLinearMotion_ = new CubicLinearMotion(rate, universalJointHeight_);
 
     jointTrajectoryPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>(
-            controllerName_ + "/command", 1);
+            controllerName_ + "/command", 2);
     cartTrajectoryPub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
     cartTrajectory_.joint_names.push_back("x");
@@ -129,8 +131,17 @@ void Agent::update() {
 void Agent::updateTactic() {
     if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > vDefendMin_) {
         if (observationState_.puckPredictedState.predictedTime < maxPredictionTime_ - 1e-6) {
-            bool restart = setTactic(Tactics::CUT);
-            startCut(restart);
+            setTactic(Tactics::CUT);
+            if (abs(observationState_.puckPredictedState.state.y() - cutPrevY_) > (malletRadius_)){
+                cutCount_ = 0;
+                cutPrevY_ = observationState_.puckPredictedState.state.y();
+            } else {
+                cutCount_ += 1;
+            }
+            if (cutCount_ == 10){
+                ROS_INFO_STREAM("New Cut Motion");
+                startCut(true);
+            }
         } else {
             bool restart = setTactic(Tactics::READY);
             startReady(restart);
@@ -309,31 +320,21 @@ void Agent::startHit(bool restart) {
 }
 
 void Agent::startCut(bool restart) {
-    Vector2d xCut;
-    xCut << defendLine_, observationState_.puckPredictedState.state.y();
+    Vector2d xCut(defendLine_, observationState_.puckPredictedState.state.y());
 
-    if (restart || ros::Time::now() > trajStopTime_ ||
-        (xCut - xCutPrev_).norm() > (puckRadius_ + malletRadius_)) {
-        xCutPrev_ = xCut;
-
+    if (restart) {
         Vector3d xCur, vCur;
-        Vector2d xCur2d, vCur2d, vCut;
-        Kinematics::JacobianPosType jacobian;
-
-        kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
+        Vector2d xCur2d, vCur2d;
+        ros::Time tStart;
+        getPlannedCartesianState(xCur, vCur, tStart, cutTimeOffset_);
         applyInverseTransform(xCur);
-        xCur2d = xCur.block<2, 1>(0, 0);
-        kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
-        vCur = jacobian * observationState_.jointVelocity;
         applyInverseRotation(vCur);
+        xCur2d = xCur.block<2, 1>(0, 0);
         vCur2d = vCur.block<2, 1>(0, 0);
-
         double tStop = boost::algorithm::clamp(observationState_.puckPredictedState.predictedTime - 0.3, tDefendMin_,
                                                maxPredictionTime_);
         xCut.y() = boost::algorithm::clamp(xCut.y(), -tableWidth_ / 2 + malletRadius_ + 0.02,
                                            tableWidth_ / 2 - malletRadius_ - 0.02);
-
-        ROS_INFO_STREAM("Update Plan for CUT");
 
         for (int i = 0; i < 10; ++i) {
             cartTrajectory_.points.clear();
@@ -345,14 +346,13 @@ void Agent::startCut(bool restart) {
                 ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
                 tStop += 0.1;
             } else {
-                jointTrajectory_.header.stamp = ros::Time::now();
+                jointTrajectory_.header.stamp = tStart;
                 jointTrajectoryPub_.publish(jointTrajectory_);
                 cartTrajectoryPub_.publish(cartTrajectory_);
                 trajStopTime_ = jointTrajectory_.header.stamp + ros::Duration(tStop);
                 return;
             }
         }
-        cartTrajectoryPub_.publish(cartTrajectory_);
         ROS_INFO_STREAM("Optimization Failed. Unable to find trajectory for Cut");
     }
 }
@@ -592,7 +592,6 @@ void Agent::loadParam() {
     qRef_ << xTmp[0], xTmp[1], xTmp[2], xTmp[3], xTmp[4], xTmp[5], xTmp[6];
 
     nh_.getParam("/air_hockey/agent/defend_line", defendLine_);
-    xCutPrev_ << defendLine_, 0.0;
 
     double frequency;
     int max_prediction_steps;
@@ -607,6 +606,8 @@ void Agent::loadParam() {
 
     nh_.getParam("/air_hockey/agent/min_defend_time", tDefendMin_);
     nh_.getParam("/air_hockey/agent/controller", controllerName_);
+
+    nh_.getParam("/air_hockey/agent/defend_time_offset", cutTimeOffset_);
 }
 
 void Agent::transformTrajectory(trajectory_msgs::MultiDOFJointTrajectory &cartesianTrajectory) {
@@ -698,4 +699,39 @@ bool Agent::planReturnTraj(const double &vMax,
         }
     }
     return false;
+}
+
+void Agent::getPlannedCartesianState(Vector3d &x, Vector3d &dx, ros::Time& tStart, double offset_t) {
+    Kinematics::JointArrayType q, dq;
+    if (offset_t <= 0) {
+        q = observationState_.jointPosition;
+        dq = observationState_.jointVelocity;
+    } else {
+        tStart = ros::Time::now() + ros::Duration(offset_t);
+        ros::Time tLast = jointTrajectory_.header.stamp + jointTrajectory_.points.back().time_from_start;
+
+        if (tStart <= tLast){
+            for (int i = jointTrajectory_.points.size() - 3; i >= 0; --i) {
+                if (tStart > jointTrajectory_.header.stamp + jointTrajectory_.points[i].time_from_start){
+                    for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+                        q[j] = jointTrajectory_.points[i + 2].positions[j];
+                        dq[j] = jointTrajectory_.points[i + 2].velocities[j];
+                    }
+                    ROS_INFO_STREAM("Time: " << tStart << " joint: " << q.transpose());
+                    ROS_INFO_STREAM("Now : " << ros::Time::now() << " joint: " << observationState_.jointPosition.transpose());
+                    break;
+                }
+            }
+        } else {
+            for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+                q[j] = jointTrajectory_.points.back().positions[j];
+                dq[j] = jointTrajectory_.points.back().velocities[j];
+            }
+        }
+    }
+
+    kinematics_->forwardKinematics(q, x);
+    Kinematics::JacobianPosType jacobian;
+    kinematics_->jacobianPos(q, jacobian);
+    dx = jacobian * dq;
 }
