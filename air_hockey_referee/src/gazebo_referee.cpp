@@ -59,7 +59,7 @@ bool GazeboReferee::resetPuck(std::string* msg)
 void GazeboReferee::update() {
     Referee::update();
     if (gameStatusMsg.status == GameStatus::PAUSE){
-        ros::Duration(3.0).sleep();
+        ros::Duration(5.0).sleep();
         resetPuck(nullptr);
         if (isPuckOnTable()) {
             gameStatusMsg.status = GameStatus::START;
