@@ -62,7 +62,7 @@ namespace AirHockey{
         void applyForwardTransform(Vector3d& v_in);
         void applyInverseTransform(Vector3d& v_in);
         void applyInverseRotation(Vector3d& v_in);
-        void getPlannedCartesianState(Vector3d& x, Vector3d& dx, ros::Time& tStart, double t=0);
+        void getPlannedState(Vector3d& x, Vector3d& dx, Kinematics::JointArrayType& q, Kinematics::JointArrayType& dq, ros::Time& tStart, double t=0);
 
     private:
         ros::NodeHandle nh_;
@@ -89,7 +89,7 @@ namespace AirHockey{
         double defendLine_;
         double universalJointHeight_, prepareHeight_;
         double vHitMax_, vDefendMin_, tDefendMin_;
-        double cutPrevY_, cutTimeOffset_;
+        double cutPrevY_, planTimeOffset_;
         std::string controllerName_;
         Vector2d hitRange_;
 

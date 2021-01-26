@@ -132,13 +132,13 @@ void Agent::updateTactic() {
     if (observationState_.puckPredictedState.state.block<2, 1>(2, 0).norm() > vDefendMin_) {
         if (observationState_.puckPredictedState.predictedTime < maxPredictionTime_ - 1e-6) {
             setTactic(Tactics::CUT);
-            if (abs(observationState_.puckPredictedState.state.y() - cutPrevY_) > (malletRadius_)){
+            if (abs(observationState_.puckPredictedState.state.y() - cutPrevY_) > (malletRadius_)) {
                 cutCount_ = 0;
                 cutPrevY_ = observationState_.puckPredictedState.state.y();
             } else {
                 cutCount_ += 1;
             }
-            if (cutCount_ == 10){
+            if (cutCount_ == 10) {
                 ROS_INFO_STREAM("New Cut Motion");
                 startCut(true);
             }
@@ -326,9 +326,13 @@ void Agent::startCut(bool restart) {
         Vector3d xCur, vCur;
         Vector2d xCur2d, vCur2d;
         ros::Time tStart;
-        getPlannedCartesianState(xCur, vCur, tStart, cutTimeOffset_);
+        Kinematics::JointArrayType qStart, dqStart;
+
+        getPlannedState(xCur, vCur, qStart, dqStart, tStart, planTimeOffset_);
+
         applyInverseTransform(xCur);
         applyInverseRotation(vCur);
+
         xCur2d = xCur.block<2, 1>(0, 0);
         vCur2d = vCur.block<2, 1>(0, 0);
         double tStop = boost::algorithm::clamp(observationState_.puckPredictedState.predictedTime - 0.3, tDefendMin_,
@@ -341,50 +345,51 @@ void Agent::startCut(bool restart) {
             jointTrajectory_.points.clear();
             cubicLinearMotion_->plan(xCur2d, vCur2d, xCut, Vector2d(0., 0.), tStop, cartTrajectory_);
             transformTrajectory(cartTrajectory_);
-            if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, observationState_.jointPosition,
+            if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, qStart,
                                                      jointTrajectory_)) {
-                ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
+                ROS_INFO_STREAM("Optimization Failed [Cut]. Increase the motion time: " << tStop);
                 tStop += 0.1;
             } else {
                 jointTrajectory_.header.stamp = tStart;
+                cartTrajectory_.header.stamp = tStart;
                 jointTrajectoryPub_.publish(jointTrajectory_);
                 cartTrajectoryPub_.publish(cartTrajectory_);
                 trajStopTime_ = jointTrajectory_.header.stamp + ros::Duration(tStop);
                 return;
             }
         }
-        ROS_INFO_STREAM("Optimization Failed. Unable to find trajectory for Cut");
+        ROS_INFO_STREAM("Optimization Failed [Cut].");
     }
 }
 
 void Agent::startReady(bool restart) {
     if (ros::Time::now() > trajStopTime_) {
 
-        Vector3d xCur, vCur;
-        Vector2d xCur2d, vCur2d;
-        Kinematics::JacobianPosType jacobian;
-        kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
-        applyInverseTransform(xCur);
-        xCur2d = xCur.block<2, 1>(0, 0);
+        Vector3d xStart, vStart;
+        Vector2d xStart2d, vStart2d;
+        ros::Time tStart;
+        Kinematics::JointArrayType qStart, dqStart;
 
-        kinematics_->jacobianPos(observationState_.jointPosition, jacobian);
-        vCur = jacobian * observationState_.jointVelocity;
-        applyInverseRotation(vCur);
-        vCur2d = vCur.block<2, 1>(0, 0);
+        getPlannedState(xStart, vStart, qStart, dqStart, tStart, planTimeOffset_);
+
+        applyInverseTransform(xStart);
+        applyInverseRotation(vStart);
+
+        xStart2d = xStart.block<2, 1>(0, 0);
+        vStart2d = vStart.block<2, 1>(0, 0);
 
         double tStop = 2.0;
         for (int i = 0; i < 10; ++i) {
             cartTrajectory_.points.clear();
             jointTrajectory_.points.clear();
-
-            cubicLinearMotion_->plan(xCur2d, vCur2d, xHome_, Vector2d(0., 0.), tStop, cartTrajectory_);
+            cubicLinearMotion_->plan(xStart2d, vStart2d, xHome_, Vector2d(0., 0.), tStop, cartTrajectory_);
             transformTrajectory(cartTrajectory_);
-            if (!optimizer_->optimizeJointTrajectoryAnchor(cartTrajectory_, observationState_.jointPosition, qHome_,
-                                                           jointTrajectory_)) {
-                ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
+            if (!optimizer_->optimizeJointTrajectoryAnchor(cartTrajectory_, qStart, qHome_,jointTrajectory_)) {
+                ROS_INFO_STREAM("Optimization Failed [READY]. Increase the motion time: " << tStop);
                 tStop += 0.1;
             } else {
-                jointTrajectory_.header.stamp = ros::Time::now();
+                jointTrajectory_.header.stamp = tStart;
+                cartTrajectory_.header.stamp = tStart;
                 jointTrajectoryPub_.publish(jointTrajectory_);
                 cartTrajectoryPub_.publish(cartTrajectory_);
                 trajStopTime_ = jointTrajectory_.header.stamp + ros::Duration(tStop);
@@ -496,10 +501,12 @@ void Agent::startPrepareCombinatorial(bool restart) {
         xPuck = observationState_.puckPredictedState.state.block<2, 1>(0, 0);
         if (xPuck.y() > 0) {
             double prepare_x = xPuck.x() + 0.2;
-            vPrepare = (2 * Vector2d(prepare_x, tableWidth_ / 2 - puckRadius_) - Vector2d(prepare_x, 0) - xPuck).normalized();
+            vPrepare = (2 * Vector2d(prepare_x, tableWidth_ / 2 - puckRadius_) - Vector2d(prepare_x, 0) -
+                        xPuck).normalized();
         } else {
             double prepare_x = xPuck.x() + 0.2;
-            vPrepare = (2 * Vector2d(prepare_x, -tableWidth_ / 2 + puckRadius_) - Vector2d(prepare_x, 0) - xPuck).normalized();
+            vPrepare = (2 * Vector2d(prepare_x, -tableWidth_ / 2 + puckRadius_) - Vector2d(prepare_x, 0) -
+                        xPuck).normalized();
         }
         xPrepare = xPuck - vPrepare * (puckRadius_ + malletRadius_);
         xPrepare.x() = boost::algorithm::clamp(xPrepare.x(), malletRadius_ + 0.02, tableLength_ - malletRadius_ - 0.02);
@@ -607,7 +614,7 @@ void Agent::loadParam() {
     nh_.getParam("/air_hockey/agent/min_defend_time", tDefendMin_);
     nh_.getParam("/air_hockey/agent/controller", controllerName_);
 
-    nh_.getParam("/air_hockey/agent/defend_time_offset", cutTimeOffset_);
+    nh_.getParam("/air_hockey/agent/plan_time_offset", planTimeOffset_);
 }
 
 void Agent::transformTrajectory(trajectory_msgs::MultiDOFJointTrajectory &cartesianTrajectory) {
@@ -661,9 +668,9 @@ void Agent::applyInverseRotation(Vector3d &v_in_out) {
 }
 
 bool Agent::planReturnTraj(const double &vMax,
-                             trajectory_msgs::MultiDOFJointTrajectoryPoint& lastPoint,
-                             trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
-                             trajectory_msgs::JointTrajectory &jointTrajReturn) {
+                           trajectory_msgs::MultiDOFJointTrajectoryPoint &lastPoint,
+                           trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
+                           trajectory_msgs::JointTrajectory &jointTrajReturn) {
     double vReadyMax = vMax;
     cartTrajReturn.joint_names.push_back("x");
     cartTrajReturn.joint_names.push_back("y");
@@ -701,32 +708,34 @@ bool Agent::planReturnTraj(const double &vMax,
     return false;
 }
 
-void Agent::getPlannedCartesianState(Vector3d &x, Vector3d &dx, ros::Time& tStart, double offset_t) {
-    Kinematics::JointArrayType q, dq;
+void Agent::getPlannedState(Vector3d &x, Vector3d &dx, Kinematics::JointArrayType& q, Kinematics::JointArrayType& dq, ros::Time &tStart, double offset_t) {
     if (offset_t <= 0) {
         q = observationState_.jointPosition;
         dq = observationState_.jointVelocity;
     } else {
-        tStart = ros::Time::now() + ros::Duration(offset_t);
-        ros::Time tLast = jointTrajectory_.header.stamp + jointTrajectory_.points.back().time_from_start;
-
-        if (tStart <= tLast){
-            for (int i = jointTrajectory_.points.size() - 3; i >= 0; --i) {
-                if (tStart > jointTrajectory_.header.stamp + jointTrajectory_.points[i].time_from_start){
-                    for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-                        q[j] = jointTrajectory_.points[i + 2].positions[j];
-                        dq[j] = jointTrajectory_.points[i + 2].velocities[j];
+        if (jointTrajectory_.points.size() > 0) {
+            tStart = ros::Time::now() + ros::Duration(offset_t);
+            ros::Time tLast = jointTrajectory_.header.stamp + jointTrajectory_.points.back().time_from_start;
+            if (tStart <= tLast) {
+                ROS_INFO_STREAM("#####GET STATE");
+                for (int i = jointTrajectory_.points.size() - 1; i >= 0; --i) {
+                    if (tStart > jointTrajectory_.header.stamp + jointTrajectory_.points[i].time_from_start) {
+                        for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+                            q[j] = jointTrajectory_.points[i].positions[j];
+                            dq[j] = jointTrajectory_.points[i].velocities[j];
+                        }
+                        break;
                     }
-                    ROS_INFO_STREAM("Time: " << tStart << " joint: " << q.transpose());
-                    ROS_INFO_STREAM("Now : " << ros::Time::now() << " joint: " << observationState_.jointPosition.transpose());
-                    break;
+                }
+            } else {
+                for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+                    q[j] = jointTrajectory_.points.back().positions[j];
+                    dq[j] = jointTrajectory_.points.back().velocities[j];
                 }
             }
         } else {
-            for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-                q[j] = jointTrajectory_.points.back().positions[j];
-                dq[j] = jointTrajectory_.points.back().velocities[j];
-            }
+            q = observationState_.jointPosition;
+            dq = observationState_.jointVelocity;
         }
     }
 

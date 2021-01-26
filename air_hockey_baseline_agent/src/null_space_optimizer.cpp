@@ -34,6 +34,7 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics *kinematics,
 
     K_ << 10., 10., 10.;
     weights_ << 40., 40., 20., 40., 10., 20., 1.;
+    weightsAnchor_.setOnes();
 }
 
 NullSpaceOptimizer::~NullSpaceOptimizer() {
@@ -173,8 +174,8 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
         return false;
     }
 
-    P_ = (nullSpace_.transpose() * (weights_ * pow(stepSize_, 2)).asDiagonal() * nullSpace_).sparseView();
-    q_ = omega.transpose() * (weights_ * stepSize_).asDiagonal() * nullSpace_;
+    P_ = (nullSpace_.transpose() * (weightsAnchor_ * pow(stepSize_, 2)).asDiagonal() * nullSpace_).sparseView();
+    q_ = omega.transpose() * (weightsAnchor_ * stepSize_).asDiagonal() * nullSpace_;
     A_ = nullSpace_.sparseView();
 
     if (!solver_.clearSolverVariables()) { return false; }

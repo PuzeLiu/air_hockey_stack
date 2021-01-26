@@ -67,7 +67,7 @@ namespace AirHockey {
         iiwas_kinematics::Kinematics::JacobianPosType jacobian_;
         MatrixXd nullSpace_;
 
-        iiwas_kinematics::Kinematics::JointArrayType weights_;
+        iiwas_kinematics::Kinematics::JointArrayType weights_, weightsAnchor_;
     };
 }
 
