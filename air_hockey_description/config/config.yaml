@@ -5,4 +5,4 @@ air_hockey:
   table_length: 1.956
   table_width: 1.042
   goal_width: 0.25
-  pause_region_length: 0.2
+  pause_region_length: 0.156

@@ -70,7 +70,7 @@
                     <contact>
                         <ode>
                             <kp>1e9</kp>
-                            <max_vel>1</max_vel>
+                            <max_vel>10</max_vel>
                         </ode>
                     </contact>
                 </surface>
