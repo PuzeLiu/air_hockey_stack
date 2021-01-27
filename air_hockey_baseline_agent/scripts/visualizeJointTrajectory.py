@@ -7,7 +7,7 @@ import torch
 from iiwas_kinematics import KinematicsTorch
 
 input_dir = os.path.abspath("/home/puze/air_hockey_record")
-file_name = "2021-01-26-19-23-06.bag"
+file_name = "2021-01-27-19-25-44.bag"
 
 desired_positions = []
 desired_velocities = []

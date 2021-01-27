@@ -350,6 +350,8 @@ void Agent::startCut(bool restart) {
                 ROS_INFO_STREAM("Optimization Failed [Cut]. Increase the motion time: " << tStop);
                 tStop += 0.1;
             } else {
+                ROS_INFO_STREAM("Cut Cartesian Time" << cartTrajectory_.points.back().time_from_start - cartTrajectory_.points[cartTrajectory_.points.size() - 2].time_from_start);
+                ROS_INFO_STREAM("Cut Last Velocity" << jointTrajectory_.points.back().velocities[0] << " " << jointTrajectory_.points.back().velocities[1] << " " << jointTrajectory_.points.back().velocities[2] << " " << jointTrajectory_.points.back().velocities[3] << " " << jointTrajectory_.points.back().velocities[4] << " " << jointTrajectory_.points.back().velocities[5] << " " << jointTrajectory_.points.back().velocities[6]);
                 jointTrajectory_.header.stamp = tStart;
                 cartTrajectory_.header.stamp = tStart;
                 jointTrajectoryPub_.publish(jointTrajectory_);
@@ -397,6 +399,7 @@ void Agent::startReady(bool restart) {
             }
         }
         ROS_INFO_STREAM("Optimization Failed. Unable to find trajectory for Ready");
+        exit(42);
     }
 }
 
@@ -709,36 +712,29 @@ bool Agent::planReturnTraj(const double &vMax,
 }
 
 void Agent::getPlannedState(Vector3d &x, Vector3d &dx, Kinematics::JointArrayType& q, Kinematics::JointArrayType& dq, ros::Time &tStart, double offset_t) {
-    if (offset_t <= 0) {
-        q = observationState_.jointPosition;
-        dq = observationState_.jointVelocity;
-    } else {
-        if (jointTrajectory_.points.size() > 0) {
-            tStart = ros::Time::now() + ros::Duration(offset_t);
-            ros::Time tLast = jointTrajectory_.header.stamp + jointTrajectory_.points.back().time_from_start;
-            if (tStart <= tLast) {
-                ROS_INFO_STREAM("#####GET STATE");
-                for (int i = jointTrajectory_.points.size() - 1; i >= 0; --i) {
-                    if (tStart > jointTrajectory_.header.stamp + jointTrajectory_.points[i].time_from_start) {
-                        for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-                            q[j] = jointTrajectory_.points[i].positions[j];
-                            dq[j] = jointTrajectory_.points[i].velocities[j];
-                        }
-                        break;
+    if (jointTrajectory_.points.size() > 0) {
+        tStart = ros::Time::now() + ros::Duration(offset_t);
+        ros::Time tLast = jointTrajectory_.header.stamp + jointTrajectory_.points.back().time_from_start;
+        if (tStart <= tLast) {
+            for (int i = jointTrajectory_.points.size() - 1; i >= 0; --i) {
+                if (tStart > jointTrajectory_.header.stamp + jointTrajectory_.points[i].time_from_start) {
+                    for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+                        q[j] = jointTrajectory_.points[i + 1].positions[j];
+                        dq[j] = jointTrajectory_.points[i + 1].velocities[j];
                     }
-                }
-            } else {
-                for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-                    q[j] = jointTrajectory_.points.back().positions[j];
-                    dq[j] = jointTrajectory_.points.back().velocities[j];
+                    break;
                 }
             }
         } else {
-            q = observationState_.jointPosition;
-            dq = observationState_.jointVelocity;
+            for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+                q[j] = jointTrajectory_.points.back().positions[j];
+                dq[j] = jointTrajectory_.points.back().velocities[j];
+            }
         }
+    } else {
+        q = observationState_.jointPosition;
+        dq = observationState_.jointVelocity;
     }
-
     kinematics_->forwardKinematics(q, x);
     Kinematics::JacobianPosType jacobian;
     kinematics_->jacobianPos(q, jacobian);

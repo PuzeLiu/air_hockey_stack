@@ -78,7 +78,18 @@ bool CubicLinearMotion::plan(const Vector3d &pStart, const Vector3d &vStart, con
         viaPoint_.velocities[0].linear.z = vTmp_[2];
         viaPoint_.time_from_start = ros::Duration(t + t_prev);
         cartTraj.points.push_back(viaPoint_);
+
     }
+
+    viaPoint_.transforms[0].translation.x = pStop[0];
+    viaPoint_.transforms[0].translation.y = pStop[1];
+    viaPoint_.transforms[0].translation.z = pStop[2];
+    viaPoint_.velocities[0].linear.x = vStop[0];
+    viaPoint_.velocities[0].linear.y = vStop[1];
+    viaPoint_.velocities[0].linear.z = vStop[2];
+    viaPoint_.time_from_start = ros::Duration(t + t_prev + stepSize_);
+    cartTraj.points.push_back(viaPoint_);
+
     cartTraj.header.stamp = ros::Time::now();
     return true;
 }

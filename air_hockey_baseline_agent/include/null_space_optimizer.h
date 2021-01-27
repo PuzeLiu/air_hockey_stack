@@ -49,6 +49,7 @@ namespace AirHockey {
     private:
         bool closeLoop_;
         double stepSize_;
+        double beta_;
 
         iiwas_kinematics::Kinematics *kinematics_;
         Observer *observer_;

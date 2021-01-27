@@ -32,9 +32,10 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics *kinematics,
     jointViaPoint_.positions.resize(iiwas_kinematics::NUM_OF_JOINTS);
     jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
 
-    K_ << 10., 10., 10.;
-    weights_ << 40., 40., 20., 40., 10., 20., 1.;
+    K_.setConstant(1/stepSize_);
+    weights_ << 40., 40., 20., 40., 10., 20., 0.;
     weightsAnchor_.setOnes();
+    beta_ = 10;
 }
 
 NullSpaceOptimizer::~NullSpaceOptimizer() {
@@ -84,7 +85,8 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
                                                        trajectory_msgs::JointTrajectory &jointTraj) {
     if (cartTraj.points.size() > 0) {
         Vector3d xDes, dxDes;
-        Kinematics::JointArrayType qCur, qNext, dqNext;
+        Kinematics::JointArrayType qCur, qNext, dqNext, dqAnchorTmp;
+        double tTogo;
 
         qCur = qStart;
 
@@ -97,7 +99,14 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
             dxDes[1] = cartTraj.points[i].velocities[0].linear.y;
             dxDes[2] = cartTraj.points[i].velocities[0].linear.z;
 
-            if (!solveQPAnchor(xDes, dxDes, qCur, qAnchor, qNext, dqNext)) {
+            tTogo = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec();
+            if ( tTogo > 0) {
+                dqAnchorTmp = (qAnchor - qCur) / tTogo;
+            } else {
+                dqAnchorTmp.setZero();
+            }
+
+            if (!solveQPAnchor(xDes, dxDes, qCur, dqAnchorTmp, qNext, dqNext)) {
                 ROS_INFO_STREAM("Failed Anchor Index: " << i);
                 return false;
             }
@@ -127,8 +136,7 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
     kinematics_->jacobianPos(qCur, jacobian_);
     GetNullSpace(jacobian_, nullSpace_);
 
-    auto x_err_pos_ = K_.asDiagonal() * (xDes - xCurPos_);
-    auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() * (x_err_pos_ + dxDes);
+    auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() * (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
 
     if (nullSpace_.cols() != dimNullSpace_) {
         ROS_ERROR_STREAM("Null space of jacobian should be:" << dimNullSpace_);
@@ -157,7 +165,7 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
 bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
                                        const Vector3d &dxDes,
                                        const Kinematics::JointArrayType &qCur,
-                                       const Kinematics::JointArrayType &qAnchor,
+                                       const Kinematics::JointArrayType &dqAnchor,
                                        Kinematics::JointArrayType &qNext,
                                        Kinematics::JointArrayType &dqNext) {
     kinematics_->forwardKinematics(qCur, xCurPos_);
@@ -165,17 +173,16 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
     kinematics_->jacobianPos(qCur, jacobian_);
     GetNullSpace(jacobian_, nullSpace_);
 
-    auto x_err_pos_ = K_.asDiagonal() * (xDes - xCurPos_);
-    auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() * (x_err_pos_ + dxDes);
-    auto omega = qCur - qAnchor + b * stepSize_;
+    auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() * (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
+    auto omega = b - dqAnchor;
 
     if (nullSpace_.cols() != dimNullSpace_) {
         ROS_ERROR_STREAM("Null space of jacobian should be:" << dimNullSpace_);
         return false;
     }
 
-    P_ = (nullSpace_.transpose() * (weightsAnchor_ * pow(stepSize_, 2)).asDiagonal() * nullSpace_).sparseView();
-    q_ = omega.transpose() * (weightsAnchor_ * stepSize_).asDiagonal() * nullSpace_;
+    P_ = (nullSpace_.transpose() * weightsAnchor_.asDiagonal() * nullSpace_).sparseView();
+    q_ = omega.transpose() * weightsAnchor_.asDiagonal() * nullSpace_;
     A_ = nullSpace_.sparseView();
 
     if (!solver_.clearSolverVariables()) { return false; }
