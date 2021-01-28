@@ -21,6 +21,7 @@ Referee::Referee(ros::NodeHandle nh) : nh(nh), tfBuffer(), tfListener(tfBuffer) 
     nh.param("/air_hockey/table_width", tableWidth, 1.042);
     nh.param("/air_hockey/goal_width", goalWidth, 0.25);
     nh.param("/air_hockey/puck_radius", puckRadius, 0.03165);
+    nh.param("/air_hockey/mallet_radius", malletRadius, 0.04815);
     nh.param("/air_hockey/pause_region_length", pauseRegionLength, 0.2);
 
     gameStatusMsg.status = GameStatus::STOP;

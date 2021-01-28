@@ -26,6 +26,8 @@
 
 #include "air_hockey_referee/referee.h"
 #include <gazebo_msgs/SetModelState.h>
+#include <tf2/LinearMath/Matrix3x3.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 namespace AirHockey{
 
@@ -38,9 +40,13 @@ public:
 
 protected:
     bool resetPuck(std::string* res = nullptr);
+    void checkMallet();
 
 private:
     ros::ServiceClient clientResetGazeboPuck;
+    geometry_msgs::TransformStamped tfMalletF, tfMalletB;
+    tf2::Quaternion quatTmp;
+    tf2::Matrix3x3 rotMatTmp;
 
 };
 

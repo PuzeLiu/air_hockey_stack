@@ -58,7 +58,7 @@ private:
     bool serviceResetCallback(air_hockey_referee::ResetRobot::Request &req, air_hockey_referee::ResetRobot::Response &res);
 
 protected:
-    double tableLength, tableWidth, goalWidth, puckRadius, pauseRegionLength;
+    double tableLength, tableWidth, goalWidth, puckRadius, malletRadius, pauseRegionLength;
 
     ros::NodeHandle nh;
     tf2_ros::Buffer tfBuffer;
