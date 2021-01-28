@@ -103,7 +103,7 @@ namespace AirHockey{
 
         ros::Time trajStopTime_;
 
-        int smashCount_, cutCount_;
+        int staticCount, smashCount_, cutCount_;
         double maxPredictionTime_;
         std::mt19937 rng_;
         std::uniform_int_distribution<int> dist_;
