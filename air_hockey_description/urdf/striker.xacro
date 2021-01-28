@@ -123,6 +123,7 @@
                         <threshold>0.0</threshold>
                     </bounce>
                     <contact>
+                        <collide_bitmask>0x02</collide_bitmask>
                         <ode>
                             <kp>1e9</kp>
                             <max_vel>10</max_vel>

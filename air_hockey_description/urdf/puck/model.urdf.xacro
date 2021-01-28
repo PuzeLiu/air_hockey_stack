@@ -68,6 +68,7 @@
                         </ode>
                     </friction>
                     <contact>
+                        <collide_bitmask>0x03</collide_bitmask>
                         <ode>
                             <kp>1e9</kp>
                             <max_vel>10</max_vel>

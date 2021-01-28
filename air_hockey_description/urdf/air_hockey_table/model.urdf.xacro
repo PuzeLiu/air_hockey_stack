@@ -23,6 +23,7 @@
     <xacro:property name="table_rim_vertical_length" value="2.136"/>
     <xacro:property name="table_rim_vertical_width" value="0.09"/>
     <xacro:property name="table_rim_vertical_height" value="0.03"/>
+    <xacro:property name="collide_bitmask" value="0x01"/>
 
     <xacro:macro name="air_hockey_table" params="parent">
         <link name="${parent}"/>
@@ -346,6 +347,7 @@
                         </ode>
                     </friction>
                     <contact>
+                        <collide_bitmask>0x01</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -374,6 +376,7 @@
                         </ode>
                     </friction>
                     <contact>
+                        <collide_bitmask>0x01</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -402,6 +405,7 @@
                         </ode>
                     </friction>
                     <contact>
+                        <collide_bitmask>0x01</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -458,6 +462,7 @@
                         </ode>
                     </friction>
                     <contact>
+                        <collide_bitmask>0x01</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -486,6 +491,7 @@
                         </ode>
                     </friction>
                     <contact>
+                        <collide_bitmask>0x01</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -542,6 +548,7 @@
                         </ode>
                     </friction>
                     <contact>
+                        <collide_bitmask>0x01</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -570,6 +577,7 @@
                         </ode>
                     </friction>
                     <contact>
+                        <collide_bitmask>0x01</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
