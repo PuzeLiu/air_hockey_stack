@@ -32,7 +32,7 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics *kinematics,
     jointViaPoint_.positions.resize(iiwas_kinematics::NUM_OF_JOINTS);
     jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
 
-    K_.setConstant(1/stepSize_);
+    K_.setConstant(1 / stepSize_);
     weights_ << 40., 40., 20., 40., 10., 20., 0.;
     weightsAnchor_.setOnes();
     beta_ = 10;
@@ -63,6 +63,8 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
             if (!solveQP(xDes, dxDes, qCur, qNext, dqNext)) {
                 return false;
             }
+
+            SolveJoint7(qNext);
 
             jointViaPoint_.time_from_start = cartTraj.points[i].time_from_start;
             for (size_t row = 0; row < NUM_OF_JOINTS; row++) {
@@ -100,7 +102,7 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
             dxDes[2] = cartTraj.points[i].velocities[0].linear.z;
 
             tTogo = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec();
-            if ( tTogo > 0) {
+            if (tTogo > 0) {
                 dqAnchorTmp = (qAnchor - qCur) / tTogo;
             } else {
                 dqAnchorTmp.setZero();
@@ -110,6 +112,8 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
                 ROS_INFO_STREAM("Failed Anchor Index: " << i);
                 return false;
             }
+
+            SolveJoint7(qNext);
 
             jointViaPoint_.time_from_start = cartTraj.points[i].time_from_start;
             for (size_t row = 0; row < NUM_OF_JOINTS; row++) {
@@ -136,7 +140,8 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
     kinematics_->jacobianPos(qCur, jacobian_);
     GetNullSpace(jacobian_, nullSpace_);
 
-    auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() * (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
+    auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() *
+             (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
 
     if (nullSpace_.cols() != dimNullSpace_) {
         ROS_ERROR_STREAM("Null space of jacobian should be:" << dimNullSpace_);
@@ -173,7 +178,8 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
     kinematics_->jacobianPos(qCur, jacobian_);
     GetNullSpace(jacobian_, nullSpace_);
 
-    auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() * (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
+    auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() *
+             (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
     auto omega = b - dqAnchor;
 
     if (nullSpace_.cols() != dimNullSpace_) {
@@ -211,3 +217,26 @@ void NullSpaceOptimizer::GetNullSpace(const Kinematics::JacobianPosType &jacobia
     out_null_space = cod.colsPermutation() * out_null_space; // Unpermute the columns
 }
 
+void NullSpaceOptimizer::SolveJoint7(Kinematics::JointArrayType &q) {
+    double qCur = q[6];
+
+    // Set last joint to 0 solve desired joint position
+    q[6] = 0.0;
+    Vector3d eePos;
+    Quaterniond eeQuat;
+    kinematics_->forwardKinematics(q, eePos, eeQuat);
+    Matrix3d mat = eeQuat.toRotationMatrix();
+    Vector3d zAxis(0., 0., 1.);
+    auto yDes = zAxis.cross(mat.col(2)).normalized();
+    double angle = acos(mat.col(1).dot(yDes));
+
+    if (angle >= M_PI_2) {
+        angle -= M_PI;
+    }
+
+//    auto dq = boost::algorithm::clamp((angle - qCur)/stepSize_ ,
+//                                 kinematics_->velLimitsLower_[6] * 0.8,
+//                                 kinematics_->velLimitsUpper_[6]) * 0.8;
+//    q[6] = qCur + dq * stepSize_;
+    q[6] = angle;
+}

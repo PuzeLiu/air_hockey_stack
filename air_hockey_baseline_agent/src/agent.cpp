@@ -81,6 +81,9 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2
         ROS_ERROR_STREAM("Inverse Kinematics fail, unable to find solution for HOME position");
     }
 
+    optimizer_->SolveJoint7(qInit_);
+    optimizer_->SolveJoint7(qHome_);
+
     trajStopTime_ = ros::Time::now();
 }
 

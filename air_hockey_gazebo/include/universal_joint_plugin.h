@@ -7,6 +7,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 #include <ignition/math.hh>
+#include "iiwas_kinematics.h"
 
 namespace gazebo {
     class UniversalJointPlugin : public ModelPlugin {
@@ -27,12 +28,16 @@ namespace gazebo {
         physics::ModelPtr model_;
         physics::WorldPtr world_;
         physics::JointControllerPtr jointController_;
-        ignition::math::Pose3d pose_;
 
-        std::string robotNamespace_, robotBaseLinkName_;
-        std::string eeLinkName_;
+        std::string robotNamespace_;
         std::string jointName1_;
         std::string jointName2_;
+        std::vector<std::string> iiwaJointNames_;
+
+        iiwas_kinematics::Kinematics* kinematics_;
+        iiwas_kinematics::Kinematics::JointArrayType qCur_;
+        Vector3d posCur_;
+        Quaterniond quatCur_;
 
         int debugCounter_;
         bool started_;

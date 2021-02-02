@@ -14,12 +14,13 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   gazebo_ros
   sensor_msgs
+  iiwas_kinematics
 )
 
 find_package(gazebo REQUIRED)
 
 catkin_package(
-  DEPENDS gazebo_ros
+  DEPENDS gazebo_ros iiwas_kinematics
 )
 
 ###########

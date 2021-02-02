@@ -30,6 +30,8 @@ namespace AirHockey {
                                            const Kinematics::JointArrayType &qAnchor,
                                            trajectory_msgs::JointTrajectory &jointTraj);
 
+        void SolveJoint7(Kinematics::JointArrayType &q);
+
     private:
         bool solveQP(const Vector3d &xDes,
                      const Vector3d &dxDes,
