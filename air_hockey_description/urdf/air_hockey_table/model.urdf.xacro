@@ -12,6 +12,7 @@
 
     <xacro:arg name="parent" default="world"/>
     <xacro:arg name="collide_bitmask" default="0x01"/>
+    <xacro:arg name="restitution" default="1.0"/>
 
     <xacro:property name="M_PI" value="3.1415926535897931"/>
     <xacro:property name="table_base_length" value="2.136"/>
@@ -26,7 +27,7 @@
     <xacro:property name="table_rim_vertical_height" value="0.03"/>
 
 
-    <xacro:macro name="air_hockey_table" params="parent collide_bitmask">
+    <xacro:macro name="air_hockey_table" params="parent collide_bitmask restitution">
         <link name="${parent}"/>
         <joint name="base_joint" type="fixed">
             <origin xyz="0 0 ${-table_base_height/2}" rpy="0 0 0"/>
@@ -53,7 +54,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="1.0"/>
+                <restitution value="${restitution}"/>
                 <lateral_friction value="1.0"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -100,7 +101,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="1.0"/>
+                <restitution value="${restitution}"/>
                 <lateral_friction value="0.0"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -133,7 +134,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="1.0"/>
+                <restitution value="${restitution}"/>
                 <lateral_friction value="0.0"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -166,7 +167,7 @@
 <!--                </geometry>-->
 <!--            </collision>-->
             <contact>
-                <restitution value="1.0"/>
+                <restitution value="${restitution}"/>
                 <lateral_friction value="0.0"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -199,7 +200,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="1.0"/>
+                <restitution value="${restitution}"/>
                 <lateral_friction value="0.0"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -232,7 +233,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="1.0"/>
+                <restitution value="${restitution}"/>
                 <lateral_friction value="0.0"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -259,7 +260,7 @@
                 <material name="grey"/>
             </visual>
             <contact>
-                <restitution value="1.0"/>
+                <restitution value="${restitution}"/>
                 <lateral_friction value="0.0"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -292,7 +293,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="1.0"/>
+                <restitution value="${restitution}"/>
                 <lateral_friction value="0.0"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -325,7 +326,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="1.0"/>
+                <restitution value="${restitution}"/>
                 <lateral_friction value="0.0"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -336,7 +337,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <restitution_coefficient>${restitution}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -365,7 +366,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <restitution_coefficient>${restitution}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -394,7 +395,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <restitution_coefficient>${restitution}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -423,7 +424,7 @@
 <!--            <collision>-->
 <!--                <surface>-->
 <!--                    <bounce>-->
-<!--                        <restitution_coefficient>1.0</restitution_coefficient>-->
+<!--                        <restitution_coefficient>${restitution}</restitution_coefficient>-->
 <!--                        <threshold>0</threshold>-->
 <!--                    </bounce>-->
 <!--                    <friction>-->
@@ -451,7 +452,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <restitution_coefficient>${restitution}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -480,7 +481,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <restitution_coefficient>${restitution}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -509,7 +510,7 @@
 <!--            <collision>-->
 <!--                <surface>-->
 <!--                    <bounce>-->
-<!--                        <restitution_coefficient>1.0</restitution_coefficient>-->
+<!--                        <restitution_coefficient>${restitution}</restitution_coefficient>-->
 <!--                        <threshold>0</threshold>-->
 <!--                    </bounce>-->
 <!--                    <friction>-->
@@ -537,7 +538,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <restitution_coefficient>${restitution}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -566,7 +567,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>1.0</restitution_coefficient>
+                        <restitution_coefficient>${restitution}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -593,6 +594,8 @@
         </gazebo>
     </xacro:macro>
 
-    <xacro:air_hockey_table parent="$(arg parent)" collide_bitmask="$(arg collide_bitmask)"/>
+    <xacro:air_hockey_table parent="$(arg parent)"
+                            collide_bitmask="$(arg collide_bitmask)"
+                            restitution="$(arg restitution)"/>
 </robot>
 
