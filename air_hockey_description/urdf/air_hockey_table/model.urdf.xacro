@@ -11,6 +11,7 @@
     </material>
 
     <xacro:arg name="parent" default="world"/>
+    <xacro:arg name="collide_bitmask" default="0x01"/>
 
     <xacro:property name="M_PI" value="3.1415926535897931"/>
     <xacro:property name="table_base_length" value="2.136"/>
@@ -23,9 +24,9 @@
     <xacro:property name="table_rim_vertical_length" value="2.136"/>
     <xacro:property name="table_rim_vertical_width" value="0.09"/>
     <xacro:property name="table_rim_vertical_height" value="0.03"/>
-    <xacro:property name="collide_bitmask" value="0x01"/>
 
-    <xacro:macro name="air_hockey_table" params="parent">
+
+    <xacro:macro name="air_hockey_table" params="parent collide_bitmask">
         <link name="${parent}"/>
         <joint name="base_joint" type="fixed">
             <origin xyz="0 0 ${-table_base_height/2}" rpy="0 0 0"/>
@@ -347,7 +348,7 @@
                         </ode>
                     </friction>
                     <contact>
-                        <collide_bitmask>0x01</collide_bitmask>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -376,7 +377,7 @@
                         </ode>
                     </friction>
                     <contact>
-                        <collide_bitmask>0x01</collide_bitmask>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -405,7 +406,7 @@
                         </ode>
                     </friction>
                     <contact>
-                        <collide_bitmask>0x01</collide_bitmask>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -462,7 +463,7 @@
                         </ode>
                     </friction>
                     <contact>
-                        <collide_bitmask>0x01</collide_bitmask>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -491,7 +492,7 @@
                         </ode>
                     </friction>
                     <contact>
-                        <collide_bitmask>0x01</collide_bitmask>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -548,7 +549,7 @@
                         </ode>
                     </friction>
                     <contact>
-                        <collide_bitmask>0x01</collide_bitmask>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -577,7 +578,7 @@
                         </ode>
                     </friction>
                     <contact>
-                        <collide_bitmask>0x01</collide_bitmask>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <max_vel>10</max_vel>
                         </ode>
@@ -592,6 +593,6 @@
         </gazebo>
     </xacro:macro>
 
-    <xacro:air_hockey_table parent="$(arg parent)"/>
+    <xacro:air_hockey_table parent="$(arg parent)" collide_bitmask="$(arg collide_bitmask)"/>
 </robot>
 
