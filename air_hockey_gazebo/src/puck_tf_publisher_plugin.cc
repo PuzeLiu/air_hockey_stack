@@ -35,7 +35,6 @@ void PuckTFPublisher::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
 
     rosnode_->param<std::string>("parent_frame_id", transformMsg_.header.frame_id, "world");
     rosnode_->param<std::string>("child_frame_id", transformMsg_.child_frame_id, "Puck");
-    ROS_INFO_STREAM(rosnode_->getNamespace() << " ########### TF ID:" << transformMsg_.child_frame_id);
 
     this->update_rate_ = 100.0;
     if (_model->GetSDF()->HasElement("updateRate")){

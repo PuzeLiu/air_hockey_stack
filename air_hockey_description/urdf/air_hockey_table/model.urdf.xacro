@@ -12,7 +12,10 @@
 
     <xacro:arg name="parent" default="world"/>
     <xacro:arg name="collide_bitmask" default="0x01"/>
-    <xacro:arg name="restitution" default="1.0"/>
+    <xacro:arg name="restitution" default="0.68"/>
+    <xacro:arg name="lateral_friction" default="1.0"/>
+    <xacro:arg name="rolling_friction" default="1.0"/>
+    <xacro:arg name="spinning_friction" default="1.0"/>
 
     <xacro:property name="M_PI" value="3.1415926535897931"/>
     <xacro:property name="table_base_length" value="2.136"/>
@@ -27,7 +30,8 @@
     <xacro:property name="table_rim_vertical_height" value="0.03"/>
 
 
-    <xacro:macro name="air_hockey_table" params="parent collide_bitmask restitution">
+    <xacro:macro name="air_hockey_table" params="parent collide_bitmask restitution
+                                                 lateral_friction rolling_friction spinning_friction">
         <link name="${parent}"/>
         <joint name="base_joint" type="fixed">
             <origin xyz="0 0 ${-table_base_height/2}" rpy="0 0 0"/>
@@ -344,8 +348,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0.04</mu>
-                            <mu2>0.04</mu2>
+                            <mu>${lateral_friction}</mu>
+                            <mu2>${lateral_friction}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -373,8 +377,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0.04</mu>
-                            <mu2>0.04</mu2>
+                            <mu>${lateral_friction}</mu>
+                            <mu2>${lateral_friction}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -402,8 +406,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0.04</mu>
-                            <mu2>0.04</mu2>
+                            <mu>${lateral_friction}</mu>
+                            <mu2>${lateral_friction}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -431,8 +435,8 @@
 <!--                        &lt;!&ndash; For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 &ndash;&gt;-->
 <!--                        &lt;!&ndash; https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc &ndash;&gt;-->
 <!--                        <ode>-->
-<!--                            <mu>0.04</mu>-->
-<!--                            <mu2>0.04</mu2>-->
+<!--                            <mu>${lateral_friction}</mu>-->
+<!--                            <mu2>${lateral_friction}</mu2>-->
 <!--                        </ode>-->
 <!--                    </friction>-->
 <!--                    <contact>-->
@@ -459,8 +463,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0.04</mu>
-                            <mu2>0.04</mu2>
+                            <mu>${lateral_friction}</mu>
+                            <mu2>${lateral_friction}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -488,8 +492,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0.04</mu>
-                            <mu2>0.04</mu2>
+                            <mu>${lateral_friction}</mu>
+                            <mu2>${lateral_friction}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -517,8 +521,8 @@
 <!--                        &lt;!&ndash; For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 &ndash;&gt;-->
 <!--                        &lt;!&ndash; https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc &ndash;&gt;-->
 <!--                        <ode>-->
-<!--                            <mu>0.04</mu>-->
-<!--                            <mu2>0.04</mu2>-->
+<!--                            <mu>${lateral_friction}</mu>-->
+<!--                            <mu2>${lateral_friction}</mu2>-->
 <!--                        </ode>-->
 <!--                    </friction>-->
 <!--                    <contact>-->
@@ -545,8 +549,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0.04</mu>
-                            <mu2>0.04</mu2>
+                            <mu>${lateral_friction}</mu>
+                            <mu2>${lateral_friction}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -574,8 +578,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>0.04</mu>
-                            <mu2>0.04</mu2>
+                            <mu>${lateral_friction}</mu>
+                            <mu2>${lateral_friction}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -596,6 +600,9 @@
 
     <xacro:air_hockey_table parent="$(arg parent)"
                             collide_bitmask="$(arg collide_bitmask)"
-                            restitution="$(arg restitution)"/>
+                            restitution="$(arg restitution)"
+                            lateral_friction="$(arg lateral_friction)"
+                            rolling_friction="$(arg rolling_friction)"
+                            spinning_friction="$(arg spinning_friction)"/>
 </robot>
 

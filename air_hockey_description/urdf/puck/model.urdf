@@ -39,28 +39,32 @@
       </geometry>
     </collision>
     <contact>
-      <restitution value="0.8"/>
-      <lateral_friction value="0.02"/>
+      <restitution value="1.0"/>
+      <lateral_friction value="1.0"/>
       <rolling_friction value="0.0"/>
-      <spinning_friction value="0.02"/>
+      <spinning_friction value="1.0"/>
     </contact>
   </link>
   <gazebo reference="Puck">
     <collision>
       <surface>
         <bounce>
-          <restitution_coefficient>0.8</restitution_coefficient>
-          <threshold>0.01</threshold>
+          <restitution_coefficient>1.0</restitution_coefficient>
+          <threshold>0.0</threshold>
         </bounce>
         <friction>
           <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
           <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
           <torsional>
+            <coefficient>1.0</coefficient>
+            <use_patch_radius>false</use_patch_radius>
             <surface_radius>0.03165</surface_radius>
           </torsional>
           <ode>
-            <mu>0.02</mu>
-            <mu2>0.02</mu2>
+            <mu>1.0</mu>
+            <mu2>1.0</mu2>
+            <slip1>1.0</slip1>
+            <slip2>1.0</slip2>
           </ode>
         </friction>
         <contact>
@@ -75,7 +79,7 @@
     <material>Gazebo/Red</material>
   </gazebo>
   <gazebo>
-    <updateRate>100.0</updateRate>
+    <updateRate>500.0</updateRate>
     <plugin filename="libpuck_tf_plugin.so" name="puck_tf_plugin">
             </plugin>
   </gazebo>
