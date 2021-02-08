@@ -38,14 +38,12 @@ int main(int argc, char **argv) {
     bool useGazebo;
     nh.getParam("gazebo", useGazebo);
     if (useGazebo){
-        ROS_INFO_STREAM("##########Use gazebo");
         GazeboReferee referee(nh);
         while (ros::ok()){
             referee.update();
             rate.sleep();
         }
     } else{
-        ROS_INFO_STREAM("##########Use Real Robot");
         RealWorldReferee referee(nh);
         while (ros::ok()){
             referee.update();

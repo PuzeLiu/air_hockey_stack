@@ -20,6 +20,7 @@ namespace AirHockey {
         Kinematics::JointArrayType jointVelocity;
         Kinematics::JointArrayType jointDesiredPosition;
         Kinematics::JointArrayType jointDesiredVelocity;
+        State puckEstimatedState;
         PuckPredictedState puckPredictedState;
         air_hockey_referee::GameStatus gameStatus;
     };

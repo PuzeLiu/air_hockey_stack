@@ -62,6 +62,7 @@ namespace AirHockey{
         void applyForwardTransform(Vector3d& v_in);
         void applyInverseTransform(Vector3d& v_in);
         void applyInverseRotation(Vector3d& v_in);
+        void getPlannedState(Vector3d& x, Vector3d& dx, Kinematics::JointArrayType& q, Kinematics::JointArrayType& dq, ros::Time& tStart, double t=0);
 
     private:
         ros::NodeHandle nh_;
@@ -76,7 +77,7 @@ namespace AirHockey{
         GameStatus gameStatusPrev_;
 
         iiwas_kinematics::Kinematics::JointArrayType qRef_, qHome_, qInit_;
-        Vector2d xHome_, xGoal_, xCutPrev_;
+        Vector2d xHome_, xGoal_;
         Vector3d xPrepare_;
         trajectory_msgs::MultiDOFJointTrajectory cartTrajectory_;
         trajectory_msgs::JointTrajectory jointTrajectory_;
@@ -88,6 +89,7 @@ namespace AirHockey{
         double defendLine_;
         double universalJointHeight_, prepareHeight_;
         double vHitMax_, vDefendMin_, tDefendMin_;
+        double cutPrevY_, planTimeOffset_;
         std::string controllerName_;
         Vector2d hitRange_;
 
@@ -101,7 +103,7 @@ namespace AirHockey{
 
         ros::Time trajStopTime_;
 
-        double smashCount_;
+        int staticCount, smashCount_, cutCount_;
         double maxPredictionTime_;
         std::mt19937 rng_;
         std::uniform_int_distribution<int> dist_;

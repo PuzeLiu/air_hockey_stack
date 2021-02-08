@@ -20,7 +20,7 @@ CombinatorialHit::~CombinatorialHit() {
 }
 
 bool CombinatorialHit::plan(const Vector2d &xStart, const Vector2d &xHit, const Vector2d &vHit,
-                            trajectory_msgs::MultiDOFJointTrajectory &cartTraj) {
+                            trajectory_msgs::MultiDOFJointTrajectory &cartTraj, double stopTime) {
     xStart_ = xStart;
     xHit_ = xHit;
     vecDir2_ = vHit.normalized();
@@ -28,7 +28,7 @@ bool CombinatorialHit::plan(const Vector2d &xStart, const Vector2d &xHit, const 
 
     if (!getMiddlePoint()){ return false; }
     if (!getArcCenter()){ return false;}
-    fitPhase();
+    fitPhase(stopTime);
 
     double t_prev;
     if (cartTraj.points.size() == 0){
@@ -116,9 +116,9 @@ bool CombinatorialHit::getArcCenter() {
     return true;
 }
 
-void CombinatorialHit::fitPhase() {
+void CombinatorialHit::fitPhase(double stopTime) {
     tHit_ = 2 * lHit_ / vHitMag_;
-    tStop_ = tHit_ + 0.2;
+    tStop_ = tHit_ + stopTime;
     phaseCoeff_[0] = 0.;
     phaseCoeff_[1] = 0.;
     phaseCoeff_[2] = 0.;

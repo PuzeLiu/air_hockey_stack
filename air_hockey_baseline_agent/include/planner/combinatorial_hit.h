@@ -15,12 +15,12 @@ public:
     ~CombinatorialHit();
 
     bool plan(const Vector2d &xStart, const Vector2d &xHit, const Vector2d &vHit,
-              trajectory_msgs::MultiDOFJointTrajectory &cartTraj);
+              trajectory_msgs::MultiDOFJointTrajectory &cartTraj, double stopTime=0.2);
 
 private:
     bool getMiddlePoint();
     bool getArcCenter();
-    void fitPhase();
+    void fitPhase(double stopTime=0.2);
     void getPoint(const double t);
 
 private:

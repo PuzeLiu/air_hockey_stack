@@ -49,6 +49,7 @@ public:
 
 protected:
     virtual bool resetPuck(std::string* msg = nullptr) = 0;
+    bool isPuckOnTable();
 
 private:
     bool serviceStartCallback(air_hockey_referee::StartGame::Request &req, air_hockey_referee::StartGame::Response &res);
@@ -57,20 +58,16 @@ private:
     bool serviceResetCallback(air_hockey_referee::ResetRobot::Request &req, air_hockey_referee::ResetRobot::Response &res);
 
 protected:
-    double tableLength, tableWidth, goalWidth, puckRadius;
+    double tableLength, tableWidth, goalWidth, puckRadius, malletRadius, pauseRegionLength;
 
-private:
     ros::NodeHandle nh;
     tf2_ros::Buffer tfBuffer;
     tf2_ros::TransformListener tfListener;
     ros::Publisher statusPub;
     ros::ServiceServer serviceStart, serviceStop, servicePause, serviceReset;
 
-    geometry_msgs::TransformStamped tfPuck, tfTable;
+    geometry_msgs::TransformStamped tfPuck, tfPuckPrev;
     air_hockey_referee::GameStatus gameStatusMsg;
-
-
-    ros::Time stampPrev;
 };
 }
 

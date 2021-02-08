@@ -27,6 +27,7 @@ void Observer::jointStateCallback(const control_msgs::JointTrajectoryControllerS
 
 const ObservationState& Observer::getObservation() {
     observationState_.puckPredictedState = puckTracker_.getPredictedState();
+    observationState_.puckEstimatedState = puckTracker_.getEstimatedState();
     ros::spinOnce();
     return observationState_;
 }

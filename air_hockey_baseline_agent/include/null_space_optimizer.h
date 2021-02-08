@@ -30,6 +30,8 @@ namespace AirHockey {
                                            const Kinematics::JointArrayType &qAnchor,
                                            trajectory_msgs::JointTrajectory &jointTraj);
 
+        void SolveJoint7(Kinematics::JointArrayType &q);
+
     private:
         bool solveQP(const Vector3d &xDes,
                      const Vector3d &dxDes,
@@ -49,6 +51,7 @@ namespace AirHockey {
     private:
         bool closeLoop_;
         double stepSize_;
+        double beta_;
 
         iiwas_kinematics::Kinematics *kinematics_;
         Observer *observer_;
@@ -67,7 +70,7 @@ namespace AirHockey {
         iiwas_kinematics::Kinematics::JacobianPosType jacobian_;
         MatrixXd nullSpace_;
 
-        iiwas_kinematics::Kinematics::JointArrayType weights_;
+        iiwas_kinematics::Kinematics::JointArrayType weights_, weightsAnchor_;
     };
 }
 

@@ -2,9 +2,9 @@
 
 using namespace gazebo;
 
-UniversalJointPlugin::UniversalJointPlugin(): nh_("/"){
-
-
+UniversalJointPlugin::UniversalJointPlugin(): nh_("/") {
+    kinematics_ = new iiwas_kinematics::Kinematics(Vector3d(0., 0., 0.),
+                                                   Quaterniond(1., 0., 0., 0.));
 }
 
 UniversalJointPlugin::~UniversalJointPlugin() {
@@ -17,18 +17,17 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPt
     this->world_ = model_->GetWorld();
     this->robotNamespace_ = _sdf->GetElement ( "robotNamespace" )->Get<std::string>();
 
+    std::string prefix;
     if (this->robotNamespace_ == "/iiwa_front/"){
         jointStatePub_ = nh_.advertise<sensor_msgs::JointState>(this->robotNamespace_ + "joint_states", 1);
-        robotBaseLinkName_ = "front_base";
-        eeLinkName_ = "F_link_ee";
+        prefix = "F";
         jointName1_ = "iiwa_front::F_striker_joint_1";
         jointName2_ = "iiwa_front::F_striker_joint_2";
         universalJointState_.name.push_back("F_striker_joint_1");
         universalJointState_.name.push_back("F_striker_joint_2");
     } else if (this->robotNamespace_ == "/iiwa_back/"){
         jointStatePub_ = nh_.advertise<sensor_msgs::JointState>(this->robotNamespace_ + "joint_states", 1);
-        robotBaseLinkName_ = "back_base";
-        eeLinkName_ = "B_link_ee";
+        prefix = "B";
         jointName1_ = "iiwa_back::B_striker_joint_1";
         jointName2_ = "iiwa_back::B_striker_joint_2";
         universalJointState_.name.push_back("B_striker_joint_1");
@@ -36,6 +35,14 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model, sdf::ElementPt
     } else {
         ROS_ERROR_STREAM_NAMED("Universal Joint Plugin" , "No namespace for the iiwa. Use /iiwa_front or /iiwa_back.");
     }
+
+    iiwaJointNames_.push_back(prefix + "_joint_1");
+    iiwaJointNames_.push_back(prefix + "_joint_2");
+    iiwaJointNames_.push_back(prefix + "_joint_3");
+    iiwaJointNames_.push_back(prefix + "_joint_4");
+    iiwaJointNames_.push_back(prefix + "_joint_5");
+    iiwaJointNames_.push_back(prefix + "_joint_6");
+    iiwaJointNames_.push_back(prefix + "_joint_7");
 
     universalJointState_.position.resize(2);
     universalJointState_.velocity.push_back(0.);
@@ -61,44 +68,26 @@ void UniversalJointPlugin::OnUpdate() {
         this->jointController_->SetPositionPID(jointName2_, pid);
         started_ = true;
     } else{
-        ignition::math::Pose3d poseBase;
-        poseBase = this->model_->GetLink(robotBaseLinkName_)->WorldPose();
-        poseBase.Pos().Z() += 0.015;
-        auto poseEETip2World = this->model_->GetLink(eeLinkName_)->WorldPose();
-        auto pose = poseBase.Inverse() * poseEETip2World;
-        auto quat = pose.Rot();
+        if (this->model_->GetJoints().size()!=0){
+            for (int i = 0; i < iiwaJointNames_.size(); ++i) {
+                qCur_[i] = this->model_->GetJoint(iiwaJointNames_[i])->Position();
+            }
+            kinematics_->forwardKinematics(qCur_, posCur_, quatCur_);
 
-        double q1, q2;
-        if (pow(quat.W(), 2) - pow(quat.X(), 2) - pow(quat.Y(), 2) + pow(quat.Z(), 2) != 0){
-            q1 = atan2(-2 * (quat.W() * quat.Y() - quat.X() * quat.Z()),
-                       (pow(quat.W(), 2) - pow(quat.X(), 2) - pow(quat.Y(), 2) + pow(quat.Z(), 2)));
-        }
+            double q1, q2;
 
-        if (q1 < -M_PI_2){
-            q1 += M_PI;
-        } else if (q1 > M_PI_2){
-            q1 -= M_PI;
-        }
+            q1 = acos(quatCur_.toRotationMatrix().col(2).dot(Vector3d(0., 0., -1)));
+            q2 = 0.;
 
-        q2 = asin(ignition::math::clamp<double>((quat.W() * quat.X() - quat.Y(), quat.Z()) * 2, -1, 1));
+            this->jointController_->SetPositionTarget(jointName1_, q1);
+            this->jointController_->SetPositionTarget(jointName2_, q2);
+            this->jointController_->Update();
 
-        this->jointController_->SetPositionTarget(jointName1_, q1);
-        this->jointController_->SetPositionTarget(jointName2_, q2);
-        this->jointController_->Update();
+            universalJointState_.header.stamp = ros::Time::now();
+            universalJointState_.position[0] = this->model_->GetJoint(jointName1_)->Position();
+            universalJointState_.position[1] = this->model_->GetJoint(jointName2_)->Position();
+            jointStatePub_.publish(universalJointState_);
 
-        universalJointState_.header.stamp = ros::Time::now();
-        universalJointState_.position[0] = this->model_->GetJoint(jointName1_)->Position();
-        universalJointState_.position[1] = this->model_->GetJoint(jointName2_)->Position();
-        jointStatePub_.publish(universalJointState_);
-
-        debugCounter_ +=1;
-        if (robotNamespace_ == "/iiwa_front/" && debugCounter_ > 100){
-            debugCounter_ = 0;
-            ROS_DEBUG_STREAM("[Desired ]" << " q1: " << q1 << " q2: " << q2);
-            ROS_DEBUG_STREAM("[Actual  ]" << " q1: " << this->model_->GetJoint(jointName1_)->Position() << " q2: " << this->model_->GetJoint(jointName2_)->Position());
-            ROS_DEBUG_STREAM("[Command ]" << " q1: " << this->jointController_->GetPositionPIDs()[jointName1_].GetCmd());
-            ROS_DEBUG_STREAM("[Command Out]" << " q1: " << this->model_->GetJointController()->GetVelocityPIDs()[jointName1_].GetCmd() << " q2: " << this->jointController_->GetPositionPIDs()[jointName2_].GetCmd());
-            ROS_DEBUG_STREAM("[Velocity]" << " q1: " << this->jointController_->GetVelocities()[jointName1_] << " q2: " << this->jointController_->GetVelocities()[jointName2_]);
         }
     }
 }

@@ -7,7 +7,7 @@ import torch
 from iiwas_kinematics import KinematicsTorch
 
 input_dir = os.path.abspath("/home/puze/air_hockey_record")
-file_name = "2021-01-18-11-09-50.bag"
+file_name = "2021-01-27-19-25-44.bag"
 
 desired_positions = []
 desired_velocities = []
@@ -23,8 +23,8 @@ kinematics = KinematicsTorch(torch.tensor([0., 0., 0.515]), torch.tensor([0., 0.
 
 bag = rosbag.Bag(os.path.join(input_dir, file_name))
 for topic, msg, t in bag.read_messages():
-    if topic == "/iiwa_front/joint_position_trajectory_controller/state":
-        msg:JointTrajectory
+    if topic == "/iiwa_back/joint_position_trajectory_controller/state":
+        msg: JointTrajectory
         desired_positions.append(msg.desired.positions)
         desired_velocities.append(msg.desired.velocities)
         actual_positions.append(msg.actual.positions)
@@ -47,11 +47,13 @@ time = np.array(time)
 
 for i in range(7):
     fig, axes = plt.subplots(2)
-    fig.suptitle("Joint_" + str(i+1))
-    axes[0].plot(time, desired_positions[:, i])
-    axes[0].plot(time, actual_positions[:, i])
-    axes[1].plot(time, desired_velocities[:, i])
-    axes[1].plot(time, actual_velocities[:, i])
+    fig.suptitle("Joint_" + str(i + 1))
+    axes[0].scatter(time, desired_positions[:, i], s=3)
+    axes[0].scatter(time, actual_positions[:, i], s=3)
+    # axes[0].plot(time, error_positions[:, i])
+    axes[1].scatter(time, desired_velocities[:, i], s=3)
+    axes[1].scatter(time, actual_velocities[:, i], s=3)
+    # axes[1].plot(time, error_velocities[:, i])
 
 fig, axes = plt.subplots(3)
 fig.suptitle("Cartesian Position")

@@ -3,8 +3,6 @@
 using namespace gazebo;
 
 PuckTFPublisher::PuckTFPublisher() {
-    transformMsg_.header.frame_id = "world";
-    transformMsg_.child_frame_id = "Puck";
     update_rate_ = 0.;
     update_period_ = 0.;
 }
@@ -33,7 +31,10 @@ void PuckTFPublisher::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf) {
     } else {
         this->robot_namespace_ = _sdf->GetElement ( "robotNamespace" )->Get<std::string>();
     }
-    rosnode_ = boost::shared_ptr<ros::NodeHandle> ( new ros::NodeHandle ( this->robot_namespace_ ) );
+    rosnode_ = boost::shared_ptr<ros::NodeHandle> ( new ros::NodeHandle (this->robot_namespace_) );
+
+    rosnode_->param<std::string>("parent_frame_id", transformMsg_.header.frame_id, "world");
+    rosnode_->param<std::string>("child_frame_id", transformMsg_.child_frame_id, "Puck");
 
     this->update_rate_ = 100.0;
     if (_model->GetSDF()->HasElement("updateRate")){

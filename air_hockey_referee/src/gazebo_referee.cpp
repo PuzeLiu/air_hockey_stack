@@ -41,7 +41,7 @@ bool GazeboReferee::resetPuck(std::string* msg)
 	gazebo_msgs::SetModelState::Response puckStateRes;
 	puckStateReq.model_state.model_name = "puck";
 	puckStateReq.model_state.reference_frame = "air_hockey_table::Table";
-	puckStateReq.model_state.pose.position.z = 0.0565;
+	puckStateReq.model_state.pose.position.z = 0.01;
 	Eigen::Vector2d vec;
 	vec.setRandom();
 	puckStateReq.model_state.pose.position.x = vec.x() * (tableLength - 2 * puckRadius) / 2;
@@ -56,6 +56,50 @@ bool GazeboReferee::resetPuck(std::string* msg)
 	return puckStateRes.success;
 }
 
+void GazeboReferee::update() {
+    Referee::update();
+    checkMallet();
+    if (gameStatusMsg.status == GameStatus::PAUSE){
+        ros::Duration(5.0).sleep();
+        resetPuck(nullptr);
+        if (isPuckOnTable()) {
+            gameStatusMsg.status = GameStatus::START;
+            statusPub.publish(gameStatusMsg);
+            ROS_INFO_STREAM("Game Restarted");
+        }
+    }
 }
 
+    void GazeboReferee::checkMallet() {
+        if (gameStatusMsg.status == GameStatus::START) {
+            tfMalletF = tfBuffer.lookupTransform("Table", "F_striker_mallet_tip", ros::Time(0), ros::Duration(1.0));
+            tf2::fromMsg(tfMalletF.transform.rotation, quatTmp);
+            rotMatTmp.setRotation(quatTmp);
 
+            if (abs(tfMalletF.transform.translation.x) > (tableLength / 2 - malletRadius - 0.01) ||
+                abs(tfMalletF.transform.translation.y) > (tableWidth / 2 - malletRadius - 0.01) ||
+                abs(rotMatTmp.getColumn(2).getZ()) < 0.9) {
+                ROS_WARN_STREAM("[Referee]: Detect exceptional position on F_striker_mallet_tip, Game Stop");
+                gameStatusMsg.status = GameStatus::STOP;
+                gameStatusMsg.score_away = 0;
+                gameStatusMsg.score_home = 0;
+                statusPub.publish(gameStatusMsg);
+            }
+
+            tfMalletB = tfBuffer.lookupTransform("Table", "B_striker_mallet_tip", ros::Time(0), ros::Duration(1.0));
+            tf2::fromMsg(tfMalletB.transform.rotation, quatTmp);
+            rotMatTmp.setRotation(quatTmp);
+
+            if (abs(tfMalletB.transform.translation.x) > (tableLength / 2 - malletRadius - 0.01) ||
+                abs(tfMalletB.transform.translation.y) > (tableWidth / 2 - malletRadius - 0.01) ||
+                abs(rotMatTmp.getColumn(2).getZ()) < 0.9) {
+                ROS_WARN_STREAM("[Referee]: Detect exceptional position on B_striker_mallet_tip, Game Stop");
+                gameStatusMsg.status = GameStatus::STOP;
+                gameStatusMsg.score_away = 0;
+                gameStatusMsg.score_home = 0;
+                statusPub.publish(gameStatusMsg);
+            }
+        }
+    }
+
+}

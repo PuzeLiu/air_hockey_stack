@@ -53,6 +53,8 @@ namespace AirHockey {
 
         const PuckPredictedState& getPredictedState();
 
+        const State& getEstimatedState();
+
         void reset();
 
     private:
