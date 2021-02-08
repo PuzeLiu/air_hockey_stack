@@ -251,7 +251,7 @@ void Agent::gotoHome(bool restart) {
 
 double Agent::updateGoal(Vector2d puckPosition) {
     auto random_integer = dist_(rng_);
-//    random_integer = 0;
+    random_integer = 0;
     if (puckPosition(1) > 0.1) {
         xGoal_.x() = tableLength_;
         xGoal_.y() = -0.1;
