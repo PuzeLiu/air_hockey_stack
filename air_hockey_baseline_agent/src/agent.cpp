@@ -340,8 +340,12 @@ void Agent::startCut(bool restart) {
             jointTrajectory_.points.clear();
             cubicLinearMotion_->plan(xCur2d, vCur2d, xCut, Vector2d(0., 0.), tStop, cartTrajectory_);
             transformTrajectory(cartTrajectory_);
+//            Kinematics::JointArrayType qAnchor;
+//            qAnchor << 0., 0., 0., 0., 0., 0, 0.;
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, observationState_.jointPosition,
                                                      jointTrajectory_)) {
+//            if (!optimizer_->optimizeJointTrajectoryAnchor(cartTrajectory_, observationState_.jointPosition, qAnchor,
+//                                                     jointTrajectory_)) {
                 ROS_INFO_STREAM("Optimization Failed. Increase the motion time: " << tStop);
                 tStop += 0.1;
             } else {
