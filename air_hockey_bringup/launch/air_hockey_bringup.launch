@@ -32,7 +32,7 @@
         </node>
     </group>
 
-    <include file="$(find ias_optitrack_bridge)/launch/optitrack_tf.launch">
+    <include file="$(find optitrack_bridge)/launch/optitrack.launch">
         <arg name="output" value="log"/>
     </include>
 

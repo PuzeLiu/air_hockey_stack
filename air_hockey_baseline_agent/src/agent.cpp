@@ -251,7 +251,7 @@ void Agent::gotoHome(bool restart) {
 
 double Agent::updateGoal(Vector2d puckPosition) {
     auto random_integer = dist_(rng_);
-//    random_integer = 0;
+    random_integer = 0;
     if (puckPosition(1) > 0.1) {
         xGoal_.x() = tableLength_;
         xGoal_.y() = -0.1;
@@ -358,6 +358,7 @@ void Agent::startCut(bool restart) {
             cubicLinearMotion_->plan(xCur2d, vCur2d, xCut, Vector2d(0., 0.), tStop, cartTrajectory_);
             transformTrajectory(cartTrajectory_);
             if (!optimizer_->optimizeJointTrajectory(cartTrajectory_, qStart,
+//            qAnchor << 0., 0., 0., 0., 0., 0, 0.;
                                                      jointTrajectory_)) {
                 ROS_INFO_STREAM("Optimization Failed [Cut]. Increase the motion time: " << tStop);
                 tStop += 0.1;
