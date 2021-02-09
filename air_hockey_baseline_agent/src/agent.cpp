@@ -22,7 +22,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2
     cubicLinearMotion_ = new CubicLinearMotion(rate, universalJointHeight_);
 
     jointTrajectoryPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>(
-            controllerName_ + "/command", 2);
+            controllerName_, 2);
     cartTrajectoryPub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
     cartTrajectory_.joint_names.push_back("x");
@@ -626,9 +626,23 @@ void Agent::loadParam() {
     nh_.getParam("/air_hockey/agent/min_defend_velocity", vDefendMin_);
 
     nh_.getParam("/air_hockey/agent/min_defend_time", tDefendMin_);
-    nh_.getParam("/air_hockey/agent/controller", controllerName_);
-
     nh_.getParam("/air_hockey/agent/plan_time_offset", planTimeOffset_);
+
+    ros::master::V_TopicInfo topics;
+    if (ros::master::getTopics(topics)){
+        for (int i = 0; i < topics.size(); ++i) {
+            if (topics[i].name == nh_.getNamespace() + "/joint_position_trajectory_controller/state"){
+                controllerName_ = "joint_position_trajectory_controller/command";
+                break;
+            } else if (topics[i].name == nh_.getNamespace() + "/joint_torque_trajectory_controller/state"){
+                controllerName_ = "joint_torque_trajectory_controller/command";
+                break;
+            }
+        }
+        if (controllerName_ == ""){
+            ROS_ERROR_STREAM("Could not find controller");
+        }
+    }
 }
 
 void Agent::transformTrajectory(trajectory_msgs::MultiDOFJointTrajectory &cartesianTrajectory) {
