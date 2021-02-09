@@ -9,10 +9,11 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2
     smashCount_ = 0;
     cutCount_ = 0;
     cutPrevY_ = 0.0;
+    staticCount = 0;
 
     rng_.seed(0);
 
-    observer_ = new Observer(nh, ros::Rate(rate), defendLine_);
+    observer_ = new Observer(nh, controllerName_, ros::Rate(rate), defendLine_);
     optimizer_ = new NullSpaceOptimizer(kinematics_, observer_, false);
 
     combinatorialHit_ = new CombinatorialHit(
@@ -22,7 +23,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) : nh_(nh), rate_(rate), dist_(0, 2
     cubicLinearMotion_ = new CubicLinearMotion(rate, universalJointHeight_);
 
     jointTrajectoryPub_ = nh_.advertise<trajectory_msgs::JointTrajectory>(
-            controllerName_, 2);
+            controllerName_ + "/command", 2);
     cartTrajectoryPub_ = nh_.advertise<trajectory_msgs::MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
     cartTrajectory_.joint_names.push_back("x");
@@ -632,10 +633,10 @@ void Agent::loadParam() {
     if (ros::master::getTopics(topics)){
         for (int i = 0; i < topics.size(); ++i) {
             if (topics[i].name == nh_.getNamespace() + "/joint_position_trajectory_controller/state"){
-                controllerName_ = "joint_position_trajectory_controller/command";
+                controllerName_ = "joint_position_trajectory_controller";
                 break;
             } else if (topics[i].name == nh_.getNamespace() + "/joint_torque_trajectory_controller/state"){
-                controllerName_ = "joint_torque_trajectory_controller/command";
+                controllerName_ = "joint_torque_trajectory_controller";
                 break;
             }
         }
