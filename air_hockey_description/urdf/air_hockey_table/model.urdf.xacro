@@ -10,12 +10,11 @@
         <color rgba="1.0 0.0 0.0 1"/>
     </material>
 
-    <xacro:arg name="parent" default="world"/>
+    <xacro:arg name="parent" default="Table"/>
     <xacro:arg name="collide_bitmask" default="0x01"/>
-    <xacro:arg name="restitution" default="0.68"/>
-    <xacro:arg name="lateral_friction" default="1.0"/>
-    <xacro:arg name="rolling_friction" default="1.0"/>
-    <xacro:arg name="spinning_friction" default="1.0"/>
+    <xacro:arg name="restitution" default="1.0"/>
+    <xacro:arg name="lateral_friction_rim" default="1.0"/>
+    <xacro:arg name="lateral_friction_surface" default="1.0"/>
 
     <xacro:property name="M_PI" value="3.1415926535897931"/>
     <xacro:property name="table_base_length" value="2.136"/>
@@ -31,7 +30,7 @@
 
 
     <xacro:macro name="air_hockey_table" params="parent collide_bitmask restitution
-                                                 lateral_friction rolling_friction spinning_friction">
+                                                 lateral_friction_rim lateral_friction_surface">
         <link name="${parent}"/>
         <joint name="base_joint" type="fixed">
             <origin xyz="0 0 ${-table_base_height/2}" rpy="0 0 0"/>
@@ -59,7 +58,7 @@
             </collision>
             <contact>
                 <restitution value="${restitution}"/>
-                <lateral_friction value="1.0"/>
+                <lateral_friction value="${lateral_friction_surface}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
             </contact>
@@ -106,7 +105,7 @@
             </collision>
             <contact>
                 <restitution value="${restitution}"/>
-                <lateral_friction value="0.0"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
             </contact>
@@ -139,7 +138,7 @@
             </collision>
             <contact>
                 <restitution value="${restitution}"/>
-                <lateral_friction value="0.0"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
             </contact>
@@ -172,7 +171,7 @@
 <!--            </collision>-->
             <contact>
                 <restitution value="${restitution}"/>
-                <lateral_friction value="0.0"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
             </contact>
@@ -205,7 +204,7 @@
             </collision>
             <contact>
                 <restitution value="${restitution}"/>
-                <lateral_friction value="0.0"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
             </contact>
@@ -238,7 +237,7 @@
             </collision>
             <contact>
                 <restitution value="${restitution}"/>
-                <lateral_friction value="0.0"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
             </contact>
@@ -265,7 +264,7 @@
             </visual>
             <contact>
                 <restitution value="${restitution}"/>
-                <lateral_friction value="0.0"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
             </contact>
@@ -298,7 +297,7 @@
             </collision>
             <contact>
                 <restitution value="${restitution}"/>
-                <lateral_friction value="0.0"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
             </contact>
@@ -331,7 +330,7 @@
             </collision>
             <contact>
                 <restitution value="${restitution}"/>
-                <lateral_friction value="0.0"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
             </contact>
@@ -348,8 +347,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>${lateral_friction}</mu>
-                            <mu2>${lateral_friction}</mu2>
+                            <mu>${lateral_friction_surface}</mu>
+                            <mu2>${lateral_friction_surface}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -377,8 +376,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>${lateral_friction}</mu>
-                            <mu2>${lateral_friction}</mu2>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -406,8 +405,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>${lateral_friction}</mu>
-                            <mu2>${lateral_friction}</mu2>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -435,8 +434,8 @@
 <!--                        &lt;!&ndash; For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 &ndash;&gt;-->
 <!--                        &lt;!&ndash; https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc &ndash;&gt;-->
 <!--                        <ode>-->
-<!--                            <mu>${lateral_friction}</mu>-->
-<!--                            <mu2>${lateral_friction}</mu2>-->
+<!--                            <mu>${lateral_friction_rim}</mu>-->
+<!--                            <mu2>${lateral_friction_rim}</mu2>-->
 <!--                        </ode>-->
 <!--                    </friction>-->
 <!--                    <contact>-->
@@ -463,8 +462,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>${lateral_friction}</mu>
-                            <mu2>${lateral_friction}</mu2>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -492,8 +491,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>${lateral_friction}</mu>
-                            <mu2>${lateral_friction}</mu2>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -521,8 +520,8 @@
 <!--                        &lt;!&ndash; For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 &ndash;&gt;-->
 <!--                        &lt;!&ndash; https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc &ndash;&gt;-->
 <!--                        <ode>-->
-<!--                            <mu>${lateral_friction}</mu>-->
-<!--                            <mu2>${lateral_friction}</mu2>-->
+<!--                            <mu>${lateral_friction_rim}</mu>-->
+<!--                            <mu2>${lateral_friction_rim}</mu2>-->
 <!--                        </ode>-->
 <!--                    </friction>-->
 <!--                    <contact>-->
@@ -549,8 +548,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>${lateral_friction}</mu>
-                            <mu2>${lateral_friction}</mu2>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -578,8 +577,8 @@
                         <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <ode>
-                            <mu>${lateral_friction}</mu>
-                            <mu2>${lateral_friction}</mu2>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
                         </ode>
                     </friction>
                     <contact>
@@ -601,8 +600,7 @@
     <xacro:air_hockey_table parent="$(arg parent)"
                             collide_bitmask="$(arg collide_bitmask)"
                             restitution="$(arg restitution)"
-                            lateral_friction="$(arg lateral_friction)"
-                            rolling_friction="$(arg rolling_friction)"
-                            spinning_friction="$(arg spinning_friction)"/>
+                            lateral_friction_rim="$(arg lateral_friction_rim)"
+                            lateral_friction_surface="$(arg lateral_friction_surface)"/>
 </robot>
 

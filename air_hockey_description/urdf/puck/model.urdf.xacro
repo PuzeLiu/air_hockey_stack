@@ -17,17 +17,13 @@
     <xacro:arg name="collide_bitmask" default="0x03"/>
     <xacro:arg name="restitution" default="1.0"/>
     <xacro:arg name="lateral_friction" default="1.0"/>
-    <xacro:arg name="viscous_friction" default="1.0"/>
     <xacro:arg name="spinning_friction" default="1.0"/>
 
     <xacro:property name="puck_radius" value="0.03165"/>
     <xacro:property name="puck_height" value="0.0049"/>
 
-
-
-
     <xacro:macro name="puck" params="puck_name color collide_bitmask restitution
-                                     lateral_friction viscous_friction spinning_friction">
+                                     lateral_friction spinning_friction">
         <link name="${puck_name}"/>
 
         <joint name="{puck_name}_joint" type="fixed">
@@ -40,7 +36,7 @@
             <inertial>
                 <origin xyz="0 0 0.0" rpy="0 0 0"/>
                 <mass value="0.01"/>
-                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="2e-5"/>
+                <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="5e-6"/>
             </inertial>
             <visual>
                 <origin xyz="0 0 0.0" rpy="0 0 0"/>
@@ -75,21 +71,19 @@
                         <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
                         <torsional>
                             <coefficient>${spinning_friction}</coefficient>
-                            <use_patch_radius>false</use_patch_radius>
-                            <surface_radius>${puck_radius}</surface_radius>
+                            <use_patch_radius>true</use_patch_radius>
+                            <patch_radius>${puck_radius}</patch_radius>
                         </torsional>
                         <ode>
                             <mu>${lateral_friction}</mu>
                             <mu2>${lateral_friction}</mu2>
-                            <slip1>${viscous_friction}</slip1>
-                            <slip2>${viscous_friction}</slip2>
                         </ode>
                     </friction>
                     <contact>
                         <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <kp>1e9</kp>
-                            <max_vel>10</max_vel>
+                            <max_vel>20</max_vel>
                         </ode>
                     </contact>
                 </surface>
@@ -110,7 +104,6 @@
                 color="$(arg color)"
                 restitution="$(arg restitution)"
                 lateral_friction="$(arg lateral_friction)"
-                viscous_friction="$(arg viscous_friction)"
                 spinning_friction="$(arg spinning_friction)"/>
 </robot>
 
