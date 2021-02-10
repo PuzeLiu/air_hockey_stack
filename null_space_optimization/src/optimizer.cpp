@@ -5,7 +5,9 @@
 #include "optimizer.h"
 
 using namespace std;
+using namespace Eigen;
 using namespace null_space_optimization;
+using namespace iiwas_kinematics;
 
 NullSpaceOptimizer::NullSpaceOptimizer(Kinematics &kinematics) : solver_(), kinematics_(kinematics) {
     solver_.settings()->setWarmStart(true);

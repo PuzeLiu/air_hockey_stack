@@ -7,47 +7,47 @@
 
 #include <osqp/osqp.h>
 #include <OsqpEigen/OsqpEigen.h>
-#include "iiwas_kinematics.h"
-
-using namespace iiwas_kinematics;
+#include "iiwas_kinematics/iiwas_kinematics.h"
 
 namespace null_space_optimization {
     class NullSpaceOptimizer {
     public:
-        typedef Kinematics::JacobianPosType JacobianPosType;
-    public:
-        NullSpaceOptimizer(Kinematics &kinematics);
+        typedef iiwas_kinematics::Kinematics::JacobianPosType JacobianPosType;
+        typedef iiwas_kinematics::Kinematics::JointArrayType JointArrayType;
 
-        bool solveQP(const Vector3d &xDes,
-                     const Vector3d &dxDes,
-                     const Kinematics::JointArrayType &qCur,
-                     const Kinematics::JointArrayType &weights,
+    public:
+        NullSpaceOptimizer(iiwas_kinematics::Kinematics &kinematics);
+
+        bool solveQP(const Eigen::Vector3d &xDes,
+                     const Eigen::Vector3d &dxDes,
+                     const JointArrayType &qCur,
+                     const JointArrayType &weights,
                      const double timeStep,
-                     Kinematics::JointArrayType &qNext,
-                     Kinematics::JointArrayType &dqNext);
+                     JointArrayType &qNext,
+                     JointArrayType &dqNext);
 
     private:
-        void GetNullSpace(const JacobianPosType &jacobian, MatrixXd &out_null_space);
+        void GetNullSpace(const JacobianPosType &jacobian, Eigen::MatrixXd &out_null_space);
 
     public:
-        Kinematics &kinematics_;
-        Kinematics::JacobianPosType jacobian_;
-        MatrixXd nullSpace_;
+        iiwas_kinematics::Kinematics &kinematics_;
+        JacobianPosType jacobian_;
+        Eigen::MatrixXd nullSpace_;
 
     private:
         int num_of_variables_;  //Dimensions of jacobian
-        Vector3d K_;            // Weight for correcting position error
+        Eigen::Vector3d K_;            // Weight for correcting position error
 
-        Vector3d xCurPos_;
-        Quaterniond xCurQuat_;
+        Eigen::Vector3d xCurPos_;
+        Eigen::Quaterniond xCurQuat_;
 
         OsqpEigen::Solver solver_;
         int dimNullSpace_;
-        SparseMatrix<double> P_;
-        Matrix<double, 4, 1> q_;
-        SparseMatrix<double> A_;
+        Eigen::SparseMatrix<double> P_;
+        Eigen::Matrix<double, 4, 1> q_;
+        Eigen::SparseMatrix<double> A_;
 
-        MatrixXd V_;            // temporal matrix for calculating null space
+        Eigen::MatrixXd V_;            // temporal matrix for calculating null space
     };
 }
 

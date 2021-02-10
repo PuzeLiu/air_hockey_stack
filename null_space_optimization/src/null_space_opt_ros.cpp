@@ -5,6 +5,7 @@
 #include "null_space_opt_ros.h"
 
 using namespace null_space_optimization;
+using namespace iiwas_kinematics;
 
 NullSpaceOptimizerROS::NullSpaceOptimizerROS(Kinematics &kinematics,
                                              BezierCurve2D &bezier,
