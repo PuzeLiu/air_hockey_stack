@@ -86,40 +86,45 @@ void SystemState::getPlannedCartesianState(Vector3d &x, Vector3d &dx,
 bool Tactic::planReturnTraj(SystemState &state, const double &vMax,
 		trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
 		trajectory_msgs::JointTrajectory &jointTrajReturn) {
-//    double vReadyMax = vMax;
-//    cartTrajReturn.joint_names.push_back("x");
-//    cartTrajReturn.joint_names.push_back("y");
-//    cartTrajReturn.joint_names.push_back("z");
-//
-//    trajectory_msgs::MultiDOFJointTrajectoryPoint lastPoint = state.cartTrajectory_.points.back();
-//
-//    for (size_t i = 0; i < 10; ++i) {
-//        cartTrajReturn.points.clear();
-//        jointTrajReturn.points.clear();
-//        cartTrajReturn.points.push_back(lastPoint);
-//
-//        Vector3d xStop;
-//        xStop << lastPoint.transforms[0].translation.x,
-//                lastPoint.transforms[0].translation.y,
-//                lastPoint.transforms[0].translation.z;
-//        applyInverseTransform(xStop);
-//        Vector2d xStop2d = xStop.block<2, 1>(0, 0);
-//        double tStop = (xHome_ - xStop2d).norm() / vReadyMax;
-//        cubicLinearMotion_->plan(xStop2d, Vector2d(0., 0.), xHome_, Vector2d(0., 0.), tStop, cartTrajReturn);
-//        cartTrajReturn.points.erase(cartTrajReturn.points.begin());
-//        transformTrajectory(cartTrajReturn);
-//
-//        Kinematics::JointArrayType qStart;
-//        for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-//            qStart[j] = state.jointTrajectory_.points.back().positions[j];
-//        }
-//        if (optimizer_->optimizeJointTrajectoryAnchor(cartTrajReturn, qStart, qHome_, jointTrajReturn)) {
-//            return true;
-//        } else {
-//            vReadyMax *= 0.8;
-//            ROS_INFO_STREAM("Optimization Failed [RETURN]. Reduce the velocity for Ready: " << vReadyMax);
-//        }
-//    }
+	double vReadyMax = vMax;
+	cartTrajReturn.joint_names.push_back("x");
+	cartTrajReturn.joint_names.push_back("y");
+	cartTrajReturn.joint_names.push_back("z");
+
+	trajectory_msgs::MultiDOFJointTrajectoryPoint lastPoint =
+			state.cartTrajectory_.points.back();
+
+	for (size_t i = 0; i < 10; ++i) {
+		cartTrajReturn.points.clear();
+		jointTrajReturn.points.clear();
+		cartTrajReturn.points.push_back(lastPoint);
+
+		Vector3d xStop;
+		xStop << lastPoint.transforms[0].translation.x, lastPoint.transforms[0].translation.y, lastPoint.transforms[0].translation.z;
+		generator.transformations->applyInverseTransform(xStop);
+		Vector2d xStop2d = xStop.block<2, 1>(0, 0);
+		double tStop = (xHome_ - xStop2d).norm() / vReadyMax;
+		generator.cubicLinearMotion->plan(xStop2d, Vector2d(0., 0.), xHome_,
+				Vector2d(0., 0.), tStop, cartTrajReturn);
+		cartTrajReturn.points.erase(cartTrajReturn.points.begin());
+		generator.transformations->transformTrajectory(cartTrajReturn);
+
+		Kinematics::JointArrayType qStart;
+		for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+			qStart[j] = state.jointTrajectory_.points.back().positions[j];
+		}
+
+		bool ok = generator.optimizer->optimizeJointTrajectoryAnchor(
+				cartTrajReturn, qStart, qHome_, jointTrajReturn);
+
+		if (ok) {
+			return true;
+		} else {
+			vReadyMax *= 0.8;
+			ROS_INFO_STREAM(
+					"Optimization Failed [RETURN]. Reduce the velocity for Ready: " << vReadyMax);
+		}
+	}
 
 	return false;
 }

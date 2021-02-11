@@ -28,7 +28,7 @@ using namespace air_hockey_baseline_agent;
 using namespace Eigen;
 
 Smash::Smash(EnvironmentParams &envParams, AgentParams &agentParams,
-		SystemState *state, TrajectoryGenerator *generator) :
+		SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator), gen(rd()), dist(0, 2) {
 
 }
@@ -39,7 +39,7 @@ bool Smash::ready() {
 
 bool Smash::apply() {
 	Vector3d xCur;
-	generator.kinematics->forwardKinematics(observationState_.jointPosition, xCur);
+	generator.kinematics->forwardKinematics(state.observation.jointPosition, xCur);
 	generator.transformations->applyInverseTransform(xCur);
 	Vector2d xCur2d = xCur.block<2, 1>(0, 0);
 	Vector2d puckCur2d = state.puckPredictedState.state.block<2, 1>(

@@ -29,7 +29,7 @@ using namespace trajectory_msgs;
 using namespace air_hockey_baseline_agent;
 
 Home::Home(EnvironmentParams &envParams, AgentParams &agentParams,
-		SystemState *state, TrajectoryGenerator *generator) :
+		SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
 	Vector3d xTmp, gc;
 	Quaterniond quatTmp;

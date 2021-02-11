@@ -23,61 +23,72 @@
 
 #include "air_hockey_baseline_agent/tactics.h"
 
+using namespace Eigen;
+using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
 MovePuck::MovePuck(EnvironmentParams &envParams, AgentParams &agentParams,
-		SystemState *state, TrajectoryGenerator *generator) :
+		SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
 
 }
 
-bool MovePuck::ready(SystemState &state) {
+bool MovePuck::ready() {
 	return ros::Time::now() > state.trajStopTime_;
 }
 
-bool MovePuck::apply(SystemState &state) {
+bool MovePuck::apply() {
 	Vector3d xCur;
-	kinematics_->forwardKinematics(observationState_.jointPosition, xCur);
-	applyInverseTransform(xCur);
+	generator.kinematics->forwardKinematics(state.observation.jointPosition,
+			xCur);
+	generator.transformations->applyInverseTransform(xCur);
 
 	Vector3d xLiftUp, xSetDown;
-	xLiftUp = observationState_.puckPredictedState.state.block<3, 1>(0, 0);
-	xLiftUp.x() = boost::algorithm::clamp(xLiftUp.x(), malletRadius_ + 0.02,
-			tableLength_ - malletRadius_ - 0.02);
+	xLiftUp = state.observation.puckPredictedState.state.block<3, 1>(0, 0);
+
+	xLiftUp.x() = boost::algorithm::clamp(xLiftUp.x(),
+			envParams.malletRadius_ + 0.02,
+			envParams.tableLength_ - envParams.malletRadius_ - 0.02);
 	xLiftUp.y() = boost::algorithm::clamp(xLiftUp.y(),
-			-tableWidth_ / 2 + malletRadius_ + 0.02,
-			tableWidth_ / 2 - malletRadius_ - 0.02);
-	xLiftUp.z() = prepareHeight_;
+			-envParams.tableWidth_ / 2 + envParams.malletRadius_ + 0.02,
+			envParams.tableWidth_ / 2 - envParams.malletRadius_ - 0.02);
+	xLiftUp.z() = envParams.prepareHeight_;
 	xSetDown = xLiftUp;
-	xSetDown.z() = universalJointHeight_ + puckHeight_;
+	xSetDown.z() = envParams.universalJointHeight_ + envParams.puckHeight_;
 
 	double tStop = 2.0;
 	for (int i = 0; i < 10; ++i) {
-		cartTrajectory_.points.clear();
-		jointTrajectory_.points.clear();
+		state.cartTrajectory_.points.clear();
+		state.jointTrajectory_.points.clear();
 
-		cubicLinearMotion_->plan(xCur, Vector3d(0., 0., 0.), xLiftUp,
-				Vector3d(0., 0., 0.), tStop, cartTrajectory_);
-		cubicLinearMotion_->plan(xLiftUp, Vector3d(0., 0., 0.), xSetDown,
-				Vector3d(0., 0., 0.), tStop, cartTrajectory_);
-		cubicLinearMotion_->plan(xSetDown, Vector3d(0., 0., 0.), xPrepare_,
-				Vector3d(0., 0., 0.), tStop, cartTrajectory_);
-		generator.transformations->transformTrajectory(cartTrajectory_);
-		if (!optimizer_->optimizeJointTrajectory(cartTrajectory_,
-				observationState_.jointPosition, jointTrajectory_)) {
+		generator.cubicLinearMotion->plan(xCur, Vector3d(0., 0., 0.), xLiftUp,
+				Vector3d(0., 0., 0.), tStop, state.cartTrajectory_);
+		generator.cubicLinearMotion->plan(xLiftUp, Vector3d(0., 0., 0.),
+				xSetDown, Vector3d(0., 0., 0.), tStop, state.cartTrajectory_);
+		generator.cubicLinearMotion->plan(xSetDown, Vector3d(0., 0., 0.),
+				agentParams.xPrepare_, Vector3d(0., 0., 0.), tStop,
+				state.cartTrajectory_);
+
+		generator.transformations->transformTrajectory(state.cartTrajectory_);
+
+		bool ok = generator.optimizer->optimizeJointTrajectory(
+				state.cartTrajectory_, state.observation.jointPosition,
+				state.jointTrajectory_);
+		if (!ok) {
 			ROS_INFO_STREAM(
 					"Optimization Failed [PREPARE]. Increase the motion time: " << tStop);
 			tStop += 0.2;
 		} else {
-			jointTrajectory_.header.stamp = ros::Time::now();
-			trajStopTime_ = jointTrajectory_.header.stamp
+			state.jointTrajectory_.header.stamp = ros::Time::now();
+			state.trajStopTime_ = state.jointTrajectory_.header.stamp
 					+ ros::Duration(3 * tStop);
-			ros::Duration(3 * tStop).sleep();
-			return;
+			return true;
 		}
 	}
 	ROS_INFO_STREAM(
 			"Optimization Failed [PREPARE]. Unable to find trajectory for Prepare");
+
+	return false;
 
 }
 

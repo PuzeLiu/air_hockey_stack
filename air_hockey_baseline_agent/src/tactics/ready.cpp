@@ -25,11 +25,12 @@
 #include <Eigen/Dense>
 #include <ros/ros.h>
 
-using namespace air_hockey_baseline_agent;
 using namespace Eigen;
+using namespace iiwas_kinematics;
+using namespace air_hockey_baseline_agent;
 
 Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
-		SystemState *state, TrajectoryGenerator *generator) :
+		SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
 
 }
@@ -45,7 +46,7 @@ bool Ready::apply() {
 	ros::Time tStart;
 	Kinematics::JointArrayType qStart, dqStart;
 
-	getPlannedState(xStart, vStart, qStart, dqStart, tStart, planTimeOffset_);
+	state.getPlannedState(xStart, vStart, qStart, dqStart, tStart, agentParams.planTimeOffset_);
 
 	generator.transformations->applyInverseTransform(xStart);
 	generator.transformations->applyInverseRotation(vStart);

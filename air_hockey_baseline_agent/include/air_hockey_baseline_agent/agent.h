@@ -68,7 +68,7 @@ private:
 
 	// LOGIC
 	Observer *observer;
-	TrajectoryGenerator *trajGenerator;
+	TrajectoryGenerator *generator;
 	std::vector<Tactic*> tactics;
 
 	//State

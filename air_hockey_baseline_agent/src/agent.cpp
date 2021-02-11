@@ -21,7 +21,8 @@
  * SOFTWARE.
  */
 
-#include "agent.h"
+#include "air_hockey_baseline_agent/agent.h"
+#include "air_hockey_baseline_agent/tactics.h"
 
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <trajectory_msgs/JointTrajectory.h>
@@ -48,7 +49,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) :
 	std::string controllerName = getControllerName();
 	observer = new Observer(nh, controllerName, agentParams.defendLine_);
 
-	trajGenerator = new TrajectoryGenerator(nh.getNamespace(), envParams, rate);
+	generator = new TrajectoryGenerator(nh.getNamespace(), envParams, observer, rate);
 
 
 	jointTrajectoryPub = nh.advertise<JointTrajectory>(
@@ -63,7 +64,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) :
 
 Agent::~Agent() {
 	delete observer;
-	delete trajGenerator;
+	delete generator;
 
 	for (auto tactic : tactics) {
 		delete tactic;
@@ -78,8 +79,8 @@ void Agent::start() {
 	while (ros::ok()) {
 		agentState.observation = observer->getObservation();
 		auto &activeTactic = *tactics[agentState.currentTactic];
-		if (activeTactic.ready(state)) {
-			activeTactic.apply(state);
+		if (activeTactic.ready()) {
+			activeTactic.apply();
 			publishTrajectory();
 		}
 
@@ -182,12 +183,12 @@ void Agent::publishTrajectory() {
 void Agent::loadTactics() {
 	tactics.resize(Tactics::N_TACTICS);
 
-	tactics[Tactics::INIT] = new Init();
-	tactics[Tactics::HOME] = new Home();
-	tactics[Tactics::READY] = new Ready();
-	tactics[Tactics::PREPARE] = new Prepare();
-	tactics[Tactics::CUT] = new Cut();
-	tactics[Tactics::SMASH] = new Smash();
+	tactics[Tactics::INIT] = new Init(envParams, agentParams, state, generator);
+	tactics[Tactics::HOME] = new Home(envParams, agentParams, state, generator);
+	tactics[Tactics::READY] = new Ready(envParams, agentParams, state, generator);
+	tactics[Tactics::PREPARE] = new Prepare(envParams, agentParams, state, generator);
+	tactics[Tactics::CUT] = new Cut(envParams, agentParams, state, generator);
+	tactics[Tactics::SMASH] = new Smash(envParams, agentParams, state, generator);
 }
 
 bool Agent::setTactic(Tactics tactic) {

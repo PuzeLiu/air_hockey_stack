@@ -53,7 +53,7 @@ public:
 class Tactic {
 public:
 	Tactic(EnvironmentParams &envParams, AgentParams &agentParams,
-			SystemState *state, TrajectoryGenerator *generator);
+			SystemState &state, TrajectoryGenerator *generator);
 	virtual bool ready() = 0;
 	virtual bool apply() = 0;
 	virtual ~Tactic();
@@ -74,7 +74,7 @@ protected:
 class Init: public Tactic {
 public:
 	Init(EnvironmentParams &envParams, AgentParams &agentParams,
-			SystemState *state, TrajectoryGenerator *generator);
+			SystemState &state, TrajectoryGenerator *generator);
 	virtual bool ready();
 	virtual bool apply();
 	virtual ~Init();
@@ -88,7 +88,7 @@ private:
 class Home: public Tactic {
 public:
 	Home(EnvironmentParams &envParams, AgentParams &agentParams,
-			SystemState *state, TrajectoryGenerator *generator);
+			SystemState &state, TrajectoryGenerator *generator);
 	virtual bool ready();
 	virtual bool apply();
 	virtual ~Home();
@@ -100,7 +100,7 @@ private:
 class Ready: public Tactic {
 public:
 	Ready(EnvironmentParams &envParams, AgentParams &agentParams,
-			SystemState *state, TrajectoryGenerator *generator);
+			SystemState &state, TrajectoryGenerator *generator);
 	virtual bool ready();
 	virtual bool apply();
 	virtual ~Ready();
@@ -109,7 +109,7 @@ public:
 class Cut: public Tactic {
 public:
 	Cut(EnvironmentParams &envParams, AgentParams &agentParams,
-			SystemState *state, TrajectoryGenerator *generator);
+			SystemState &state, TrajectoryGenerator *generator);
 	virtual bool ready();
 	virtual bool apply();
 	virtual ~Cut();
@@ -118,7 +118,7 @@ public:
 class Prepare: public Tactic {
 public:
 	Prepare(EnvironmentParams &envParams, AgentParams &agentParams,
-			SystemState *state, TrajectoryGenerator *generator);
+			SystemState &state, TrajectoryGenerator *generator);
 	virtual bool ready();
 	virtual bool apply();
 	virtual ~Prepare();
@@ -127,7 +127,7 @@ public:
 class MovePuck: public Tactic {
 public:
 	MovePuck(EnvironmentParams &envParams, AgentParams &agentParams,
-			SystemState *state, TrajectoryGenerator *generator);
+			SystemState &state, TrajectoryGenerator *generator);
 	virtual bool ready();
 	virtual bool apply();
 	virtual ~MovePuck();
@@ -136,7 +136,7 @@ public:
 class Smash: public Tactic {
 public:
 	Smash(EnvironmentParams &envParams, AgentParams &agentParams,
-			SystemState *state, TrajectoryGenerator *generator);
+			SystemState &state, TrajectoryGenerator *generator);
 	virtual bool ready();
 	virtual bool apply();
 	virtual ~Smash();
