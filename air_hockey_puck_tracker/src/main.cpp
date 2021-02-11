@@ -27,7 +27,7 @@
 #include "air_hockey_puck_tracker/Validation.hpp"
 
 
-using namespace AirHockey;
+using namespace air_hockey_baseline_agent;
 using namespace std;
 
 

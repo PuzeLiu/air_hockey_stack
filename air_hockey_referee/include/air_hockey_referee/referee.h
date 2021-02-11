@@ -34,7 +34,7 @@
 #include "air_hockey_referee/PauseGame.h"
 #include "air_hockey_referee/ResetRobot.h"
 
-namespace AirHockey{
+namespace air_hockey_baseline_agent{
     enum GameStatus {
         STOP = 0,
         PAUSE = 1,

@@ -23,7 +23,7 @@
 
 #include "air_hockey_referee/real_world_referee.h"
 
-namespace AirHockey{
+namespace air_hockey_baseline_agent{
 
     RealWorldReferee::RealWorldReferee(ros::NodeHandle nh_) : Referee(nh_) {
 

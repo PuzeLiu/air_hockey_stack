@@ -1,6 +1,6 @@
 #include "air_hockey_referee/referee.h"
 
-using namespace AirHockey;
+using namespace air_hockey_baseline_agent;
 using namespace std;
 
 Referee::Referee(ros::NodeHandle nh) : nh(nh), tfBuffer(), tfListener(tfBuffer) {

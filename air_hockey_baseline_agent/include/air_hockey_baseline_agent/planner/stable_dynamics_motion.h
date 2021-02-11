@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Davide Tateo, Puze Liu
+ * Copyright (c) 2020 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,36 +21,38 @@
  * SOFTWARE.
  */
 
-#include <kalman/LinearizedMeasurementModel.hpp>
 
-#include "air_hockey_puck_tracker/ObservationModel.hpp"
+#ifndef SRC_STABLE_DYNAMICS_MOTION_H
+#define SRC_STABLE_DYNAMICS_MOTION_H
 
-namespace air_hockey_baseline_agent {
+#include <Eigen/Dense>
+#include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <boost/algorithm/clamp.hpp>
 
-ObservationModel::ObservationModel() {
-	this->V.setIdentity();
+
+namespace air_hockey_baseline_agent{
+class StableDynamicsMotion {
+public:
+    StableDynamicsMotion(Eigen::Vector2d stiffnessUpperBound, Eigen::Vector2d stiffnessLowerBound, double rate, double height);
+    ~StableDynamicsMotion();
+
+    bool plan(const Eigen::Vector2d& xCur, const Eigen::Vector2d& vCur, const Eigen::Vector2d& xGoal,
+              trajectory_msgs::MultiDOFJointTrajectory& cartTraj, double tStop = 0.1);
+
+    void scaleStiffness(const Eigen::Vector2d& scale);
+    void setStiffness(const Eigen::Vector2d& stiffness);
+    const Eigen::Vector2d& getStiffness();
+
+private:
+    Eigen::Vector2d stiffnessUpperBound_, stiffnessLowerBound_;
+    Eigen::Vector2d stiffness_, damping_;
+    double stepSize_;
+    double height_;
+
+    Eigen::Vector2d xTmp_, vTmp_;
+
+    trajectory_msgs::MultiDOFJointTrajectoryPoint viaPoint_;
+};
 }
 
-Measurement ObservationModel::h(const State &x) const {
-	Measurement measurement;
-	measurement.block<2, 1>(0, 0) = x.block<2, 1>(0, 0);
-	measurement.theta() = x.theta();
-	return measurement;
-}
-
-Kalman::Jacobian<Measurement, State>& ObservationModel::getH() {
-	return this->H;
-}
-
-void ObservationModel::updateJacobians(const State &x) {
-	// H = dh/dx (Jacobian of measurement function w.r.t. the state)
-	this->H.setZero();
-
-	// partial derivative of meas.x() w.r.t. x.x()
-	this->H(Measurement::X, State::X) = 1.0;
-	this->H(Measurement::Y, State::Y) = 1.0;
-	this->H(Measurement::THETA, State::THETA) = 1.0;
-}
-
-}
-
+#endif //SRC_STABLE_DYNAMICS_MOTION_H

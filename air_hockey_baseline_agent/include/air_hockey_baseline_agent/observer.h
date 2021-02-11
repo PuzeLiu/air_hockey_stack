@@ -21,26 +21,46 @@
  * SOFTWARE.
  */
 
-#ifndef SRC_REAL_WORLD_REFEREE_H
-#define SRC_REAL_WORLD_REFEREE_H
+#ifndef SRC_TACTICAL_AGENT_OBSERVATION_H
+#define SRC_TACTICAL_AGENT_OBSERVATION_H
 
-#include "referee.h"
+#include <ros/ros.h>
+#include <geometry_msgs/TransformStamped.h>
+
+#include <iiwas_kinematics/iiwas_kinematics.h>
+
+#include <control_msgs/JointTrajectoryControllerState.h>
+
+#include "air_hockey_baseline_agent/data_structures.h"
 
 namespace air_hockey_baseline_agent {
-    class RealWorldReferee : public Referee {
+    class Observer {
     public:
-        RealWorldReferee(ros::NodeHandle nh_);
+        Observer(ros::NodeHandle& nh, std::string controllerName, double defendLine);
 
-        ~RealWorldReferee() override;
+        ~Observer();
 
-    protected:
-        bool resetPuck(std::string *res = nullptr);
+        void start();
+
+        const ObservationState& getObservation();
+
+        inline const double getMaxPredictionTime() {
+        	return maxPredictionTime_;
+        }
 
     private:
-        ros::NodeHandle nh_;
+        void jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg);
+        void refereeStatusCallback(const air_hockey_referee::GameStatus::ConstPtr &msg);
+
+    private:
+        double maxPredictionTime_;
+        ObservationState observationState_, observationStatePrev_;
+
+        ros::Subscriber jointSub_;
+        ros::Subscriber refereeSub_;
+        air_hockey_baseline_agent::PuckTracker  puckTracker_;
 
     };
 }
 
-
-#endif //SRC_REAL_WORLD_REFEREE_H
+#endif //SRC_TACTICAL_AGENT_OBSERVATION_H

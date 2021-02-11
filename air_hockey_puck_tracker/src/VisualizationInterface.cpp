@@ -28,7 +28,7 @@
 
 #include "air_hockey_puck_tracker/VisualizationInterface.hpp"
 
-namespace AirHockey {
+namespace air_hockey_baseline_agent {
 
 VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh, const std::string& tableRefName) :
 		m_nh(nh) {

@@ -32,7 +32,7 @@
 #include "air_hockey_puck_tracker/ObservationModel.hpp"
 
 
-namespace AirHockey {
+namespace air_hockey_baseline_agent {
     class EKF_Wrapper : public Kalman::ExtendedKalmanFilter<State> {
     public:
         typedef Measurement InnovationType;

@@ -23,7 +23,7 @@
 
 #include "air_hockey_puck_tracker/PuckTracker.hpp"
 
-using namespace AirHockey;
+using namespace air_hockey_baseline_agent;
 
 PuckTracker::PuckTracker(ros::NodeHandle nh, double defendLine) : nh_(nh), tfBuffer_(), tfListener_(tfBuffer_) {
     tfBuffer_.setUsingDedicatedThread(true);

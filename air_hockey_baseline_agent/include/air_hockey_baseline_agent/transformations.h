@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Davide Tateo, Puze Liu
+ * Copyright (c) 2020 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,36 +21,32 @@
  * SOFTWARE.
  */
 
-#include <kalman/LinearizedMeasurementModel.hpp>
+#ifndef AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_AGENT_TRANSFORMATIONS_H_
+#define AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_AGENT_TRANSFORMATIONS_H_
 
-#include "air_hockey_puck_tracker/ObservationModel.hpp"
+#include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+#include <Eigen/Dense>
 
 namespace air_hockey_baseline_agent {
 
-ObservationModel::ObservationModel() {
-	this->V.setIdentity();
-}
+class Transformations {
+public:
+	Transformations(std::string ns);
 
-Measurement ObservationModel::h(const State &x) const {
-	Measurement measurement;
-	measurement.block<2, 1>(0, 0) = x.block<2, 1>(0, 0);
-	measurement.theta() = x.theta();
-	return measurement;
-}
+	void transformTrajectory(trajectory_msgs::MultiDOFJointTrajectory &cartesianTrajectory);
+	void applyForwardTransform(Eigen::Vector3d &v_in_out);
+	void applyInverseTransform(Eigen::Vector3d &v_in_out);
+	void applyInverseRotation(Eigen::Vector3d &v_in_out);
 
-Kalman::Jacobian<Measurement, State>& ObservationModel::getH() {
-	return this->H;
-}
+private:
+	geometry_msgs::TransformStamped tfRobot2Table_, tfRobot2TableInverse_;
 
-void ObservationModel::updateJacobians(const State &x) {
-	// H = dh/dx (Jacobian of measurement function w.r.t. the state)
-	this->H.setZero();
-
-	// partial derivative of meas.x() w.r.t. x.x()
-	this->H(Measurement::X, State::X) = 1.0;
-	this->H(Measurement::Y, State::Y) = 1.0;
-	this->H(Measurement::THETA, State::THETA) = 1.0;
-}
+};
 
 }
 
+
+#endif /* AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_AGENT_TRANSFORMATIONS_H_ */

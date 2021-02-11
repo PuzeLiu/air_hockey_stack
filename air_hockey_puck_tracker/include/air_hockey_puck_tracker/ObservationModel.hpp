@@ -28,7 +28,7 @@
 
 #include "air_hockey_puck_tracker/SystemModel.hpp"
 
-namespace AirHockey {
+namespace air_hockey_baseline_agent {
     class EKF_Wrapper;
 
     class Measurement : public Kalman::Vector<double, 3> {
@@ -57,7 +57,7 @@ namespace AirHockey {
 
     class ObservationModel : public Kalman::LinearizedMeasurementModel<State, Measurement> {
     public:
-        friend class AirHockey::EKF_Wrapper;
+        friend class air_hockey_baseline_agent::EKF_Wrapper;
         ObservationModel();
 
 

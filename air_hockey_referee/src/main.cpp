@@ -25,7 +25,7 @@
 #include "air_hockey_referee/gazebo_referee.h"
 #include "air_hockey_referee/real_world_referee.h"
 
-using namespace AirHockey;
+using namespace air_hockey_baseline_agent;
 using namespace std;
 
 

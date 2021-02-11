@@ -7,7 +7,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 #include <ignition/math.hh>
-#include "iiwas_kinematics.h"
+#include "iiwas_kinematics/iiwas_kinematics.h"
 
 namespace gazebo {
     class UniversalJointPlugin : public ModelPlugin {
@@ -36,8 +36,8 @@ namespace gazebo {
 
         iiwas_kinematics::Kinematics* kinematics_;
         iiwas_kinematics::Kinematics::JointArrayType qCur_;
-        Vector3d posCur_;
-        Quaterniond quatCur_;
+        Eigen::Vector3d posCur_;
+        Eigen::Quaterniond quatCur_;
 
         int debugCounter_;
         bool started_;

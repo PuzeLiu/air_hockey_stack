@@ -30,7 +30,7 @@
 
 #include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
 
-namespace AirHockey {
+namespace air_hockey_baseline_agent {
 
     static double cross2D(Vector2 v1, Vector2 v2);
 

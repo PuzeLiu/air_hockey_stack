@@ -21,34 +21,61 @@
  * SOFTWARE.
  */
 
+#ifndef SRC_TACTICAL_AGENT_H
+#define SRC_TACTICAL_AGENT_H
 
-#ifndef PUCK_TRACKER_VISUALIZATION_INTERFACE_H
-#define PUCK_TRACKER_VISUALIZATION_INTERFACE_H
+#include "air_hockey_baseline_agent/data_structures.h"
+#include "air_hockey_baseline_agent/tactics.h"
+#include "air_hockey_baseline_agent/trajectory_generator.h"
+#include "air_hockey_baseline_agent/observer.h"
+#include "air_hockey_baseline_agent/null_space_optimizer.h"
+#include "air_hockey_baseline_agent/transformations.h"
 
-#include <visualization_msgs/Marker.h>
-#include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
+using namespace std;
 
+namespace air_hockey_baseline_agent {
 
-namespace air_hockey_baseline_agent{
-class VisualizationInterface{
+class Agent {
 public:
-    VisualizationInterface(const ros::NodeHandle& nh, const std::string& tableRefName);
+	Agent(ros::NodeHandle nh, double rate);
+	~Agent();
 
-    void update(EKF_Wrapper& predictor, ObservationModel& observationModel);
+	void start();
 
-private:
-    void visualize();
-    void setPredictionMarker(const State& state,
-                             const EKF_Wrapper::InnovationCovariance& cov);
+	void update();
 
 private:
-    ros::NodeHandle m_nh;
+	void loadAgentParam();
+	void updateTactic();
+	void publishTrajectory();
 
-    ros::Publisher m_markerPub;
+	double updateGoal(Eigen::Vector2d puckPos);
+	bool setTactic(Tactics tactic);
+	void loadEnvironmentParams();
+	std::string getControllerName();
+	void loadTactics();
 
-    visualization_msgs::Marker m_predictionMarker;
+private:
+	// ROS
+	ros::NodeHandle nh;
+	ros::Publisher jointTrajectoryPub;
+	ros::Publisher cartTrajectoryPub;
+	ros::Rate rate;
+
+	// PARAMS
+	EnvironmentParams envParams;
+	AgentParams agentParams;
+
+	// LOGIC
+	Observer *observer;
+	TrajectoryGenerator *trajGenerator;
+	std::vector<Tactic*> tactics;
+
+	//State
+	SystemState state;
+	AgentState agentState;
 };
 
 }
 
-#endif //PUCK_TRACKER_VISUALIZATION_INTERFACE_H
+#endif //SRC_TACTICAL_AGENT_H

@@ -35,7 +35,7 @@
 #include "EKF_Wrapper.hpp"
 #include "VisualizationInterface.hpp"
 
-namespace AirHockey {
+namespace air_hockey_baseline_agent {
     struct PuckPredictedState{
         ros::Time stamp;
         State state;
@@ -56,6 +56,10 @@ namespace AirHockey {
         const State& getEstimatedState();
 
         void reset();
+
+        inline double getMaxPredictionTime() {
+        	return maxPredictionSteps_ * rate_->expectedCycleTime().toSec();
+        }
 
     private:
         void init();

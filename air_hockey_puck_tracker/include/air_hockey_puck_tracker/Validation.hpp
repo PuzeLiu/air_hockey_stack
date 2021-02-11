@@ -30,7 +30,7 @@
 #include "air_hockey_puck_tracker/ObservationModel.hpp"
 
 
-namespace AirHockey{
+namespace air_hockey_baseline_agent{
     class ValidationInterface{
         typedef Kalman::Covariance<Measurement> InnovationCovariance;
 

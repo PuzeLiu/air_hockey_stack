@@ -23,7 +23,7 @@
 
 #include "air_hockey_puck_tracker/SystemModel.hpp"
 
-namespace AirHockey {
+namespace air_hockey_baseline_agent {
 
     SystemModel::SystemModel(double c, double d) {
         m_c = c;

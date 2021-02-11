@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Davide Tateo, Puze Liu
+ * Copyright (c) 2020 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,36 +21,43 @@
  * SOFTWARE.
  */
 
-#include <kalman/LinearizedMeasurementModel.hpp>
+#ifndef SRC_CUBIC_LINEAR_MOTION_H
+#define SRC_CUBIC_LINEAR_MOTION_H
 
-#include "air_hockey_puck_tracker/ObservationModel.hpp"
+#include <Eigen/Dense>
+#include <trajectory_msgs/MultiDOFJointTrajectory.h>
 
-namespace air_hockey_baseline_agent {
 
-ObservationModel::ObservationModel() {
-	this->V.setIdentity();
+namespace air_hockey_baseline_agent{
+class CubicLinearMotion {
+public:
+    CubicLinearMotion(double rate, double height);
+    ~CubicLinearMotion();
+    bool plan(const Eigen::Vector2d& pStart,
+              const Eigen::Vector2d& vStart,
+              const Eigen::Vector2d& pStop,
+              const Eigen::Vector2d& vStop,
+              double tStop,
+              trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
+
+    bool plan(const Eigen::Vector3d& pStart,
+              const Eigen::Vector3d& vStart,
+              const Eigen::Vector3d& pStop,
+              const Eigen::Vector3d& vStop,
+              double tStop,
+              trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
+
+private:
+    double stepSize_;
+    double height_;
+
+
+    trajectory_msgs::MultiDOFJointTrajectoryPoint viaPoint_;
+
+
+
+};
 }
 
-Measurement ObservationModel::h(const State &x) const {
-	Measurement measurement;
-	measurement.block<2, 1>(0, 0) = x.block<2, 1>(0, 0);
-	measurement.theta() = x.theta();
-	return measurement;
-}
 
-Kalman::Jacobian<Measurement, State>& ObservationModel::getH() {
-	return this->H;
-}
-
-void ObservationModel::updateJacobians(const State &x) {
-	// H = dh/dx (Jacobian of measurement function w.r.t. the state)
-	this->H.setZero();
-
-	// partial derivative of meas.x() w.r.t. x.x()
-	this->H(Measurement::X, State::X) = 1.0;
-	this->H(Measurement::Y, State::Y) = 1.0;
-	this->H(Measurement::THETA, State::THETA) = 1.0;
-}
-
-}
-
+#endif //SRC_CUBIC_LINEAR_MOTION_H

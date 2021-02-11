@@ -27,7 +27,7 @@
 
 using namespace std;
 
-namespace AirHockey {
+namespace air_hockey_baseline_agent {
 
 ValidationInterface::ValidationInterface(ros::NodeHandle nh_, bool save) :
 		m_nh(nh_) {

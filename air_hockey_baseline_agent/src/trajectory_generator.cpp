@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Davide Tateo, Puze Liu
+ * Copyright (c) 2020 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,36 +21,35 @@
  * SOFTWARE.
  */
 
-#include <kalman/LinearizedMeasurementModel.hpp>
+#include "air_hockey_baseline_agent/trajectory_generator.h"
 
-#include "air_hockey_puck_tracker/ObservationModel.hpp"
+using namespace air_hockey_baseline_agent;
+using namespace Eigen;
 
-namespace air_hockey_baseline_agent {
+TrajectoryGenerator::TrajectoryGenerator(std::string ns, EnvironmentParams data,
+		Observer *observer, double rate) {
+	kinematics = new iiwas_kinematics::Kinematics(data.tcp_position,
+			data.tcp_quaternion);
+	optimizer = new NullSpaceOptimizer(kinematics, observer, false);
+	transformations = new Transformations(ns);
 
-ObservationModel::ObservationModel() {
-	this->V.setIdentity();
+	Eigen::Vector2d bound_lower = Vector2d(data.malletRadius_,
+			-data.tableWidth_ / 2 + data.malletRadius_ + 0.02);
+	Eigen::Vector2d bound_upper = Vector2d(
+			data.tableLength_ / 2 - data.malletRadius_,
+			data.tableWidth_ / 2 - data.malletRadius_ - 0.02);
+
+	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, rate,
+			data.universalJointHeight_);
+	cubicLinearMotion = new CubicLinearMotion(rate, data.universalJointHeight_);
+
 }
 
-Measurement ObservationModel::h(const State &x) const {
-	Measurement measurement;
-	measurement.block<2, 1>(0, 0) = x.block<2, 1>(0, 0);
-	measurement.theta() = x.theta();
-	return measurement;
-}
-
-Kalman::Jacobian<Measurement, State>& ObservationModel::getH() {
-	return this->H;
-}
-
-void ObservationModel::updateJacobians(const State &x) {
-	// H = dh/dx (Jacobian of measurement function w.r.t. the state)
-	this->H.setZero();
-
-	// partial derivative of meas.x() w.r.t. x.x()
-	this->H(Measurement::X, State::X) = 1.0;
-	this->H(Measurement::Y, State::Y) = 1.0;
-	this->H(Measurement::THETA, State::THETA) = 1.0;
-}
-
+TrajectoryGenerator::~TrajectoryGenerator() {
+	delete kinematics;
+	delete optimizer;
+	delete transformations;
+	delete combinatorialHit;
+	delete cubicLinearMotion;
 }
 

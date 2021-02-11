@@ -26,7 +26,7 @@
 
 #include <kalman/LinearizedSystemModel.hpp>
 
-namespace AirHockey {
+namespace air_hockey_baseline_agent {
 typedef Kalman::Vector<double, 2> Vector2;
 
 /**
@@ -130,10 +130,10 @@ public:KALMAN_VECTOR(Control, double, 1)
 class SystemModel: public Kalman::LinearizedSystemModel<State, Control> {
 public:
 	//! State type shortcut definition
-	typedef AirHockey::State S;
+	typedef air_hockey_baseline_agent::State S;
 
 	//! Control type shortcut definition
-	typedef AirHockey::Control C;
+	typedef air_hockey_baseline_agent::Control C;
 
 	//! Friction coefficient for air drag
 	double m_c;

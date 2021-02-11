@@ -25,7 +25,7 @@
 
 using namespace ros;
 
-namespace AirHockey{
+namespace air_hockey_baseline_agent{
 
 GazeboReferee::GazeboReferee(NodeHandle nh) : Referee(nh) {
     clientResetGazeboPuck = nh.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
