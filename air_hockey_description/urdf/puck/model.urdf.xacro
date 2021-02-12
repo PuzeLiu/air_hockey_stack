@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<robot name="puck" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+<robot name="puck" xmlns:xacro="http://www.ros.org/wiki/xacro">
     <material name="Red">
         <color rgba="1.0 0.0 0.0 1"/>
     </material>
@@ -18,12 +18,14 @@
     <xacro:arg name="restitution" default="1.0"/>
     <xacro:arg name="lateral_friction" default="1.0"/>
     <xacro:arg name="spinning_friction" default="1.0"/>
+    <xacro:arg name="linear_vel_decay" default="0.0001"/>
+    <xacro:arg name="angular_vel_decay" default="0.0001"/>
 
     <xacro:property name="puck_radius" value="0.03165"/>
     <xacro:property name="puck_height" value="0.0049"/>
 
     <xacro:macro name="puck" params="puck_name color collide_bitmask restitution
-                                     lateral_friction spinning_friction">
+                                     lateral_friction spinning_friction linear_vel_decay angular_vel_decay">
         <link name="${puck_name}"/>
 
         <joint name="{puck_name}_joint" type="fixed">
@@ -60,6 +62,10 @@
         </link>
 
         <gazebo reference="${puck_name}">
+            <velocity_decay>
+                <linear>${linear_vel_decay}</linear>
+                <angular>${angular_vel_decay}</angular>
+            </velocity_decay>
             <collision>
                 <surface>
                     <bounce>
@@ -104,6 +110,8 @@
                 color="$(arg color)"
                 restitution="$(arg restitution)"
                 lateral_friction="$(arg lateral_friction)"
-                spinning_friction="$(arg spinning_friction)"/>
+                spinning_friction="$(arg spinning_friction)"
+                linear_vel_decay="$(arg linear_vel_decay)"
+                angular_vel_decay="$(arg angular_vel_decay)"/>
 </robot>
 

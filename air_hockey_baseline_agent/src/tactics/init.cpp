@@ -36,7 +36,8 @@ Init::Init(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Init::ready() {
-	return state.restart || ros::Time::now() > state.trajStopTime;
+    state.restart = ((state.observation.jointPosition - agentParams.qInit).norm() > 1e-3);
+	return state.restart && ros::Time::now() > state.trajStopTime;
 }
 
 bool Init::apply() {

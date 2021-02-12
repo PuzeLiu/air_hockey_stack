@@ -12,7 +12,8 @@
 
     <xacro:arg name="parent" default="Table"/>
     <xacro:arg name="collide_bitmask" default="0x01"/>
-    <xacro:arg name="restitution" default="1.0"/>
+    <xacro:arg name="restitution_longitude" default="1.0"/>
+    <xacro:arg name="restitution_latitude" default="1.0"/>
     <xacro:arg name="lateral_friction_rim" default="1.0"/>
     <xacro:arg name="lateral_friction_surface" default="1.0"/>
 
@@ -29,7 +30,7 @@
     <xacro:property name="table_rim_vertical_height" value="0.03"/>
 
 
-    <xacro:macro name="air_hockey_table" params="parent collide_bitmask restitution
+    <xacro:macro name="air_hockey_table" params="parent collide_bitmask restitution_longitude restitution_latitude
                                                  lateral_friction_rim lateral_friction_surface">
         <link name="${parent}"/>
         <joint name="base_joint" type="fixed">
@@ -57,7 +58,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="${restitution}"/>
+                <restitution value="${restitution_longitude}"/>
                 <lateral_friction value="${lateral_friction_surface}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -104,7 +105,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="${restitution}"/>
+                <restitution value="${restitution_latitude}"/>
                 <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -137,7 +138,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="${restitution}"/>
+                <restitution value="${restitution_latitude}"/>
                 <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -170,7 +171,7 @@
 <!--                </geometry>-->
 <!--            </collision>-->
             <contact>
-                <restitution value="${restitution}"/>
+                <restitution value="${restitution_latitude}"/>
                 <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -203,7 +204,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="${restitution}"/>
+                <restitution value="${restitution_latitude}"/>
                 <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -236,7 +237,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="${restitution}"/>
+                <restitution value="${restitution_latitude}"/>
                 <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -263,7 +264,7 @@
                 <material name="grey"/>
             </visual>
             <contact>
-                <restitution value="${restitution}"/>
+                <restitution value="${restitution_latitude}"/>
                 <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -296,7 +297,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="${restitution}"/>
+                <restitution value="${restitution_longitude}"/>
                 <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -329,7 +330,7 @@
                 </geometry>
             </collision>
             <contact>
-                <restitution value="${restitution}"/>
+                <restitution value="${restitution_longitude}"/>
                 <lateral_friction value="${lateral_friction_rim}"/>
                 <rolling_friction value="0.0"/>
                 <spinning_friction value="0.0"/>
@@ -340,7 +341,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>${restitution}</restitution_coefficient>
+                        <restitution_coefficient>${restitution_longitude}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -369,7 +370,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>${restitution}</restitution_coefficient>
+                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -398,7 +399,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>${restitution}</restitution_coefficient>
+                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -427,7 +428,7 @@
 <!--            <collision>-->
 <!--                <surface>-->
 <!--                    <bounce>-->
-<!--                        <restitution_coefficient>${restitution}</restitution_coefficient>-->
+<!--                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>-->
 <!--                        <threshold>0</threshold>-->
 <!--                    </bounce>-->
 <!--                    <friction>-->
@@ -455,7 +456,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>${restitution}</restitution_coefficient>
+                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -484,7 +485,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>${restitution}</restitution_coefficient>
+                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -513,7 +514,7 @@
 <!--            <collision>-->
 <!--                <surface>-->
 <!--                    <bounce>-->
-<!--                        <restitution_coefficient>${restitution}</restitution_coefficient>-->
+<!--                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>-->
 <!--                        <threshold>0</threshold>-->
 <!--                    </bounce>-->
 <!--                    <friction>-->
@@ -541,7 +542,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>${restitution}</restitution_coefficient>
+                        <restitution_coefficient>${restitution_longitude}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -570,7 +571,7 @@
             <collision>
                 <surface>
                     <bounce>
-                        <restitution_coefficient>${restitution}</restitution_coefficient>
+                        <restitution_coefficient>${restitution_longitude}</restitution_coefficient>
                         <threshold>0</threshold>
                     </bounce>
                     <friction>
@@ -599,7 +600,8 @@
 
     <xacro:air_hockey_table parent="$(arg parent)"
                             collide_bitmask="$(arg collide_bitmask)"
-                            restitution="$(arg restitution)"
+                            restitution_longitude="$(arg restitution_longitude)"
+                            restitution_latitude="$(arg restitution_latitude)"
                             lateral_friction_rim="$(arg lateral_friction_rim)"
                             lateral_friction_surface="$(arg lateral_friction_surface)"/>
 </robot>

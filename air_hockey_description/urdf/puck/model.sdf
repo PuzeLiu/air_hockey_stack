@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+<sdf version="1.7">
+  <model name="puck">
+    <link name="Puck">
+      <inertial>
+        <pose>0 0 0.00245 0 -0 0</pose>
+        <mass>0.01</mass>
+        <inertia>
+          <ixx>0.01</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>0.01</iyy>
+          <iyz>0</iyz>
+          <izz>5e-06</izz>
+        </inertia>
+      </inertial>
+      <collision name="Puck_link_collision">
+        <pose>0 0 0.00245 0 -0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0049</length>
+            <radius>0.03165</radius>
+          </cylinder>
+        </geometry>
+        <surface>
+          <bounce>
+            <restitution_coefficient>1</restitution_coefficient>
+            <threshold>0</threshold>
+          </bounce>
+          <friction>
+            <torsional>
+              <coefficient>0.343283</coefficient>
+              <use_patch_radius>1</use_patch_radius>
+              <patch_radius>0.03165</patch_radius>
+            </torsional>
+            <ode>
+              <mu>1</mu>
+              <mu2>1</mu2>
+            </ode>
+          </friction>
+          <contact>
+            <collide_bitmask>3</collide_bitmask>
+            <ode>
+              <kp>1e+09</kp>
+              <max_vel>20</max_vel>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+      <visual name="Puck_link_visual">
+        <pose>0 0 0.00245 0 -0 0</pose>
+        <geometry>
+          <cylinder>
+            <length>0.0049</length>
+            <radius>0.03165</radius>
+          </cylinder>
+        </geometry>
+        <material>
+          <script>
+            <name>Gazebo/Red</name>
+            <uri>file://media/materials/scripts/gazebo.material</uri>
+          </script>
+        </material>
+      </visual>
+      <gravity>1</gravity>
+      <velocity_decay>
+        <linear>0.000225613</linear>
+        <angular>1.30473e-06</angular>
+      </velocity_decay>
+    </link>
+    <static>0</static>
+    <plugin filename="libpuck_tf_plugin.so" name="puck_tf_plugin"/>
+    <updateRate>500.0</updateRate>
+  </model>
+</sdf>
