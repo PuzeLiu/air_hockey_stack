@@ -44,22 +44,31 @@ namespace air_hockey_baseline_agent {
 
         const ObservationState& getObservation();
 
-        inline const double getMaxPredictionTime() {
-        	return maxPredictionTime_;
+        inline bool isGameStatusChanged() {
+        	bool changed = statusChanged;
+        	statusChanged = false;
+        	return statusChanged;
         }
+
+        inline const double getMaxPredictionTime() {
+        	return maxPredictionTime;
+        }
+
+
 
     private:
         void jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg);
         void refereeStatusCallback(const air_hockey_referee::GameStatus::ConstPtr &msg);
 
     private:
-        double maxPredictionTime_;
-        ObservationState observationState_, observationStatePrev_;
+        ros::Subscriber jointSub;
+        ros::Subscriber refereeSub;
 
-        ros::Subscriber jointSub_;
-        ros::Subscriber refereeSub_;
-        air_hockey_baseline_agent::PuckTracker  puckTracker_;
+        air_hockey_baseline_agent::PuckTracker  puckTracker;
+        double maxPredictionTime;
 
+        ObservationState observation, observationPrev;
+        bool statusChanged;
     };
 }
 

@@ -39,7 +39,7 @@ bool Cut::ready() {
 }
 
 bool Cut::apply() {
-	Vector2d xCut(agentParams.defendLine_,
+	Vector2d xCut(agentParams.defendLine,
 			state.observation.puckPredictedState.state.y());
 
 	Vector3d xCur, vCur;
@@ -48,7 +48,7 @@ bool Cut::apply() {
 	Kinematics::JointArrayType qStart, dqStart;
 
 	state.getPlannedState(xCur, vCur, qStart, dqStart, tStart,
-			agentParams.planTimeOffset_);
+			agentParams.planTimeOffset);
 
 	generator.transformations->applyInverseTransform(xCur);
 	generator.transformations->applyInverseRotation(vCur);
@@ -56,32 +56,32 @@ bool Cut::apply() {
 	xCur2d = xCur.block<2, 1>(0, 0);
 	vCur2d = vCur.block<2, 1>(0, 0);
 	double tStop = boost::algorithm::clamp(
-			observationState_.puckPredictedState.predictedTime - 0.3,
-			agentParams.tDefendMin_, agentParams.maxPredictionTime_);
+			state.observation.puckPredictedState.predictedTime - 0.3,
+			agentParams.tDefendMin, agentParams.maxPredictionTime);
 	xCut.y() = boost::algorithm::clamp(xCut.y(),
-			-envParams.tableWidth_ / 2 + envParams.malletRadius_ + 0.02,
-			envParams.tableWidth_ / 2 - envParams.malletRadius_ - 0.02);
+			-envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
+			envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
 
 	for (int i = 0; i < 10; ++i) {
-		state.cartTrajectory_.points.clear();
-		state.jointTrajectory_.points.clear();
+		state.cartTrajectory.points.clear();
+		state.jointTrajectory.points.clear();
 		generator.cubicLinearMotion->plan(xCur2d, vCur2d, xCut,
-				Vector2d(0., 0.), tStop, state.cartTrajectory_);
-		generator.transformations->transformTrajectory(state.cartTrajectory_);
+				Vector2d(0., 0.), tStop, state.cartTrajectory);
+		generator.transformations->transformTrajectory(state.cartTrajectory);
 
 		bool ok = generator.optimizer->optimizeJointTrajectory(
-				state.cartTrajectory_, qStart,
+				state.cartTrajectory, qStart,
 				//            qAnchor << 0., 0., 0., 0., 0., 0, 0.;
-				state.jointTrajectory_);
+				state.jointTrajectory);
 
 		if (!ok) {
 			ROS_INFO_STREAM(
 					"Optimization Failed [Cut]. Increase the motion time: " << tStop);
 			tStop += 0.1;
 		} else {
-			state.jointTrajectory_.header.stamp = tStart;
-			state.cartTrajectory_.header.stamp = tStart;
-			state.trajStopTime_ = state.jointTrajectory_.header.stamp
+			state.jointTrajectory.header.stamp = tStart;
+			state.cartTrajectory.header.stamp = tStart;
+			state.trajStopTime = state.jointTrajectory.header.stamp
 					+ ros::Duration(tStop);
 			return true;
 		}

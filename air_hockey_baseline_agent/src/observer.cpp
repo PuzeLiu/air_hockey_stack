@@ -25,14 +25,15 @@
 
 using namespace air_hockey_baseline_agent;
 
-Observer::Observer(ros::NodeHandle& nh, std::string controllerName, double defendLine) :  puckTracker_(nh, defendLine){
-    jointSub_ = nh.subscribe(controllerName + "/state", 1, &Observer::jointStateCallback, this);
-    refereeSub_ = nh.subscribe("/air_hockey_referee/game_status", 1, &Observer::refereeStatusCallback, this);
-    maxPredictionTime_ = puckTracker_.getMaxPredictionTime() - 1e-6;
+Observer::Observer(ros::NodeHandle& nh, std::string controllerName, double defendLine) :  puckTracker(nh, defendLine){
+    jointSub = nh.subscribe(controllerName + "/state", 1, &Observer::jointStateCallback, this);
+    refereeSub = nh.subscribe("/air_hockey_referee/game_status", 1, &Observer::refereeStatusCallback, this);
+    maxPredictionTime = puckTracker.getMaxPredictionTime() - 1e-6;
+    statusChanged = true;
 }
 
 void Observer::start(){
-    puckTracker_.start();
+    puckTracker.start();
 }
 
 Observer::~Observer() {
@@ -40,20 +41,22 @@ Observer::~Observer() {
 
 void Observer::jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg) {
     for (int i = 0; i < iiwas_kinematics::NUM_OF_JOINTS; ++i) {
-        observationState_.jointPosition[i] = msg->actual.positions[i];
-        observationState_.jointVelocity[i] = msg->actual.velocities[i];
-        observationState_.jointDesiredPosition[i] = msg->desired.positions[i];
-        observationState_.jointDesiredVelocity[i] = msg->desired.velocities[i];
+        observation.jointPosition[i] = msg->actual.positions[i];
+        observation.jointVelocity[i] = msg->actual.velocities[i];
+        observation.jointDesiredPosition[i] = msg->desired.positions[i];
+        observation.jointDesiredVelocity[i] = msg->desired.velocities[i];
     }
 }
 
 const ObservationState& Observer::getObservation() {
-    observationState_.puckPredictedState = puckTracker_.getPredictedState();
-    observationState_.puckEstimatedState = puckTracker_.getEstimatedState();
+    observation.puckPredictedState = puckTracker.getPredictedState();
+    observation.puckEstimatedState = puckTracker.getEstimatedState();
     ros::spinOnce();
-    return observationState_;
+    return observation;
 }
 
 void Observer::refereeStatusCallback(const air_hockey_referee::GameStatus::ConstPtr &msg) {
-    observationState_.gameStatus = *msg;
+	auto newStatus = *msg;
+	statusChanged = statusChanged || newStatus != observation.gameStatus;
+    observation.gameStatus = newStatus;
 }

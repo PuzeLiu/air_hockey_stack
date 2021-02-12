@@ -33,15 +33,15 @@ TrajectoryGenerator::TrajectoryGenerator(std::string ns, EnvironmentParams data,
 	optimizer = new NullSpaceOptimizer(kinematics, observer, false);
 	transformations = new Transformations(ns);
 
-	Eigen::Vector2d bound_lower = Vector2d(data.malletRadius_,
-			-data.tableWidth_ / 2 + data.malletRadius_ + 0.02);
+	Eigen::Vector2d bound_lower = Vector2d(data.malletRadius,
+			-data.tableWidth / 2 + data.malletRadius + 0.02);
 	Eigen::Vector2d bound_upper = Vector2d(
-			data.tableLength_ / 2 - data.malletRadius_,
-			data.tableWidth_ / 2 - data.malletRadius_ - 0.02);
+			data.tableLength / 2 - data.malletRadius,
+			data.tableWidth / 2 - data.malletRadius - 0.02);
 
 	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, rate,
-			data.universalJointHeight_);
-	cubicLinearMotion = new CubicLinearMotion(rate, data.universalJointHeight_);
+			data.universalJointHeight);
+	cubicLinearMotion = new CubicLinearMotion(rate, data.universalJointHeight);
 
 }
 

@@ -42,9 +42,10 @@ public:
 			double t = 0);
 
 public:
-	trajectory_msgs::MultiDOFJointTrajectory cartTrajectory_;
-	trajectory_msgs::JointTrajectory jointTrajectory_;
-	ros::Time trajStopTime_;
+	trajectory_msgs::MultiDOFJointTrajectory cartTrajectory;
+	trajectory_msgs::JointTrajectory jointTrajectory;
+	ros::Time trajStopTime;
+	ObservationState observation;
 
 	bool restart;
 
@@ -78,11 +79,6 @@ public:
 	virtual bool ready();
 	virtual bool apply();
 	virtual ~Init();
-
-private:
-	iiwas_kinematics::Kinematics::JointArrayType qInit;
-
-	void computeQInit();
 };
 
 class Home: public Tactic {
@@ -92,9 +88,6 @@ public:
 	virtual bool ready();
 	virtual bool apply();
 	virtual ~Home();
-
-private:
-	iiwas_kinematics::Kinematics::JointArrayType qHome;
 };
 
 class Ready: public Tactic {

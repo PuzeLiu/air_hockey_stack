@@ -32,29 +32,11 @@ using namespace air_hockey_baseline_agent;
 Init::Init(EnvironmentParams &envParams, AgentParams &agentParams,
 		SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
-	Vector3d xTmp, gc;
-	Quaterniond quatTmp;
-	double psi;
 
-	auto kinematics = this->generator.kinematics;
-	auto transformations = this->generator.transformations;
-	auto optimizer = this->generator.optimizer;
-
-	kinematics->forwardKinematics(agentParams.qRef_, xTmp, quatTmp);
-	kinematics->getRedundancy(agentParams.qRef_, gc, psi);
-	xTmp << agentParams.xHome_[0], agentParams.xHome_[1], envParams.universalJointHeight_
-			+ envParams.initHeight_;
-	transformations->applyForwardTransform(xTmp);
-	if (!kinematics->inverseKinematics(xTmp, quatTmp, gc, psi, qInit)) {
-		ROS_ERROR_STREAM(
-				"Inverse Kinematics fail, unable to find solution for INIT position");
-	}
-
-	optimizer->SolveJoint7(qInit);
 }
 
 bool Init::ready() {
-	return state.restart || ros::Time::now() > state.trajStopTime_;
+	return state.restart || ros::Time::now() > state.trajStopTime;
 }
 
 bool Init::apply() {
@@ -62,16 +44,16 @@ bool Init::apply() {
 	jointViaPoint_.positions.resize(7);
 	jointViaPoint_.velocities.resize(7);
 
-	state.jointTrajectory_.points.clear();
+	state.jointTrajectory.points.clear();
 	for (int i = 0; i < 7; ++i) {
-		jointViaPoint_.positions[i] = qInit[i];
+		jointViaPoint_.positions[i] = agentParams.qInit[i];
 		jointViaPoint_.velocities[i] = 0.;
 	}
 	jointViaPoint_.time_from_start = ros::Duration(5.0);
-	state.jointTrajectory_.points.push_back(jointViaPoint_);
+	state.jointTrajectory.points.push_back(jointViaPoint_);
 
-	state.jointTrajectory_.header.stamp = ros::Time::now();
-	state.trajStopTime_ = state.jointTrajectory_.header.stamp
+	state.jointTrajectory.header.stamp = ros::Time::now();
+	state.trajStopTime = state.jointTrajectory.header.stamp
 			+ ros::Duration(5.0);
 
 	ROS_INFO_STREAM("Go to initial position");

@@ -34,36 +34,37 @@ Smash::Smash(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Smash::ready() {
-	return state.restart || ros::Time::now() > statetrajStopTime_;
+	return state.restart || ros::Time::now() > state.trajStopTime;
 }
 
 bool Smash::apply() {
 	Vector3d xCur;
-	generator.kinematics->forwardKinematics(state.observation.jointPosition, xCur);
+	generator.kinematics->forwardKinematics(state.observation.jointPosition,
+			xCur);
 	generator.transformations->applyInverseTransform(xCur);
 	Vector2d xCur2d = xCur.block<2, 1>(0, 0);
-	Vector2d puckCur2d = state.puckPredictedState.state.block<2, 1>(
-			0, 0);
+	Vector2d puckCur2d = state.puckPredictedState.state.block<2, 1>(0, 0);
 
 	Vector2d xGoal = computeTarget(puckCur2d);
 	Vector2d vHit = (xGoal - puckCur2d).normalized();
-	Vector2d xHit = puckCur2d - vHit * (envParams.puckRadius_ + envParams.malletRadius_ + 0.005);
+	Vector2d xHit = puckCur2d
+			- vHit * (envParams.puckRadius + envParams.malletRadius + 0.005);
 
-	vHit *= agentParams.vHitMax_;
+	vHit *= agentParams.vHitMax;
 	bool success = false;
 
 	for (size_t i = 0; i < 10; ++i) {
-		state.cartTrajectory_.points.clear();
-		state.jointTrajectory_.points.clear();
+		state.cartTrajectory.points.clear();
+		state.jointTrajectory.points.clear();
 
 		bool ok = generator.combinatorialHit->plan(xCur2d, xHit, vHit,
-				state.cartTrajectory_);
+				state.cartTrajectory);
 		if (!ok) {
 			return false;
 		}
-		generator.transformations->transformTrajectory(state.cartTrajectory_);
-		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory_,
-				observationState_.jointPosition, state.jointTrajectory_)) {
+		generator.transformations->transformTrajectory(state.cartTrajectory);
+		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory,
+				state.observation.jointPosition, state.jointTrajectory)) {
 			success = true;
 			break;
 		} else {
@@ -77,20 +78,18 @@ bool Smash::apply() {
 	trajectory_msgs::MultiDOFJointTrajectory cartTrajReturn;
 	trajectory_msgs::JointTrajectory jointTrajReturn;
 	double vMax = 0.5;
-	success = success
-			&& planReturnTraj(state, vMax, cartTrajReturn, jointTrajReturn);
+	success = success && planReturnTraj(vMax, cartTrajReturn, jointTrajReturn);
 
 	//! append return to whole trajectory
 	if (success) {
-		state.cartTrajectory_.points.insert(state.cartTrajectory_.points.end(),
+		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
 				cartTrajReturn.points.begin(), cartTrajReturn.points.end());
-		state.jointTrajectory_.points.insert(
-				state.jointTrajectory_.points.end(),
+		state.jointTrajectory.points.insert(state.jointTrajectory.points.end(),
 				jointTrajReturn.points.begin(), jointTrajReturn.points.end());
-		state.jointTrajectory_.header.stamp = ros::Time::now();
-		state.trajStopTime_ = ros::Time::now()
+		state.jointTrajectory.header.stamp = ros::Time::now();
+		state.trajStopTime = ros::Time::now()
 				+ ros::Duration(
-						state.jointTrajectory_.points.back().time_from_start);
+						state.jointTrajectory.points.back().time_from_start);
 		return true;
 	} else {
 		ROS_INFO_STREAM("Failed to find a feasible movement [HITTING]");
@@ -103,23 +102,23 @@ Vector2d Smash::computeTarget(Vector2d puckPosition) {
 	auto random_integer = dist(gen);
 	random_integer = 0;
 	if (puckPosition(1) > 0.1) {
-		xTarget.x() = envParams.tableLength_;
+		xTarget.x() = envParams.tableLength;
 		xTarget.y() = -0.1;
 	} else if (puckPosition(1) < -0.1) {
-		xTarget.x() = envParams.tableLength_;
+		xTarget.x() = envParams.tableLength;
 		xTarget.y() = 0.1;
 	} else {
-		xTarget.x() = envParams.tableLength_;
+		xTarget.x() = envParams.tableLength;
 		xTarget.y() = 0.0;
 	}
 	if (random_integer == 1) {
 		ROS_INFO_STREAM("Strategy: Right");
-		xTarget.y() = -2 * (envParams.tableWidth_ / 2 - envParams.puckRadius_)
-				- agentParams.xGoal_.y();
+		xTarget.y() = -2 * (envParams.tableWidth / 2 - envParams.puckRadius)
+				- agentParams.xGoal.y();
 	} else if (random_integer == 2) {
 		ROS_INFO_STREAM("Strategy: Left");
-		xTarget.y() = 2 * (envParams.tableWidth_ / 2 - envParams.puckRadius_)
-				- agentParams.xGoal_.y();
+		xTarget.y() = 2 * (envParams.tableWidth / 2 - envParams.puckRadius)
+				- agentParams.xGoal.y();
 	} else {
 		ROS_INFO_STREAM("Strategy: Middle");
 	}

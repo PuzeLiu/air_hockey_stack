@@ -35,7 +35,7 @@ Prepare::Prepare(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Prepare::ready() {
-	return state.restart || ros::Time::now() > state.trajStopTime_;
+	return state.restart || ros::Time::now() > state.trajStopTime;
 }
 
 bool Prepare::apply() {
@@ -45,46 +45,46 @@ bool Prepare::apply() {
 	Kinematics::JointArrayType qStart, dqStart;
 
 	state.getPlannedState(xStart, vStart, qStart, dqStart, tStart,
-			planTimeOffset_);
+			agentParams.planTimeOffset);
 	generator.transformations->applyInverseTransform(xStart);
 	generator.transformations->applyInverseRotation(vStart);
 
 	xStart2d = xStart.block<2, 1>(0, 0);
 
-	xPuck = observationState_.puckPredictedState.state.block<2, 1>(0, 0);
+	xPuck = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
 	if (xPuck.y() > 0) {
 		vPrepare =
 				(Vector2d(xPuck.x() + 0.2,
-						2 * (envParams.tableWidth_ / 2 - envParams.puckRadius_))
+						2 * (envParams.tableWidth / 2 - envParams.puckRadius))
 						- xPuck).normalized();
 //            vPrepare = Vector2d(0.1, 0.7);
 	} else {
 		vPrepare = (Vector2d(xPuck.x() + 0.2,
-				-2 * (envParams.tableWidth_ / 2 - envParams.puckRadius_))
+				-2 * (envParams.tableWidth / 2 - envParams.puckRadius))
 				- xPuck).normalized();
 //            vPrepare = Vector2d(0.1, 0.7);
 	}
 	xPrepare = xPuck
-			- vPrepare * (envParams.puckRadius_ + envParams.malletRadius_);
+			- vPrepare * (envParams.puckRadius + envParams.malletRadius);
 	xPrepare.x() = boost::algorithm::clamp(xPrepare.x(),
-			envParams.malletRadius_ + 0.02,
-			envParams.tableLength_ - envParams.malletRadius_ - 0.02);
+			envParams.malletRadius + 0.02,
+			envParams.tableLength - envParams.malletRadius - 0.02);
 	xPrepare.y() = boost::algorithm::clamp(xPrepare.y(),
-			-envParams.tableWidth_ / 2 + envParams.malletRadius_ + 0.02,
-			envParams.tableWidth_ / 2 - envParams.malletRadius_ - 0.02);
+			-envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
+			envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
 	double tStop = 0.08;
 	bool success = false;
 
 	for (int i = 0; i < 10; ++i) {
-		state.cartTrajectory_.points.clear();
-		state.jointTrajectory_.points.clear();
+		state.cartTrajectory.points.clear();
+		state.jointTrajectory.points.clear();
 		generator.combinatorialHit->plan(xStart2d, xPrepare, vPrepare,
-				state.cartTrajectory_, tStop);
-		generator.transformations->transformTrajectory(state.cartTrajectory_);
+				state.cartTrajectory, tStop);
+		generator.transformations->transformTrajectory(state.cartTrajectory);
 
 		success = generator.optimizer->optimizeJointTrajectory(
-				state.cartTrajectory_, observationState_.jointPosition,
-				state.jointTrajectory_);
+				state.cartTrajectory, state.observation.jointPosition,
+				state.jointTrajectory);
 		if (success) {
 			break;
 		}
@@ -98,22 +98,21 @@ bool Prepare::apply() {
 	trajectory_msgs::MultiDOFJointTrajectory cartTrajReturn;
 	trajectory_msgs::JointTrajectory jointTrajReturn;
 	double vMax = 0.5;
-	success = success
-			&& planReturnTraj(state, vMax, cartTrajReturn, jointTrajReturn);
+	success = success && planReturnTraj(vMax, cartTrajReturn, jointTrajReturn);
 
 	//! append return to whole trajectory
 	if (success) {
-		state.cartTrajectory_.points.insert(state.cartTrajectory_.points.end(),
+		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
 				cartTrajReturn.points.begin(), cartTrajReturn.points.end());
-		state.jointTrajectory_.points.insert(
-				state.jointTrajectory_.points.end(),
+		state.jointTrajectory.points.insert(
+				state.jointTrajectory.points.end(),
 				jointTrajReturn.points.begin(), jointTrajReturn.points.end());
-		state.cartTrajectory_.header.stamp = tStart;
-		state.jointTrajectory_.header.stamp = tStart;
+		state.cartTrajectory.header.stamp = tStart;
+		state.jointTrajectory.header.stamp = tStart;
 
-		state.trajStopTime_ = ros::Time::now()
+		state.trajStopTime = ros::Time::now()
 				+ ros::Duration(
-						state.jointTrajectory_.points.back().time_from_start);
+						state.jointTrajectory.points.back().time_from_start);
 		return true;
 	} else {
 		ROS_INFO_STREAM(

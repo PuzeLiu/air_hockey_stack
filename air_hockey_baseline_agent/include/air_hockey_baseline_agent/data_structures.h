@@ -31,24 +31,24 @@
 
 namespace air_hockey_baseline_agent {
 enum Tactics {
-	INIT,
-	HOME,
-	READY,    //!< go to home position
-	PREPARE,  //!< adjust the puck's position when smash fails
-	CUT,      //!< defend the incoming puck to opponent's court regardless of direction
-	SMASH,    //!< hit the static or slow-moving puck
-	N_TACTICS
+	INIT,      //!< go to init position
+	HOME,      //!< go to home position from init
+	READY,     //!< go to home position
+	PREPARE,   //!< adjust the puck's position when smash fails
+	CUT,       //!< defend the incoming puck to opponent's court regardless of direction
+	SMASH,     //!< hit the static or slow-moving puck
+	N_TACTICS  //!< Total number of available tactics
 };
 
 struct EnvironmentParams {
-	double puckRadius_;
-	double puckHeight_;
-	double malletRadius_;
-	double tableLength_;
-	double tableWidth_;
-	double universalJointHeight_;
-	double prepareHeight_;
-	double initHeight_;
+	double puckRadius;
+	double puckHeight;
+	double malletRadius;
+	double tableLength;
+	double tableWidth;
+	double universalJointHeight;
+	double prepareHeight;
+	double initHeight;
 
 	Eigen::Vector3d tcp_position;
 	Eigen::Quaterniond tcp_quaternion;
@@ -56,18 +56,19 @@ struct EnvironmentParams {
 
 
 struct AgentParams {
-	iiwas_kinematics::Kinematics::JointArrayType qRef_;
-	iiwas_kinematics::Kinematics::JointArrayType qHome_;
-	Eigen::Vector2d xHome_;
-	Eigen::Vector2d xGoal_;
-	Eigen::Vector2d xPrepare_;
-	Eigen::Vector2d hitRange_;
+	iiwas_kinematics::Kinematics::JointArrayType qRef;
+	iiwas_kinematics::Kinematics::JointArrayType qHome;
+	iiwas_kinematics::Kinematics::JointArrayType qInit;
+	Eigen::Vector2d xHome;
+	Eigen::Vector2d xGoal;
+	Eigen::Vector2d xPrepare;
+	Eigen::Vector2d hitRange;
 
-	double vHitMax_;
-	double vDefendMin_;
-	double tDefendMin_;
-	double defendLine_;
-	double planTimeOffset_;
+	double vHitMax;
+	double vDefendMin;
+	double tDefendMin;
+	double defendLine;
+	double planTimeOffset;
 };
 
 struct ObservationState {
@@ -84,8 +85,6 @@ struct AgentState {
 	AgentState();
 
 	Tactics currentTactic;
-	GameStatus gameStatusPrev;
-	ObservationState observation;
 	double cutPrevY;
 	int staticCount;
 	int smashCount;

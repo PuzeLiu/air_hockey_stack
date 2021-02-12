@@ -34,7 +34,7 @@ MovePuck::MovePuck(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool MovePuck::ready() {
-	return ros::Time::now() > state.trajStopTime_;
+	return ros::Time::now() > state.trajStopTime;
 }
 
 bool MovePuck::apply() {
@@ -47,40 +47,40 @@ bool MovePuck::apply() {
 	xLiftUp = state.observation.puckPredictedState.state.block<3, 1>(0, 0);
 
 	xLiftUp.x() = boost::algorithm::clamp(xLiftUp.x(),
-			envParams.malletRadius_ + 0.02,
-			envParams.tableLength_ - envParams.malletRadius_ - 0.02);
+			envParams.malletRadius + 0.02,
+			envParams.tableLength - envParams.malletRadius - 0.02);
 	xLiftUp.y() = boost::algorithm::clamp(xLiftUp.y(),
-			-envParams.tableWidth_ / 2 + envParams.malletRadius_ + 0.02,
-			envParams.tableWidth_ / 2 - envParams.malletRadius_ - 0.02);
-	xLiftUp.z() = envParams.prepareHeight_;
+			-envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
+			envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
+	xLiftUp.z() = envParams.prepareHeight;
 	xSetDown = xLiftUp;
-	xSetDown.z() = envParams.universalJointHeight_ + envParams.puckHeight_;
+	xSetDown.z() = envParams.universalJointHeight + envParams.puckHeight;
 
 	double tStop = 2.0;
 	for (int i = 0; i < 10; ++i) {
-		state.cartTrajectory_.points.clear();
-		state.jointTrajectory_.points.clear();
+		state.cartTrajectory.points.clear();
+		state.jointTrajectory.points.clear();
 
 		generator.cubicLinearMotion->plan(xCur, Vector3d(0., 0., 0.), xLiftUp,
-				Vector3d(0., 0., 0.), tStop, state.cartTrajectory_);
+				Vector3d(0., 0., 0.), tStop, state.cartTrajectory);
 		generator.cubicLinearMotion->plan(xLiftUp, Vector3d(0., 0., 0.),
-				xSetDown, Vector3d(0., 0., 0.), tStop, state.cartTrajectory_);
+				xSetDown, Vector3d(0., 0., 0.), tStop, state.cartTrajectory);
 		generator.cubicLinearMotion->plan(xSetDown, Vector3d(0., 0., 0.),
-				agentParams.xPrepare_, Vector3d(0., 0., 0.), tStop,
-				state.cartTrajectory_);
+				agentParams.xPrepare, Vector3d(0., 0., 0.), tStop,
+				state.cartTrajectory);
 
-		generator.transformations->transformTrajectory(state.cartTrajectory_);
+		generator.transformations->transformTrajectory(state.cartTrajectory);
 
 		bool ok = generator.optimizer->optimizeJointTrajectory(
-				state.cartTrajectory_, state.observation.jointPosition,
-				state.jointTrajectory_);
+				state.cartTrajectory, state.observation.jointPosition,
+				state.jointTrajectory);
 		if (!ok) {
 			ROS_INFO_STREAM(
 					"Optimization Failed [PREPARE]. Increase the motion time: " << tStop);
 			tStop += 0.2;
 		} else {
-			state.jointTrajectory_.header.stamp = ros::Time::now();
-			state.trajStopTime_ = state.jointTrajectory_.header.stamp
+			state.jointTrajectory.header.stamp = ros::Time::now();
+			state.trajStopTime = state.jointTrajectory.header.stamp
 					+ ros::Duration(3 * tStop);
 			return true;
 		}

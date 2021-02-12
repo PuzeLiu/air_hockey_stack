@@ -45,15 +45,17 @@ public:
 	void update();
 
 private:
+	std::string getControllerName();
+
 	void loadAgentParam();
+	void loadEnvironmentParams();
+	void computeBaseConfigurations();
+	void loadTactics();
+
+
 	void updateTactic();
 	void publishTrajectory();
 
-	double updateGoal(Eigen::Vector2d puckPos);
-	bool setTactic(Tactics tactic);
-	void loadEnvironmentParams();
-	std::string getControllerName();
-	void loadTactics();
 
 private:
 	// ROS
@@ -62,16 +64,16 @@ private:
 	ros::Publisher cartTrajectoryPub;
 	ros::Rate rate;
 
-	// PARAMS
+	// Params
 	EnvironmentParams envParams;
 	AgentParams agentParams;
 
-	// LOGIC
+	// Logic
 	Observer *observer;
 	TrajectoryGenerator *generator;
 	std::vector<Tactic*> tactics;
 
-	//State
+	// State
 	SystemState state;
 	AgentState agentState;
 };

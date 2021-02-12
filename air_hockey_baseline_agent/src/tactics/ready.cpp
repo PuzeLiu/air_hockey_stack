@@ -36,7 +36,7 @@ Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Ready::ready() {
-	return ros::Time::now() > state.trajStopTime_;
+	return ros::Time::now() > state.trajStopTime;
 }
 
 bool Ready::apply() {
@@ -46,7 +46,7 @@ bool Ready::apply() {
 	ros::Time tStart;
 	Kinematics::JointArrayType qStart, dqStart;
 
-	state.getPlannedState(xStart, vStart, qStart, dqStart, tStart, agentParams.planTimeOffset_);
+	state.getPlannedState(xStart, vStart, qStart, dqStart, tStart, agentParams.planTimeOffset);
 
 	generator.transformations->applyInverseTransform(xStart);
 	generator.transformations->applyInverseRotation(vStart);
@@ -56,22 +56,22 @@ bool Ready::apply() {
 
 	double tStop = 1.5;
 	for (int i = 0; i < 10; ++i) {
-		state.cartTrajectory_.points.clear();
-		state.jointTrajectory_.points.clear();
-		generator.cubicLinearMotion->plan(xStart2d, vStart2d, xHome_,
-				Vector2d(0., 0.), tStop, state.cartTrajectory_);
-		generator.transformations->transformTrajectory(state.cartTrajectory_);
+		state.cartTrajectory.points.clear();
+		state.jointTrajectory.points.clear();
+		generator.cubicLinearMotion->plan(xStart2d, vStart2d, agentParams.xHome,
+				Vector2d(0., 0.), tStop, state.cartTrajectory);
+		generator.transformations->transformTrajectory(state.cartTrajectory);
 
 		bool ok = generator.optimizer->optimizeJointTrajectoryAnchor(
-				state.cartTrajectory_, qStart, qHome_, state.jointTrajectory_);
+				state.cartTrajectory, qStart, agentParams.qHome, state.jointTrajectory);
 		if (!ok) {
 			ROS_INFO_STREAM(
 					"Optimization Failed [READY]. Increase the motion time: " << tStop);
 			tStop += 0.1;
 		} else {
-			state.jointTrajectory_.header.stamp = tStart;
-			state.cartTrajectory_.header.stamp = tStart;
-			state.trajStopTime_ = state.jointTrajectory_.header.stamp
+			state.jointTrajectory.header.stamp = tStart;
+			state.cartTrajectory.header.stamp = tStart;
+			state.trajStopTime = state.jointTrajectory.header.stamp
 					+ ros::Duration(tStop);
 			return true;
 		}

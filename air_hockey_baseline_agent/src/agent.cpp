@@ -33,7 +33,6 @@ using namespace Eigen;
 
 AgentState::AgentState() {
 	currentTactic = Tactics::READY;
-	gameStatusPrev = GameStatus::STOP;
 	smashCount = 0;
 	cutCount = 0;
 	cutPrevY = 0.0;
@@ -47,10 +46,10 @@ Agent::Agent(ros::NodeHandle nh, double rate) :
 	loadAgentParam();
 
 	std::string controllerName = getControllerName();
-	observer = new Observer(nh, controllerName, agentParams.defendLine_);
+	observer = new Observer(nh, controllerName, agentParams.defendLine);
 
-	generator = new TrajectoryGenerator(nh.getNamespace(), envParams, observer, rate);
-
+	generator = new TrajectoryGenerator(nh.getNamespace(), envParams, observer,
+			rate);
 
 	jointTrajectoryPub = nh.advertise<JointTrajectory>(
 			controllerName + "/command", 2);
@@ -59,7 +58,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) :
 
 	loadTactics();
 
-	state.trajStopTime_ = ros::Time::now();
+	state.trajStopTime = ros::Time::now();
 }
 
 Agent::~Agent() {
@@ -77,7 +76,7 @@ void Agent::start() {
 	observer->start();
 
 	while (ros::ok()) {
-		agentState.observation = observer->getObservation();
+		state.observation = observer->getObservation();
 		auto &activeTactic = *tactics[agentState.currentTactic];
 		if (activeTactic.ready()) {
 			activeTactic.apply();
@@ -90,94 +89,133 @@ void Agent::start() {
 }
 
 void Agent::update() {
-	bool gameStatusChanged = (agentState.observation.gameStatus.status
-			!= agentState.gameStatusPrev);
-	if (gameStatusChanged) {
-		agentState.gameStatusPrev =
-				static_cast<GameStatus>(agentState.observation.gameStatus.status);
-		if (agentState.observation.gameStatus.status == GameStatus::START) {
+	auto status = state.observation.gameStatus.status;
+
+	if (observer->isGameStatusChanged()) {
+		switch (status) {
+		case GameStatus::START:
 			ROS_INFO_STREAM("Game Status Changed: START");
 			agentState.currentTactic = Tactics::HOME;
-		} else if (agentState.observation.gameStatus.status
-				== GameStatus::PAUSE) {
-			ROS_INFO_STREAM("Game Status Changed: PAUSE");
-			agentState.currentTactic = Tactics::READY;
-		} else {
+			break;
+		case GameStatus::STOP:
 			ROS_INFO_STREAM("Game Status Changed: STOP");
 			agentState.currentTactic = Tactics::INIT;
+			break;
+		case GameStatus::PAUSE:
+			ROS_INFO_STREAM("Game Status Changed: PAUSE");
+			agentState.currentTactic = Tactics::READY;
+			break;
+		default:
+			ROS_FATAL_STREAM("Unknown game status");
+			exit(-1);
 		}
-	} else {
-		if (agentState.observation.gameStatus.status == GameStatus::START) {
-			updateTactic();
-		}
+	} else if (status == GameStatus::START) {
+		updateTactic();
 	}
 }
 
 void Agent::updateTactic() {
-	if (agentState.observation.puckPredictedState.state.block<2, 1>(2, 0).norm()
-			> agentParams.vDefendMin_) {
-		agentState.staticCount = 0;
-	} else {
-		agentState.staticCount += 1;
-	}
-
-	if (agentState.staticCount < 10) {
-		if (agentState.observation.puckPredictedState.predictedTime
-				< observer->getMaxPredictionTime()) {
-			setTactic(Tactics::CUT);
-			if (abs(
-					agentState.observation.puckPredictedState.state.y()
-							- agentState.cutPrevY)
-					> (envParams.malletRadius_)) {
-				agentState.cutCount = 0;
-				agentState.cutPrevY =
-						agentState.observation.puckPredictedState.state.y();
-			} else {
-				agentState.cutCount += 1;
-			}
-			if (agentState.cutCount == 10) {
-				agentState.currentTactic = Tactics::CUT;
-			}
-		} else {
-			bool restart = setTactic(Tactics::READY);
-			agentState.currentTactic = Tactics::READY;
-		}
-	} else {
-		if (agentState.observation.puckPredictedState.state.x()
-				< agentParams.hitRange_[1]
-				&& agentState.observation.puckPredictedState.state.x()
-						> agentParams.hitRange_[0]
-				&& agentState.currentTactic != Tactics::PREPARE) {
-			if (agentState.observation.puckPredictedState.state.y()
-					> envParams.tableWidth_ / 2 - envParams.puckRadius_
-							- envParams.malletRadius_ - 0.02
-					|| agentState.observation.puckPredictedState.state.y()
-							< -envParams.tableWidth_ / 2 + envParams.puckRadius_
-									+ envParams.malletRadius_ + 0.02) {
-				bool restart = setTactic(Tactics::PREPARE);
-				agentState.currentTactic = Tactics::PREPARE;
-			} else {
-				bool restart = setTactic(Tactics::SMASH);
-				if (agentState.smashCount > 10) {
-					agentState.currentTactic = Tactics::SMASH;
-				}
-			}
-		} else if (agentState.observation.puckPredictedState.state.x()
-				<= agentParams.hitRange_[0]
-				|| agentState.currentTactic == Tactics::PREPARE) {
-			bool restart = setTactic(Tactics::PREPARE);
-			agentState.currentTactic = Tactics::PREPARE;
-		} else {
-			bool restart = setTactic(Tactics::READY);
-			agentState.currentTactic = Tactics::READY;
-		}
-	}
-
+	//TODO implement
 }
 
 void Agent::publishTrajectory() {
-	jointTrajectoryPub.publish(state.jointTrajectory_);
-	cartTrajectoryPub.publish(state.cartTrajectory_);
+	jointTrajectoryPub.publish(state.jointTrajectory);
+	cartTrajectoryPub.publish(state.cartTrajectory);
+}
+
+void Agent::loadEnvironmentParams() {
+	nh.getParam("/air_hockey/table_length", envParams.tableLength);
+	nh.getParam("/air_hockey/table_width", envParams.tableWidth);
+	nh.getParam("/air_hockey/mallet_radius", envParams.malletRadius);
+	nh.getParam("/air_hockey/puck_radius", envParams.puckRadius);
+	nh.getParam("/air_hockey/puck_height", envParams.puckHeight);
+	nh.getParam("/air_hockey/agent/universal_joint_height",
+			envParams.universalJointHeight);
+	nh.getParam("/air_hockey/agent/prepare_height", envParams.prepareHeight);
+
+	std::vector<double> tcp_position;
+	nh.getParam("/air_hockey/agent/tcp_position", tcp_position);
+	envParams.tcp_position.x() = tcp_position[0];
+	envParams.tcp_position.y() = tcp_position[1];
+	envParams.tcp_position.z() = tcp_position[2];
+
+	std::vector<double> tcp_quaternion;
+	nh.getParam("/air_hockey/agent/tcp_quaternion", tcp_quaternion);
+	envParams.tcp_quaternion.w() = tcp_quaternion[0];
+	envParams.tcp_quaternion.x() = tcp_quaternion[1];
+	envParams.tcp_quaternion.y() = tcp_quaternion[2];
+	envParams.tcp_quaternion.z() = tcp_quaternion[3];
+}
+
+void Agent::loadAgentParam() {
+	std::vector<double> xTmp;
+
+	nh.getParam("/air_hockey/agent/home", xTmp);
+	agentParams.xHome << xTmp[0], xTmp[1];
+
+	nh.getParam("/air_hockey/agent/prepare", xTmp);
+	agentParams.xPrepare << xTmp[0], xTmp[1], envParams.universalJointHeight
+			+ envParams.puckHeight;
+
+	nh.getParam("/air_hockey/agent/goal", xTmp);
+	agentParams.xGoal << xTmp[0], xTmp[1];
+
+	nh.getParam("/air_hockey/agent/hit_range", xTmp);
+	agentParams.hitRange << xTmp[0], xTmp[1];
+
+	nh.getParam("/air_hockey/agent/q_ref", xTmp);
+	agentParams.qRef << xTmp[0], xTmp[1], xTmp[2], xTmp[3], xTmp[4], xTmp[5], xTmp[6];
+
+	nh.getParam("/air_hockey/agent/defend_line", agentParams.defendLine);
+
+	nh.getParam("/air_hockey/agent/max_hit_velocity", agentParams.vHitMax);
+
+	nh.getParam("/air_hockey/agent/min_defend_velocity",
+			agentParams.vDefendMin);
+
+	nh.getParam("/air_hockey/agent/min_defend_time", agentParams.tDefendMin);
+	nh.getParam("/air_hockey/agent/plan_time_offset",
+			agentParams.planTimeOffset);
+
+	computeBaseConfigurations();
+}
+
+void Agent::computeBaseConfigurations() {
+
+	auto kinematics = generator->kinematics;
+	auto transformations = generator->transformations;
+	auto optimizer = generator->optimizer;
+
+	// Compute global configuration
+	Vector3d xTmp, gc;
+	Quaterniond quatTmp;
+	double psi;
+
+	kinematics->forwardKinematics(agentParams.qRef, xTmp, quatTmp);
+	kinematics->getRedundancy(agentParams.qRef, gc, psi);
+
+	// compute qHome
+	xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight;
+	transformations->applyForwardTransform(xTmp);
+	if (!kinematics->inverseKinematics(xTmp, quatTmp, gc, psi,
+			agentParams.qHome)) {
+		ROS_ERROR_STREAM(
+				"Inverse Kinematics fail, unable to find solution for HOME position");
+	}
+
+	optimizer->SolveJoint7(agentParams.qHome);
+
+	// compute qinit
+	xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight
+			+ envParams.initHeight;
+	transformations->applyForwardTransform(xTmp);
+	if (!kinematics->inverseKinematics(xTmp, quatTmp, gc, psi,
+			agentParams.qInit)) {
+		ROS_ERROR_STREAM(
+				"Inverse Kinematics fail, unable to find solution for INIT position");
+	}
+
+	optimizer->SolveJoint7(agentParams.qInit);
 }
 
 void Agent::loadTactics() {
@@ -185,42 +223,13 @@ void Agent::loadTactics() {
 
 	tactics[Tactics::INIT] = new Init(envParams, agentParams, state, generator);
 	tactics[Tactics::HOME] = new Home(envParams, agentParams, state, generator);
-	tactics[Tactics::READY] = new Ready(envParams, agentParams, state, generator);
-	tactics[Tactics::PREPARE] = new Prepare(envParams, agentParams, state, generator);
+	tactics[Tactics::READY] = new Ready(envParams, agentParams, state,
+			generator);
+	tactics[Tactics::PREPARE] = new Prepare(envParams, agentParams, state,
+			generator);
 	tactics[Tactics::CUT] = new Cut(envParams, agentParams, state, generator);
-	tactics[Tactics::SMASH] = new Smash(envParams, agentParams, state, generator);
-}
-
-bool Agent::setTactic(Tactics tactic) {
-//	if (tacticState_ != tactic) {
-//		if (tactic == Tactics::READY) {
-//			if (tacticState_ == Tactics::SMASH
-//					&& ros::Time::now() < trajStopTime_) {
-//				return false;
-//			} else {
-//				tacticState_ = tactic;
-//				ROS_INFO_STREAM("Tactics changed: READY");
-//				return true;
-//			}
-//		} else if (tactic == Tactics::CUT) {
-//			tacticState_ = tactic;
-//			ROS_INFO_STREAM("Tactics changed: CUT");
-//			return true;
-//		} else if (tactic == Tactics::PREPARE) {
-//			tacticState_ = tactic;
-//			ROS_INFO_STREAM("Tactics changed: PREPARE");
-//			return true;
-//		} else if (tactic == Tactics::SMASH) {
-//			tacticState_ = tactic;
-//			smashCount = 0;
-//			ROS_INFO_STREAM("Tactics changed: SMASH");
-//			return true;
-//		}
-//	} else if (tactic == Tactics::SMASH) {
-//		smashCount += 1;
-//		return false;
-//	}
-	return false;
+	tactics[Tactics::SMASH] = new Smash(envParams, agentParams, state,
+			generator);
 }
 
 std::string Agent::getControllerName() {
@@ -248,60 +257,5 @@ std::string Agent::getControllerName() {
 	}
 
 	return controllerName;
-}
-
-void Agent::loadEnvironmentParams() {
-	nh.getParam("/air_hockey/table_length", envParams.tableLength_);
-	nh.getParam("/air_hockey/table_width", envParams.tableWidth_);
-	nh.getParam("/air_hockey/mallet_radius", envParams.malletRadius_);
-	nh.getParam("/air_hockey/puck_radius", envParams.puckRadius_);
-	nh.getParam("/air_hockey/puck_height", envParams.puckHeight_);
-	nh.getParam("/air_hockey/agent/universal_joint_height",
-			envParams.universalJointHeight_);
-	nh.getParam("/air_hockey/agent/prepare_height", envParams.prepareHeight_);
-
-	std::vector<double> tcp_position;
-	nh.getParam("/air_hockey/agent/tcp_position", tcp_position);
-	envParams.tcp_position.x() = tcp_position[0];
-	envParams.tcp_position.y() = tcp_position[1];
-	envParams.tcp_position.z() = tcp_position[2];
-
-	std::vector<double> tcp_quaternion;
-	nh.getParam("/air_hockey/agent/tcp_quaternion", tcp_quaternion);
-	envParams.tcp_quaternion.w() = tcp_quaternion[0];
-	envParams.tcp_quaternion.x() = tcp_quaternion[1];
-	envParams.tcp_quaternion.y() = tcp_quaternion[2];
-	envParams.tcp_quaternion.z() = tcp_quaternion[3];
-}
-
-void Agent::loadAgentParam() {
-	std::vector<double> xTmp;
-
-	nh.getParam("/air_hockey/agent/home", xTmp);
-	agentParams.xHome_ << xTmp[0], xTmp[1];
-
-	nh.getParam("/air_hockey/agent/prepare", xTmp);
-	agentParams.xPrepare_ << xTmp[0], xTmp[1], envParams.universalJointHeight_
-			+ envParams.puckHeight_;
-
-	nh.getParam("/air_hockey/agent/goal", xTmp);
-	agentParams.xGoal_ << xTmp[0], xTmp[1];
-
-	nh.getParam("/air_hockey/agent/hit_range", xTmp);
-	agentParams.hitRange_ << xTmp[0], xTmp[1];
-
-	nh.getParam("/air_hockey/agent/q_ref", xTmp);
-	agentParams.qRef_ << xTmp[0], xTmp[1], xTmp[2], xTmp[3], xTmp[4], xTmp[5], xTmp[6];
-
-	nh.getParam("/air_hockey/agent/defend_line", agentParams.defendLine_);
-
-	nh.getParam("/air_hockey/agent/max_hit_velocity", agentParams.vHitMax_);
-
-	nh.getParam("/air_hockey/agent/min_defend_velocity",
-			agentParams.vDefendMin_);
-
-	nh.getParam("/air_hockey/agent/min_defend_time", agentParams.tDefendMin_);
-	nh.getParam("/air_hockey/agent/plan_time_offset",
-			agentParams.planTimeOffset_);
 }
 

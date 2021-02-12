@@ -34,12 +34,12 @@ using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
 SystemState::SystemState(string ns_prefix) {
-	cartTrajectory_.joint_names.push_back("x");
-	cartTrajectory_.joint_names.push_back("y");
-	cartTrajectory_.joint_names.push_back("z");
+	cartTrajectory.joint_names.push_back("x");
+	cartTrajectory.joint_names.push_back("y");
+	cartTrajectory.joint_names.push_back("z");
 
 	for (int i = 1; i < 8; i++) {
-		jointTrajectory_.joint_names.push_back(
+		jointTrajectory.joint_names.push_back(
 				ns_prefix + "_joint_" + to_string(i));
 
 	}
@@ -49,26 +49,26 @@ SystemState::SystemState(string ns_prefix) {
 
 void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
 		Kinematics::JointArrayType &dq, ros::Time &tStart, double offset_t) {
-	if (jointTrajectory_.points.size() > 0) {
+	if (jointTrajectory.points.size() > 0) {
 		tStart = ros::Time::now() + ros::Duration(offset_t);
-		ros::Time tLast = jointTrajectory_.header.stamp
-				+ jointTrajectory_.points.back().time_from_start;
+		ros::Time tLast = jointTrajectory.header.stamp
+				+ jointTrajectory.points.back().time_from_start;
 		if (tStart <= tLast) {
-			for (int i = jointTrajectory_.points.size() - 1; i >= 0; --i) {
+			for (int i = jointTrajectory.points.size() - 1; i >= 0; --i) {
 				if (tStart
-						> jointTrajectory_.header.stamp
-								+ jointTrajectory_.points[i].time_from_start) {
+						> jointTrajectory.header.stamp
+								+ jointTrajectory.points[i].time_from_start) {
 					for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-						q[j] = jointTrajectory_.points[i + 1].positions[j];
-						dq[j] = jointTrajectory_.points[i + 1].velocities[j];
+						q[j] = jointTrajectory.points[i + 1].positions[j];
+						dq[j] = jointTrajectory.points[i + 1].velocities[j];
 					}
 					break;
 				}
 			}
 		} else {
 			for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-				q[j] = jointTrajectory_.points.back().positions[j];
-				dq[j] = jointTrajectory_.points.back().velocities[j];
+				q[j] = jointTrajectory.points.back().positions[j];
+				dq[j] = jointTrajectory.points.back().velocities[j];
 			}
 		}
 	}
@@ -83,6 +83,13 @@ void SystemState::getPlannedCartesianState(Vector3d &x, Vector3d &dx,
 //	dx = jacobian * dq;
 }
 
+Tactic::Tactic(EnvironmentParams &envParams, AgentParams &agentParams,
+		SystemState *state, TrajectoryGenerator *generator) :
+		envParams(envParams), agentParams(agentParams), state(*state), generator(
+				*generator) {
+
+}
+
 bool Tactic::planReturnTraj(SystemState &state, const double &vMax,
 		trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
 		trajectory_msgs::JointTrajectory &jointTrajReturn) {
@@ -92,7 +99,7 @@ bool Tactic::planReturnTraj(SystemState &state, const double &vMax,
 	cartTrajReturn.joint_names.push_back("z");
 
 	trajectory_msgs::MultiDOFJointTrajectoryPoint lastPoint =
-			state.cartTrajectory_.points.back();
+			state.cartTrajectory.points.back();
 
 	for (size_t i = 0; i < 10; ++i) {
 		cartTrajReturn.points.clear();
@@ -103,19 +110,19 @@ bool Tactic::planReturnTraj(SystemState &state, const double &vMax,
 		xStop << lastPoint.transforms[0].translation.x, lastPoint.transforms[0].translation.y, lastPoint.transforms[0].translation.z;
 		generator.transformations->applyInverseTransform(xStop);
 		Vector2d xStop2d = xStop.block<2, 1>(0, 0);
-		double tStop = (xHome_ - xStop2d).norm() / vReadyMax;
-		generator.cubicLinearMotion->plan(xStop2d, Vector2d(0., 0.), xHome_,
+		double tStop = (agentParams.xHome - xStop2d).norm() / vReadyMax;
+		generator.cubicLinearMotion->plan(xStop2d, Vector2d(0., 0.), agentParams.xHome,
 				Vector2d(0., 0.), tStop, cartTrajReturn);
 		cartTrajReturn.points.erase(cartTrajReturn.points.begin());
 		generator.transformations->transformTrajectory(cartTrajReturn);
 
 		Kinematics::JointArrayType qStart;
 		for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-			qStart[j] = state.jointTrajectory_.points.back().positions[j];
+			qStart[j] = state.jointTrajectory.points.back().positions[j];
 		}
 
 		bool ok = generator.optimizer->optimizeJointTrajectoryAnchor(
-				cartTrajReturn, qStart, qHome_, jointTrajReturn);
+				cartTrajReturn, qStart, agentParams.qHome, jointTrajReturn);
 
 		if (ok) {
 			return true;
@@ -127,13 +134,6 @@ bool Tactic::planReturnTraj(SystemState &state, const double &vMax,
 	}
 
 	return false;
-}
-
-Tactic::Tactic(EnvironmentParams &envParams, AgentParams &agentParams,
-		SystemState *state, TrajectoryGenerator *generator) :
-		envParams(envParams), agentParams(agentParams), state(*state), generator(
-				*generator) {
-
 }
 
 Tactic::~Tactic() {
