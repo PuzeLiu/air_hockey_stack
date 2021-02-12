@@ -43,7 +43,7 @@ bool Smash::apply() {
 			xCur);
 	generator.transformations->applyInverseTransform(xCur);
 	Vector2d xCur2d = xCur.block<2, 1>(0, 0);
-	Vector2d puckCur2d = state.puckPredictedState.state.block<2, 1>(0, 0);
+	Vector2d puckCur2d = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
 
 	Vector2d xGoal = computeTarget(puckCur2d);
 	Vector2d vHit = (xGoal - puckCur2d).normalized();
