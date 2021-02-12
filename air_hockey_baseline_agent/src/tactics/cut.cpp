@@ -47,8 +47,10 @@ bool Cut::apply() {
 	ros::Time tStart;
 	Kinematics::JointArrayType qStart, dqStart;
 
-	state.getPlannedState(xCur, vCur, qStart, dqStart, tStart,
+	state.getPlannedJointState(qStart, dqStart, tStart,
 			agentParams.planTimeOffset);
+
+	generator.getCartesianPosAndVel(xCur, vCur, qStart, dqStart);
 
 	generator.transformations->applyInverseTransform(xCur);
 	generator.transformations->applyInverseRotation(vCur);
@@ -88,6 +90,7 @@ bool Cut::apply() {
 	}
 
 	ROS_INFO_STREAM("Optimization Failed [Cut].");
+	return false;
 }
 
 Cut::~Cut() {

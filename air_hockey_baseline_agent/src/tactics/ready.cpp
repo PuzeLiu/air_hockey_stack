@@ -46,7 +46,10 @@ bool Ready::apply() {
 	ros::Time tStart;
 	Kinematics::JointArrayType qStart, dqStart;
 
-	state.getPlannedState(xStart, vStart, qStart, dqStart, tStart, agentParams.planTimeOffset);
+	state.getPlannedJointState(qStart, dqStart, tStart,
+			agentParams.planTimeOffset);
+
+	generator.getCartesianPosAndVel(xStart, vStart, qStart, dqStart);
 
 	generator.transformations->applyInverseTransform(xStart);
 	generator.transformations->applyInverseRotation(vStart);
@@ -58,7 +61,7 @@ bool Ready::apply() {
 	for (int i = 0; i < 10; ++i) {
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
-		generator.cubicLinearMotion->plan(xStart2d, vStart2d, agentParams.xHome,
+		generator.cubicLinearMotion->plan(xStart2d, vStart2d, agentParams.xHome.block<2,1>(0, 0),
 				Vector2d(0., 0.), tStop, state.cartTrajectory);
 		generator.transformations->transformTrajectory(state.cartTrajectory);
 

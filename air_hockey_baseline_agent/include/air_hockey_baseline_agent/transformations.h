@@ -41,6 +41,7 @@ public:
 	void applyInverseTransform(Eigen::Vector3d &v_in_out);
 	void applyInverseRotation(Eigen::Vector3d &v_in_out);
 
+
 private:
 	geometry_msgs::TransformStamped tfRobot2Table_, tfRobot2TableInverse_;
 

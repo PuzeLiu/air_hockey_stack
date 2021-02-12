@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "null_space_optimizer.h"
+#include "air_hockey_baseline_agent/null_space_optimizer.h"
 
 using namespace std;
 using namespace air_hockey_baseline_agent;

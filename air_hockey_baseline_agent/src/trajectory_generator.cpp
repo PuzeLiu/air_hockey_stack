@@ -23,26 +23,33 @@
 
 #include "air_hockey_baseline_agent/trajectory_generator.h"
 
-using namespace air_hockey_baseline_agent;
 using namespace Eigen;
+using namespace iiwas_kinematics;
+using namespace air_hockey_baseline_agent;
 
 TrajectoryGenerator::TrajectoryGenerator(std::string ns, EnvironmentParams data,
 		Observer *observer, double rate) {
-	kinematics = new iiwas_kinematics::Kinematics(data.tcp_position,
-			data.tcp_quaternion);
+	kinematics = new Kinematics(data.tcp_position, data.tcp_quaternion);
 	optimizer = new NullSpaceOptimizer(kinematics, observer, false);
 	transformations = new Transformations(ns);
 
-	Eigen::Vector2d bound_lower = Vector2d(data.malletRadius,
+	Vector2d bound_lower(data.malletRadius,
 			-data.tableWidth / 2 + data.malletRadius + 0.02);
-	Eigen::Vector2d bound_upper = Vector2d(
-			data.tableLength / 2 - data.malletRadius,
+	Vector2d bound_upper(data.tableLength / 2 - data.malletRadius,
 			data.tableWidth / 2 - data.malletRadius - 0.02);
 
 	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, rate,
 			data.universalJointHeight);
 	cubicLinearMotion = new CubicLinearMotion(rate, data.universalJointHeight);
 
+}
+
+void TrajectoryGenerator::getCartesianPosAndVel(Vector3d &x, Vector3d &dx,
+		Kinematics::JointArrayType &q, Kinematics::JointArrayType &dq) {
+	kinematics->forwardKinematics(q, x);
+	Kinematics::JacobianPosType jacobian;
+	kinematics->jacobianPos(q, jacobian);
+	dx = jacobian * dq;
 }
 
 TrajectoryGenerator::~TrajectoryGenerator() {

@@ -44,8 +44,11 @@ bool Prepare::apply() {
 	ros::Time tStart;
 	Kinematics::JointArrayType qStart, dqStart;
 
-	state.getPlannedState(xStart, vStart, qStart, dqStart, tStart,
+	state.getPlannedJointState(qStart, dqStart, tStart,
 			agentParams.planTimeOffset);
+
+	generator.getCartesianPosAndVel(xStart, vStart, qStart, dqStart);
+
 	generator.transformations->applyInverseTransform(xStart);
 	generator.transformations->applyInverseRotation(vStart);
 

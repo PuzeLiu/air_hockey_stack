@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "planner/bezier_hit.h"
+#include "air_hockey_baseline_agent/planner/bezier_hit.h"
 
 using namespace std;
 using namespace Eigen;

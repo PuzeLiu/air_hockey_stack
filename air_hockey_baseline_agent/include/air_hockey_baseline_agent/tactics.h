@@ -29,28 +29,6 @@
 
 namespace air_hockey_baseline_agent {
 
-class SystemState {
-public:
-	SystemState(std::string ns_prefix);
-
-	void getPlannedJointState(iiwas_kinematics::Kinematics::JointArrayType &q,
-			iiwas_kinematics::Kinematics::JointArrayType &dq, ros::Time &tStart,
-			double offset_t);
-	void getPlannedCartesianState(Eigen::Vector3d &x, Eigen::Vector3d &dx,
-			iiwas_kinematics::Kinematics::JointArrayType &q,
-			iiwas_kinematics::Kinematics::JointArrayType &dq, ros::Time &tStart,
-			double t = 0);
-
-public:
-	trajectory_msgs::MultiDOFJointTrajectory cartTrajectory;
-	trajectory_msgs::JointTrajectory jointTrajectory;
-	ros::Time trajStopTime;
-	ObservationState observation;
-
-	bool restart;
-
-};
-
 class Tactic {
 public:
 	Tactic(EnvironmentParams &envParams, AgentParams &agentParams,

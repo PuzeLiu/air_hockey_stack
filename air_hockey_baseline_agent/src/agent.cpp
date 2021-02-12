@@ -40,13 +40,14 @@ AgentState::AgentState() {
 }
 
 Agent::Agent(ros::NodeHandle nh, double rate) :
-		nh(nh), rate(rate) {
+		nh(nh), rate(rate), state(nh.getNamespace()) {
 
 	loadEnvironmentParams();
 	loadAgentParam();
 
 	std::string controllerName = getControllerName();
 	observer = new Observer(nh, controllerName, agentParams.defendLine);
+	agentParams.maxPredictionTime = observer->getMaxPredictionTime();
 
 	generator = new TrajectoryGenerator(nh.getNamespace(), envParams, observer,
 			rate);
@@ -151,7 +152,7 @@ void Agent::loadAgentParam() {
 	std::vector<double> xTmp;
 
 	nh.getParam("/air_hockey/agent/home", xTmp);
-	agentParams.xHome << xTmp[0], xTmp[1];
+	agentParams.xHome << xTmp[0], xTmp[1], 0.0;
 
 	nh.getParam("/air_hockey/agent/prepare", xTmp);
 	agentParams.xPrepare << xTmp[0], xTmp[1], envParams.universalJointHeight

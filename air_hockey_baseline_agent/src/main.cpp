@@ -23,7 +23,7 @@
 
 #include <ros/ros.h>
 
-#include "agent.h"
+#include "air_hockey_baseline_agent/agent.h"
 
 using namespace air_hockey_baseline_agent;
 

@@ -25,6 +25,9 @@
 
 #include <Eigen/Dense>
 
+#include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <trajectory_msgs/JointTrajectory.h>
+
 #include "iiwas_kinematics/iiwas_kinematics.h"
 #include "air_hockey_puck_tracker/PuckTracker.hpp"
 #include "air_hockey_referee/referee.h"
@@ -59,9 +62,10 @@ struct AgentParams {
 	iiwas_kinematics::Kinematics::JointArrayType qRef;
 	iiwas_kinematics::Kinematics::JointArrayType qHome;
 	iiwas_kinematics::Kinematics::JointArrayType qInit;
-	Eigen::Vector2d xHome;
 	Eigen::Vector2d xGoal;
-	Eigen::Vector2d xPrepare;
+	Eigen::Vector3d xHome;
+	Eigen::Vector3d xPrepare;
+
 	Eigen::Vector2d hitRange;
 
 	double vHitMax;
@@ -69,6 +73,7 @@ struct AgentParams {
 	double tDefendMin;
 	double defendLine;
 	double planTimeOffset;
+	double maxPredictionTime;
 };
 
 struct ObservationState {
@@ -89,6 +94,24 @@ struct AgentState {
 	int staticCount;
 	int smashCount;
 	int cutCount;
+
+};
+
+class SystemState {
+public:
+	SystemState(std::string ns_prefix);
+
+	void getPlannedJointState(iiwas_kinematics::Kinematics::JointArrayType &q,
+			iiwas_kinematics::Kinematics::JointArrayType &dq, ros::Time &tStart,
+			double offset_t);
+
+public:
+	trajectory_msgs::MultiDOFJointTrajectory cartTrajectory;
+	trajectory_msgs::JointTrajectory jointTrajectory;
+	ros::Time trajStopTime;
+	ObservationState observation;
+
+	bool restart;
 
 };
 

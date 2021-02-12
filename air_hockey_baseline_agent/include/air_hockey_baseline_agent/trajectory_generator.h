@@ -42,6 +42,11 @@ struct TrajectoryGenerator {
 			Observer *observer, double rate);
 	~TrajectoryGenerator();
 
+	void getCartesianPosAndVel(Eigen::Vector3d &x,
+			Eigen::Vector3d &dx,
+			iiwas_kinematics::Kinematics::JointArrayType &q,
+			iiwas_kinematics::Kinematics::JointArrayType &dq);
+
 	CombinatorialHit *combinatorialHit;
 	CubicLinearMotion *cubicLinearMotion;
 	iiwas_kinematics::Kinematics *kinematics;

@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "planner/combinatorial_hit.h"
+#include "air_hockey_baseline_agent/planner/combinatorial_hit.h"
 
 #include <Eigen/Geometry>
 #include <boost/algorithm/clamp.hpp>

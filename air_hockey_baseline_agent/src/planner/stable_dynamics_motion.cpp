@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "planner/stable_dynamics_motion.h"
+#include "air_hockey_baseline_agent/planner/stable_dynamics_motion.h"
 
 #include <utility>
 

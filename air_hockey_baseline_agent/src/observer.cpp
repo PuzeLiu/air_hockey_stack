@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "observer.h"
+#include "air_hockey_baseline_agent/observer.h"
 
 using namespace air_hockey_baseline_agent;
 
