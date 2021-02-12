@@ -19,7 +19,9 @@ find_package(Eigen3 REQUIRED)
 
 find_package(osqp REQUIRED)
 
-find_package(OsqpEigen REQUIRED COMPONENTS)
+find_package(OsqpEigen REQUIRED)
+
+find_package(NLopt REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -144,7 +146,7 @@ add_executable(${PROJECT_NAME} src/null_space_opt_node.cpp
         src/optimizer.cpp
         src/planner.cpp
         src/null_space_opt_ros.cpp)
-#add_executable(bezier_curve_planner src/bezier_curve_node.cpp src/planner.cpp)
+add_executable(hitting_point_optimization src/hitting_point_optimizer.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -154,18 +156,19 @@ add_executable(${PROJECT_NAME} src/null_space_opt_node.cpp
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
- add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 # Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
         ${catkin_LIBRARIES}
-        iiwas_kinematics
         osqp::osqp
         OsqpEigen
         )
-#target_link_libraries(bezier_curve_planner
-#        ${catkin_LIBRARIES}
-#        Eigen3::Eigen)
+
+target_link_libraries(hitting_point_optimization
+    ${catkin_LIBRARIES}
+    NLopt::nlopt
+    )
 
 #############
 ## Install ##
