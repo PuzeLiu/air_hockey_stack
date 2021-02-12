@@ -45,9 +45,10 @@ namespace air_hockey_baseline_agent {
         const ObservationState& getObservation();
 
         inline bool isGameStatusChanged() {
+//        	std::cout << statusChanged << std::endl;
         	bool changed = statusChanged;
         	statusChanged = false;
-        	return statusChanged;
+        	return changed;
         }
 
         inline const double getMaxPredictionTime() {

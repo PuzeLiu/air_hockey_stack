@@ -32,7 +32,7 @@ using namespace trajectory_msgs;
 using namespace Eigen;
 
 AgentState::AgentState() {
-	currentTactic = Tactics::READY;
+	currentTactic = Tactics::INIT;
 	smashCount = 0;
 	cutCount = 0;
 	cutPrevY = 0.0;
@@ -51,6 +51,8 @@ Agent::Agent(ros::NodeHandle nh, double rate) :
 
 	generator = new TrajectoryGenerator(nh.getNamespace(), envParams, observer,
 			rate);
+
+	computeBaseConfigurations();
 
 	jointTrajectoryPub = nh.advertise<JointTrajectory>(
 			controllerName + "/command", 2);
@@ -78,13 +80,14 @@ void Agent::start() {
 
 	while (ros::ok()) {
 		state.observation = observer->getObservation();
+		update();
+
 		auto &activeTactic = *tactics[agentState.currentTactic];
 		if (activeTactic.ready()) {
 			activeTactic.apply();
 			publishTrajectory();
 		}
 
-		update();
 		rate.sleep();
 	}
 }
@@ -178,7 +181,7 @@ void Agent::loadAgentParam() {
 	nh.getParam("/air_hockey/agent/plan_time_offset",
 			agentParams.planTimeOffset);
 
-	computeBaseConfigurations();
+	envParams.initHeight = 0.2; //TODO in config
 }
 
 void Agent::computeBaseConfigurations() {
