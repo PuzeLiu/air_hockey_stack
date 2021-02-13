@@ -8,32 +8,41 @@
 #include <nlopt.hpp>
 #include "iiwas_kinematics/iiwas_kinematics.h"
 
-struct OptimizerData{
-    iiwas_kinematics::Kinematics& kinematics;
+struct OptimizerData {
+    iiwas_kinematics::Kinematics &kinematics;
     Eigen::Vector3d hitPoint;
     Eigen::Vector3d hitDirection;
     double epsilon;
-    OptimizerData(iiwas_kinematics::Kinematics& kinematics);
+
+    OptimizerData(iiwas_kinematics::Kinematics &kinematics);
 };
 
-class HittingPointOptimizer{
+class HittingPointOptimizer {
 public:
-    HittingPointOptimizer(iiwas_kinematics::Kinematics& kinematics);
+    HittingPointOptimizer(iiwas_kinematics::Kinematics &kinematics);
+
     ~HittingPointOptimizer();
 
-    bool optimize(const Eigen::Vector3d& hitPoint, const Eigen::Vector3d& hitDirection,
-                  const iiwas_kinematics::Kinematics::JointArrayType& qStart,
-                  iiwas_kinematics::Kinematics::JointArrayType& qOut);
+    bool solve(const Eigen::Vector3d &hitPoint, const Eigen::Vector3d &hitDirection,
+               iiwas_kinematics::Kinematics::JointArrayType &qInOut, double &velMagMax);
 
 private:
-    static double objective(const std::vector<double> &x, std::vector<double> &grad, void* f_data);
-    static double equalityConstraint(const std::vector<double> &x, std::vector<double> &grad, void* data);
+    typedef double (*functype)(const std::vector<double> &x, const OptimizerData *data);
 
-    static double f(const std::vector<double> &x, const OptimizerData* data);
-    static double h(const std::vector<double> &x, const OptimizerData* data);
+    static double objective(const std::vector<double> &x, std::vector<double> &grad, void *f_data);
 
-    typedef double (*functype)(const std::vector<double> &x, const OptimizerData* data);
-    static void numerical_grad(functype function, const std::vector<double> &x, const OptimizerData* data, std::vector<double> &grad);
+    static double equalityConstraint(const std::vector<double> &x, std::vector<double> &grad, void *data);
+
+    static double f(const std::vector<double> &x, const OptimizerData *data);
+
+    static double h(const std::vector<double> &x, const OptimizerData *data);
+
+    static void numerical_grad(functype function, const std::vector<double> &x, const OptimizerData *data,
+                               std::vector<double> &grad);
+
+    bool getInitPoint(iiwas_kinematics::Kinematics::JointArrayType &qInOut);
+
+    double getMaxVelocity(const iiwas_kinematics::Kinematics::JointArrayType &q);
 
 
 private:
