@@ -121,14 +121,14 @@ void HittingPointOptimizer::numerical_grad(HittingPointOptimizer::functype funct
 }
 
 bool HittingPointOptimizer::getInitPoint(iiwas_kinematics::Kinematics::JointArrayType &qInOut) {
-    iiwas_kinematics::Kinematics::JointArrayType qIk;
-    qIk.setZero();
-    if (!optData.kinematics.numericalInverseKinematics(optData.hitPoint, qIk, 1e-4, 200)){
-        qInOut = qIk;
+//    iiwas_kinematics::Kinematics::JointArrayType qIk;
+//    qIk.setZero();
+    if (!optData.kinematics.numericalInverseKinematics(optData.hitPoint, qInOut, 1e-4, 200)){
+        qInOut = qInOut;
         cout << "No feasible IK solution" << endl;
         return false;
     }
-    qInOut = qIk;
+    qInOut = qInOut;
     return true;
 }
 
@@ -151,6 +151,7 @@ int main(int argc, char *argv[]) {
     HittingPointOptimizer optimizer(kinematics);
     Eigen::Vector3d hitPos, hitDir;
     iiwas_kinematics::Kinematics::JointArrayType qInOut;
+    iiwas_kinematics::Kinematics::JacobianPosType jac;
 
     qInOut << 1.7207, 0.6541, -1.859, -1.422, 0.1313, 1.3779, -0.0653;
     double velMag = 0.;
@@ -172,9 +173,7 @@ int main(int argc, char *argv[]) {
         if (!ret){
             cout << "optimization fail" << endl;
         } else{
-            cout << "Hitting Point: " << hitPos.transpose() << endl;
-            cout << "Hitting Velocity: " << (hitDir * velMag).transpose() << " Magnitude: " << velMag << endl;
-            cout << "Joint Position: " << qInOut.transpose() << endl;
+            cout << "Hitting Point: " << hitPos.transpose() << " Magnitude: " << velMag << endl;
         }
 
     }
