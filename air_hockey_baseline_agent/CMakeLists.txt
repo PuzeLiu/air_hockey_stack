@@ -20,6 +20,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
 find_package(osqp REQUIRED)
 find_package(OsqpEigen REQUIRED)
+find_package(NLopt REQUIRED)
 
 
 catkin_package(
@@ -42,6 +43,7 @@ set(SOURCE
     src/agent.cpp
     src/data_structures.cpp
     src/null_space_optimizer.cpp
+    src/hitting_point_optimizer.cpp
     src/observer.cpp
     src/trajectory_generator.cpp
     src/transformations.cpp
@@ -73,6 +75,7 @@ target_link_libraries(${PROJECT_NAME}
     ${catkin_LIBRARIES}
     osqp::osqp
     OsqpEigen
+    NLopt::nlopt
     )
 
 #############
