@@ -42,13 +42,13 @@
       <restitution value="1.0"/>
       <lateral_friction value="1.0"/>
       <rolling_friction value="0.0"/>
-      <spinning_friction value="0.3432826696586775"/>
+      <spinning_friction value="0.002104678089464182"/>
     </contact>
   </link>
   <gazebo reference="Puck">
     <velocity_decay>
-      <linear>0.0002256130121427001</linear>
-      <angular>1.3047328294479792e-06</angular>
+      <linear>0.00042116963399586936</linear>
+      <angular>0.0007291871439489361</angular>
     </velocity_decay>
     <collision>
       <surface>
@@ -60,7 +60,7 @@
           <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
           <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
           <torsional>
-            <coefficient>0.3432826696586775</coefficient>
+            <coefficient>0.002104678089464182</coefficient>
             <use_patch_radius>true</use_patch_radius>
             <patch_radius>0.03165</patch_radius>
           </torsional>

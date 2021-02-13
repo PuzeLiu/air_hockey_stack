@@ -29,7 +29,7 @@
           </bounce>
           <friction>
             <torsional>
-              <coefficient>0.343283</coefficient>
+              <coefficient>0.00210468</coefficient>
               <use_patch_radius>1</use_patch_radius>
               <patch_radius>0.03165</patch_radius>
             </torsional>
@@ -64,8 +64,8 @@
       </visual>
       <gravity>1</gravity>
       <velocity_decay>
-        <linear>0.000225613</linear>
-        <angular>1.30473e-06</angular>
+        <linear>0.00042117</linear>
+        <angular>0.000729187</angular>
       </velocity_decay>
     </link>
     <static>0</static>
