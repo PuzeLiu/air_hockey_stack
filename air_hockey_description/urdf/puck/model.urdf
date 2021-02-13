@@ -47,7 +47,7 @@
   </link>
   <gazebo reference="Puck">
     <velocity_decay>
-      <linear>0.00042116963399586936</linear>
+      <linear>0.00042311248196670435</linear>
       <angular>0.0007291871439489361</angular>
     </velocity_decay>
     <collision>
