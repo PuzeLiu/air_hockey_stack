@@ -14,6 +14,8 @@
     <arg name="table_surface_y" default="0.813"/>
     <arg name="table_surface_z" default="0.1"/>
 
+    <arg name="puck_sdf" default="$(find air_hockey_description)/urdf/puck/model.sdf"/>
+
     <!-- Description -->
     <include file="$(find air_hockey_description)/launch/air_hockey_description.launch">
         <arg name="hardware_interface" value="$(arg hardware_interface)"/>
@@ -63,7 +65,7 @@
             <param name="publish_frequency" type="double" value="50.0"/>
         </node>
         <node name="puck_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-urdf -model puck -param robot_description -wait air_hockey_table
+              args="-sdf -model puck -file $(arg puck_sdf) -wait air_hockey_table
               -x 1.08075 -y 1.013 -z $(arg table_surface_z)"/>
     </group>
 

@@ -64,7 +64,7 @@
       </visual>
       <gravity>1</gravity>
       <velocity_decay>
-        <linear>0.000423112</linear>
+        <linear>0.000419852</linear>
         <angular>0.000729187</angular>
       </velocity_decay>
     </link>
