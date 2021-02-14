@@ -55,8 +55,11 @@ bool Smash::apply() {
 			return false;
 		}
 		generator.transformations->transformTrajectory(state.cartTrajectory);
-		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory,
-				state.observation.jointPosition, state.jointTrajectory)) {
+		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, state.observation.jointPosition,
+														 qHitRef, state.jointTrajectory)){
+//		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory,
+//				state.observation.jointPosition, state.jointTrajectory)) {
+			ROS_INFO_STREAM("[HITTING] velocity: " << vHit2d.norm());
 			success = true;
 			break;
 		} else {
