@@ -56,6 +56,12 @@ private:
 	void updateTactic();
 	void publishTrajectory();
 
+	bool isPuckStopped();
+	bool isPuckRisky();
+	bool isPuckReachable();
+	bool isHitStrong();
+	bool isPredictionReliable();
+
 
 private:
 	// ROS

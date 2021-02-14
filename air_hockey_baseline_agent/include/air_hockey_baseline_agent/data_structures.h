@@ -90,6 +90,7 @@ struct AgentState {
 	AgentState();
 
 	Tactics currentTactic;
+	bool isReady;
 	double cutPrevY;
 	int staticCount;
 	int smashCount;
