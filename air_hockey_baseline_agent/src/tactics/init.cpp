@@ -36,8 +36,7 @@ Init::Init(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Init::ready() {
-    state.restart = ((state.observation.jointPosition - agentParams.qInit).norm() > 1e-3);
-	return state.restart && ros::Time::now() > state.trajStopTime;
+	return state.restart;
 }
 
 bool Init::apply() {
@@ -46,16 +45,25 @@ bool Init::apply() {
 	jointViaPoint_.velocities.resize(7);
 
 	state.jointTrajectory.points.clear();
+	double tVia = 0.2;
+	for (int i = 0; i < 7; ++i) {
+		jointViaPoint_.positions[i] = state.observation.jointDesiredPosition[i] + state.observation.jointDesiredVelocity[i] * tVia / 2;
+		jointViaPoint_.velocities[i] = 0.;
+	}
+	jointViaPoint_.time_from_start = ros::Duration(tVia);
+	state.jointTrajectory.points.push_back(jointViaPoint_);
+
+	tVia = 5.0;
 	for (int i = 0; i < 7; ++i) {
 		jointViaPoint_.positions[i] = agentParams.qInit[i];
 		jointViaPoint_.velocities[i] = 0.;
 	}
-	jointViaPoint_.time_from_start = ros::Duration(5.0);
+	jointViaPoint_.time_from_start = ros::Duration(tVia);
 	state.jointTrajectory.points.push_back(jointViaPoint_);
 
 	state.jointTrajectory.header.stamp = ros::Time::now();
 	state.trajStopTime = state.jointTrajectory.header.stamp
-			+ ros::Duration(5.0);
+			+ state.jointTrajectory.points.back().time_from_start;
 
 	ROS_INFO_STREAM("Go to initial position");
 
