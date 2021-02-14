@@ -113,7 +113,9 @@ public:
 	virtual ~Smash();
 
 private:
-	Eigen::Vector2d computeTarget(Eigen::Vector2d puckPosition);
+	Eigen::Vector3d computeTarget(Eigen::Vector3d puckPosition);
+    void getHitPointVelocity(Eigen::Vector2d &xCur2d, Eigen::Vector2d &xHit2d, Eigen::Vector2d &vHit2d,
+                             iiwas_kinematics::Kinematics::JointArrayType &qHitRef);
 
 private:
 	std::random_device rd;

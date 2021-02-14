@@ -84,18 +84,18 @@ void Agent::start() {
 
 		auto &activeTactic = *tactics[agentState.currentTactic];
 		if (activeTactic.ready()) {
-			activeTactic.apply();
-			publishTrajectory();
+		    if (activeTactic.apply()){
+                publishTrajectory();
+		    }
 		}
-
 		rate.sleep();
 	}
 }
 
 void Agent::update() {
 	auto status = state.observation.gameStatus.status;
-
-	if (observer->isGameStatusChanged()) {
+    state.restart = observer->isGameStatusChanged();
+	if (state.restart) {
 		switch (status) {
 		case GameStatus::START:
 			ROS_INFO_STREAM("Game Status Changed: START");
@@ -120,6 +120,10 @@ void Agent::update() {
 
 void Agent::updateTactic() {
 	//TODO implement
+	if (agentState.currentTactic == HOME){
+        agentState.currentTactic = SMASH;
+	}
+	state.restart = false;
 }
 
 void Agent::publishTrajectory() {

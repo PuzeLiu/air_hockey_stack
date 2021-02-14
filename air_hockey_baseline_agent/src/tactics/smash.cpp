@@ -34,30 +34,22 @@ Smash::Smash(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Smash::ready() {
-	return state.restart || ros::Time::now() > state.trajStopTime;
+    return !state.hasActiveTrajectory();
 }
 
 bool Smash::apply() {
-	Vector3d xCur;
-	generator.kinematics->forwardKinematics(state.observation.jointPosition,
-			xCur);
-	generator.transformations->applyInverseTransform(xCur);
-	Vector2d xCur2d = xCur.block<2, 1>(0, 0);
-	Vector2d puckCur2d = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
+	Vector2d xCur2d, xHit2d, vHit2d;
+	iiwas_kinematics::Kinematics::JointArrayType qHitRef;
 
-	Vector2d xGoal = computeTarget(puckCur2d);
-	Vector2d vHit = (xGoal - puckCur2d).normalized();
-	Vector2d xHit = puckCur2d
-			- vHit * (envParams.puckRadius + envParams.malletRadius + 0.005);
+	getHitPointVelocity(xCur2d, xHit2d, vHit2d, qHitRef);
 
-	vHit *= agentParams.vHitMax;
 	bool success = false;
 
 	for (size_t i = 0; i < 10; ++i) {
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
 
-		bool ok = generator.combinatorialHit->plan(xCur2d, xHit, vHit,
+		bool ok = generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,
 				state.cartTrajectory);
 		if (!ok) {
 			return false;
@@ -68,9 +60,9 @@ bool Smash::apply() {
 			success = true;
 			break;
 		} else {
-			vHit *= .8;
+            vHit2d *= .8;
 			ROS_INFO_STREAM(
-					"Optimization Failed [HITTING]. Reduce the velocity: " << vHit.transpose());
+					"Optimization Failed [HITTING]. Reduce the velocity: " << vHit2d.transpose());
 			continue;
 		}
 	}
@@ -97,20 +89,21 @@ bool Smash::apply() {
 	}
 }
 
-Vector2d Smash::computeTarget(Vector2d puckPosition) {
-	Vector2d xTarget;
+Vector3d Smash::computeTarget(Vector3d puckPosition) {
+	Vector3d xTarget;
 	auto random_integer = dist(gen);
 	random_integer = 0;
-	if (puckPosition(1) > 0.1) {
-		xTarget.x() = envParams.tableLength;
+	if (puckPosition.y() > 0.1) {
 		xTarget.y() = -0.1;
-	} else if (puckPosition(1) < -0.1) {
-		xTarget.x() = envParams.tableLength;
+	} else if (puckPosition.y() < -0.1) {
 		xTarget.y() = 0.1;
 	} else {
-		xTarget.x() = envParams.tableLength;
 		xTarget.y() = 0.0;
 	}
+
+    xTarget.x() = envParams.tableLength;
+	xTarget.z() = 0.0;
+
 	if (random_integer == 1) {
 		ROS_INFO_STREAM("Strategy: Right");
 		xTarget.y() = -2 * (envParams.tableWidth / 2 - envParams.puckRadius)
@@ -124,6 +117,38 @@ Vector2d Smash::computeTarget(Vector2d puckPosition) {
 	}
 
 	return xTarget;
+}
+
+void Smash::getHitPointVelocity(Vector2d &xCur2d, Vector2d &xHit2d, Vector2d &vHit2d,
+                                iiwas_kinematics::Kinematics::JointArrayType &qHitRef){
+    Vector3d xCur;
+    generator.kinematics->forwardKinematics(state.observation.jointPosition,
+                                            xCur);
+    generator.transformations->applyInverseTransform(xCur);
+    Vector3d puckCur;
+    puckCur.x() = state.observation.puckPredictedState.state.x();
+    puckCur.y() = state.observation.puckPredictedState.state.y();
+    puckCur.z() = 0.0;
+    Vector3d xGoal = computeTarget(puckCur);
+    Vector3d vHit = (xGoal - puckCur).normalized();
+    Vector3d xHit = puckCur - vHit * (envParams.puckRadius + envParams.malletRadius + 0.005);
+
+    // optimize the hitting point
+    double velMag;
+    qHitRef = state.observation.jointPosition;
+    generator.transformations->applyForwardTransform(xHit);
+    generator.transformations->applyForwardRotation(vHit);
+    generator.hittingPointOptimizer->solve(xHit, vHit, qHitRef, velMag);
+
+
+    // prepare output
+    generator.transformations->applyInverseTransform(xHit);
+    generator.transformations->applyInverseRotation(vHit);
+    vHit = vHit * velMag;
+    xCur2d = xCur.block<2, 1>(0, 0);
+    xHit2d = xHit.block<2, 1>(0, 0);
+    vHit2d = vHit.block<2, 1>(0, 0);
+//    vHit2d *= agentParams.vHitMax;
 }
 
 Smash::~Smash() {

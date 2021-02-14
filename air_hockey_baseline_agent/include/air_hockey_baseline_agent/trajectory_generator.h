@@ -33,6 +33,7 @@
 
 #include "air_hockey_baseline_agent/transformations.h"
 #include "air_hockey_baseline_agent/null_space_optimizer.h"
+#include "air_hockey_baseline_agent/hitting_point_optimizer.h"
 #include "air_hockey_baseline_agent/observer.h"
 
 namespace air_hockey_baseline_agent {
@@ -52,6 +53,7 @@ struct TrajectoryGenerator {
 	iiwas_kinematics::Kinematics *kinematics;
 	Transformations *transformations;
 	NullSpaceOptimizer *optimizer;
+	HittingPointOptimizer *hittingPointOptimizer;
 };
 
 }

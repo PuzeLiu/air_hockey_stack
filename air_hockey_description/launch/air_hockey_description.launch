@@ -22,7 +22,7 @@
 
     <group ns="puck">
         <param name="robot_description"
-               command="$(find xacro)/xacro '$(find air_hockey_description)/urdf/puck/model.urdf.xacro' parent:=$(arg puck_parent)"/>
+               command="$(find xacro)/xacro '$(arg puck_urdf)' parent:=$(arg puck_parent)"/>
     </group>
 
     <group ns="iiwa_front">

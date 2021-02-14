@@ -32,8 +32,9 @@ TrajectoryGenerator::TrajectoryGenerator(std::string ns, EnvironmentParams data,
 	kinematics = new Kinematics(data.tcp_position, data.tcp_quaternion);
 	optimizer = new NullSpaceOptimizer(kinematics, observer, false);
 	transformations = new Transformations(ns);
+	hittingPointOptimizer = new HittingPointOptimizer(*kinematics);
 
-	Vector2d bound_lower(data.malletRadius,
+	Vector2d bound_lower(data.malletRadius + 0.02,
 			-data.tableWidth / 2 + data.malletRadius + 0.02);
 	Vector2d bound_upper(data.tableLength / 2 - data.malletRadius,
 			data.tableWidth / 2 - data.malletRadius - 0.02);
