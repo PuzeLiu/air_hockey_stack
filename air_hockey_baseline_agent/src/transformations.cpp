@@ -30,23 +30,20 @@ Transformations::Transformations(std::string ns) {
 	tf2_ros::Buffer tfBuffer_;
 	tf2_ros::TransformListener tfListener_(tfBuffer_);
 
-	std::string ns_prefix;
 	if (ns == "/iiwa_front") {
-		ns_prefix = 'F';
-		tfRobot2Table_ = tfBuffer_.lookupTransform("F_link_0", "TableHome",
-				ros::Time(0), ros::Duration(10.0));
-		tfRobot2TableInverse_.header = tfRobot2Table_.header;
+        tfTable2Robot_ = tfBuffer_.lookupTransform("F_link_0", "TableHome",
+                                                   ros::Time(0), ros::Duration(10.0));
+        tfRobot2Table_.header = tfTable2Robot_.header;
 		tf2::Stamped<tf2::Transform> tmp;
-		tf2::fromMsg(tfRobot2Table_, tmp);
-		tfRobot2TableInverse_.transform = tf2::toMsg(tmp.inverse());
+		tf2::fromMsg(tfTable2Robot_, tmp);
+        tfRobot2Table_.transform = tf2::toMsg(tmp.inverse());
 	} else if (ns == "/iiwa_back") {
-		ns_prefix = 'B';
-		tfRobot2Table_ = tfBuffer_.lookupTransform("B_link_0", "TableAway",
-				ros::Time(0), ros::Duration(10.0));
-		tfRobot2TableInverse_.header = tfRobot2Table_.header;
+        tfTable2Robot_ = tfBuffer_.lookupTransform("B_link_0", "TableAway",
+                                                   ros::Time(0), ros::Duration(10.0));
+        tfRobot2Table_.header = tfTable2Robot_.header;
 		tf2::Stamped<tf2::Transform> tmp;
-		tf2::fromMsg(tfRobot2Table_, tmp);
-		tfRobot2TableInverse_.transform = tf2::toMsg(tmp.inverse());
+		tf2::fromMsg(tfTable2Robot_, tmp);
+        tfRobot2Table_.transform = tf2::toMsg(tmp.inverse());
 	} else {
 		ROS_ERROR_STREAM(
 				"Run the node under the namespace: iiwa_front / iiwa_back");
@@ -62,7 +59,7 @@ void Transformations::transformTrajectory(
 		tmp.y = cartesianTrajectory.points[i].transforms[0].translation.y;
 		tmp.z = cartesianTrajectory.points[i].transforms[0].translation.z;
 
-		tf2::doTransform(tmp, tmp, tfRobot2Table_);
+		tf2::doTransform(tmp, tmp, tfTable2Robot_);
 
 		cartesianTrajectory.points[i].transforms[0].translation.x = tmp.x;
 		cartesianTrajectory.points[i].transforms[0].translation.y = tmp.y;
@@ -75,10 +72,23 @@ void Transformations::applyForwardTransform(Vector3d &v_in_out) {
 	point.x = v_in_out.x();
 	point.y = v_in_out.y();
 	point.z = v_in_out.z();
-	tf2::doTransform(point, point, tfRobot2Table_);
+	tf2::doTransform(point, point, tfTable2Robot_);
 	v_in_out.x() = point.x;
 	v_in_out.y() = point.y;
 	v_in_out.z() = point.z;
+}
+
+void Transformations::applyForwardRotation(Vector3d &v_in_out) {
+    geometry_msgs::Vector3 point;
+    point.x = v_in_out.x();
+    point.y = v_in_out.y();
+    point.z = v_in_out.z();
+
+    tf2::doTransform(point, point, tfTable2Robot_);
+
+    v_in_out.x() = point.x;
+    v_in_out.y() = point.y;
+    v_in_out.z() = point.z;
 }
 
 void Transformations::applyInverseTransform(Vector3d &v_in_out) {
@@ -86,7 +96,7 @@ void Transformations::applyInverseTransform(Vector3d &v_in_out) {
 	point.x = v_in_out.x();
 	point.y = v_in_out.y();
 	point.z = v_in_out.z();
-	tf2::doTransform(point, point, tfRobot2TableInverse_);
+	tf2::doTransform(point, point, tfRobot2Table_);
 	v_in_out.x() = point.x;
 	v_in_out.y() = point.y;
 	v_in_out.z() = point.z;
@@ -98,7 +108,7 @@ void Transformations::applyInverseRotation(Vector3d &v_in_out) {
 	point.y = v_in_out.y();
 	point.z = v_in_out.z();
 
-	tf2::doTransform(point, point, tfRobot2TableInverse_);
+	tf2::doTransform(point, point, tfRobot2Table_);
 
 	v_in_out.x() = point.x;
 	v_in_out.y() = point.y;

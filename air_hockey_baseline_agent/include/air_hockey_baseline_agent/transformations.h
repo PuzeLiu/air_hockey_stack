@@ -39,11 +39,12 @@ public:
 	void transformTrajectory(trajectory_msgs::MultiDOFJointTrajectory &cartesianTrajectory);
 	void applyForwardTransform(Eigen::Vector3d &v_in_out);
 	void applyInverseTransform(Eigen::Vector3d &v_in_out);
+    void applyForwardRotation(Eigen::Vector3d &v_in_out);
 	void applyInverseRotation(Eigen::Vector3d &v_in_out);
 
 
 private:
-	geometry_msgs::TransformStamped tfRobot2Table_, tfRobot2TableInverse_;
+	geometry_msgs::TransformStamped tfTable2Robot_, tfRobot2Table_;
 
 };
 
