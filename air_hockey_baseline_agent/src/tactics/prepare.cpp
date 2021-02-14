@@ -35,7 +35,7 @@ Prepare::Prepare(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Prepare::ready() {
-	return state.restart || ros::Time::now() > state.trajStopTime;
+	return state.restart || !state.hasActiveTrajectory();
 }
 
 bool Prepare::apply() {
@@ -105,6 +105,7 @@ bool Prepare::apply() {
 
 	//! append return to whole trajectory
 	if (success) {
+		
 		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
 				cartTrajReturn.points.begin(), cartTrajReturn.points.end());
 		state.jointTrajectory.points.insert(

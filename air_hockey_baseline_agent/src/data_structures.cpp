@@ -27,7 +27,7 @@ using namespace std;
 using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
-SystemState::SystemState(string ns) {
+SystemState::SystemState(const string& ns) {
 	string ns_prefix;
 
 	if (ns == "/iiwa_front") {
@@ -76,5 +76,9 @@ void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
 			}
 		}
 	}
+}
+
+bool SystemState::hasActiveTrajectory() {
+    return ros::Time::now() < trajStopTime;
 }
 

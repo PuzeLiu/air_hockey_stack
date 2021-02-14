@@ -34,7 +34,7 @@ MovePuck::MovePuck(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool MovePuck::ready() {
-	return ros::Time::now() > state.trajStopTime;
+	return !state.hasActiveTrajectory();
 }
 
 bool MovePuck::apply() {

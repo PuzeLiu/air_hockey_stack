@@ -35,7 +35,7 @@ Home::Home(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Home::ready() {
-	return state.restart || ros::Time::now() > state.trajStopTime;
+	return state.restart;
 }
 
 bool Home::apply() {
@@ -55,6 +55,8 @@ bool Home::apply() {
 	state.jointTrajectory.header.stamp = ros::Time::now();
 	state.trajStopTime = state.jointTrajectory.header.stamp
 			+ ros::Duration(2.0);
+
+    ROS_INFO_STREAM("Go to home position");
 
 	return true;
 }

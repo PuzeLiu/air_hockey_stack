@@ -99,11 +99,13 @@ struct AgentState {
 
 class SystemState {
 public:
-	SystemState(std::string ns_prefix);
+	SystemState(const std::string& ns);
 
 	void getPlannedJointState(iiwas_kinematics::Kinematics::JointArrayType &q,
 			iiwas_kinematics::Kinematics::JointArrayType &dq, ros::Time &tStart,
 			double offset_t);
+
+	bool hasActiveTrajectory();
 
 public:
 	trajectory_msgs::MultiDOFJointTrajectory cartTrajectory;

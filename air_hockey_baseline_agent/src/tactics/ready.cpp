@@ -36,7 +36,7 @@ Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Ready::ready() {
-	return ros::Time::now() > state.trajStopTime;
+	return !state.hasActiveTrajectory();
 }
 
 bool Ready::apply() {
