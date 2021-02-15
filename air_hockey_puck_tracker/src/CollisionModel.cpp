@@ -172,7 +172,7 @@ namespace air_hockey_baseline_agent {
         }
     }
 
-    bool Mallet::applyCollision(State &puckState) {
+    bool Mallet::applyCollision(PuckState &puckState) {
         Vector2 pPuck = puckState.block<2, 1>(0, 0);
         Vector2 vPuck = puckState.block<2, 1>(2, 0);
 
@@ -216,7 +216,7 @@ namespace air_hockey_baseline_agent {
 
     }
 
-    bool CollisionModel::applyCollision(State &puckState, const bool &checkMallet) {
+    bool CollisionModel::applyCollision(PuckState &puckState, const bool &checkMallet) {
         if (checkMallet) {
             m_mallet.applyCollision(puckState);
         }

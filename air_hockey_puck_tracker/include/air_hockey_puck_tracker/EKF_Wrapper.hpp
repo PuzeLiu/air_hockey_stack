@@ -33,14 +33,14 @@
 
 
 namespace air_hockey_baseline_agent {
-    class EKF_Wrapper : public Kalman::ExtendedKalmanFilter<State> {
+    class EKF_Wrapper : public Kalman::ExtendedKalmanFilter<PuckState> {
     public:
         typedef Measurement InnovationType;
         typedef Kalman::Covariance<Measurement> InnovationCovariance;
 
-        const State &update(ObservationModel &m, const Measurement &z);
+        const PuckState &update(ObservationModel &m, const Measurement &z);
 
-        inline State &getState() {
+        inline PuckState &getState() {
             return x;
         }
 

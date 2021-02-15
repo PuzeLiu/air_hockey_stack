@@ -35,10 +35,12 @@ Cut::Cut(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Cut::ready() {
-	return state.restart;
+	return state.isNewTactics;
 }
 
 bool Cut::apply() {
+	state.isNewTactics = false;
+
 	Vector2d xCut(agentParams.defendLine,
 			state.observation.puckPredictedState.state.y());
 
@@ -83,8 +85,6 @@ bool Cut::apply() {
 		} else {
 			state.jointTrajectory.header.stamp = tStart;
 			state.cartTrajectory.header.stamp = tStart;
-			state.trajStopTime = state.jointTrajectory.header.stamp
-					+ ros::Duration(tStop);
 			return true;
 		}
 	}
@@ -95,5 +95,13 @@ bool Cut::apply() {
 
 Cut::~Cut() {
 
+}
+
+void Cut::setNextState() {
+	if (state.hasActiveTrajectory()){
+		setTactic(CUT);
+	} else {
+		setTactic(READY);
+	}
 }
 

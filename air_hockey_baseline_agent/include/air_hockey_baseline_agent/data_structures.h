@@ -34,13 +34,13 @@
 
 namespace air_hockey_baseline_agent {
 enum Tactics {
-	INIT,      //!< go to init position
+	INIT = 0,      //!< go to init position
 	HOME,      //!< go to home position from init
 	READY,     //!< go to home position
 	PREPARE,   //!< adjust the puck's position when smash fails
 	CUT,       //!< defend the incoming puck to opponent's court regardless of direction
 	SMASH,     //!< hit the static or slow-moving puck
-	N_TACTICS  //!< Total number of available tactics
+	N_TACTICS  //!< Total number of available tacticsProcessor
 };
 
 struct EnvironmentParams {
@@ -81,41 +81,9 @@ struct ObservationState {
 	iiwas_kinematics::Kinematics::JointArrayType jointVelocity;
 	iiwas_kinematics::Kinematics::JointArrayType jointDesiredPosition;
 	iiwas_kinematics::Kinematics::JointArrayType jointDesiredVelocity;
-    State puckEstimatedState;
+    PuckState puckEstimatedState;
     PuckPredictedState puckPredictedState;
     air_hockey_referee::GameStatus gameStatus;
-};
-
-struct AgentState {
-	AgentState();
-
-	Tactics currentTactic;
-	bool isReady;
-	double cutPrevY;
-	int staticCount;
-	int smashCount;
-	int cutCount;
-
-};
-
-class SystemState {
-public:
-	SystemState(const std::string& ns);
-
-	void getPlannedJointState(iiwas_kinematics::Kinematics::JointArrayType &q,
-			iiwas_kinematics::Kinematics::JointArrayType &dq, ros::Time &tStart,
-			double offset_t);
-
-	bool hasActiveTrajectory();
-
-public:
-	trajectory_msgs::MultiDOFJointTrajectory cartTrajectory;
-	trajectory_msgs::JointTrajectory jointTrajectory;
-	ros::Time trajStopTime;
-	ObservationState observation;
-
-	bool restart;
-
 };
 
 }

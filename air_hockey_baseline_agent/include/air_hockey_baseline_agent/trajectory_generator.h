@@ -25,6 +25,7 @@
 #define AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_AGENT_TRAJECTORY_GENERATOR_H_
 
 #include "air_hockey_baseline_agent/data_structures.h"
+#include "air_hockey_baseline_agent/system_state.h"
 
 //#include "air_hockey_baseline_agent/planner/bezier_hit.h"
 //#include "air_hockey_baseline_agent/planner/stable_dynamics_motion.h"

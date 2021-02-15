@@ -35,10 +35,12 @@ Home::Home(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Home::ready() {
-	return state.restart;
+	return state.isNewTactics;
 }
 
 bool Home::apply() {
+	state.isNewTactics = false;
+
 	JointTrajectoryPoint jointViaPoint_;
 	jointViaPoint_.positions.resize(7);
 	jointViaPoint_.velocities.resize(7);
@@ -53,8 +55,6 @@ bool Home::apply() {
 	state.jointTrajectory.points.push_back(jointViaPoint_);
 
 	state.jointTrajectory.header.stamp = ros::Time::now();
-	state.trajStopTime = state.jointTrajectory.header.stamp
-			+ ros::Duration(2.0);
 
     ROS_INFO_STREAM("Go to home position");
 
@@ -65,3 +65,10 @@ Home::~Home() {
 
 }
 
+void Home::setNextState() {
+	if (state.hasActiveTrajectory()){
+		setTactic(HOME);
+	} else {
+		setTactic(READY);
+	}
+}

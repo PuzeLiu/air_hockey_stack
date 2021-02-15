@@ -2,7 +2,7 @@
 
 using namespace air_hockey_baseline_agent;
 
-const State & EKF_Wrapper::update(ObservationModel &m, const Measurement &z) {
+const PuckState & EKF_Wrapper::update(ObservationModel &m, const Measurement &z) {
     m.updateJacobians(x);
 
     // COMPUTE KALMAN GAIN

@@ -34,12 +34,11 @@ Smash::Smash(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Smash::ready() {
-    return !state.hasActiveTrajectory();
+    return state.isNewTactics;
 }
 
 bool Smash::apply() {
-	Vector2d xCur2d, xHit2d, vHit2d;
-	iiwas_kinematics::Kinematics::JointArrayType qHitRef;
+	state.isNewTactics = false;
 
 	getHitPointVelocity(xCur2d, xHit2d, vHit2d, qHitRef);
 
@@ -82,9 +81,6 @@ bool Smash::apply() {
 		state.jointTrajectory.points.insert(state.jointTrajectory.points.end(),
 				jointTrajReturn.points.begin(), jointTrajReturn.points.end());
 		state.jointTrajectory.header.stamp = ros::Time::now();
-		state.trajStopTime = ros::Time::now()
-				+ ros::Duration(
-						state.jointTrajectory.points.back().time_from_start);
 		return true;
 	} else {
 		ROS_INFO_STREAM("Failed to find a feasible movement [HITTING]");
@@ -156,4 +152,12 @@ void Smash::getHitPointVelocity(Vector2d &xCur2d, Vector2d &xHit2d, Vector2d &vH
 
 Smash::~Smash() {
 
+}
+
+void Smash::setNextState() {
+	if (state.hasActiveTrajectory()){
+		setTactic(SMASH);
+	} else {
+		setTactic(READY);
+	}
 }

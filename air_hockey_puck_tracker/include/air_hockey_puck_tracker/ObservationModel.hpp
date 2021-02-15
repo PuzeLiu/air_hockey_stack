@@ -55,17 +55,17 @@ namespace air_hockey_baseline_agent {
         inline double &theta() { return (*this)[THETA]; }
     };
 
-    class ObservationModel : public Kalman::LinearizedMeasurementModel<State, Measurement> {
+    class ObservationModel : public Kalman::LinearizedMeasurementModel<PuckState, Measurement> {
     public:
         friend class air_hockey_baseline_agent::EKF_Wrapper;
         ObservationModel();
 
 
-        Measurement h(const State &x) const;
-        Kalman::Jacobian<Measurement, State>& getH();
+        Measurement h(const PuckState &x) const;
+        Kalman::Jacobian<Measurement, PuckState>& getH();
     protected:
 
-        void updateJacobians(const State &x);
+        void updateJacobians(const PuckState &x);
     };
 }
 #endif //PUCK_TRACKER_OBSERVATIONMODEL_H

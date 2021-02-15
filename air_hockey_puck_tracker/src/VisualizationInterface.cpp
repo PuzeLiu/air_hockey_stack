@@ -67,7 +67,7 @@ void VisualizationInterface::visualize() {
 	m_markerPub.publish(m_predictionMarker);
 }
 
-void VisualizationInterface::setPredictionMarker(const State &state,
+void VisualizationInterface::setPredictionMarker(const PuckState &state,
 		const EKF_Wrapper::InnovationCovariance &cov) {
 	m_predictionMarker.pose.position.x = state.x();
 	m_predictionMarker.pose.position.y = state.y();

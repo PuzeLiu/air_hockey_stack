@@ -58,7 +58,7 @@ const PuckPredictedState &PuckTracker::getPredictedState() {
     return predictedState_;
 }
 
-const State& PuckTracker::getEstimatedState(){
+const PuckState& PuckTracker::getEstimatedState(){
     return kalmanFilter_->getState();
 }
 
@@ -107,7 +107,7 @@ void PuckTracker::init() {
     visualizer_ = new VisualizationInterface(nh_, tableRefName_);
 
     //! Initialize Kalman Filter
-    State sInit;
+    PuckState sInit;
     sInit.setZero();
     kalmanFilter_->init(sInit);
     setCovariance();
@@ -121,7 +121,7 @@ void PuckTracker::init() {
 }
 
 void PuckTracker::setCovariance() {
-    Kalman::Covariance<State> covDyn;
+    Kalman::Covariance<PuckState> covDyn;
     Kalman::Covariance<Measurement> covObs;
 
     covObs.setIdentity();
@@ -240,7 +240,7 @@ void PuckTracker::reset() {
         tfPuck_ = tfBuffer_.lookupTransform(tableRefName_, "Puck", ros::Time::now(), ros::Duration(1.0));
         stamp_ = tfPuck_.header.stamp;
 
-        State initState;
+        PuckState initState;
         initState.x() = tfPuck_.transform.translation.x;
         initState.y() = tfPuck_.transform.translation.y;
         initState.dx() = 0.;
@@ -259,7 +259,7 @@ void PuckTracker::reset() {
 
         kalmanFilter_->init(initState);
 
-        Kalman::Covariance<State> covInit;
+        Kalman::Covariance<PuckState> covInit;
         covInit.setIdentity();
         kalmanFilter_->setCovariance(covInit);
         puckPredictor_->init(initState);

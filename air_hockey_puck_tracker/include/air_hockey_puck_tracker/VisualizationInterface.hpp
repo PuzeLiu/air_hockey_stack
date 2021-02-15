@@ -38,7 +38,7 @@ public:
 
 private:
     void visualize();
-    void setPredictionMarker(const State& state,
+    void setPredictionMarker(const PuckState& state,
                              const EKF_Wrapper::InnovationCovariance& cov);
 
 private:

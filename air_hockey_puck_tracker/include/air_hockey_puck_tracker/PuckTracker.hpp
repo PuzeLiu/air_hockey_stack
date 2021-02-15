@@ -38,7 +38,7 @@
 namespace air_hockey_baseline_agent {
     struct PuckPredictedState{
         ros::Time stamp;
-        State state;
+        PuckState state;
         double predictedTime;
     };
 
@@ -53,7 +53,7 @@ namespace air_hockey_baseline_agent {
 
         const PuckPredictedState& getPredictedState();
 
-        const State& getEstimatedState();
+        const PuckState& getEstimatedState();
 
         void reset();
 

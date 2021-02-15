@@ -34,10 +34,12 @@ MovePuck::MovePuck(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool MovePuck::ready() {
-	return !state.hasActiveTrajectory();
+	return state.isNewTactics;
 }
 
 bool MovePuck::apply() {
+	state.isNewTactics = false;
+
 	Vector3d xCur;
 	generator.kinematics->forwardKinematics(state.observation.jointPosition,
 			xCur);
@@ -80,8 +82,6 @@ bool MovePuck::apply() {
 			tStop += 0.2;
 		} else {
 			state.jointTrajectory.header.stamp = ros::Time::now();
-			state.trajStopTime = state.jointTrajectory.header.stamp
-					+ ros::Duration(3 * tStop);
 			return true;
 		}
 	}
@@ -94,5 +94,13 @@ bool MovePuck::apply() {
 
 MovePuck::~MovePuck() {
 
+}
+
+void MovePuck::setNextState() {
+	if (state.hasActiveTrajectory()){
+		setTactic(READY);
+	} else {
+		setTactic(READY);
+	}
 }
 

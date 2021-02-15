@@ -38,8 +38,8 @@ typedef Kalman::Vector<double, 2> Vector2;
  * @param T Numeric scalar type
  */
 
-class State: public Kalman::Vector<double, 6> {
-public:KALMAN_VECTOR(State, double, 6)
+class PuckState: public Kalman::Vector<double, 6> {
+public:KALMAN_VECTOR(PuckState, double, 6)
 
 	//! X-position
 	static constexpr size_t X = 0;
@@ -127,10 +127,10 @@ public:KALMAN_VECTOR(Control, double, 1)
  *                       (as covariance matrix (StandardBase) or as lower-triangular
  *                       coveriace square root (SquareRootBase))
  */
-class SystemModel: public Kalman::LinearizedSystemModel<State, Control> {
+class SystemModel: public Kalman::LinearizedSystemModel<PuckState, Control> {
 public:
 	//! State type shortcut definition
-	typedef air_hockey_baseline_agent::State S;
+	typedef air_hockey_baseline_agent::PuckState S;
 
 	//! Control type shortcut definition
 	typedef air_hockey_baseline_agent::Control C;

@@ -41,7 +41,7 @@ include_directories(
 set(SOURCE
     src/main.cpp
     src/agent.cpp
-    src/data_structures.cpp
+    src/system_state.cpp
     src/null_space_optimizer.cpp
     src/hitting_point_optimizer.cpp
     src/observer.cpp
@@ -60,16 +60,8 @@ set(SOURCE
     src/tactics/smash.cpp
     src/tactics/tactics.cpp
     )
-#set(HEADERS
-#    include/agent.h
-#    include/observer.h
-#    include/null_space_optimizer.h
-#    include/planner/bezier_hit.h
-#    include/planner/combinatorial_hit.h
-#    include/planner/stable_dynamics_motion.h
-#    include/planner/cubic_linear_motion.h)
 
-add_executable(${PROJECT_NAME} ${SOURCE}) #${HEADERS})
+add_executable(${PROJECT_NAME} ${SOURCE})
 
 target_link_libraries(${PROJECT_NAME}
     ${catkin_LIBRARIES}

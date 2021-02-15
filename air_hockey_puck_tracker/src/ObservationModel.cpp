@@ -38,7 +38,7 @@ Measurement ObservationModel::h(const State &x) const {
 	return measurement;
 }
 
-Kalman::Jacobian<Measurement, State>& ObservationModel::getH() {
+Kalman::Jacobian<Measurement, PuckState>& ObservationModel::getH() {
 	return this->H;
 }
 

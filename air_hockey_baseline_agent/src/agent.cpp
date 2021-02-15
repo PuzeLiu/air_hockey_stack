@@ -22,22 +22,11 @@
  */
 
 #include "air_hockey_baseline_agent/agent.h"
-#include "air_hockey_baseline_agent/tactics.h"
-
-#include <trajectory_msgs/MultiDOFJointTrajectory.h>
-#include <trajectory_msgs/JointTrajectory.h>
 
 using namespace air_hockey_baseline_agent;
 using namespace trajectory_msgs;
 using namespace Eigen;
 
-AgentState::AgentState() {
-	currentTactic = Tactics::INIT;
-	smashCount = 0;
-	cutCount = 0;
-	cutPrevY = 0.0;
-	staticCount = 0;
-}
 
 Agent::Agent(ros::NodeHandle nh, double rate) :
 		nh(nh), rate(rate), state(nh.getNamespace()) {
@@ -60,15 +49,13 @@ Agent::Agent(ros::NodeHandle nh, double rate) :
 			"cartesian_trajectory", 1);
 
 	loadTactics();
-
-	state.trajStopTime = ros::Time::now();
 }
 
 Agent::~Agent() {
 	delete observer;
 	delete generator;
 
-	for (auto tactic : tactics) {
+	for (auto tactic : tacticsProcessor) {
 		delete tactic;
 	}
 }
@@ -79,10 +66,11 @@ void Agent::start() {
 	observer->start();
 
 	while (ros::ok()) {
-		state.observation = observer->getObservation();
-		update();
+		state.updateObservationAndState(observer->getObservation(), agentParams);
+//		update();
+		tacticsProcessor[state.currentTactic]->updateTactic();
 
-		auto &activeTactic = *tactics[agentState.currentTactic];
+		auto &activeTactic = *tacticsProcessor[state.currentTactic];
 		if (activeTactic.ready()) {
 			if (activeTactic.apply()) {
 				publishTrajectory();
@@ -94,59 +82,26 @@ void Agent::start() {
 
 void Agent::update() {
 	auto status = state.observation.gameStatus.status;
-	state.restart = observer->isGameStatusChanged();
-	if (state.restart) {
+	if (state.isNewTactics) {
 		switch (status) {
 			case GameStatus::START:
 				ROS_INFO_STREAM("Game Status Changed: START");
-				agentState.currentTactic = Tactics::HOME;
-				agentState.isReady = false;
+				state.currentTactic = Tactics::HOME;
 				break;
 			case GameStatus::STOP:
 				ROS_INFO_STREAM("Game Status Changed: STOP");
-				agentState.currentTactic = Tactics::INIT;
-				agentState.isReady = false;
+				state.currentTactic = Tactics::INIT;
 				break;
 			case GameStatus::PAUSE:
 				ROS_INFO_STREAM("Game Status Changed: PAUSE");
-				agentState.currentTactic = Tactics::READY;
-				agentState.isReady = false;
+				state.currentTactic = Tactics::READY;
 				break;
 			default:
 				ROS_FATAL_STREAM("Unknown game status");
 				exit(-1);
 		}
 	} else if (status == GameStatus::START) {
-		updateTactic();
-	}
-}
-
-void Agent::updateTactic() {
-	//TODO implement
-	if (agentState.isReady){
-		if (isPuckStopped()){
-			if (isHitStrong()){
-				agentState.currentTactic = SMASH;
-			} else if (isPuckReachable()){
-				agentState.currentTactic = PREPARE;
-			} else {
-				agentState.currentTactic = READY;
-			}
-		} else{
-			if (isPuckRisky()){
-				agentState.currentTactic = CUT;
-			} else if (isPredictionReliable() && isHitStrong()){
-				agentState.currentTactic = SMASH;
-			} else {
-				agentState.currentTactic = READY;
-			}
-		}
-
-		state.restart = false;
-	}
-
-	if (!agentState.isReady && !state.hasActiveTrajectory()) {
-		agentState.isReady = true;
+		tacticsProcessor[state.currentTactic]->updateTactic();
 	}
 }
 
@@ -251,17 +206,17 @@ void Agent::computeBaseConfigurations() {
 }
 
 void Agent::loadTactics() {
-	tactics.resize(Tactics::N_TACTICS);
+	tacticsProcessor.resize(Tactics::N_TACTICS);
 
-	tactics[Tactics::INIT] = new Init(envParams, agentParams, state, generator);
-	tactics[Tactics::HOME] = new Home(envParams, agentParams, state, generator);
-	tactics[Tactics::READY] = new Ready(envParams, agentParams, state,
-	                                    generator);
-	tactics[Tactics::PREPARE] = new Prepare(envParams, agentParams, state,
-	                                        generator);
-	tactics[Tactics::CUT] = new Cut(envParams, agentParams, state, generator);
-	tactics[Tactics::SMASH] = new Smash(envParams, agentParams, state,
-	                                    generator);
+	tacticsProcessor[Tactics::INIT] = new Init(envParams, agentParams, state, generator);
+	tacticsProcessor[Tactics::HOME] = new Home(envParams, agentParams, state, generator);
+	tacticsProcessor[Tactics::READY] = new Ready(envParams, agentParams, state,
+	                                             generator);
+	tacticsProcessor[Tactics::PREPARE] = new Prepare(envParams, agentParams, state,
+	                                                 generator);
+	tacticsProcessor[Tactics::CUT] = new Cut(envParams, agentParams, state, generator);
+	tacticsProcessor[Tactics::SMASH] = new Smash(envParams, agentParams, state,
+	                                             generator);
 }
 
 std::string Agent::getControllerName() {
@@ -290,35 +245,3 @@ std::string Agent::getControllerName() {
 
 	return controllerName;
 }
-
-bool Agent::isPuckStopped() {
-	auto puckVel = state.observation.puckEstimatedState.block<2, 1>(2, 0).norm();
-	if (puckVel > 0.1){
-		agentState.staticCount = 0;
-	} else {
-		agentState.staticCount++;
-	}
-	return agentState.staticCount > 5;
-}
-
-bool Agent::isPuckReachable() {
-	if (state.observation.puckEstimatedState.x() < agentParams.hitRange[1]) {
-		return true;
-	}
-	return false;
-}
-
-bool Agent::isHitStrong() {
-	return false;
-}
-
-bool Agent::isPuckRisky() {
-	return false;
-}
-
-bool Agent::isPredictionReliable() {
-	return false;
-}
-
-
-

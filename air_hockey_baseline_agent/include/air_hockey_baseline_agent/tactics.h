@@ -33,14 +33,18 @@ class Tactic {
 public:
 	Tactic(EnvironmentParams &envParams, AgentParams &agentParams,
 			SystemState &state, TrajectoryGenerator *generator);
+	virtual ~Tactic();
 	virtual bool ready() = 0;
 	virtual bool apply() = 0;
-	virtual ~Tactic();
+	virtual void updateTactic();
 
 protected:
+	virtual void setNextState() = 0;
 	bool planReturnTraj(const double &vMax,
 			trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
 			trajectory_msgs::JointTrajectory &jointTrajReturn);
+	void setTactic(Tactics tactic);
+	std::string tactic2String(Tactics tactic);
 
 protected:
 	SystemState &state;
@@ -54,73 +58,91 @@ class Init: public Tactic {
 public:
 	Init(EnvironmentParams &envParams, AgentParams &agentParams,
 			SystemState &state, TrajectoryGenerator *generator);
-	virtual bool ready();
-	virtual bool apply();
-	virtual ~Init();
+	bool ready() override;
+	bool apply() override;
+	void setNextState() override;
+	~Init() override;
 };
 
 class Home: public Tactic {
 public:
 	Home(EnvironmentParams &envParams, AgentParams &agentParams,
 			SystemState &state, TrajectoryGenerator *generator);
-	virtual bool ready();
-	virtual bool apply();
-	virtual ~Home();
+	bool ready() override;
+	bool apply() override;
+	void setNextState() override;
+	~Home() override;
 };
 
 class Ready: public Tactic {
 public:
 	Ready(EnvironmentParams &envParams, AgentParams &agentParams,
 			SystemState &state, TrajectoryGenerator *generator);
-	virtual bool ready();
-	virtual bool apply();
-	virtual ~Ready();
+	bool ready() override;
+	bool apply() override;
+	void setNextState() override;
+	~Ready() override;
+
+private:
+	bool canSmash();
+	bool defense();
+	bool puckStuck();
 };
 
 class Cut: public Tactic {
 public:
 	Cut(EnvironmentParams &envParams, AgentParams &agentParams,
 			SystemState &state, TrajectoryGenerator *generator);
-	virtual bool ready();
-	virtual bool apply();
-	virtual ~Cut();
+	bool ready() override;
+	bool apply() override;
+	void setNextState() override;
+	~Cut() override;
 };
 
 class Prepare: public Tactic {
 public:
 	Prepare(EnvironmentParams &envParams, AgentParams &agentParams,
 			SystemState &state, TrajectoryGenerator *generator);
-	virtual bool ready();
-	virtual bool apply();
-	virtual ~Prepare();
+	bool ready() override;
+	bool apply() override;
+	void setNextState() override;
+	~Prepare() override;
 };
 
 class MovePuck: public Tactic {
 public:
 	MovePuck(EnvironmentParams &envParams, AgentParams &agentParams,
 			SystemState &state, TrajectoryGenerator *generator);
-	virtual bool ready();
-	virtual bool apply();
-	virtual ~MovePuck();
+	bool ready() override;
+	bool apply() override;
+	void setNextState() override;
+	~MovePuck() override;
 };
 
 class Smash: public Tactic {
+
 public:
 	Smash(EnvironmentParams &envParams, AgentParams &agentParams,
 			SystemState &state, TrajectoryGenerator *generator);
-	virtual bool ready();
-	virtual bool apply();
-	virtual ~Smash();
+	bool ready() override;
+	bool apply() override;
+	void setNextState() override;
+	~Smash() override;
 
-private:
+friend class Ready;
+
+protected:
 	Eigen::Vector3d computeTarget(Eigen::Vector3d puckPosition);
     void getHitPointVelocity(Eigen::Vector2d &xCur2d, Eigen::Vector2d &xHit2d, Eigen::Vector2d &vHit2d,
                              iiwas_kinematics::Kinematics::JointArrayType &qHitRef);
 
-private:
+protected:
 	std::random_device rd;
 	std::mt19937 gen;
 	std::uniform_int_distribution<int> dist;
+
+	Eigen::Vector2d xCur2d, xHit2d, vHit2d;
+	iiwas_kinematics::Kinematics::JointArrayType qHitRef;
 
 };
 

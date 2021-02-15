@@ -80,13 +80,13 @@ namespace air_hockey_baseline_agent {
         //! restitution coefficient
         double m_e;
 
-        State m_malletState;
+        PuckState m_malletState;
 
         Mallet(double puckRadius, double malletRadius, double restitution, double dt);
 
         void setState(const geometry_msgs::TransformStamped &tfMallet);
 
-        bool applyCollision(State &puckState);
+        bool applyCollision(PuckState &puckState);
     };
 
     class CollisionModel {
@@ -99,7 +99,7 @@ namespace air_hockey_baseline_agent {
         CollisionModel(double tableLength, double tableWidth, double goalWidth, double puckRadius, double malletRadius,
                        double &restitutionTable, double &restitutionMallet, double dt);
 
-        bool applyCollision(State &puckState, const bool& checkMallet);
+        bool applyCollision(PuckState &puckState, const bool& checkMallet);
 
     };
 

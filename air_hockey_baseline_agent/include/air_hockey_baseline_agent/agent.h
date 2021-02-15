@@ -25,6 +25,7 @@
 #define SRC_TACTICAL_AGENT_H
 
 #include "air_hockey_baseline_agent/data_structures.h"
+#include "air_hockey_baseline_agent/system_state.h"
 #include "air_hockey_baseline_agent/tactics.h"
 #include "air_hockey_baseline_agent/trajectory_generator.h"
 #include "air_hockey_baseline_agent/observer.h"
@@ -51,16 +52,7 @@ private:
 	void loadEnvironmentParams();
 	void computeBaseConfigurations();
 	void loadTactics();
-
-
-	void updateTactic();
 	void publishTrajectory();
-
-	bool isPuckStopped();
-	bool isPuckRisky();
-	bool isPuckReachable();
-	bool isHitStrong();
-	bool isPredictionReliable();
 
 
 private:
@@ -77,11 +69,10 @@ private:
 	// Logic
 	Observer *observer;
 	TrajectoryGenerator *generator;
-	std::vector<Tactic*> tactics;
+	std::vector<Tactic*> tacticsProcessor;
 
 	// State
 	SystemState state;
-	AgentState agentState;
 };
 
 }

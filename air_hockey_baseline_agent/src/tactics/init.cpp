@@ -36,10 +36,12 @@ Init::Init(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Init::ready() {
-	return state.restart;
+	return state.isNewTactics;
 }
 
 bool Init::apply() {
+	state.isNewTactics = false;
+
 	JointTrajectoryPoint jointViaPoint_;
 	jointViaPoint_.positions.resize(7);
 	jointViaPoint_.velocities.resize(7);
@@ -62,8 +64,6 @@ bool Init::apply() {
 	state.jointTrajectory.points.push_back(jointViaPoint_);
 
 	state.jointTrajectory.header.stamp = ros::Time::now();
-	state.trajStopTime = state.jointTrajectory.header.stamp
-			+ state.jointTrajectory.points.back().time_from_start;
 
 	ROS_INFO_STREAM("Go to initial position");
 
@@ -72,4 +72,8 @@ bool Init::apply() {
 
 Init::~Init() {
 
+}
+
+void Init::setNextState() {
+	setTactic(HOME);
 }

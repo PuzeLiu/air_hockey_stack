@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-#include "air_hockey_baseline_agent/data_structures.h"
+#include "air_hockey_baseline_agent/system_state.h"
 
 using namespace std;
 using namespace iiwas_kinematics;
@@ -48,20 +48,25 @@ SystemState::SystemState(const string& ns) {
 
 	}
 
-	restart = false;
+	currentTactic = Tactics::INIT;
+
+	isNewTactics = true;
+
+	staticCount = 0;
+	approachingCount = 0;
 }
 
 void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
-		Kinematics::JointArrayType &dq, ros::Time &tStart, double offset_t) {
+                                       Kinematics::JointArrayType &dq, ros::Time &tStart, double offset_t) {
 	if (jointTrajectory.points.size() > 0) {
 		tStart = ros::Time::now() + ros::Duration(offset_t);
 		ros::Time tLast = jointTrajectory.header.stamp
-				+ jointTrajectory.points.back().time_from_start;
+		                  + jointTrajectory.points.back().time_from_start;
 		if (tStart <= tLast) {
 			for (int i = jointTrajectory.points.size() - 1; i >= 0; --i) {
 				if (tStart
-						> jointTrajectory.header.stamp
-								+ jointTrajectory.points[i].time_from_start) {
+				    > jointTrajectory.header.stamp
+				      + jointTrajectory.points[i].time_from_start) {
 					for (int j = 0; j < NUM_OF_JOINTS; ++j) {
 						q[j] = jointTrajectory.points[i + 1].positions[j];
 						dq[j] = jointTrajectory.points[i + 1].velocities[j];
@@ -79,6 +84,40 @@ void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
 }
 
 bool SystemState::hasActiveTrajectory() {
-    return ros::Time::now() < trajStopTime;
+	if (!jointTrajectory.points.empty()){
+		return ros::Time::now() < jointTrajectory.header.stamp + jointTrajectory.points.back().time_from_start;
+	} else {
+		return false;
+	}
 }
 
+bool SystemState::isPuckStatic() {
+
+	return staticCount > 5;
+}
+
+bool SystemState::isPuckApproaching() {
+	return approachingCount > 5;
+}
+
+void SystemState::updateObservationAndState(ObservationState observationState,
+											const AgentParams& agentParams){
+	observation = observationState;
+
+	if (observation.puckEstimatedState.block<2, 1>(2, 0).norm() < agentParams.vDefendMin){
+		staticCount++;
+		approachingCount = 0;
+	} else {
+		staticCount = 0;
+
+		if (observation.puckEstimatedState.dx() < 0){
+			approachingCount++;
+		} else {
+			approachingCount = 0;
+		}
+	}
+
+	staticCount = min(staticCount, 20);
+	approachingCount = min(approachingCount, 20);
+
+}

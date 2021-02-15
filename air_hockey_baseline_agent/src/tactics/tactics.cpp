@@ -89,3 +89,40 @@ Tactic::~Tactic() {
 
 }
 
+void Tactic::updateTactic() {
+	if (state.observation.gameStatus.status == START){
+		setNextState();
+	} else if (state.observation.gameStatus.status == STOP){
+		setTactic(INIT);
+	} else if (state.observation.gameStatus.status == PAUSE) {
+		setTactic(HOME);
+	}
+}
+
+void Tactic::setTactic(Tactics tactic){
+	if (tactic != state.currentTactic){
+		state.isNewTactics = true;
+		ROS_INFO_STREAM("Tactics changed: " << tactic2String(state.currentTactic) << " -> " << tactic2String(tactic));
+		state.currentTactic = tactic;
+	}
+}
+
+std::string Tactic::tactic2String(Tactics tactic){
+	switch (tactic) {
+		case Tactics::INIT:
+			return "INIT ";
+		case Tactics::HOME:
+			return "HOME ";
+		case Tactics::SMASH:
+			return "SMASH";
+		case Tactics::CUT:
+			return "CUT  ";
+		case Tactics::READY:
+			return "READY ";
+		default:
+			ROS_FATAL_STREAM("Invalid Tactic");
+			exit(-1);
+	}
+}
+
+

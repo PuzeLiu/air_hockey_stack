@@ -35,10 +35,12 @@ Prepare::Prepare(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Prepare::ready() {
-	return state.restart || !state.hasActiveTrajectory();
+	return state.isNewTactics;
 }
 
 bool Prepare::apply() {
+	state.isNewTactics = false;
+
 	Vector3d xStart, vStart;
 	Vector2d xStart2d, vStart2d, xPuck, xPrepare, vPrepare;
 	ros::Time tStart;
@@ -105,7 +107,6 @@ bool Prepare::apply() {
 
 	//! append return to whole trajectory
 	if (success) {
-		
 		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
 				cartTrajReturn.points.begin(), cartTrajReturn.points.end());
 		state.jointTrajectory.points.insert(
@@ -114,9 +115,6 @@ bool Prepare::apply() {
 		state.cartTrajectory.header.stamp = tStart;
 		state.jointTrajectory.header.stamp = tStart;
 
-		state.trajStopTime = ros::Time::now()
-				+ ros::Duration(
-						state.jointTrajectory.points.back().time_from_start);
 		return true;
 	} else {
 		ROS_INFO_STREAM(
@@ -129,3 +127,10 @@ Prepare::~Prepare() {
 
 }
 
+void Prepare::setNextState() {
+	if (state.hasActiveTrajectory()){
+		setTactic(PREPARE);
+	} else {
+		setTactic(PREPARE);
+	}
+}

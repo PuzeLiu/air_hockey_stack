@@ -67,7 +67,7 @@ namespace air_hockey_baseline_agent {
         air_hockey_baseline_agent::PuckTracker  puckTracker;
         double maxPredictionTime;
 
-        ObservationState observation, observationPrev;
+        ObservationState observation;
         bool statusChanged;
     };
 }

@@ -36,10 +36,11 @@ Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Ready::ready() {
-	return !state.hasActiveTrajectory();
+	return state.isNewTactics || !state.hasActiveTrajectory();
 }
 
 bool Ready::apply() {
+	state.isNewTactics = false;
 
 	Vector3d xStart, vStart;
 	Vector2d xStart2d, vStart2d;
@@ -74,19 +75,50 @@ bool Ready::apply() {
 		} else {
 			state.jointTrajectory.header.stamp = tStart;
 			state.cartTrajectory.header.stamp = tStart;
-			state.trajStopTime = state.jointTrajectory.header.stamp
-					+ ros::Duration(tStop);
 			return true;
 		}
 	}
-
 	ROS_INFO_STREAM(
 			"Optimization Failed [READY]. Unable to find trajectory for Ready");
-
 	return false;
 }
 
 Ready::~Ready() {
 
+}
+
+void Ready::setNextState() {
+	if (canSmash()){
+		setTactic(SMASH);
+	} else if (defense()) {
+		setTactic(CUT);
+	} else if (puckStuck()) {
+		setTactic(PREPARE);
+	} else {
+		setTactic(READY);
+	}
+}
+
+bool Ready::canSmash() {
+	if (state.isPuckStatic() && state.observation.puckEstimatedState.x() < agentParams.hitRange[1]
+	&& abs(state.observation.puckEstimatedState.y()) < (envParams.tableWidth - envParams.puckRadius - 0.1)){
+		return true;
+	}
+	return false;
+}
+
+bool Ready::defense() {
+	if (state.isPuckApproaching() && state.observation.puckPredictedState.predictedTime < agentParams.maxPredictionTime){
+		return true;
+	}
+	return false;
+}
+
+bool Ready::puckStuck() {
+	if (state.isPuckStatic() && state.observation.puckEstimatedState.x() < agentParams.hitRange[1]
+	    && abs(state.observation.puckEstimatedState.y()) > (envParams.tableWidth - envParams.puckRadius - 0.1)){
+		return true;
+	}
+	return false;
 }
 
