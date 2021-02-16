@@ -42,6 +42,7 @@ set(SOURCE
     src/main.cpp
     src/agent.cpp
     src/system_state.cpp
+    src/utils.cpp
     src/null_space_optimizer.cpp
     src/hitting_point_optimizer.cpp
     src/observer.cpp
@@ -68,6 +69,7 @@ target_link_libraries(${PROJECT_NAME}
     osqp::osqp
     OsqpEigen
     NLopt::nlopt
+    Clp
     )
 
 #############

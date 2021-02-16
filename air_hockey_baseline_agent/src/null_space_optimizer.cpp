@@ -21,6 +21,7 @@
  * SOFTWARE.
  */
 
+#include "air_hockey_baseline_agent/utils.h"
 #include "air_hockey_baseline_agent/null_space_optimizer.h"
 
 using namespace std;
@@ -229,17 +230,6 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
     qNext = qCur + dqNext * stepSize_;
 
     return true;
-}
-
-void NullSpaceOptimizer::GetNullSpace(const Kinematics::JacobianPosType &jacobian,
-                                      MatrixXd &out_null_space) {
-    CompleteOrthogonalDecomposition<Matrix<double, Dynamic, Dynamic> > cod;
-    cod.compute(jacobian);
-    // Find URV^T
-    V_ = cod.matrixZ().transpose();
-    out_null_space = V_.block(0, cod.rank(), V_.rows(), V_.cols() - cod.rank());
-//    MatrixXd P = cod.colsPermutation();
-    out_null_space = cod.colsPermutation() * out_null_space; // Unpermute the columns
 }
 
 void NullSpaceOptimizer::SolveJoint7(Kinematics::JointArrayType &q) {

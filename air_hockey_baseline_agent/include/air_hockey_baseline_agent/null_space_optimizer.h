@@ -70,7 +70,6 @@ namespace air_hockey_baseline_agent {
 						   JointArrayType &qNext,
 						   JointArrayType &dqNext);
 
-        void GetNullSpace(const JacobianPosType &jacobian, Eigen::MatrixXd &out_null_space);
 
     private:
         bool closeLoop_;
@@ -88,7 +87,6 @@ namespace air_hockey_baseline_agent {
         Eigen::Matrix<double, 4, 1> q_;
         Eigen::SparseMatrix<double> A_;
         Eigen::Vector3d K_;            // Weight for correcting position error
-        Eigen::MatrixXd V_;            // temporal matrix for calculating null space
 
         Eigen::Vector3d xCurPos_;
         JacobianPosType jacobian_;

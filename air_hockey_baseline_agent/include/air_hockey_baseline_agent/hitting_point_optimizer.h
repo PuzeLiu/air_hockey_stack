@@ -7,6 +7,7 @@
 
 #include <nlopt.hpp>
 #include "iiwas_kinematics/iiwas_kinematics.h"
+#include "coin/ClpSimplex.hpp"
 
 namespace air_hockey_baseline_agent {
     struct OptimizerData {
@@ -45,9 +46,13 @@ namespace air_hockey_baseline_agent {
 
         double getMaxVelocity(const iiwas_kinematics::Kinematics::JointArrayType &q);
 
+        double getMaxVelocityLP(const iiwas_kinematics::Kinematics::JointArrayType &q);
+
 
     private:
         nlopt::opt optimizer;
+
+		ClpSimplex simplexModel;
 
         OptimizerData optData;
 
