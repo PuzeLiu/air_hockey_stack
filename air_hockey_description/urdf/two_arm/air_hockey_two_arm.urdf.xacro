@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<robot name="iiwa_striker" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <!--Import the lbr frame macro -->
+    <xacro:include filename="$(find iiwas_description)/robots/iiwas_new_frame.urdf.xacro"/>
+    <!--Import the striker macro -->
+    <xacro:include filename="$(find air_hockey_description)/urdf/striker.xacro"/>
+
+    <xacro:property name="base_height" default="0.03"/>
+
+    <xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+    <xacro:arg name="parent" default="world"/>
+    <xacro:arg name="base_rpy" default="0 0 0"/>
+
+    <!-- Fix to world just for testing -->
+<!--    <link name="$(arg parent)"/>-->
+
+    <xacro:striker hardware_interface="hardware_interface/EffortJointInterface" robot_name="F"/>
+
+    <xacro:striker hardware_interface="hardware_interface/EffortJointInterface" robot_name="B"/>
+
+    <gazebo reference="$(arg parent)">
+        <kinematic>true</kinematic>
+    </gazebo>
+
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+        </plugin>
+    </gazebo>
+</robot>
