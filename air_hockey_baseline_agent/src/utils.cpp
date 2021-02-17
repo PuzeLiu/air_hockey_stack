@@ -2,7 +2,7 @@
 
 using namespace Eigen;
 
-void air_hockey_baseline_agent::GetNullSpace(const Eigen::MatrixXd &A, MatrixXd &out_null_space) {
+void air_hockey_baseline_agent::getNullSpace(const Eigen::MatrixXd &A, MatrixXd &out_null_space) {
 	CompleteOrthogonalDecomposition<Matrix<double, Dynamic, Dynamic> > cod;
 	cod.compute(A);
 	// Find URV^T

@@ -8,7 +8,7 @@
 #include <Eigen/Dense>
 
 namespace air_hockey_baseline_agent{
-	void GetNullSpace(const Eigen::MatrixXd &A, Eigen::MatrixXd &out_null_space);
+	void getNullSpace(const Eigen::MatrixXd &A, Eigen::MatrixXd &out_null_space);
 }
 
 #endif //AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_AGENT_UTILS_H_

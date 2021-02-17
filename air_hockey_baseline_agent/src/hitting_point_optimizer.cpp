@@ -4,49 +4,54 @@
 #include <iostream>
 #include "air_hockey_baseline_agent/hitting_point_optimizer.h"
 #include <chrono>
+#include <coin/CoinPackedVector.hpp>
+
 
 using namespace std;
 using namespace nlopt;
+using namespace Eigen;
 using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
-OptimizerData::OptimizerData(Kinematics& kinematics): kinematics(kinematics) {
+OptimizerData::OptimizerData(Kinematics &kinematics) : kinematics(kinematics) {
     epsilon = sqrt(numeric_limits<double>::epsilon());
 }
 
-HittingPointOptimizer::HittingPointOptimizer(Kinematics& kinematics): optData(kinematics) {
-    optimizer = opt(LD_SLSQP, iiwas_kinematics::NUM_OF_JOINTS);
-    optimizer.set_max_objective(objective, &optData);
+HittingPointOptimizer::HittingPointOptimizer(Kinematics &kinematics) : optData(kinematics) {
+    nlSolver = opt(LD_SLSQP, iiwas_kinematics::NUM_OF_JOINTS);
+    nlSolver.set_max_objective(objective, &optData);
 
     double tol = 1e-4;
-    optimizer.add_equality_constraint(this->equalityConstraint, &optData, tol);
+    nlSolver.add_equality_constraint(this->equalityConstraint, &optData, tol);
 
     std::vector<double> qLower(optData.kinematics.posLimitsLower_.data(),
-                             optData.kinematics.posLimitsLower_.data() +
-                             optData.kinematics.posLimitsLower_.cols() * optData.kinematics.posLimitsLower_.rows());
-    optimizer.set_lower_bounds(qLower);
+                               optData.kinematics.posLimitsLower_.data() +
+                               optData.kinematics.posLimitsLower_.cols() * optData.kinematics.posLimitsLower_.rows());
+    nlSolver.set_lower_bounds(qLower);
 
     std::vector<double> qUpper(optData.kinematics.posLimitsUpper_.data(),
                                optData.kinematics.posLimitsUpper_.data() +
                                optData.kinematics.posLimitsUpper_.cols() * optData.kinematics.posLimitsUpper_.rows());
-    optimizer.set_upper_bounds(qUpper);
+    nlSolver.set_upper_bounds(qUpper);
 
+    // Set tolerance for nonlinear solver
+    nlSolver.set_ftol_abs(1e-4);
+    nlSolver.set_xtol_abs(1e-6);
 
-//    optimizer.set_ftol_rel(1e-8);
-    optimizer.set_ftol_abs(1e-4);
-    optimizer.set_xtol_rel(1e-8);
+    // Set up linear programming solver
+    simplexModel.setLogLevel(0);
 }
 
-HittingPointOptimizer::~HittingPointOptimizer(){
+HittingPointOptimizer::~HittingPointOptimizer() {
 
 }
 
-bool HittingPointOptimizer::solve(const Eigen::Vector3d& hitPoint, const Eigen::Vector3d& hitDirection,
-                                     iiwas_kinematics::Kinematics::JointArrayType& qInOut, double &velMagMax) {
+bool HittingPointOptimizer::solve(const Eigen::Vector3d &hitPoint, const Eigen::Vector3d &hitDirection,
+                                  iiwas_kinematics::Kinematics::JointArrayType &qInOut, double &velMagMax) {
     optData.hitPoint = hitPoint;
     optData.hitDirection = hitDirection;
 
-    if (!getInitPoint(qInOut)){
+    if (!getInitPoint(qInOut)) {
         return false;
     }
 
@@ -54,9 +59,9 @@ bool HittingPointOptimizer::solve(const Eigen::Vector3d& hitPoint, const Eigen::
     std::vector<double> grad(7);
 
     double opt_fun;
-    auto result = optimizer.optimize(qCur, opt_fun);
+    auto result = nlSolver.optimize(qCur, opt_fun);
 
-    if (result < 0){
+    if (result < 0) {
         return false;
     }
 
@@ -65,8 +70,8 @@ bool HittingPointOptimizer::solve(const Eigen::Vector3d& hitPoint, const Eigen::
             qInOut[i] = qCur[i];
         }
 
-        velMagMax = getMaxVelocity(qInOut);
-
+//        velMagMax = getMaxVelocity(qInOut);
+        velMagMax = getMaxVelocityLP(qInOut);
         return true;
     } else {
         cout << "The position error is : " << h(qCur, &optData) << " bigger than 1e-4" << endl;
@@ -77,7 +82,7 @@ bool HittingPointOptimizer::solve(const Eigen::Vector3d& hitPoint, const Eigen::
 
 double HittingPointOptimizer::objective(const std::vector<double> &x, std::vector<double> &grad, void *f_data) {
     auto optData = (OptimizerData *) f_data;
-    if (!grad.empty()){
+    if (!grad.empty()) {
         numerical_grad(f, x, optData, grad);
     }
     return f(x, optData);
@@ -85,13 +90,13 @@ double HittingPointOptimizer::objective(const std::vector<double> &x, std::vecto
 
 double HittingPointOptimizer::equalityConstraint(const vector<double> &x, vector<double> &grad, void *f_data) {
     auto optData = (OptimizerData *) f_data;
-    if (!grad.empty()){
+    if (!grad.empty()) {
         numerical_grad(h, x, optData, grad);
     }
     return h(x, optData);
 }
 
-double HittingPointOptimizer::f(const vector<double> &x, const OptimizerData* data) {
+double HittingPointOptimizer::f(const vector<double> &x, const OptimizerData *data) {
     iiwas_kinematics::Kinematics::JointArrayType qCur(x.data());
     iiwas_kinematics::Kinematics::JacobianPosType jacobian;
     data->kinematics.jacobianPos(qCur, jacobian);
@@ -117,12 +122,12 @@ void HittingPointOptimizer::numerical_grad(HittingPointOptimizer::functype funct
         x_neg = x;
         x_pos[i] += data->epsilon;
         x_neg[i] -= data->epsilon;
-        grad[i] = (function(x_pos, data) - function(x_neg, data))/ (2 * data->epsilon);
+        grad[i] = (function(x_pos, data) - function(x_neg, data)) / (2 * data->epsilon);
     }
 }
 
 bool HittingPointOptimizer::getInitPoint(iiwas_kinematics::Kinematics::JointArrayType &qInOut) {
-    if (!optData.kinematics.numericalInverseKinematics(optData.hitPoint, qInOut, 1e-4, 200)){
+    if (!optData.kinematics.numericalInverseKinematics(optData.hitPoint, qInOut, 1e-4, 200)) {
         cout << "No feasible IK solution" << endl;
         return false;
     }
@@ -134,11 +139,72 @@ double HittingPointOptimizer::getMaxVelocity(const iiwas_kinematics::Kinematics:
     optData.kinematics.jacobianPos(q, jac);
     auto jacInv = jac.transpose() * (jac * jac.transpose()).inverse();
     auto qRef = jacInv * optData.hitDirection;
-    double min_scale = 10;
-    for (int i = 0; i < q.size(); ++i) {
-        min_scale = min(min_scale, abs(qRef[i]) / optData.kinematics.velLimitsUpper_[i]);
+
+    auto min_scale = optData.kinematics.velLimitsUpper_.cwiseProduct(qRef.cwiseAbs().cwiseInverse()).minCoeff();
+    auto q_res = (jacInv * (min_scale * optData.hitDirection));
+//    cout << "Pseudo inverse of Jacobian" << endl;
+//    cout << "##########################" << endl;
+//    cout << q_res.transpose() << endl;
+//    cout << "MaxVel: " << min_scale << endl;
+    return min_scale;
+}
+
+double HittingPointOptimizer::getMaxVelocityLP(const Kinematics::JointArrayType &q) {
+    Kinematics::JacobianPosType jac;
+    optData.kinematics.jacobianPos(q, jac);
+    MatrixXd orthogonalComplement;
+    getNullSpace(optData.hitDirection.transpose(), orthogonalComplement);
+
+    MatrixXd OCJac = (orthogonalComplement.transpose() * jac);
+    MatrixXd OCJacNullSpace;
+    getNullSpace(OCJac, OCJacNullSpace);
+
+    // Get Objective
+    MatrixXd objective = -optData.hitDirection.transpose() * jac * OCJacNullSpace;
+
+    // Get Bounds for Primal Variables
+    int nRows = OCJacNullSpace.rows();
+    int nCols = OCJacNullSpace.cols();
+    VectorXd columnLower(nCols);
+    VectorXd columnUpper(nCols);
+    columnLower = -columnLower.setOnes() * COIN_DBL_MAX;
+    columnUpper = columnUpper.setOnes() * COIN_DBL_MAX;
+
+    // Get Constraint Matrix
+    CoinPackedMatrix matrix;
+    matrix.setDimensions(nRows, nCols);
+    for (int i = 0; i < OCJacNullSpace.rows(); ++i) {
+        for (int j = 0; j < OCJacNullSpace.cols(); ++j) {
+            matrix.modifyCoefficient(i, j, OCJacNullSpace(i, j));
+        }
     }
-    return optData.kinematics.velLimitsUpper_.cwiseProduct(qRef.cwiseAbs().cwiseInverse()).minCoeff();
+
+    // Generate Problem
+    simplexModel.loadProblem(matrix, columnLower.data(), columnUpper.data(), objective.data(),
+                             optData.kinematics.velLimitsLower_.data(), optData.kinematics.velLimitsUpper_.data());
+
+    // Get Solution
+    simplexModel.dual();
+
+//    VectorXd solution(nCols);
+//    auto solutionConst = simplexModel.getColSolution();
+//    for (int i = 0; i < nCols; ++i) {
+//        solution[i] = solutionConst[i];
+//    }
+//    cout << "    Linear Programming    " << endl;
+//    cout << "##########################" << endl;
+//    cout << solution.transpose() << endl;
+//    cout << "Constraint: " << (OCJacNullSpace * solution).transpose() << endl;
+//    cout << "Limit: " << optData.kinematics.velLimitsUpper_.transpose() << endl;
+//    cout << "Obj: " << optData.hitDirection.transpose() * jac * OCJacNullSpace * solution << endl;
+//
+//    cout << "          Problem         " << endl;
+//    cout << "##########################" << endl;
+//    cout << (optData.hitDirection.transpose() * jac * OCJacNullSpace) << endl;
+//    cout << "        Constraints       " << endl;
+//    cout << OCJacNullSpace << endl;
+
+    return -simplexModel.getObjValue();
 }
 
 

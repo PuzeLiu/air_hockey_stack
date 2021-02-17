@@ -8,6 +8,7 @@
 using namespace std;
 using namespace nlopt;
 using namespace iiwas_kinematics;
+using namespace air_hockey_baseline_agent;
 
 int main(int argc, char *argv[]) {
 	iiwas_kinematics::Kinematics kinematics(Eigen::Vector3d(0, 0., 0.515),

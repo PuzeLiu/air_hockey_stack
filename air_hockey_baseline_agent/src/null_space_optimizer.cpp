@@ -164,7 +164,7 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
     kinematics_->forwardKinematics(qCur, xCurPos_);
 
     kinematics_->jacobianPos(qCur, jacobian_);
-    GetNullSpace(jacobian_, nullSpace_);
+    getNullSpace(jacobian_, nullSpace_);
 
     auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() *
              (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
@@ -202,7 +202,7 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
     kinematics_->forwardKinematics(qCur, xCurPos_);
 
     kinematics_->jacobianPos(qCur, jacobian_);
-    GetNullSpace(jacobian_, nullSpace_);
+    getNullSpace(jacobian_, nullSpace_);
 
     auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() *
              (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);

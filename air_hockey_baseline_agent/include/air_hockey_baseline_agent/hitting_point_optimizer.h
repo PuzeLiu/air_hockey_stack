@@ -7,7 +7,9 @@
 
 #include <nlopt.hpp>
 #include "iiwas_kinematics/iiwas_kinematics.h"
-#include "coin/ClpSimplex.hpp"
+#include <coin/ClpSimplex.hpp>
+#include <coin/ClpSolve.hpp>
+#include "utils.h"
 
 namespace air_hockey_baseline_agent {
     struct OptimizerData {
@@ -50,7 +52,7 @@ namespace air_hockey_baseline_agent {
 
 
     private:
-        nlopt::opt optimizer;
+        nlopt::opt nlSolver;
 
 		ClpSimplex simplexModel;
 
