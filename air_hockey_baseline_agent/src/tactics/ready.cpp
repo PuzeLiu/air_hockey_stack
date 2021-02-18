@@ -58,7 +58,7 @@ bool Ready::apply() {
 	xStart2d = xStart.block<2, 1>(0, 0);
 	vStart2d = vStart.block<2, 1>(0, 0);
 
-	double tStop = 1.5;
+	double tStop = std::max((agentParams.xHome.block<2,1>(0, 0) - xStart2d).norm() / 0.5, 1 / 0.5);
 	for (int i = 0; i < 10; ++i) {
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
@@ -108,7 +108,8 @@ bool Ready::canSmash() {
 }
 
 bool Ready::defense() {
-	if (state.isPuckApproaching() && state.observation.puckPredictedState.predictedTime < agentParams.maxPredictionTime){
+	if (state.isPuckApproaching() && state.observation.puckPredictedState.predictedTime < agentParams.maxPredictionTime
+		&& abs(state.observation.puckPredictedState.state.y()) < agentParams.defendWidth / 2){
 		return true;
 	}
 	return false;

@@ -60,7 +60,7 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics *kinematics,
 
     K_.setConstant(1 / stepSize_);
     weights_ << 40., 40., 20., 40., 10., 20., 0.;
-    weightsAnchor_.setOnes();
+    weightsAnchor_<< 1., 1., 1., 10., 10., 10., 0.;
     beta_ = 10;
 }
 
@@ -127,7 +127,7 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
             dxDes[1] = cartTraj.points[i].velocities[0].linear.y;
             dxDes[2] = cartTraj.points[i].velocities[0].linear.z;
 
-            tTogo = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec() / 2;
+            tTogo = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec() * 0.8;
             if (tTogo > 0) {
                 dqAnchorTmp = (qAnchor - qCur) / tTogo;
             } else {
@@ -135,7 +135,6 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
             }
 
             if (!solveQPAnchor(xDes, dxDes, qCur, dqAnchorTmp, qNext, dqNext)) {
-                ROS_INFO_STREAM("Failed Anchor Index: " << i);
                 return false;
             }
 

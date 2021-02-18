@@ -99,19 +99,19 @@ bool Prepare::apply() {
 				"Optimization Failed [PREPARE]. Reduce the velocity: " << vPrepare.transpose());
 	}
 
-	//! plan for return trajectory
-	trajectory_msgs::MultiDOFJointTrajectory cartTrajReturn;
-	trajectory_msgs::JointTrajectory jointTrajReturn;
-	double vMax = 0.5;
-	success = success && planReturnTraj(vMax, cartTrajReturn, jointTrajReturn);
+//	//! plan for return trajectory
+//	trajectory_msgs::MultiDOFJointTrajectory cartTrajReturn;
+//	trajectory_msgs::JointTrajectory jointTrajReturn;
+//	double vMax = 0.5;
+//	success = success && planReturnTraj(vMax, cartTrajReturn, jointTrajReturn);
 
 	//! append return to whole trajectory
 	if (success) {
-		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
-				cartTrajReturn.points.begin(), cartTrajReturn.points.end());
-		state.jointTrajectory.points.insert(
-				state.jointTrajectory.points.end(),
-				jointTrajReturn.points.begin(), jointTrajReturn.points.end());
+//		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
+//				cartTrajReturn.points.begin(), cartTrajReturn.points.end());
+//		state.jointTrajectory.points.insert(
+//				state.jointTrajectory.points.end(),
+//				jointTrajReturn.points.begin(), jointTrajReturn.points.end());
 		state.cartTrajectory.header.stamp = tStart;
 		state.jointTrajectory.header.stamp = tStart;
 

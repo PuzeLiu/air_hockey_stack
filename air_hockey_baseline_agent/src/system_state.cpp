@@ -92,12 +92,11 @@ bool SystemState::hasActiveTrajectory() {
 }
 
 bool SystemState::isPuckStatic() {
-
-	return staticCount > 5;
+	return staticCount > 10;
 }
 
 bool SystemState::isPuckApproaching() {
-	return approachingCount > 5;
+	return approachingCount > 10;
 }
 
 void SystemState::updateObservationAndState(ObservationState observationState,

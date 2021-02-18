@@ -10,8 +10,8 @@ air_hockey:
     universal_joint_height:  0.0505 # 0.095 0.058 #
     prepare_height:  0.2395    # height of iiwa second joint - universal joint height: 0.29 - 0.0505 = 0.2395
     max_hit_velocity: 1.5
-    min_defend_velocity: 0.05
+    min_defend_velocity: 0.1
     min_defend_time: 0.3
+    defend_width: 0.4
     plan_time_offset: 0.05
-#    controller: joint_torque_trajectory_controller
     q_ref: [1.7207, 0.6541, -1.859, -1.422, 0.1313, 1.3779, -0.0653]

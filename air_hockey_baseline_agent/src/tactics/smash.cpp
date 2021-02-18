@@ -59,43 +59,27 @@ bool Smash::apply() {
 //		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory,
 //				state.observation.jointPosition, state.jointTrajectory)) {
 			ROS_INFO_STREAM("[HITTING] velocity: " << vHit2d.norm());
-//			ROS_INFO_STREAM("[HITTING] start  point: " << state.jointTrajectory.points.front().positions[0]
-//			                                          << " " << state.jointTrajectory.points.front().positions[1]
-//			                                          << " " << state.jointTrajectory.points.front().positions[2]
-//			                                          << " " << state.jointTrajectory.points.front().positions[3]
-//			                                          << " " << state.jointTrajectory.points.front().positions[4]
-//			                                          << " " << state.jointTrajectory.points.front().positions[5]
-//			                                          << " " << state.jointTrajectory.points.front().positions[6]);
-//			ROS_INFO_STREAM("[HITTING] anchor point: " << qHitRef.transpose());
-//			ROS_INFO_STREAM("[HITTING] final  point: " << state.jointTrajectory.points.back().positions[0]
-//			                                          << " " << state.jointTrajectory.points.back().positions[1]
-//			                                          << " " << state.jointTrajectory.points.back().positions[2]
-//			                                          << " " << state.jointTrajectory.points.back().positions[3]
-//			                                          << " " << state.jointTrajectory.points.back().positions[4]
-//			                                          << " " << state.jointTrajectory.points.back().positions[5]
-//			                                          << " " << state.jointTrajectory.points.back().positions[6]);
 
 			success = true;
 			break;
 		} else {
 			vHit2d *= .8;
-			ROS_INFO_STREAM(
-					"Optimization Failed [HITTING]. Reduce the velocity: " << vHit2d.transpose());
+			ROS_INFO_STREAM("Optimization Failed [HITTING]. Reduce the velocity: " << vHit2d.transpose());
 			continue;
 		}
 	}
-	//! plan for return trajectory
-	trajectory_msgs::MultiDOFJointTrajectory cartTrajReturn;
-	trajectory_msgs::JointTrajectory jointTrajReturn;
-	double vMax = 0.5;
-	success = success && planReturnTraj(vMax, cartTrajReturn, jointTrajReturn);
+//	//! plan for return trajectory
+//	trajectory_msgs::MultiDOFJointTrajectory cartTrajReturn;
+//	trajectory_msgs::JointTrajectory jointTrajReturn;
+//	double vMax = 0.5;
+//	success = success && planReturnTraj(vMax, cartTrajReturn, jointTrajReturn);
 
 	//! append return to whole trajectory
 	if (success) {
-		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
-		                                   cartTrajReturn.points.begin(), cartTrajReturn.points.end());
-		state.jointTrajectory.points.insert(state.jointTrajectory.points.end(),
-		                                    jointTrajReturn.points.begin(), jointTrajReturn.points.end());
+//		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
+//		                                   cartTrajReturn.points.begin(), cartTrajReturn.points.end());
+//		state.jointTrajectory.points.insert(state.jointTrajectory.points.end(),
+//		                                    jointTrajReturn.points.begin(), jointTrajReturn.points.end());
 		state.jointTrajectory.header.stamp = ros::Time::now();
 		return true;
 	} else {
@@ -107,7 +91,7 @@ bool Smash::apply() {
 Vector3d Smash::computeTarget(Vector3d puckPosition) {
 	Vector3d xTarget;
 	auto random_integer = dist(gen);
-	random_integer = 0;
+//	random_integer = 0;
 	if (puckPosition.y() > 0.1) {
 		xTarget.y() = -0.05;
 	} else if (puckPosition.y() < -0.1) {

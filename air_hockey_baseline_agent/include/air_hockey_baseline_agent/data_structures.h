@@ -68,9 +68,9 @@ struct AgentParams {
 
 	Eigen::Vector2d hitRange;
 
-	double vHitMax;
 	double vDefendMin;
 	double tDefendMin;
+	double defendWidth;
 	double defendLine;
 	double planTimeOffset;
 	double maxPredictionTime;
