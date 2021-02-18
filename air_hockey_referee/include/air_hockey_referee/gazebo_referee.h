@@ -39,7 +39,7 @@ public:
     void update();
 
 protected:
-    bool resetPuck(std::string* res = nullptr);
+    bool resetPuck(std::string* res = nullptr, bool onHome=true);
     void checkMallet();
 
 private:

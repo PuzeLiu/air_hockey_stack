@@ -33,7 +33,7 @@ namespace air_hockey_baseline_agent{
 
     }
 
-    bool RealWorldReferee::resetPuck(std::string *res) {
+    bool RealWorldReferee::resetPuck(std::string *res, bool onHome) {
         //! Do not reset puck for real world
         return true;
     }

@@ -34,7 +34,7 @@ namespace air_hockey_baseline_agent {
         ~RealWorldReferee() override;
 
     protected:
-        bool resetPuck(std::string *res = nullptr);
+        bool resetPuck(std::string *res = nullptr, bool onHome=true);
 
     private:
         ros::NodeHandle nh_;

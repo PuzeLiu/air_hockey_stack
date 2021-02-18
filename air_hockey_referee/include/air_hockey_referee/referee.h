@@ -24,6 +24,7 @@
 #ifndef REFEREE_H
 #define REFEREE_H
 
+#include <random>
 #include <ros/ros.h>
 #include <std_msgs/Int8.h>
 #include <tf2_ros/transform_listener.h>
@@ -48,7 +49,7 @@ public:
     void update();
 
 protected:
-    virtual bool resetPuck(std::string* msg = nullptr) = 0;
+    virtual bool resetPuck(std::string* msg = nullptr, bool onHome=true) = 0;
     bool isPuckOnTable();
 
 private:
@@ -68,6 +69,9 @@ protected:
 
     geometry_msgs::TransformStamped tfPuck, tfPuckPrev;
     air_hockey_referee::GameStatus gameStatusMsg;
+
+	std::mt19937 gen;
+	std::uniform_int_distribution<int> dist;
 };
 }
 

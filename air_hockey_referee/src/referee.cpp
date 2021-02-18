@@ -3,7 +3,7 @@
 using namespace air_hockey_baseline_agent;
 using namespace std;
 
-Referee::Referee(ros::NodeHandle nh) : nh(nh), tfBuffer(), tfListener(tfBuffer) {
+Referee::Referee(ros::NodeHandle nh) : nh(nh), tfBuffer(), tfListener(tfBuffer), dist(0, 1){
     statusPub = nh.advertise<air_hockey_referee::GameStatus>("game_status", 1);
     serviceStart = nh.advertiseService("start_game", &Referee::serviceStartCallback, this);
     servicePause = nh.advertiseService("pause_game", &Referee::servicePauseCallback, this);
@@ -57,6 +57,9 @@ void Referee::update() {
                     ROS_INFO_STREAM("Detect Puck is not reachable for both Robot, Game Paused");
                     gameStatusMsg.status = GameStatus::PAUSE;
                     statusPub.publish(gameStatusMsg);
+	                auto onHome = dist(gen);
+	                std::string msg;
+	                resetPuck(&msg, onHome);
                 } else {
                     if (tfPuck.transform.translation.x < -(tableLength / 2 + 1e-2) &&
                         abs(tfPuck.transform.translation.y) < goalWidth / 2) {
@@ -65,7 +68,8 @@ void Referee::update() {
                         gameStatusMsg.score_away += 1;
                         statusPub.publish(gameStatusMsg);
                         ROS_INFO_STREAM(gameStatusMsg);
-                        resetPuck();
+                        std::string msg;
+                        resetPuck(&msg, false);
                     } else if (tfPuck.transform.translation.x > (tableLength / 2 + 1e-2) &&
                                abs(tfPuck.transform.translation.y) < goalWidth / 2) {
                         ROS_INFO_STREAM("Front Goal");
@@ -73,7 +77,8 @@ void Referee::update() {
                         gameStatusMsg.score_home += 1;
                         statusPub.publish(gameStatusMsg);
                         ROS_INFO_STREAM(gameStatusMsg);
-                        resetPuck();
+	                    std::string msg;
+                        resetPuck(&msg, true);
                     }
                 }
             }
