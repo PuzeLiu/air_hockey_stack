@@ -101,7 +101,7 @@ void Ready::setNextState() {
 
 bool Ready::canSmash() {
 	if (state.isPuckStatic() && state.observation.puckEstimatedState.x() < agentParams.hitRange[1]
-	&& abs(state.observation.puckEstimatedState.y()) < (envParams.tableWidth - envParams.puckRadius - 0.1)){
+	&& abs(state.observation.puckEstimatedState.y()) < (envParams.tableWidth / 2 - envParams.puckRadius - 0.1)){
 		return true;
 	}
 	return false;
@@ -116,7 +116,7 @@ bool Ready::defense() {
 
 bool Ready::puckStuck() {
 	if (state.isPuckStatic() && state.observation.puckEstimatedState.x() < agentParams.hitRange[1]
-	    && abs(state.observation.puckEstimatedState.y()) > (envParams.tableWidth - envParams.puckRadius - 0.1)){
+	    && abs(state.observation.puckEstimatedState.y()) > (envParams.tableWidth / 2 - envParams.puckRadius - 0.1)){
 		return true;
 	}
 	return false;

@@ -119,6 +119,8 @@ std::string Tactic::tactic2String(Tactics tactic){
 			return "CUT  ";
 		case Tactics::READY:
 			return "READY ";
+		case Tactics::PREPARE:
+			return "PREPARE ";
 		default:
 			ROS_FATAL_STREAM("Invalid Tactic");
 			exit(-1);

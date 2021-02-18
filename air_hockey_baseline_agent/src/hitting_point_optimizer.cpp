@@ -35,8 +35,8 @@ HittingPointOptimizer::HittingPointOptimizer(Kinematics &kinematics) : optData(k
     nlSolver.set_upper_bounds(qUpper);
 
     // Set tolerance for nonlinear solver
-    nlSolver.set_ftol_abs(1e-4);
-    nlSolver.set_xtol_abs(1e-6);
+    nlSolver.set_ftol_abs(1e-6);
+    nlSolver.set_xtol_abs(1e-8);
 
     // Set up linear programming solver
     simplexModel.setLogLevel(0);
@@ -75,7 +75,6 @@ bool HittingPointOptimizer::solve(const Eigen::Vector3d &hitPoint, const Eigen::
         return true;
     } else {
         cout << "The position error is : " << h(qCur, &optData) << " bigger than 1e-4" << endl;
-        cout << "termination condition:" << nlopt_result_to_string(nlopt_result(result)) << endl;
         return false;
     }
 }

@@ -131,6 +131,6 @@ void Prepare::setNextState() {
 	if (state.hasActiveTrajectory()){
 		setTactic(PREPARE);
 	} else {
-		setTactic(PREPARE);
+		setTactic(READY);
 	}
 }

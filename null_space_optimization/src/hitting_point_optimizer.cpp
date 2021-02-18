@@ -69,7 +69,6 @@ bool HittingPointOptimizer::solve(const Eigen::Vector3d& hitPoint, const Eigen::
         return true;
     } else {
         cout << "The position error is : " << h(qCur, &optData) << " bigger than 1e-4" << endl;
-        cout << "termination condition:" << nlopt_result_to_string(nlopt_result(result)) << endl;
         return false;
     }
 }

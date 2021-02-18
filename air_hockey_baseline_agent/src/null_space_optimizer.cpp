@@ -127,7 +127,7 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
             dxDes[1] = cartTraj.points[i].velocities[0].linear.y;
             dxDes[2] = cartTraj.points[i].velocities[0].linear.z;
 
-            tTogo = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec();
+            tTogo = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec() / 2;
             if (tTogo > 0) {
                 dqAnchorTmp = (qAnchor - qCur) / tTogo;
             } else {
@@ -233,8 +233,7 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 }
 
 void NullSpaceOptimizer::SolveJoint7(Kinematics::JointArrayType &q) {
-    double qCur = q[6];
-
+	double qCur7 = q[6];
     // Set last joint to 0 solve desired joint position
     q[6] = 0.0;
     Vector3d eePos;
@@ -243,15 +242,14 @@ void NullSpaceOptimizer::SolveJoint7(Kinematics::JointArrayType &q) {
     Matrix3d mat = eeQuat.toRotationMatrix();
     Vector3d zAxis(0., 0., 1.);
     auto yDes = zAxis.cross(mat.col(2)).normalized();
-    double angle = acos(mat.col(1).dot(yDes));
+    double delta_angle = acos(mat.col(1).dot(yDes));
 
-    if (angle >= M_PI_2) {
-        angle -= M_PI;
-    }
+	if (delta_angle - qCur7 > M_PI_2) {
+		delta_angle -= M_PI;
+	} else if (delta_angle - qCur7 < -M_PI_2){
+		delta_angle += M_PI;
+	}
+	delta_angle = boost::algorithm::clamp(delta_angle, kinematics_->posLimitsLower_[6], kinematics_->posLimitsUpper_[6]);
 
-//    auto dq = boost::algorithm::clamp((angle - qCur)/stepSize_ ,
-//                                 kinematics_->velLimitsLower_[6] * 0.8,
-//                                 kinematics_->velLimitsUpper_[6]) * 0.8;
-//    q[6] = qCur + dq * stepSize_;
-    q[6] = angle;
+    q[6] = delta_angle;
 }
