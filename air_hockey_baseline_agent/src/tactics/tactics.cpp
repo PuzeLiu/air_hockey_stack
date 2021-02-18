@@ -102,6 +102,7 @@ void Tactic::updateTactic() {
 void Tactic::setTactic(Tactics tactic){
 	if (tactic != state.currentTactic){
 		state.isNewTactics = true;
+		state.tNewTactics = ros::Time::now().toSec() + agentParams.tTacticSwitchMin;
 		ROS_INFO_STREAM("Tactics changed: " << tactic2String(state.currentTactic) << " -> " << tactic2String(tactic));
 		state.currentTactic = tactic;
 	}

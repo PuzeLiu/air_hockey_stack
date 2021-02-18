@@ -88,14 +88,16 @@ Ready::~Ready() {
 }
 
 void Ready::setNextState() {
-	if (canSmash()){
-		setTactic(SMASH);
-	} else if (defense()) {
-		setTactic(CUT);
-	} else if (puckStuck()) {
-		setTactic(PREPARE);
-	} else {
-		setTactic(READY);
+	if (ros::Time::now().toSec() > state.tNewTactics) {
+		if (canSmash()) {
+			setTactic(SMASH);
+		} else if (defense()) {
+			setTactic(CUT);
+		} else if (puckStuck()) {
+			setTactic(PREPARE);
+		} else {
+			setTactic(READY);
+		}
 	}
 }
 
@@ -108,7 +110,7 @@ bool Ready::canSmash() {
 }
 
 bool Ready::defense() {
-	if (state.isPuckApproaching() && state.observation.puckPredictedState.predictedTime < agentParams.maxPredictionTime
+	if (state.isPuckApproaching() && state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax
 		&& abs(state.observation.puckPredictedState.state.y()) < agentParams.defendWidth / 2){
 		return true;
 	}

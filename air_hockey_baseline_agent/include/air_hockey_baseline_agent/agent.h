@@ -43,8 +43,6 @@ public:
 
 	void start();
 
-	void update();
-
 private:
 	std::string getControllerName();
 

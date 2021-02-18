@@ -73,7 +73,8 @@ struct AgentParams {
 	double defendWidth;
 	double defendLine;
 	double planTimeOffset;
-	double maxPredictionTime;
+	double tPredictionMax;
+	double tTacticSwitchMin;
 };
 
 struct ObservationState {

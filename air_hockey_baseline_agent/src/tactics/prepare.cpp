@@ -128,9 +128,11 @@ Prepare::~Prepare() {
 }
 
 void Prepare::setNextState() {
-	if (state.hasActiveTrajectory()){
-		setTactic(PREPARE);
-	} else {
-		setTactic(READY);
+	if (ros::Time::now().toSec() > state.tNewTactics) {
+		if (state.hasActiveTrajectory()) {
+			setTactic(PREPARE);
+		} else {
+			setTactic(READY);
+		}
 	}
 }

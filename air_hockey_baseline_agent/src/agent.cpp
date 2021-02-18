@@ -36,7 +36,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) :
 
 	std::string controllerName = getControllerName();
 	observer = new Observer(nh, controllerName, agentParams.defendLine);
-	agentParams.maxPredictionTime = observer->getMaxPredictionTime();
+	agentParams.tPredictionMax = observer->getMaxPredictionTime();
 
 	generator = new TrajectoryGenerator(nh.getNamespace(), envParams, observer,
 	                                    rate);
@@ -67,7 +67,7 @@ void Agent::start() {
 
 	while (ros::ok()) {
 		state.updateObservationAndState(observer->getObservation(), agentParams);
-//		update();
+
 		tacticsProcessor[state.currentTactic]->updateTactic();
 
 		auto &activeTactic = *tacticsProcessor[state.currentTactic];
@@ -77,31 +77,6 @@ void Agent::start() {
 			}
 		}
 		rate.sleep();
-	}
-}
-
-void Agent::update() {
-	auto status = state.observation.gameStatus.status;
-	if (state.isNewTactics) {
-		switch (status) {
-			case GameStatus::START:
-				ROS_INFO_STREAM("Game Status Changed: START");
-				state.currentTactic = Tactics::HOME;
-				break;
-			case GameStatus::STOP:
-				ROS_INFO_STREAM("Game Status Changed: STOP");
-				state.currentTactic = Tactics::INIT;
-				break;
-			case GameStatus::PAUSE:
-				ROS_INFO_STREAM("Game Status Changed: PAUSE");
-				state.currentTactic = Tactics::READY;
-				break;
-			default:
-				ROS_FATAL_STREAM("Unknown game status");
-				exit(-1);
-		}
-	} else if (status == GameStatus::START) {
-		tacticsProcessor[state.currentTactic]->updateTactic();
 	}
 }
 
@@ -159,6 +134,7 @@ void Agent::loadAgentParam() {
 	            agentParams.vDefendMin);
 
 	nh.getParam("/air_hockey/agent/min_defend_time", agentParams.tDefendMin);
+	nh.getParam("/air_hockey/agent/min_tactic_switch_time", agentParams.tTacticSwitchMin);
 
 	nh.getParam("/air_hockey/agent/defend_width", agentParams.defendWidth);
 	nh.getParam("/air_hockey/agent/plan_time_offset",

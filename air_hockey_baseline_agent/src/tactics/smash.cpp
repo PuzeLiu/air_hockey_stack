@@ -40,6 +40,9 @@ bool Smash::ready() {
 bool Smash::apply() {
 	state.isNewTactics = false;
 
+	Eigen::Vector2d xCur2d, xHit2d, vHit2d;
+	iiwas_kinematics::Kinematics::JointArrayType qHitRef;
+
 	getHitPointVelocity(xCur2d, xHit2d, vHit2d, qHitRef);
 
 	bool success = false;
@@ -154,9 +157,11 @@ Smash::~Smash() {
 }
 
 void Smash::setNextState() {
-	if (state.hasActiveTrajectory()) {
-		setTactic(SMASH);
-	} else {
-		setTactic(READY);
+	if (ros::Time::now().toSec() > state.tNewTactics) {
+		if (state.hasActiveTrajectory()) {
+			setTactic(SMASH);
+		} else {
+			setTactic(READY);
+		}
 	}
 }

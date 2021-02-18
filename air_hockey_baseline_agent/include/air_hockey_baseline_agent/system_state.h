@@ -54,6 +54,7 @@ public:
 	air_hockey_baseline_agent::ObservationState observation;
 	air_hockey_baseline_agent::Tactics currentTactic;
 
+	double tNewTactics;
 	bool isNewTactics;
 	int staticCount;
 	int approachingCount;

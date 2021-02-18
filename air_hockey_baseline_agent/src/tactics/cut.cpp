@@ -61,7 +61,7 @@ bool Cut::apply() {
 	vCur2d = vCur.block<2, 1>(0, 0);
 	double tStop = boost::algorithm::clamp(
 			state.observation.puckPredictedState.predictedTime - 0.3,
-			agentParams.tDefendMin, agentParams.maxPredictionTime);
+			agentParams.tDefendMin, agentParams.tPredictionMax);
 	xCut.y() = boost::algorithm::clamp(xCut.y(),
 			-envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
 			envParams.tableWidth / 2 - envParams.malletRadius - 0.02);

@@ -97,10 +97,12 @@ MovePuck::~MovePuck() {
 }
 
 void MovePuck::setNextState() {
-	if (state.hasActiveTrajectory()){
-		setTactic(READY);
-	} else {
-		setTactic(READY);
+	if (ros::Time::now().toSec() > state.tNewTactics) {
+		if (state.hasActiveTrajectory()) {
+			setTactic(READY);
+		} else {
+			setTactic(READY);
+		}
 	}
 }
 
