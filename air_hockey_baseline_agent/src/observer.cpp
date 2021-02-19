@@ -52,6 +52,7 @@ const ObservationState& Observer::getObservation() {
     observation.puckPredictedState = puckTracker.getPredictedState();
     observation.puckEstimatedState = puckTracker.getEstimatedState();
     ros::spinOnce();
+    observation.stamp = ros::Time::now();
     return observation;
 }
 

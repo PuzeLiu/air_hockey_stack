@@ -169,6 +169,7 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
              (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
 
     if (nullSpace_.cols() != dimNullSpace_) {
+    	ROS_INFO_STREAM(qCur.transpose());
         ROS_ERROR_STREAM("Null space of jacobian should be:" << dimNullSpace_);
         return false;
     }

@@ -70,7 +70,7 @@ struct AgentParams {
 
 	double vDefendMin;
 	double tDefendMin;
-	double defendWidth;
+	double defendZoneWidth;
 	double defendLine;
 	double planTimeOffset;
 	double tPredictionMax;
@@ -78,6 +78,7 @@ struct AgentParams {
 };
 
 struct ObservationState {
+	ros::Time stamp;
 	iiwas_kinematics::Kinematics::JointArrayType jointPosition;
 	iiwas_kinematics::Kinematics::JointArrayType jointVelocity;
 	iiwas_kinematics::Kinematics::JointArrayType jointDesiredPosition;

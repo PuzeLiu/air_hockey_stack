@@ -35,14 +35,14 @@ Cut::Cut(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Cut::ready() {
-	return state.isNewTactics;
+	xCut << agentParams.defendLine,	state.observation.puckPredictedState.state.y();
+	return state.isNewTactics || (xCut - xCutPrev).norm() > (envParams.puckRadius + envParams.malletRadius);
 }
 
 bool Cut::apply() {
 	state.isNewTactics = false;
 
-	Vector2d xCut(agentParams.defendLine,
-			state.observation.puckPredictedState.state.y());
+	xCutPrev = xCut;
 
 	Vector3d xCur, vCur;
 	Vector2d xCur2d, vCur2d;

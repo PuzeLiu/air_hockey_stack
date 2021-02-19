@@ -45,6 +45,7 @@ protected:
 			trajectory_msgs::JointTrajectory &jointTrajReturn);
 	void setTactic(Tactics tactic);
 	std::string tactic2String(Tactics tactic);
+	void generateStopTrajectory();
 
 protected:
 	SystemState &state;
@@ -97,6 +98,9 @@ public:
 	bool apply() override;
 	void setNextState() override;
 	~Cut() override;
+
+protected:
+	Eigen::Vector2d xCut, xCutPrev;
 };
 
 class Prepare: public Tactic {
@@ -107,6 +111,11 @@ public:
 	bool apply() override;
 	void setNextState() override;
 	~Prepare() override;
+
+protected:
+	bool generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArrayType &qStart,
+	                               iiwas_kinematics::Kinematics::JointArrayType &dqStart,
+	                               ros::Time tStart);
 };
 
 class MovePuck: public Tactic {
@@ -133,8 +142,9 @@ friend class Ready;
 
 protected:
 	Eigen::Vector3d computeTarget(Eigen::Vector3d puckPosition);
-    void getHitPointVelocity(Eigen::Vector2d &xCur2d, Eigen::Vector2d &xHit2d, Eigen::Vector2d &vHit2d,
+    void getHitPointVelocity(Eigen::Vector2d &xHit2d, Eigen::Vector2d &vHit2d,
                              iiwas_kinematics::Kinematics::JointArrayType &qHitRef);
+    bool generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart);
 
 protected:
 	std::random_device rd;

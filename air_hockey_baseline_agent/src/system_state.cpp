@@ -58,26 +58,23 @@ SystemState::SystemState(const string& ns) {
 
 void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
                                        Kinematics::JointArrayType &dq, ros::Time &tStart, double offset_t) {
+	q = observation.jointPosition;
+	dq = observation.jointVelocity;
+
 	if (jointTrajectory.points.size() > 0) {
 		tStart = ros::Time::now() + ros::Duration(offset_t);
 		ros::Time tLast = jointTrajectory.header.stamp
 		                  + jointTrajectory.points.back().time_from_start;
 		if (tStart <= tLast) {
-			for (int i = jointTrajectory.points.size() - 1; i >= 0; --i) {
-				if (tStart
-				    > jointTrajectory.header.stamp
-				      + jointTrajectory.points[i].time_from_start) {
+			for (int i = 0; i < jointTrajectory.points.size(); ++i) {
+				if (tStart < jointTrajectory.header.stamp + jointTrajectory.points[i].time_from_start) {
 					for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-						q[j] = jointTrajectory.points[i + 1].positions[j];
-						dq[j] = jointTrajectory.points[i + 1].velocities[j];
+						q[j] = jointTrajectory.points[i].positions[j];
+						dq[j] = jointTrajectory.points[i].velocities[j];
+						tStart = jointTrajectory.header.stamp + jointTrajectory.points[i].time_from_start;
 					}
 					break;
 				}
-			}
-		} else {
-			for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-				q[j] = jointTrajectory.points.back().positions[j];
-				dq[j] = jointTrajectory.points.back().velocities[j];
 			}
 		}
 	}

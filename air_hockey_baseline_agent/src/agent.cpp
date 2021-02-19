@@ -136,7 +136,7 @@ void Agent::loadAgentParam() {
 	nh.getParam("/air_hockey/agent/min_defend_time", agentParams.tDefendMin);
 	nh.getParam("/air_hockey/agent/min_tactic_switch_time", agentParams.tTacticSwitchMin);
 
-	nh.getParam("/air_hockey/agent/defend_width", agentParams.defendWidth);
+	nh.getParam("/air_hockey/agent/defend_zone_width", agentParams.defendZoneWidth);
 	nh.getParam("/air_hockey/agent/plan_time_offset",
 	            agentParams.planTimeOffset);
 

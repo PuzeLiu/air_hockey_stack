@@ -85,6 +85,28 @@ bool Tactic::planReturnTraj(const double &vMax,
 	return false;
 }
 
+void Tactic::generateStopTrajectory() {
+	iiwas_kinematics::Kinematics::JointArrayType  q, dq;
+	ros::Time tTmp;
+	state.getPlannedJointState(q, dq, tTmp, agentParams.planTimeOffset / 2);
+
+	trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
+	jointViaPoint_.positions.resize(7);
+	jointViaPoint_.velocities.resize(7);
+	for (int i = 0; i < 7; ++i) {
+		jointViaPoint_.positions[i] = q[i];
+		jointViaPoint_.velocities[i] = 0.;
+	}
+	jointViaPoint_.time_from_start = ros::Duration(agentParams.planTimeOffset);
+
+	state.jointTrajectory.points.clear();
+	state.cartTrajectory.points.clear();
+	state.jointTrajectory.points.push_back(jointViaPoint_);
+
+	state.jointTrajectory.header.stamp = ros::Time::now();
+	state.cartTrajectory.header.stamp = ros::Time::now();
+}
+
 Tactic::~Tactic() {
 
 }

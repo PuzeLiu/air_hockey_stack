@@ -26,10 +26,11 @@
 
 using namespace Eigen;
 using namespace iiwas_kinematics;
+using namespace trajectory_msgs;
 using namespace air_hockey_baseline_agent;
 
 Prepare::Prepare(EnvironmentParams &envParams, AgentParams &agentParams,
-		SystemState &state, TrajectoryGenerator *generator) :
+                 SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
 
 }
@@ -39,87 +40,16 @@ bool Prepare::ready() {
 }
 
 bool Prepare::apply() {
-	state.isNewTactics = false;
-
-	Vector3d xStart, vStart;
-	Vector2d xStart2d, vStart2d, xPuck, xPrepare, vPrepare;
+	iiwas_kinematics::Kinematics::JointArrayType qStart, dqStart;
 	ros::Time tStart;
-	Kinematics::JointArrayType qStart, dqStart;
+	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
 
-	state.getPlannedJointState(qStart, dqStart, tStart,
-			agentParams.planTimeOffset);
-
-	generator.getCartesianPosAndVel(xStart, vStart, qStart, dqStart);
-
-	generator.transformations->applyInverseTransform(xStart);
-	generator.transformations->applyInverseRotation(vStart);
-
-	xStart2d = xStart.block<2, 1>(0, 0);
-
-	xPuck = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
-	if (xPuck.y() > 0) {
-		vPrepare =
-				(Vector2d(xPuck.x() + 0.2,
-						2 * (envParams.tableWidth / 2 - envParams.puckRadius))
-						- xPuck).normalized();
-//            vPrepare = Vector2d(0.1, 0.7);
-	} else {
-		vPrepare = (Vector2d(xPuck.x() + 0.2,
-				-2 * (envParams.tableWidth / 2 - envParams.puckRadius))
-				- xPuck).normalized();
-//            vPrepare = Vector2d(0.1, 0.7);
-	}
-	xPrepare = xPuck
-			- vPrepare * (envParams.puckRadius + envParams.malletRadius);
-	xPrepare.x() = boost::algorithm::clamp(xPrepare.x(),
-			envParams.malletRadius + 0.02,
-			envParams.tableLength - envParams.malletRadius - 0.02);
-	xPrepare.y() = boost::algorithm::clamp(xPrepare.y(),
-			-envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
-			envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
-	double tStop = 0.08;
-	bool success = false;
-
-	for (int i = 0; i < 10; ++i) {
-		state.cartTrajectory.points.clear();
-		state.jointTrajectory.points.clear();
-		generator.combinatorialHit->plan(xStart2d, xPrepare, vPrepare,
-				state.cartTrajectory, tStop);
-		generator.transformations->transformTrajectory(state.cartTrajectory);
-
-		success = generator.optimizer->optimizeJointTrajectory(
-				state.cartTrajectory, state.observation.jointPosition,
-				state.jointTrajectory);
-		if (success) {
-			break;
-		}
-
-		vPrepare *= .8;
-		ROS_INFO_STREAM(
-				"Optimization Failed [PREPARE]. Reduce the velocity: " << vPrepare.transpose());
-	}
-
-//	//! plan for return trajectory
-//	trajectory_msgs::MultiDOFJointTrajectory cartTrajReturn;
-//	trajectory_msgs::JointTrajectory jointTrajReturn;
-//	double vMax = 0.5;
-//	success = success && planReturnTraj(vMax, cartTrajReturn, jointTrajReturn);
-
-	//! append return to whole trajectory
-	if (success) {
-//		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
-//				cartTrajReturn.points.begin(), cartTrajReturn.points.end());
-//		state.jointTrajectory.points.insert(
-//				state.jointTrajectory.points.end(),
-//				jointTrajReturn.points.begin(), jointTrajReturn.points.end());
-		state.cartTrajectory.header.stamp = tStart;
-		state.jointTrajectory.header.stamp = tStart;
-
+	if (dqStart.norm() > 0.05) {
+		generateStopTrajectory();
 		return true;
 	} else {
-		ROS_INFO_STREAM(
-				"Optimization Failed [PREPARE]. Failed to find a feasible hitting movement");
-		return false;
+		state.isNewTactics = false;
+		return generatePrepareTrajectory(qStart, dqStart, tStart);
 	}
 }
 
@@ -135,4 +65,57 @@ void Prepare::setNextState() {
 			setTactic(READY);
 		}
 	}
+}
+
+bool Prepare::generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArrayType &qStart,
+                                        iiwas_kinematics::Kinematics::JointArrayType &dqStart,
+                                        ros::Time tStart) {
+	Vector3d xStart, vStart;
+	Vector2d xStart2d, vStart2d, xPuck, xPrepare, vPrepare;
+
+	generator.getCartesianPosAndVel(xStart, vStart, qStart, dqStart);
+
+	generator.transformations->applyInverseTransform(xStart);
+	generator.transformations->applyInverseRotation(vStart);
+
+	xStart2d = xStart.block<2, 1>(0, 0);
+
+	xPuck = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
+	if (xPuck.y() > 0) {
+		vPrepare = (Vector2d(xPuck.x() + 0.2, 2 * (envParams.tableWidth / 2 - envParams.puckRadius))
+		            - xPuck).normalized();
+	} else {
+		vPrepare = (Vector2d(xPuck.x() + 0.2, -2 * (envParams.tableWidth / 2 - envParams.puckRadius))
+		            - xPuck).normalized();
+	}
+	xPrepare = xPuck - vPrepare * (envParams.puckRadius + envParams.malletRadius);
+	xPrepare.x() = boost::algorithm::clamp(xPrepare.x(),
+	                                       envParams.malletRadius + 0.02,
+	                                       envParams.tableLength - envParams.malletRadius - 0.02);
+	xPrepare.y() = boost::algorithm::clamp(xPrepare.y(),
+	                                       -envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
+	                                       envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
+	double tStop = 0.08;
+	bool success = false;
+
+	for (int i = 0; i < 10; ++i) {
+		state.cartTrajectory.points.clear();
+		state.jointTrajectory.points.clear();
+		generator.combinatorialHit->plan(xStart2d, xPrepare, vPrepare,
+		                                 state.cartTrajectory, tStop);
+		generator.transformations->transformTrajectory(state.cartTrajectory);
+
+		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, state.observation.jointPosition,
+		                                                 state.jointTrajectory)) {
+			state.cartTrajectory.header.stamp = tStart;
+			state.jointTrajectory.header.stamp = tStart;
+			return true;
+		} else {
+			vPrepare *= .8;
+			ROS_INFO_STREAM("Optimization Failed [PREPARE]. Reduce the velocity: " << vPrepare.transpose());
+		}
+	}
+	ROS_INFO_STREAM("Optimization Failed [PREPARE]. Failed to find a feasible hitting movement");
+	return false;
+
 }

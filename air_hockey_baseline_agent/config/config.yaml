@@ -13,6 +13,6 @@ air_hockey:
     min_defend_velocity: 0.1
     min_defend_time: 0.3
     min_tactic_switch_time: 1
-    defend_width: 0.4
-    plan_time_offset: 0.05
+    defend_zone_width: 0.4
+    plan_time_offset: 0.1
     q_ref: [1.7207, 0.6541, -1.859, -1.422, 0.1313, 1.3779, -0.0653]
