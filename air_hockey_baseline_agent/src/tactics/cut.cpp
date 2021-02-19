@@ -36,7 +36,13 @@ Cut::Cut(EnvironmentParams &envParams, AgentParams &agentParams,
 
 bool Cut::ready() {
 	xCut << agentParams.defendLine,	state.observation.puckPredictedState.state.y();
-	return state.isNewTactics || (xCut - xCutPrev).norm() > (envParams.puckRadius + envParams.malletRadius);
+
+	if ((xCut - xCutPrev).norm() > (envParams.puckRadius + envParams.malletRadius)){
+		ROS_INFO_STREAM("Update Cut Point");
+		state.isNewTactics = true;
+	}
+
+	return state.isNewTactics;
 }
 
 bool Cut::apply() {
