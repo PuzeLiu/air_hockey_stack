@@ -30,9 +30,10 @@
 
 namespace air_hockey_baseline_agent {
 
-VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh, const std::string& tableRefName) :
+VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh, const std::string& tableRefName,
+                                               int step_delay) :
 		m_nh(nh) {
-	m_markerPub = m_nh.advertise < visualization_msgs::Marker > ("marker", 10);
+	m_markerPub = m_nh.advertise < visualization_msgs::Marker > ("marker", 1);
 
 	m_predictionMarker.header.frame_id = tableRefName;
 	m_predictionMarker.ns = "Prediction";
@@ -61,6 +62,7 @@ VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh, const 
 	m_predictionMarker.pose.orientation.y = 0.;
 	m_predictionMarker.pose.orientation.z = 0.;
 
+    stepDelay = step_delay;
 }
 
 void VisualizationInterface::visualize() {
@@ -83,10 +85,18 @@ void VisualizationInterface::setPredictionMarker(const PuckState &state,
 	m_predictionMarker.scale.y = std::sqrt(cov(1, 1)) * 1.96;
 }
 
-    void VisualizationInterface::update(EKF_Wrapper& puckPredictor, ObservationModel& observationModel) {
+void VisualizationInterface::update(EKF_Wrapper& puckPredictor, ObservationModel& observationModel) {
     puckPredictor.updateInnovationCovariance(observationModel);
-    setPredictionMarker(puckPredictor.getState(), puckPredictor.getInnovationCovariance());
-    visualize();
+
+    stateBuffer.push_back(puckPredictor.getState());
+    covBuffer.push_back(puckPredictor.getInnovationCovariance());
+
+    if (stateBuffer.size() > stepDelay) {
+        setPredictionMarker(stateBuffer.front(), covBuffer.front());
+        visualize();
+        stateBuffer.erase(stateBuffer.begin());
+        covBuffer.erase(covBuffer.begin());
+    }
 }
 
 }

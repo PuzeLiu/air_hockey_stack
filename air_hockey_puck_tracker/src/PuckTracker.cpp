@@ -97,7 +97,7 @@ void PuckTracker::init() {
         tfBuffer_.lookupTransform("world", "Table", ros::Time(0), ros::Duration(1.0));
     } catch (tf2::TransformException &exception) {
         ROS_ERROR_STREAM("Could not transform world to Table: " << exception.what());
-        ros::shutdown();
+        exit(-1);
     }
 
     rate_ = new ros::Rate(frequency);
