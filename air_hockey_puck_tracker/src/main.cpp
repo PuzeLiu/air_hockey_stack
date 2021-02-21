@@ -37,10 +37,11 @@ int main(int argc, char **argv) {
     ros::Rate rate(120);
 
     PuckTracker puckTracker(nh, 0.2);
+    PuckPredictedState state;
 
     puckTracker.start();
     while (ros::ok()){
-        puckTracker.getPredictedState();
+        state = puckTracker.getPredictedState();
         rate.sleep();
     }
 

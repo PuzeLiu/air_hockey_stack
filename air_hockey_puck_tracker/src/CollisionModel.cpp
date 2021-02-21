@@ -218,9 +218,10 @@ namespace air_hockey_baseline_agent {
 
     bool CollisionModel::applyCollision(PuckState &puckState, const bool &checkMallet) {
         if (checkMallet) {
-            m_mallet.applyCollision(puckState);
+            hasCollision = m_mallet.applyCollision(puckState);
         }
-        return m_table.applyCollision(puckState);
+        hasCollision = m_table.applyCollision(puckState) || hasCollision;
+        return hasCollision;
     }
 
 }

@@ -101,6 +101,9 @@ namespace air_hockey_baseline_agent {
 
         bool applyCollision(PuckState &puckState, const bool& checkMallet);
 
+    private:
+        bool hasCollision;
+
     };
 
 }

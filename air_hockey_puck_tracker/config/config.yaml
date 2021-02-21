@@ -1,15 +1,15 @@
 air_hockey:
   puck_tracker:
     max_prediction_steps:
-      120
+      240
     frequency:
       120
     friction_drag:
-      0.13087578868418712
+      0.001
     friction_sliding:
-      1.5363436894411218e-06
+      0.063
     restitution_table:
-      0.79
+      0.8468189914210034
     restitution_mallet:
       0.8
     observation_variance_position:
@@ -23,4 +23,4 @@ air_hockey:
     dynamic_variance_angular_position:
       1.0e-6
     dynamic_variance_angular_velocity:
-      1.0e-4
+      1.0e-6

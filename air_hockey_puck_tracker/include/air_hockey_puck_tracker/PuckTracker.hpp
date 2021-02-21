@@ -39,6 +39,7 @@ namespace air_hockey_baseline_agent {
     struct PuckPredictedState{
         ros::Time stamp;
         PuckState state;
+        int numOfCollisions;
         double predictedTime;
     };
 
@@ -68,7 +69,7 @@ namespace air_hockey_baseline_agent {
 
         void startTracking();
 
-        void getPrediction();
+        void getPrediction(int &nCollision);
 
     private:
         ros::NodeHandle nh_;

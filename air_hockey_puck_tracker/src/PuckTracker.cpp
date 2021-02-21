@@ -49,7 +49,7 @@ void PuckTracker::start() {
 }
 
 const PuckPredictedState &PuckTracker::getPredictedState() {
-    getPrediction();
+    getPrediction(predictedState_.numOfCollisions);
     visualizer_->update(*puckPredictor_, *observationModel_);
     predictedState_.state = puckPredictor_->getState();
     puckPredictor_->getCovarianceSquareRoot();
@@ -58,7 +58,7 @@ const PuckPredictedState &PuckTracker::getPredictedState() {
     return predictedState_;
 }
 
-const PuckState& PuckTracker::getEstimatedState(){
+const PuckState &PuckTracker::getEstimatedState() {
     return kalmanFilter_->getState();
 }
 
@@ -83,9 +83,12 @@ void PuckTracker::init() {
     if (nh_.getNamespace() == "/iiwa_back") {
         tableRefName_ = "TableAway";
         opponentMalletName_ = "F_striker_mallet_tip";
-    } else {
+    } else if(nh_.getNamespace() == "/iiwa_front"){
         tableRefName_ = "TableHome";
         opponentMalletName_ = "B_striker_mallet_tip";
+    } else {
+        ROS_ERROR_STREAM("No namespace specified for the puck tracker, use /iiwa_front or /iiwa_back");
+        exit(-1);
     }
 
     ROS_INFO_STREAM("Wait for transform: /Table");
@@ -205,7 +208,8 @@ void PuckTracker::startTracking() {
     }
 }
 
-void PuckTracker::getPrediction() {
+void PuckTracker::getPrediction(int &nCollision) {
+    nCollision = 0;
     if (doPrediction_) {
         //! predict future steps
         puckPredictor_->init(kalmanFilter_->getState());
@@ -214,21 +218,23 @@ void PuckTracker::getPrediction() {
             //! If not consider defending line, do maximum steps prediction
             for (int i = 0; i < maxPredictionSteps_; ++i) {
                 puckPredictor_->predict(*systemModel_, u_);
-                collisionModel_->applyCollision(puckPredictor_->getState(), true);
+                if (collisionModel_->applyCollision(puckPredictor_->getState(), true)) {
+                    nCollision += 1;
+                }
                 predictedTime_ = (i + 1) * rate_->expectedCycleTime().toSec();
             }
         } else {
             //! If consider defending line
             bool should_defend = (puckPredictor_->getState().x() > defendingLine_);
             for (int i = 0; i < maxPredictionSteps_; ++i) {
-                if (should_defend) {
-                    if ( puckPredictor_->getState().x() < defendingLine_) {
-                        break;
-                    }
+                if (should_defend && puckPredictor_->getState().x() < defendingLine_) {
+                    break;
                 }
 
                 puckPredictor_->predict(*systemModel_, u_);
-                collisionModel_->applyCollision(puckPredictor_->getState(), true);
+                if (collisionModel_->applyCollision(puckPredictor_->getState(), true)) {
+                    nCollision += 1;
+                }
                 predictedTime_ = (i + 1) * rate_->expectedCycleTime().toSec();
             }
         }
