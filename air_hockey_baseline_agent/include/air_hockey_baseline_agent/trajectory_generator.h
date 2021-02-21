@@ -40,8 +40,7 @@
 namespace air_hockey_baseline_agent {
 
 struct TrajectoryGenerator {
-	TrajectoryGenerator(std::string ns, EnvironmentParams data,
-			Observer *observer, double rate);
+	TrajectoryGenerator(std::string ns, EnvironmentParams data, double rate);
 	~TrajectoryGenerator();
 
 	void getCartesianPosAndVel(Eigen::Vector3d &x,

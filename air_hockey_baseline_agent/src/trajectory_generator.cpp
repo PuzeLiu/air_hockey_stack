@@ -27,10 +27,9 @@ using namespace Eigen;
 using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
-TrajectoryGenerator::TrajectoryGenerator(std::string ns, EnvironmentParams data,
-		Observer *observer, double rate) {
+TrajectoryGenerator::TrajectoryGenerator(std::string ns, EnvironmentParams data, double rate) {
 	kinematics = new Kinematics(data.tcp_position, data.tcp_quaternion);
-	optimizer = new NullSpaceOptimizer(kinematics, observer, false);
+	optimizer = new NullSpaceOptimizer(kinematics);
 	transformations = new Transformations(ns);
 	hittingPointOptimizer = new HittingPointOptimizer(*kinematics);
 

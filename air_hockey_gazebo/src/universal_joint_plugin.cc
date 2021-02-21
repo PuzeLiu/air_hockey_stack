@@ -88,9 +88,7 @@ void UniversalJointPlugin::OnUpdate() {
 
 			double q1, q2;
 
-			q1 = acos(
-					quatCur_.toRotationMatrix().col(2).dot(
-							Vector3d(0., 0., -1)));
+			q1 = acos(quatCur_.toRotationMatrix().col(2).dot(Vector3d(0., 0., -1)));
 			q2 = 0.;
 
 			this->jointController_->SetPositionTarget(jointName1_, q1);

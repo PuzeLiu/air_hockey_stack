@@ -39,7 +39,6 @@ include_directories(
 )
 
 set(SOURCE
-   src/main.cpp
    src/agent.cpp
    src/system_state.cpp
    src/utils.cpp
@@ -62,7 +61,10 @@ set(SOURCE
    src/tactics/tactics.cpp
    )
 
-add_executable(${PROJECT_NAME} ${SOURCE})
+add_executable(${PROJECT_NAME}
+   src/main.cpp
+   ${SOURCE})
+
 add_executable(hitting_point_optimizer_test
    src/utils.cpp
    src/hitting_point_optimizer.cpp

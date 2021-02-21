@@ -27,6 +27,7 @@
 #include <ros/ros.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
+#include <angles/angles.h>
 
 #include <osqp/osqp.h>
 #include <OsqpEigen/OsqpEigen.h>
@@ -40,8 +41,7 @@ namespace air_hockey_baseline_agent {
     	typedef iiwas_kinematics::Kinematics::JacobianPosType JacobianPosType;
 
     public:
-        NullSpaceOptimizer(iiwas_kinematics::Kinematics *kinematics, Observer *observer, bool closeLoop = false,
-                           double rate = 100.);
+        NullSpaceOptimizer(iiwas_kinematics::Kinematics *kinematics, double rate = 100.);
 
         ~NullSpaceOptimizer();
 
@@ -72,12 +72,9 @@ namespace air_hockey_baseline_agent {
 
 
     private:
-        bool closeLoop_;
         double stepSize_;
-        double beta_;
 
         iiwas_kinematics::Kinematics *kinematics_;
-        Observer *observer_;
 
         trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 

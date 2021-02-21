@@ -29,13 +29,8 @@ using namespace air_hockey_baseline_agent;
 using namespace Eigen;
 using namespace iiwas_kinematics;
 
-NullSpaceOptimizer::NullSpaceOptimizer(Kinematics *kinematics,
-                                       Observer *observer,
-                                       bool closeLoop,
-                                       double rate) :
+NullSpaceOptimizer::NullSpaceOptimizer(Kinematics *kinematics, double rate) :
         kinematics_(kinematics),
-        observer_(observer),
-        closeLoop_(closeLoop),
         stepSize_(1 / rate) {
     solver_.settings()->setWarmStart(true);
     solver_.settings()->setVerbosity(false);
@@ -60,8 +55,7 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics *kinematics,
 
     K_.setConstant(1 / stepSize_);
     weights_ << 40., 40., 20., 40., 10., 20., 0.;
-    weightsAnchor_<< 1., 1., 1., 10., 10., 10., 0.;
-    beta_ = 10;
+    weightsAnchor_.setOnes();
 }
 
 NullSpaceOptimizer::~NullSpaceOptimizer() {
@@ -111,6 +105,10 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
                                                        const Kinematics::JointArrayType &qStart,
                                                        const Kinematics::JointArrayType &qAnchor,
                                                        trajectory_msgs::JointTrajectory &jointTraj) {
+    auto diff = (qAnchor - qStart).cwiseAbs();
+    weightsAnchor_[6] = 0;
+    weightsAnchor_.normalized();
+
     if (cartTraj.points.size() > 0) {
         Vector3d xDes, dxDes;
         Kinematics::JointArrayType qCur, qNext, dqNext, dqAnchorTmp;
@@ -240,16 +238,15 @@ void NullSpaceOptimizer::SolveJoint7(Kinematics::JointArrayType &q) {
     Quaterniond eeQuat;
     kinematics_->forwardKinematics(q, eePos, eeQuat);
     Matrix3d mat = eeQuat.toRotationMatrix();
-    Vector3d zAxis(0., 0., 1.);
+    Vector3d zAxis(0., 0., -1.);
     auto yDes = zAxis.cross(mat.col(2)).normalized();
-    double delta_angle = acos(mat.col(1).dot(yDes));
+    double target = acos(mat.col(1).dot(yDes));
+    if (target > M_PI_2){
+        target -= M_PI;
+    }
 
-	if (delta_angle - qCur7 > M_PI_2) {
-		delta_angle -= M_PI;
-	} else if (delta_angle - qCur7 < -M_PI_2){
-		delta_angle += M_PI;
-	}
-	delta_angle = boost::algorithm::clamp(delta_angle, kinematics_->posLimitsLower_[6], kinematics_->posLimitsUpper_[6]);
+    Vector3d axis = mat.col(1).cross(yDes).normalized();
+    target = target * axis.dot(mat.col(2));
 
-    q[6] = delta_angle;
+    q[6] = boost::algorithm::clamp(target, kinematics_->posLimitsLower_[6], kinematics_->posLimitsUpper_[6]);
 }

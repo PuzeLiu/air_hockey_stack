@@ -51,9 +51,7 @@ bool HittingPointOptimizer::solve(const Eigen::Vector3d &hitPoint, const Eigen::
     optData.hitPoint = hitPoint;
     optData.hitDirection = hitDirection;
 
-    if (!getInitPoint(qInOut)) {
-        return false;
-    }
+    getInitPoint(qInOut);
 
     std::vector<double> qCur(qInOut.data(), qInOut.data() + qInOut.rows() * qInOut.cols());
     std::vector<double> grad(7);
@@ -62,6 +60,7 @@ bool HittingPointOptimizer::solve(const Eigen::Vector3d &hitPoint, const Eigen::
     auto result = nlSolver.optimize(qCur, opt_fun);
 
     if (result < 0) {
+        velMagMax = 2;
         return false;
     }
 
@@ -70,11 +69,16 @@ bool HittingPointOptimizer::solve(const Eigen::Vector3d &hitPoint, const Eigen::
             qInOut[i] = qCur[i];
         }
 
+//        //! manual set
+//        velMagMax = 2;
+//        //! Jacobian Inverse
 //        velMagMax = getMaxVelocity(qInOut);
+        //! LP optimization
         velMagMax = getMaxVelocityLP(qInOut);
         return true;
     } else {
         cout << "The position error is : " << h(qCur, &optData) << " bigger than 1e-4" << endl;
+        velMagMax = 2;
         return false;
     }
 }
@@ -127,7 +131,6 @@ void HittingPointOptimizer::numerical_grad(HittingPointOptimizer::functype funct
 
 bool HittingPointOptimizer::getInitPoint(iiwas_kinematics::Kinematics::JointArrayType &qInOut) {
     if (!optData.kinematics.numericalInverseKinematics(optData.hitPoint, qInOut, 1e-4, 200)) {
-        cout << "No feasible IK solution" << endl;
         return false;
     }
     return true;

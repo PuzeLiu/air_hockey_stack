@@ -24,6 +24,9 @@
 #include "air_hockey_baseline_agent/tactics.h"
 #include <Eigen/Dense>
 
+////! TODO delete
+//#include <fstream>
+
 using namespace Eigen;
 using namespace trajectory_msgs;
 using namespace air_hockey_baseline_agent;
@@ -159,12 +162,17 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 				tStart = tHitStart;
 			}
 
+//            //! TODO delete
+//            std::ofstream file("/home/puze/Desktop/100/weighted_lp_nl_opt_left.csv", std::ios::app);
+//			file << xHit2d.x() << ", " << xHit2d.y() << ", " << vHit2d.x() << ", " <<vHit2d.y() << ", " << vHit2d.norm() << std::endl;
+//			file.close();
+//
 			ROS_INFO_STREAM("[HITTING] velocity: " << vHit2d.norm());
 			state.jointTrajectory.header.stamp = tStart;
 			state.cartTrajectory.header.stamp = tStart;
 			return true;
 		} else {
-			vHit2d *= .8;
+			vHit2d *= .9;
 			ROS_INFO_STREAM("Optimization Failed [HITTING]. Reduce the velocity: " << vHit2d.transpose());
 			continue;
 		}

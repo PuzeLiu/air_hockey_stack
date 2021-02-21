@@ -38,8 +38,7 @@ Agent::Agent(ros::NodeHandle nh, double rate) :
 	observer = new Observer(nh, controllerName, agentParams.defendLine);
 	agentParams.tPredictionMax = observer->getMaxPredictionTime();
 
-	generator = new TrajectoryGenerator(nh.getNamespace(), envParams, observer,
-	                                    rate);
+	generator = new TrajectoryGenerator(nh.getNamespace(), envParams, rate);
 
 	computeBaseConfigurations();
 
