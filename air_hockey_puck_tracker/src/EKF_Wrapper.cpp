@@ -25,13 +25,17 @@ const PuckState & EKF_Wrapper::update(ObservationModel &m, const Measurement &z)
 }
 
 const air_hockey_baseline_agent::EKF_Wrapper::InnovationCovariance &
-air_hockey_baseline_agent::EKF_Wrapper::updateInnovationCovariance(air_hockey_baseline_agent::ObservationModel &m) {
+air_hockey_baseline_agent::EKF_Wrapper::updateInnovationCovariance(ObservationModel &m) {
     S = (m.H * P * m.H.transpose()) + (m.V * m.getCovariance() * m.V.transpose());
     return S;
 }
 
-void air_hockey_baseline_agent::EKF_Wrapper::calculateInnovation(air_hockey_baseline_agent::ObservationModel &m, const air_hockey_baseline_agent::Measurement &z) {
+void air_hockey_baseline_agent::EKF_Wrapper::calculateInnovation(ObservationModel &m, const Measurement &z) {
     mu = z - m.h(x);
     Eigen::Rotation2Dd rot(mu.theta());
     mu.theta() = rot.smallestAngle();
+}
+
+void air_hockey_baseline_agent::EKF_Wrapper::moveOneStep(SystemModel &s, const Control &u) {
+	x = s.f(x, u);
 }

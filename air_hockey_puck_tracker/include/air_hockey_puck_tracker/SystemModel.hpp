@@ -136,18 +136,16 @@ public:
 	typedef air_hockey_baseline_agent::Control C;
 
 	//! Friction coefficient for air drag
-	double m_c;
+	double damping;
 	//! Friction coefficient for sliding movement
-	double m_d;
-    //! Friction coefficient for spinning movement
-    double m_spin;
+	double mu;
 
 	/**
 	 * Constructor of the dynamic model
 	 * @param c Friction coefficient for air
 	 * @param d Friction coefficient for lateral movement
 	 */
-	SystemModel(double c, double d);
+	SystemModel(double damping, double friction);
 
 	/**
 	 * @brief Definition of (non-linear) state transition function

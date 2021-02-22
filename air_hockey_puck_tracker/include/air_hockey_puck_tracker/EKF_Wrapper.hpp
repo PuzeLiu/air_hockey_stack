@@ -54,6 +54,10 @@ namespace air_hockey_baseline_agent {
             return mu;
         }
 
+	    void calculateInnovation(ObservationModel &m, const Measurement &z);
+
+        void moveOneStep(SystemModel &s, const Control &u);
+
     protected:
         using ExtendedKalmanFilter::P;
         using ExtendedKalmanFilter::x;
@@ -62,8 +66,6 @@ namespace air_hockey_baseline_agent {
         InnovationType mu;
         //! Innovation Covariance
         InnovationCovariance S;
-
-        void calculateInnovation(ObservationModel &m, const Measurement &z);
 
     };
 }

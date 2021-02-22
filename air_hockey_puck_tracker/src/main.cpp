@@ -36,13 +36,14 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh("/");
     ros::Rate rate(120);
 
-    PuckTracker puckTracker(nh, 0.2);
+    PuckTracker puckTracker(nh, 0.0);
     PuckPredictedState state_predict;
     air_hockey_baseline_agent::PuckState error, state;
 
     puckTracker.start();
     while (ros::ok()){
-        state_predict = puckTracker.getPredictedState();
+        state_predict = puckTracker.getPredictedState(true, true);
+//		puckTracker.getEstimatedState(true);
         rate.sleep();
     }
 

@@ -32,14 +32,14 @@
 namespace air_hockey_baseline_agent{
 class VisualizationInterface{
 public:
-    VisualizationInterface(const ros::NodeHandle& nh, const std::string& tableRefName, int stepDelay=0);
+    VisualizationInterface(const ros::NodeHandle& nh, const std::string& tableRefName);
 
-    void update(EKF_Wrapper& predictor, ObservationModel& observationModel);
+    void update(const PuckState& predictor, const EKF_Wrapper::InnovationCovariance& innovationCov, bool usePuckSize=false);
 
 private:
     void visualize();
     void setPredictionMarker(const PuckState& state,
-                             const EKF_Wrapper::InnovationCovariance& cov);
+                             const EKF_Wrapper::InnovationCovariance& cov, bool usePuckSize);
 
 private:
     ros::NodeHandle m_nh;
@@ -47,10 +47,6 @@ private:
     ros::Publisher m_markerPub;
 
     visualization_msgs::Marker m_predictionMarker;
-
-    int stepDelay;
-    std::vector<PuckState> stateBuffer;
-    std::vector<EKF_Wrapper::InnovationCovariance> covBuffer;
 };
 
 }

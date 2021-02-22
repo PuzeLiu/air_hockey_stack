@@ -30,8 +30,7 @@
 
 namespace air_hockey_baseline_agent {
 
-VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh, const std::string& tableRefName,
-                                               int step_delay) :
+VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh, const std::string& tableRefName) :
 		m_nh(nh) {
 	m_markerPub = m_nh.advertise < visualization_msgs::Marker > ("marker", 1);
 
@@ -61,8 +60,6 @@ VisualizationInterface::VisualizationInterface(const ros::NodeHandle &nh, const 
 	m_predictionMarker.pose.orientation.x = 0.;
 	m_predictionMarker.pose.orientation.y = 0.;
 	m_predictionMarker.pose.orientation.z = 0.;
-
-    stepDelay = step_delay;
 }
 
 void VisualizationInterface::visualize() {
@@ -70,7 +67,7 @@ void VisualizationInterface::visualize() {
 }
 
 void VisualizationInterface::setPredictionMarker(const PuckState &state,
-		const EKF_Wrapper::InnovationCovariance &cov) {
+		const EKF_Wrapper::InnovationCovariance &cov, bool usePuckSize) {
 	m_predictionMarker.pose.position.x = state.x();
 	m_predictionMarker.pose.position.y = state.y();
 	m_predictionMarker.pose.position.z = 0.0;
@@ -81,22 +78,20 @@ void VisualizationInterface::setPredictionMarker(const PuckState &state,
 	m_predictionMarker.pose.orientation.z = quaternion.z();
 	m_predictionMarker.pose.orientation.w = quaternion.w();
 
-	m_predictionMarker.scale.x = std::sqrt(cov(0, 0)) * 1.96;
-	m_predictionMarker.scale.y = std::sqrt(cov(1, 1)) * 1.96;
+	if (usePuckSize){
+		m_predictionMarker.scale.x = 0.0633;
+		m_predictionMarker.scale.y = 0.0633;
+	} else {
+		m_predictionMarker.scale.x = std::sqrt(cov(0, 0)) * 1.96;
+		m_predictionMarker.scale.y = std::sqrt(cov(1, 1)) * 1.96;
+	}
 }
 
-void VisualizationInterface::update(EKF_Wrapper& puckPredictor, ObservationModel& observationModel) {
-    puckPredictor.updateInnovationCovariance(observationModel);
-
-    stateBuffer.push_back(puckPredictor.getState());
-    covBuffer.push_back(puckPredictor.getInnovationCovariance());
-
-    if (stateBuffer.size() > stepDelay) {
-        setPredictionMarker(stateBuffer.front(), covBuffer.front());
-        visualize();
-        stateBuffer.erase(stateBuffer.begin());
-        covBuffer.erase(covBuffer.begin());
-    }
+void VisualizationInterface::update(const PuckState& puckState,
+									const EKF_Wrapper::InnovationCovariance& innovationCov,
+									bool usePuckSize) {
+	setPredictionMarker(puckState, innovationCov, usePuckSize);
+    visualize();
 }
 
 }

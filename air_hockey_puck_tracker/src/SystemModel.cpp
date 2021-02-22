@@ -25,10 +25,9 @@
 
 namespace air_hockey_baseline_agent {
 
-    SystemModel::SystemModel(double c, double d) {
-        m_c = c;
-        m_d = d;
-        m_spin = 0.1;
+    SystemModel::SystemModel(double damping_, double mu_) {
+	    damping = damping_;
+	    mu = mu_;
     }
 
 /**
@@ -52,15 +51,17 @@ namespace air_hockey_baseline_agent {
 
         if (x.block<2, 1>(2, 0).norm() > 1e-6) {
             x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0)
-                                   - u.dt() * (m_c * x.block<2, 1>(2, 0) +
-                                               m_d * x.block<2, 1>(2, 0).cwiseSign());
+                                   - u.dt() * (damping * x.block<2, 1>(2, 0) +
+                                               mu * x.block<2, 1>(2, 0).cwiseSign());
         } else {
-            x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0) - u.dt() * m_c * x.block<2, 1>(2, 0);
+            x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0) - u.dt() * damping * x.block<2, 1>(2, 0);
         }
+        double angle = fmod(x.theta() + u.dt() * x.dtheta(), M_PI * 2);
+        if (angle > M_PI) angle -= M_PI * 2;
+        else if (angle < -M_PI) angle += M_PI * 2;
 
-        Eigen::Rotation2Dd rot(x.theta() + u.dt() * x.dtheta());
-        x_.theta() = rot.smallestAngle();
-        x_.dtheta() = x.dtheta() - u.dt() * (m_spin * x.dtheta());
+        x_.theta() = angle;
+        x_.dtheta() = x.dtheta();
         // Return transitioned state vector
         return x_;
     }
@@ -69,10 +70,10 @@ namespace air_hockey_baseline_agent {
         this->F.setIdentity();
         this->F(S::X, S::DX) = u.dt();
         this->F(S::Y, S::DY) = u.dt();
-        this->F(S::DX, S::DX) = 1. - u.dt() * m_c;
-        this->F(S::DY, S::DY) = 1. - u.dt() * m_c;
+        this->F(S::DX, S::DX) = 1. - u.dt() * damping;
+        this->F(S::DY, S::DY) = 1. - u.dt() * damping;
         this->F(S::THETA, S::DTHETA) = u.dt();
-        this->F(S::DTHETA, S::DTHETA) = 1. - u.dt() * m_spin;
+        this->F(S::DTHETA, S::DTHETA) = 1.;
     }
 
 }

@@ -52,9 +52,9 @@ namespace air_hockey_baseline_agent {
 
         void start();
 
-        const PuckPredictedState& getPredictedState();
+        const PuckPredictedState& getPredictedState(bool visualize = true, bool delayed=false);
 
-        const PuckState& getEstimatedState();
+        const PuckState& getEstimatedState(bool visualize = false);
 
         void reset();
 
@@ -63,13 +63,19 @@ namespace air_hockey_baseline_agent {
         }
 
     private:
-        void init();
+        void loadParams();
 
         void setCovariance();
 
         void startTracking();
 
-        void getPrediction(int &nCollision);
+        void getPrediction(double &predictedTime, int &nCollision);
+
+	    bool getMeasurement();
+
+	    bool updateOpponentMallet();
+
+	    bool checkGating();
 
     private:
         ros::NodeHandle nh_;
@@ -90,16 +96,17 @@ namespace air_hockey_baseline_agent {
 
         Control u_;
         int maxPredictionSteps_;
-        Measurement measurement_, maxInnovationTolerance_;
+        Measurement measurement_;
 
         PuckPredictedState predictedState_;
-        double predictedTime_;
+        double resetThreshold;
         double defendingLine_;
-        double tableLength_, tableWidth_, goalWidth_;
 
         bool doPrediction_;
 
         boost::thread thread_;
+
+        std::vector<PuckState> stateBuffer_;
     };
 }
 
