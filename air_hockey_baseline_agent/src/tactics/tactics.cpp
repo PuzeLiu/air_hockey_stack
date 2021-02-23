@@ -32,15 +32,15 @@ using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
 Tactic::Tactic(EnvironmentParams &envParams, AgentParams &agentParams,
-		SystemState &state, TrajectoryGenerator *generator) :
+               SystemState &state, TrajectoryGenerator *generator) :
 		envParams(envParams), agentParams(agentParams), state(state), generator(
-				*generator) {
+		*generator) {
 
 }
 
 bool Tactic::planReturnTraj(const double &vMax,
-		trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
-		trajectory_msgs::JointTrajectory &jointTrajReturn) {
+                            trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
+                            trajectory_msgs::JointTrajectory &jointTrajReturn) {
 	double vReadyMax = vMax;
 	cartTrajReturn.joint_names.push_back("x");
 	cartTrajReturn.joint_names.push_back("y");
@@ -55,13 +55,14 @@ bool Tactic::planReturnTraj(const double &vMax,
 		cartTrajReturn.points.push_back(lastPoint);
 
 		Vector3d xStop;
-		xStop << lastPoint.transforms[0].translation.x, lastPoint.transforms[0].translation.y, lastPoint.transforms[0].translation.z;
+		xStop
+				<< lastPoint.transforms[0].translation.x, lastPoint.transforms[0].translation.y, lastPoint.transforms[0].translation.z;
 		generator.transformations->applyInverseTransform(xStop);
 		Vector2d xStop2d = xStop.block<2, 1>(0, 0);
-		Vector2d xHome2d = agentParams.xHome.block<2,1>(0,0);
+		Vector2d xHome2d = agentParams.xHome.block<2, 1>(0, 0);
 		double tStop = (xHome2d - xStop2d).norm() / vReadyMax;
 		generator.cubicLinearMotion->plan(xStop2d, Vector2d(0., 0.),
-				xHome2d, Vector2d(0., 0.), tStop, cartTrajReturn);
+		                                  xHome2d, Vector2d(0., 0.), tStop, cartTrajReturn);
 		cartTrajReturn.points.erase(cartTrajReturn.points.begin());
 		generator.transformations->transformTrajectory(cartTrajReturn);
 
@@ -86,7 +87,7 @@ bool Tactic::planReturnTraj(const double &vMax,
 }
 
 void Tactic::generateStopTrajectory() {
-	iiwas_kinematics::Kinematics::JointArrayType  q, dq;
+	iiwas_kinematics::Kinematics::JointArrayType q, dq;
 	ros::Time tTmp;
 	state.getPlannedJointState(q, dq, tTmp, agentParams.planTimeOffset / 2);
 
@@ -112,17 +113,17 @@ Tactic::~Tactic() {
 }
 
 void Tactic::updateTactic() {
-	if (state.observation.gameStatus.status == START){
+	if (state.observation.gameStatus.status == START) {
 		setNextState();
-	} else if (state.observation.gameStatus.status == STOP){
+	} else if (state.observation.gameStatus.status == STOP) {
 		setTactic(INIT);
 	} else if (state.observation.gameStatus.status == PAUSE) {
 		setTactic(HOME);
 	}
 }
 
-void Tactic::setTactic(Tactics tactic){
-	if (tactic != state.currentTactic){
+void Tactic::setTactic(Tactics tactic) {
+	if (tactic != state.currentTactic) {
 		state.isNewTactics = true;
 		state.tNewTactics = ros::Time::now().toSec() + agentParams.tTacticSwitchMin;
 		ROS_INFO_STREAM("Tactics changed: " << tactic2String(state.currentTactic) << " -> " << tactic2String(tactic));
@@ -130,24 +131,66 @@ void Tactic::setTactic(Tactics tactic){
 	}
 }
 
-std::string Tactic::tactic2String(Tactics tactic){
+std::string Tactic::tactic2String(Tactics tactic) {
 	switch (tactic) {
 		case Tactics::INIT:
-			return "INIT ";
+			return "INIT   ";
 		case Tactics::HOME:
-			return "HOME ";
+			return "HOME   ";
 		case Tactics::SMASH:
-			return "SMASH";
+			return "SMASH  ";
 		case Tactics::CUT:
-			return "CUT  ";
+			return "CUT    ";
 		case Tactics::READY:
-			return "READY ";
+			return "READY  ";
+		case Tactics::REPEL:
+			return "REPEL  ";
 		case Tactics::PREPARE:
-			return "PREPARE ";
+			return "PREPARE";
 		default:
 			ROS_FATAL_STREAM("Invalid Tactic");
 			exit(-1);
 	}
+}
+
+bool Tactic::canSmash() {
+	if (state.observation.puckPredictedState.state.x() < agentParams.hitRange[1] &&
+	    state.observation.puckPredictedState.state.x() > agentParams.hitRange[0] &&
+	    abs(state.observation.puckPredictedState.state.y()) < (envParams.tableWidth / 2 - envParams.puckRadius - 0.1)) {
+		return true;
+	}
+	return false;
+}
+
+bool Tactic::shouldCut() {
+	if (state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax &&
+	    (state.observation.puckPredictedState.numOfCollisions > 0 ||
+	     (abs(state.observation.puckPredictedState.state.y()) <
+	      (envParams.tableWidth / 2 - envParams.malletRadius - 0.1)))) {
+		return true;
+	}
+	return false;
+}
+
+bool Tactic::shouldRepel() {
+	if ((state.observation.puckPredictedState.numOfCollisions == 0) &&
+	    (state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax &&
+	     state.observation.puckPredictedState.predictedTime > agentParams.tPredictionMax / 2 &&
+	     abs(state.observation.puckPredictedState.state.y()) < agentParams.defendZoneWidth / 2)) {
+		return true;
+	}
+	return false;
+}
+
+bool Tactic::puckStuck() {
+	if (state.isPuckStatic() &&
+	    (state.observation.puckPredictedState.state.x() < agentParams.hitRange[0] ||
+	     (state.observation.puckPredictedState.state.x() < agentParams.hitRange[1] &&
+	      abs(state.observation.puckPredictedState.state.y()) >
+	      (envParams.tableWidth / 2 - envParams.puckRadius - 0.1)))) {
+		return true;
+	}
+	return false;
 }
 
 

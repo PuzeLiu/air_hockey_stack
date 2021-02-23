@@ -38,7 +38,8 @@ enum Tactics {
 	HOME,      //!< go to home position from init
 	READY,     //!< go to home position
 	PREPARE,   //!< adjust the puck's position when smash fails
-	CUT,       //!< defend the incoming puck to opponent's court regardless of direction
+	CUT,       //!< defend the incoming puck and control it in our court
+	REPEL,     //!< hit back the puck regardless of the direction
 	SMASH,     //!< hit the static or slow-moving puck
 	N_TACTICS  //!< Total number of available tacticsProcessor
 };

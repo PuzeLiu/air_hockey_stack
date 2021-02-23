@@ -82,10 +82,10 @@ bool Prepare::generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArray
 
 	xPuck = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
 	if (xPuck.y() > 0) {
-		vPrepare = (Vector2d(xPuck.x() + 0.2, 2 * (envParams.tableWidth / 2 - envParams.puckRadius))
+		vPrepare = (Vector2d(xPuck.x() + 0.1, 2 * (envParams.tableWidth / 2 - envParams.puckRadius))
 		            - xPuck).normalized();
 	} else {
-		vPrepare = (Vector2d(xPuck.x() + 0.2, -2 * (envParams.tableWidth / 2 - envParams.puckRadius))
+		vPrepare = (Vector2d(xPuck.x() + 0.1, -2 * (envParams.tableWidth / 2 - envParams.puckRadius))
 		            - xPuck).normalized();
 	}
 	xPrepare = xPuck - vPrepare * (envParams.puckRadius + envParams.malletRadius);
@@ -95,8 +95,9 @@ bool Prepare::generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArray
 	xPrepare.y() = boost::algorithm::clamp(xPrepare.y(),
 	                                       -envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
 	                                       envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
-	double tStop = 0.08;
-	bool success = false;
+	vPrepare = vPrepare * 0.8;
+
+	double tStop = 0.1;
 
 	for (int i = 0; i < 10; ++i) {
 		state.cartTrajectory.points.clear();

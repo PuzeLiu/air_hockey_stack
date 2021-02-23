@@ -190,6 +190,7 @@ void Agent::loadTactics() {
 	tacticsProcessor[Tactics::PREPARE] = new Prepare(envParams, agentParams, state,
 	                                                 generator);
 	tacticsProcessor[Tactics::CUT] = new Cut(envParams, agentParams, state, generator);
+	tacticsProcessor[Tactics::REPEL] = new Repel(envParams, agentParams, state, generator);
 	tacticsProcessor[Tactics::SMASH] = new Smash(envParams, agentParams, state,
 	                                             generator);
 }

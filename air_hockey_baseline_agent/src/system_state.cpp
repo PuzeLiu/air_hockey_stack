@@ -100,17 +100,16 @@ void SystemState::updateObservationAndState(ObservationState observationState,
 											const AgentParams& agentParams){
 	observation = observationState;
 
-	if (observation.puckEstimatedState.block<2, 1>(2, 0).norm() < agentParams.vDefendMin){
-		staticCount++;
-		approachingCount = 0;
+	if (observation.puckPredictedState.state.block<2, 1>(2, 0).norm() < agentParams.vDefendMin){
+		++staticCount;
 	} else {
 		staticCount = 0;
+	}
 
-		if (observation.puckEstimatedState.dx() < 0){
-			approachingCount++;
-		} else {
-			approachingCount = 0;
-		}
+	if (observationState.puckEstimatedState.dx() < 0){
+		++approachingCount;
+	} else {
+		approachingCount = 0;
 	}
 
 	staticCount = min(staticCount, 20);

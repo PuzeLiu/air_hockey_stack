@@ -85,43 +85,27 @@ Ready::~Ready() {
 
 void Ready::setNextState() {
 	if (ros::Time::now().toSec() > state.tNewTactics) {
-		if (canSmash()) {
-			setTactic(SMASH);
-		} else if (defense()) {
-			setTactic(CUT);
-		} else if (puckStuck()) {
-			setTactic(PREPARE);
+		if (state.isPuckStatic()) {
+			if (canSmash()) {
+				setTactic(SMASH);
+			} else if (puckStuck()) {
+				setTactic(PREPARE);
+			} else {
+				setTactic(READY);
+			}
+		} else if (state.isPuckApproaching()) {
+			if (shouldRepel()) {
+				setTactic(REPEL);
+			} else if (shouldCut()) {
+				setTactic(CUT);
+			} else {
+				setTactic(READY);
+			}
 		} else {
 			setTactic(READY);
 		}
 	}
 }
 
-bool Ready::canSmash() {
-	if (state.isPuckStatic() &&
-	    state.observation.puckEstimatedState.x() < agentParams.hitRange[1] &&
-	    state.observation.puckEstimatedState.x() > agentParams.hitRange[0]
-	    && abs(state.observation.puckEstimatedState.y()) < (envParams.tableWidth / 2 - envParams.puckRadius - 0.1)) {
-		return true;
-	}
-	return false;
-}
 
-bool Ready::defense() {
-	if (state.isPuckApproaching() && state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax
-	    && abs(state.observation.puckPredictedState.state.y()) < agentParams.defendZoneWidth / 2) {
-		return true;
-	}
-	return false;
-}
-
-bool Ready::puckStuck() {
-	if (state.isPuckStatic() &&
-	    (state.observation.puckEstimatedState.x() < agentParams.hitRange[0] ||
-	     (state.observation.puckEstimatedState.x() < agentParams.hitRange[1] &&
-	      abs(state.observation.puckEstimatedState.y()) > (envParams.tableWidth / 2 - envParams.puckRadius - 0.1)))) {
-		return true;
-	}
-	return false;
-}
 

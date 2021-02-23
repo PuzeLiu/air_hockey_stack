@@ -29,16 +29,19 @@ using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
 Cut::Cut(EnvironmentParams &envParams, AgentParams &agentParams,
-		SystemState &state, TrajectoryGenerator *generator) :
+         SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
-
+	collisionNumPrev = 0;
+	waitForSteps = 0;
 }
 
 bool Cut::ready() {
-	xCut << agentParams.defendLine,	state.observation.puckPredictedState.state.y();
-
-	if ((xCut - xCutPrev).norm() > (envParams.puckRadius + envParams.malletRadius)){
-		ROS_INFO_STREAM("Update Cut Point");
+	calculateCutPosition();
+	if (collisionNumPrev != state.observation.puckPredictedState.numOfCollisions){
+		collisionNumPrev = state.observation.puckPredictedState.numOfCollisions;
+		waitForSteps = 5;
+	} else if (state.observation.puckPredictedState.predictedTime > 0.05 &&
+	     (xCut - xCutPrev).norm() > (envParams.puckRadius + envParams.malletRadius)) {
 		state.isNewTactics = true;
 	}
 
@@ -46,6 +49,7 @@ bool Cut::ready() {
 }
 
 bool Cut::apply() {
+	ROS_INFO_STREAM("Cut planning");
 	state.isNewTactics = false;
 
 	xCutPrev = xCut;
@@ -56,7 +60,7 @@ bool Cut::apply() {
 	Kinematics::JointArrayType qStart, dqStart;
 
 	state.getPlannedJointState(qStart, dqStart, tStart,
-			agentParams.planTimeOffset);
+	                           agentParams.planTimeOffset);
 
 	generator.getCartesianPosAndVel(xCur, vCur, qStart, dqStart);
 
@@ -69,14 +73,14 @@ bool Cut::apply() {
 			state.observation.puckPredictedState.predictedTime - 0.3,
 			agentParams.tDefendMin, agentParams.tPredictionMax);
 	xCut.y() = boost::algorithm::clamp(xCut.y(),
-			-envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
-			envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
+	                                   -envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
+	                                   envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
 
 	for (int i = 0; i < 10; ++i) {
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
 		generator.cubicLinearMotion->plan(xCur2d, vCur2d, xCut,
-				Vector2d(0., 0.), tStop, state.cartTrajectory);
+		                                  Vector2d(0., 0.), tStop, state.cartTrajectory);
 		generator.transformations->transformTrajectory(state.cartTrajectory);
 
 		bool ok = generator.optimizer->optimizeJointTrajectory(
@@ -104,10 +108,33 @@ Cut::~Cut() {
 }
 
 void Cut::setNextState() {
-	if (state.hasActiveTrajectory()){
+	if (state.isPuckApproaching() &&
+	    abs(state.observation.puckPredictedState.state.y()) > agentParams.defendZoneWidth / 2) {
 		setTactic(CUT);
 	} else {
 		setTactic(READY);
+		//! reset the cut record
+		xCutPrev << 0., 0.;
+	}
+}
+
+void Cut::calculateCutPosition() {
+	if (waitForSteps > 0){
+		--waitForSteps;
+		return;
+	}
+	if (state.observation.puckPredictedState.state.y() > 0) {
+		Vector2d vIn = state.observation.puckPredictedState.state.block<2, 1>(2, 0).normalized();
+		Vector2d vOut(0., 1.);
+		Vector2d offsetDir = (vIn - vOut).normalized();
+		xCut = state.observation.puckPredictedState.state.block<2, 1>(0, 0) +
+		       offsetDir * (envParams.puckRadius + envParams.malletRadius);
+	} else {
+		Vector2d vIn = state.observation.puckPredictedState.state.block<2, 1>(2, 0).normalized();
+		Vector2d vOut(0., -1.);
+		Vector2d offsetDir = (vIn - vOut).normalized();
+		xCut = state.observation.puckPredictedState.state.block<2, 1>(0, 0) +
+		       offsetDir * (envParams.puckRadius + envParams.malletRadius);
 	}
 }
 

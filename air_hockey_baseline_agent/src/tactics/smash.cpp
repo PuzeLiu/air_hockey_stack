@@ -126,7 +126,7 @@ void Smash::setNextState() {
 
 
 bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart){
-	Eigen::Vector2d xCur2d, xHit2d, vHit2d;
+	Vector2d xCur2d, xHit2d, vHit2d;
 	iiwas_kinematics::Kinematics::JointArrayType qHitRef;
 
 	Vector3d xCur;
@@ -140,10 +140,10 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
 
-		bool ok = generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.cartTrajectory);
-		if (!ok) {
+		if (!generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.cartTrajectory)){
 			return false;
 		}
+
 		generator.transformations->transformTrajectory(state.cartTrajectory);
 		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, state.observation.jointPosition,
 		                                                       qHitRef, state.jointTrajectory)) {
@@ -158,7 +158,6 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 					ros::Duration(agentParams.tPredictionMax) -
 					state.jointTrajectory.points.back().time_from_start;
 			if (tStart < tHitStart){
-				ROS_INFO_STREAM("should wait");
 				tStart = tHitStart;
 			}
 

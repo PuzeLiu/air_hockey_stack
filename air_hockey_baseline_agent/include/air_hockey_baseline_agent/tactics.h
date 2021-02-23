@@ -48,6 +48,12 @@ protected:
 	void generateStopTrajectory();
 
 protected:
+	bool canSmash();
+	bool shouldCut();
+	bool shouldRepel();
+	bool puckStuck();
+
+protected:
 	SystemState &state;
 	TrajectoryGenerator &generator;
 	AgentParams &agentParams;
@@ -83,11 +89,6 @@ public:
 	bool apply() override;
 	void setNextState() override;
 	~Ready() override;
-
-private:
-	bool canSmash();
-	bool defense();
-	bool puckStuck();
 };
 
 class Cut: public Tactic {
@@ -100,7 +101,23 @@ public:
 	~Cut() override;
 
 protected:
+	void calculateCutPosition();
 	Eigen::Vector2d xCut, xCutPrev;
+	int collisionNumPrev, waitForSteps;
+};
+
+class Repel: public Tactic {
+public:
+	Repel(EnvironmentParams &envParams, AgentParams &agentParams,
+	    SystemState &state, TrajectoryGenerator *generator);
+	bool ready() override;
+	bool apply() override;
+	void setNextState() override;
+	~Repel() override;
+protected:
+	bool generateRepelTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart);
+
+	int counter;
 };
 
 class Prepare: public Tactic {
@@ -137,8 +154,6 @@ public:
 	bool apply() override;
 	void setNextState() override;
 	~Smash() override;
-
-friend class Ready;
 
 protected:
 	Eigen::Vector3d computeTarget(Eigen::Vector3d puckPosition);

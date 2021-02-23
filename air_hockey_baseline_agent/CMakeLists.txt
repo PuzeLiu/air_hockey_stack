@@ -57,6 +57,7 @@ set(SOURCE
    src/tactics/move_puck.cpp
    src/tactics/prepare.cpp
    src/tactics/ready.cpp
+   src/tactics/repel.cpp
    src/tactics/smash.cpp
    src/tactics/tactics.cpp
    )

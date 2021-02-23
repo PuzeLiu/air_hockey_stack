@@ -1,7 +1,7 @@
 air_hockey:
   puck_tracker:
     max_prediction_steps:
-      120
+      180
     frequency:
       120
     friction_drag:
