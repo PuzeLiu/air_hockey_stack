@@ -53,6 +53,8 @@ void Referee::update() {
                     ROS_INFO_STREAM("Detect Puck is not on the Table, Game Paused");
                     gameStatusMsg.status = GameStatus::PAUSE;
                     statusPub.publish(gameStatusMsg);
+                    std::string msg;
+                    resetPuck(&msg, true);
                 } else if (v.norm() < 0.01 && abs(tfPuck.transform.translation.x) < pauseRegionLength / 2){
                     ROS_INFO_STREAM("Detect Puck is not reachable for both Robot, Game Paused");
                     gameStatusMsg.status = GameStatus::PAUSE;
