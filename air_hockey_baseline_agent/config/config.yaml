@@ -7,13 +7,13 @@ air_hockey:
     prepare: [0.4, 0.0]
     defend_line: 0.2
     hit_range: [0.2, 0.9]
-    universal_joint_height:  0.0505 # 0.095 0.058 #
+    universal_joint_height:  0.08 # 0.0505 # 0.095
     prepare_height:  0.2395    # height of iiwa second joint - universal joint height: 0.29 - 0.0505 = 0.2395
     max_hit_velocity: 1.5
     min_defend_velocity: 0.1
     min_defend_time: 0.3
-    min_tactic_switch_time: 1
+    min_tactic_switch_time: 1.5
     defend_zone_width: 0.4
     plan_time_offset: 0.1
-#    q_ref: [1.7207, 0.6541, -1.859, -1.422, 0.1313, 1.3779, -0.0653]
-    q_ref: [0., 0.15378149,  0., -1.3630843, 0.,  1.3767066, 0.]
+    q_ref: [1.7207, 0.6541, -1.859, -1.422, 0.1313, 1.3779, -0.0653]
+#    q_ref: [0., 0.15378149,  0., -1.3630843, 0.,  1.3767066, 0.]

@@ -58,7 +58,8 @@ bool Smash::apply() {
 Vector3d Smash::computeTarget(Vector3d puckPosition) {
 	Vector3d xTarget;
 	auto random_integer = dist(gen);
-//	random_integer = 0;
+	//TODO comment
+	random_integer = 0;
 	if (puckPosition.y() > 0.1) {
 		xTarget.y() = -0.05;
 	} else if (puckPosition.y() < -0.1) {
@@ -140,7 +141,7 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
 
-		if (!generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.cartTrajectory)){
+		if (!generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.cartTrajectory, 0.1)){
 			return false;
 		}
 

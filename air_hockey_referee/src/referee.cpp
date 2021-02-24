@@ -37,10 +37,10 @@ Referee::~Referee() {
 void Referee::update() {
     ros::spinOnce();
     try {
-        tfPuck = tfBuffer.lookupTransform("Table", "Puck", ros::Time(0), ros::Duration(1.0));
+        tfPuck = tfBuffer.lookupTransform("Table", "Puck", ros::Time(0));
         auto dt = (tfPuck.header.stamp - tfPuckPrev.header.stamp).toSec();
-        if (ros::Time::now() - tfPuck.header.stamp > ros::Duration(0.2)) {
-            gameStatusMsg.status = GameStatus::PAUSE;
+        if (ros::Time::now() - tfPuck.header.stamp > ros::Duration(2.0)) {
+            gameStatusMsg.status = GameStatus::STOP;
             statusPub.publish(gameStatusMsg);
         } else if (dt > 0.0) {
             if (gameStatusMsg.status == GameStatus::START) {
@@ -87,7 +87,6 @@ void Referee::update() {
             tfPuckPrev = tfPuck;
         }
     } catch (tf2::TransformException &ex) {
-        ROS_INFO_STREAM(ex.what());
     }
 }
 

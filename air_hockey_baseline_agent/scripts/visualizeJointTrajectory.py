@@ -3,11 +3,10 @@ import matplotlib.pyplot as plt
 import os
 import rosbag
 from trajectory_msgs.msg import JointTrajectory
-import torch
-from iiwas_kinematics import KinematicsTorch
+from iiwas_kinematics_py import Kinematics
 
-input_dir = os.path.abspath("/home/puze/air_hockey_record")
-file_name = "2021-01-27-19-25-44.bag"
+input_dir = os.path.abspath("/home/puze/Desktop")
+file_name = "2021-02-24-20-16-15.bag"
 
 desired_positions = []
 desired_velocities = []
@@ -19,11 +18,11 @@ desired_cart_pos = []
 actual_cart_pos = []
 time = []
 
-kinematics = KinematicsTorch(torch.tensor([0., 0., 0.515]), torch.tensor([0., 0., 0., 1.]))
+kinematics = Kinematics(np.array([0., 0., 0.515]), np.array([0., 0., 0., 1.]))
 
 bag = rosbag.Bag(os.path.join(input_dir, file_name))
 for topic, msg, t in bag.read_messages():
-    if topic == "/iiwa_back/joint_position_trajectory_controller/state":
+    if topic == "/iiwa_front/joint_torque_trajectory_controller/state":
         msg: JointTrajectory
         desired_positions.append(msg.desired.positions)
         desired_velocities.append(msg.desired.velocities)
@@ -32,8 +31,8 @@ for topic, msg, t in bag.read_messages():
         error_positions.append(msg.error.positions)
         error_velocities.append(msg.error.velocities)
         time.append(msg.header.stamp.to_sec())
-        desired_cart_pos.append(kinematics.forward_kinematics(torch.tensor(msg.desired.positions)).numpy()[:3])
-        actual_cart_pos.append(kinematics.forward_kinematics(torch.tensor(msg.actual.positions)).numpy()[:3])
+        desired_cart_pos.append(kinematics.forward_kinematics(np.array(msg.desired.positions))[0])
+        actual_cart_pos.append(kinematics.forward_kinematics(np.array(msg.actual.positions))[0])
 
 desired_positions = np.array(desired_positions)
 desired_velocities = np.array(desired_velocities)
@@ -48,11 +47,13 @@ time = np.array(time)
 for i in range(7):
     fig, axes = plt.subplots(2)
     fig.suptitle("Joint_" + str(i + 1))
-    axes[0].scatter(time, desired_positions[:, i], s=3)
-    axes[0].scatter(time, actual_positions[:, i], s=3)
+    axes[0].scatter(time, desired_positions[:, i], s=3, label='desired')
+    axes[0].scatter(time, actual_positions[:, i], s=3, label='actual')
+    axes[0].legend()
     # axes[0].plot(time, error_positions[:, i])
-    axes[1].scatter(time, desired_velocities[:, i], s=3)
-    axes[1].scatter(time, actual_velocities[:, i], s=3)
+    axes[1].scatter(time, desired_velocities[:, i], s=3, label='desired')
+    axes[1].scatter(time, actual_velocities[:, i], s=3, label='actual')
+    axes[1].legend()
     # axes[1].plot(time, error_velocities[:, i])
 
 fig, axes = plt.subplots(3)

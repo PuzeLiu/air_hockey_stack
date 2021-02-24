@@ -245,12 +245,14 @@ void NullSpaceOptimizer::SolveJoint7(Kinematics::JointArrayType &q) {
     Vector3d zAxis(0., 0., -1.);
     auto yDes = zAxis.cross(mat.col(2)).normalized();
     double target = acos(mat.col(1).dot(yDes));
-    if (target > M_PI_2){
-        target -= M_PI;
-    }
-
     Vector3d axis = mat.col(1).cross(yDes).normalized();
     target = target * axis.dot(mat.col(2));
+
+    if (target - qCur7 > M_PI_2){
+        target -= M_PI;
+    } else if (target - qCur7 < M_PI_2){
+        target += M_PI;
+    }
 
     q[6] = boost::algorithm::clamp(target, kinematics_->posLimitsLower_[6], kinematics_->posLimitsUpper_[6]);
 }
