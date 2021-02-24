@@ -87,8 +87,7 @@ bool Repel::generateRepelTrajectory(const iiwas_kinematics::Kinematics::JointArr
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
 
-		bool ok = generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.cartTrajectory);
-
+		generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.cartTrajectory);
 		generator.transformations->transformTrajectory(state.cartTrajectory);
 
 		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory,

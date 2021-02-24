@@ -97,15 +97,21 @@ bool CombinatorialHit::getMiddlePoint() {
 				boundUpper_[i]);
 	}
 
+	//! update the lower bound and upper bound of x direction to start position
+	Vector2d boundLowerTmp = boundLower_;
+	Vector2d boundUpperTmp = boundUpper_;
+	boundLowerTmp[0] = min(xStart_[0], xHit_[0]);
+	boundUpperTmp[0] = max(xStart_[0], xHit_[0]);
+
 	// Find Middle Point in hitting
 	double alpha_min_hit = INFINITY;        // cross point at hitting phase
 	for (int i = 0; i < 2; ++i) {
 		if (vecDir2_[i] > 0) {
 			alpha_min_hit = min(alpha_min_hit,
-					(xHit_[i] - boundLower_[i]) / vecDir2_[i]);
+					(xHit_[i] - boundLowerTmp[i]) / vecDir2_[i]);
 		} else if (vecDir2_[i] < 0) {
 			alpha_min_hit = min(alpha_min_hit,
-					(xHit_[i] - boundUpper_[i]) / vecDir2_[i]);
+					(xHit_[i] - boundUpperTmp[i]) / vecDir2_[i]);
 		}
 	}
 	xMiddle_ = xHit_ - alpha_min_hit * vecDir2_;

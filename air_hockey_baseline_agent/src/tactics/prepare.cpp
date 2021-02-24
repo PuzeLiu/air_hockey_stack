@@ -80,22 +80,7 @@ bool Prepare::generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArray
 
 	xStart2d = xStart.block<2, 1>(0, 0);
 
-	xPuck = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
-	if (xPuck.y() > 0) {
-		vPrepare = (Vector2d(xPuck.x() + 0.1, 2 * (envParams.tableWidth / 2 - envParams.puckRadius))
-		            - xPuck).normalized();
-	} else {
-		vPrepare = (Vector2d(xPuck.x() + 0.1, -2 * (envParams.tableWidth / 2 - envParams.puckRadius))
-		            - xPuck).normalized();
-	}
-	xPrepare = xPuck - vPrepare * (envParams.puckRadius + envParams.malletRadius);
-	xPrepare.x() = boost::algorithm::clamp(xPrepare.x(),
-	                                       envParams.malletRadius + 0.02,
-	                                       envParams.tableLength - envParams.malletRadius - 0.02);
-	xPrepare.y() = boost::algorithm::clamp(xPrepare.y(),
-	                                       -envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
-	                                       envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
-	vPrepare = vPrepare * 0.8;
+	getPreparePosAndVel(xStart2d, xPuck, xPrepare, vPrepare);
 
 	double tStop = 0.1;
 
@@ -119,4 +104,29 @@ bool Prepare::generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArray
 	ROS_INFO_STREAM("Optimization Failed [PREPARE]. Failed to find a feasible hitting movement");
 	return false;
 
+}
+
+void Prepare::getPreparePosAndVel(const Vector2d &xStart, Vector2d &xPuck, Vector2d &xPrepare, Vector2d &vPrepare){
+	xPuck = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
+
+	if (xPuck.x() >= xStart.x()){
+		vPrepare.y() = envParams.tableWidth / 2 - envParams.puckRadius - xPuck.y();
+		vPrepare.x() = xPuck.x() + envParams.puckRadius;
+	} else if (xPuck.y() >= 0){
+		vPrepare.y() = fmax(xPuck.y() + envParams.puckRadius, agentParams.defendZoneWidth / 2 + envParams.puckRadius);
+		vPrepare.x() = envParams.puckRadius - xPuck.x();
+	} else if (xPuck.y() < 0) {
+		vPrepare.y() = fmin(xPuck.y() - envParams.puckRadius, agentParams.defendZoneWidth / 2 - envParams.puckRadius);
+		vPrepare.x() = envParams.puckRadius - xPuck.x();
+	}
+	vPrepare.normalize();
+
+	xPrepare = xPuck - vPrepare * (envParams.puckRadius + envParams.malletRadius + 0.02);
+	xPrepare.x() = boost::algorithm::clamp(xPrepare.x(),
+	                                       envParams.malletRadius + 0.02,
+	                                       envParams.tableLength - envParams.malletRadius - 0.02);
+	xPrepare.y() = boost::algorithm::clamp(xPrepare.y(),
+	                                       -envParams.tableWidth / 2 + envParams.malletRadius + envParams.puckRadius + 0.02,
+	                                       envParams.tableWidth / 2 - envParams.malletRadius - envParams.puckRadius - 0.02);
+	vPrepare = vPrepare * 0.8;
 }

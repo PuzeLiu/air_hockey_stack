@@ -45,8 +45,7 @@ Transformations::Transformations(std::string ns) {
 		tf2::fromMsg(tfTable2Robot_, tmp);
         tfRobot2Table_.transform = tf2::toMsg(tmp.inverse());
 	} else {
-		ROS_ERROR_STREAM(
-				"Run the node under the namespace: iiwa_front / iiwa_back");
+		ROS_ERROR_STREAM("Run the node under the namespace: iiwa_front / iiwa_back");
 	}
 
 }

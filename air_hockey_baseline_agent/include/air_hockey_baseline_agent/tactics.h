@@ -133,6 +133,11 @@ protected:
 	bool generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArrayType &qStart,
 	                               iiwas_kinematics::Kinematics::JointArrayType &dqStart,
 	                               ros::Time tStart);
+
+	void getPreparePosAndVel(const Eigen::Vector2d &xStart,
+						     Eigen::Vector2d &xPuck,
+						     Eigen::Vector2d &xPrepare,
+						     Eigen::Vector2d &vPrepare);
 };
 
 class MovePuck: public Tactic {

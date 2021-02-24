@@ -154,9 +154,14 @@ std::string Tactic::tactic2String(Tactics tactic) {
 }
 
 bool Tactic::canSmash() {
-	if (state.observation.puckPredictedState.state.x() < agentParams.hitRange[1] &&
+	if (state.observation.puckPredictedState.state.x() < agentParams.hitRange.mean() &&
 	    state.observation.puckPredictedState.state.x() > agentParams.hitRange[0] &&
 	    abs(state.observation.puckPredictedState.state.y()) < (envParams.tableWidth / 2 - envParams.puckRadius - 0.1)) {
+		return true;
+	}
+	if (state.observation.puckPredictedState.state.x() > agentParams.hitRange.mean() &&
+		state.observation.puckPredictedState.state.x() < agentParams.hitRange[1] &&
+	    state.observation.puckPredictedState.state.dx() < 0) {
 		return true;
 	}
 	return false;
@@ -183,12 +188,17 @@ bool Tactic::shouldRepel() {
 }
 
 bool Tactic::puckStuck() {
-	if (state.isPuckStatic() &&
-	    (state.observation.puckPredictedState.state.x() < agentParams.hitRange[0] ||
-	     (state.observation.puckPredictedState.state.x() < agentParams.hitRange[1] &&
-	      abs(state.observation.puckPredictedState.state.y()) >
-	      (envParams.tableWidth / 2 - envParams.puckRadius - 0.1)))) {
-		return true;
+	if (state.isPuckStatic()) {
+		if ((state.observation.puckPredictedState.state.x() < agentParams.hitRange[0] &&
+		     abs(state.observation.puckPredictedState.state.y()) <
+		     (envParams.tableWidth / 2 - 2 * envParams.puckRadius))) {
+			return true;
+		}
+		if (state.observation.puckPredictedState.state.x() < agentParams.hitRange[1] &&
+			state.observation.puckPredictedState.state.dx() < 0.05 &&
+		    abs(state.observation.puckPredictedState.state.y()) > (envParams.tableWidth / 2 - envParams.puckRadius - 0.1)) {
+			return true;
+		}
 	}
 	return false;
 }

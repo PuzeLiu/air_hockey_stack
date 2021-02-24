@@ -72,6 +72,8 @@ bool Cut::apply() {
 	double tStop = boost::algorithm::clamp(
 			state.observation.puckPredictedState.predictedTime - 0.3,
 			agentParams.tDefendMin, agentParams.tPredictionMax);
+
+	xCut.x() = boost::algorithm::clamp(xCut.x(), envParams.malletRadius + 0.01, envParams.tableLength);
 	xCut.y() = boost::algorithm::clamp(xCut.y(),
 	                                   -envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
 	                                   envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
@@ -83,14 +85,8 @@ bool Cut::apply() {
 		                                  Vector2d(0., 0.), tStop, state.cartTrajectory);
 		generator.transformations->transformTrajectory(state.cartTrajectory);
 
-		bool ok = generator.optimizer->optimizeJointTrajectory(
-				state.cartTrajectory, qStart,
-				//            qAnchor << 0., 0., 0., 0., 0., 0, 0.;
-				state.jointTrajectory);
-
-		if (!ok) {
-			ROS_INFO_STREAM(
-					"Optimization Failed [Cut]. Increase the motion time: " << tStop);
+		if (!generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, qStart,	state.jointTrajectory)) {
+			ROS_INFO_STREAM("Optimization Failed [Cut]. Increase the motion time: " << tStop);
 			tStop += 0.1;
 		} else {
 			state.jointTrajectory.header.stamp = tStart;

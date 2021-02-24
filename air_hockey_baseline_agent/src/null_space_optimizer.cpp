@@ -54,8 +54,8 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics *kinematics, double rate) :
     jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
 
     K_.setConstant(1 / stepSize_);
-    weights_ << 40., 40., 20., 40., 10., 20., 0.;
-    weightsAnchor_.setOnes();
+    weights_ << 10., 10., 5., 10., 1., 1., 0.;
+    weightsAnchor_ << 1., 1., 5., 1, 10., 10., 0.;
 }
 
 NullSpaceOptimizer::~NullSpaceOptimizer() {
@@ -81,6 +81,7 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
             dxDes[2] = cartTraj.points[i].velocities[0].linear.z;
 
             if (!solveQP(xDes, dxDes, qCur, qNext, dqNext)) {
+	            ROS_INFO_STREAM("Optimization failed at : " << i);
                 return false;
             }
 
@@ -105,9 +106,6 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
                                                        const Kinematics::JointArrayType &qStart,
                                                        const Kinematics::JointArrayType &qAnchor,
                                                        trajectory_msgs::JointTrajectory &jointTraj) {
-    auto diff = (qAnchor - qStart).cwiseAbs();
-    weightsAnchor_[6] = 0;
-    weightsAnchor_.normalized();
 
     if (cartTraj.points.size() > 0) {
         Vector3d xDes, dxDes;
@@ -133,6 +131,12 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
             }
 
             if (!solveQPAnchor(xDes, dxDes, qCur, dqAnchorTmp, qNext, dqNext)) {
+	            ROS_INFO_STREAM("Optimization failed at : " << i);
+	            ROS_INFO_STREAM("xDes: " << xDes.transpose());
+	            Vector3d xTmp;
+	            kinematics_->forwardKinematics(qCur, xTmp);
+	            ROS_INFO_STREAM("qCur: " << qCur.transpose());
+	            ROS_INFO_STREAM("xCur: " << xTmp.transpose());
                 return false;
             }
 
