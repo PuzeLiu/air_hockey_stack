@@ -40,6 +40,7 @@ TrajectoryGenerator::TrajectoryGenerator(std::string ns, EnvironmentParams data,
 
 	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, rate,
 			data.universalJointHeight);
+	combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, rate, data.universalJointHeight);
 	cubicLinearMotion = new CubicLinearMotion(rate, data.universalJointHeight);
 
 }

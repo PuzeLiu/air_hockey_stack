@@ -159,25 +159,21 @@ void Agent::computeBaseConfigurations() {
 	// compute qHome
 	xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight;
 	transformations->applyForwardTransform(xTmp);
-	if (!kinematics->inverseKinematics(xTmp, quatTmp, gc, psi,
-	                                   agentParams.qHome)) {
-		ROS_ERROR_STREAM(
-				"Inverse Kinematics fail, unable to find solution for HOME position");
+	if (!kinematics->inverseKinematics(xTmp, quatTmp, gc, psi, agentParams.qHome)) {
+		ROS_ERROR_STREAM("Inverse Kinematics fail, unable to find solution for HOME position");
 	}
-
-	optimizer->SolveJoint7(agentParams.qHome);
+	iiwas_kinematics::Kinematics::JointArrayType dqTmp;
+	optimizer->SolveJoint7(agentParams.qHome, dqTmp);
 
 	// compute qinit
 	xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight
 	                                                    + envParams.initHeight;
 	transformations->applyForwardTransform(xTmp);
-	if (!kinematics->inverseKinematics(xTmp, quatTmp, gc, psi,
-	                                   agentParams.qInit)) {
-		ROS_ERROR_STREAM(
-				"Inverse Kinematics fail, unable to find solution for INIT position");
+	if (!kinematics->inverseKinematics(xTmp, quatTmp, gc, psi, agentParams.qInit)) {
+		ROS_ERROR_STREAM("Inverse Kinematics fail, unable to find solution for INIT position");
 	}
 
-	optimizer->SolveJoint7(agentParams.qInit);
+	optimizer->SolveJoint7(agentParams.qInit, dqTmp);
 }
 
 void Agent::loadTactics() {

@@ -89,6 +89,9 @@ public:
 	bool apply() override;
 	void setNextState() override;
 	~Ready() override;
+
+protected:
+	int debugCount;
 };
 
 class Cut: public Tactic {

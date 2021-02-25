@@ -49,6 +49,7 @@ set(SOURCE
    src/transformations.cpp
    src/planner/bezier_hit.cpp
    src/planner/combinatorial_hit.cpp
+   src/planner/combinatorial_hit_new.cpp
    src/planner/stable_dynamics_motion.cpp
    src/planner/cubic_linear_motion.cpp
    src/tactics/cut.cpp

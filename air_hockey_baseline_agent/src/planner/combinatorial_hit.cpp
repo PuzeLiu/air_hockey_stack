@@ -100,7 +100,7 @@ bool CombinatorialHit::getMiddlePoint() {
 	//! update the lower bound and upper bound of x direction to start position
 	Vector2d boundLowerTmp = boundLower_;
 	Vector2d boundUpperTmp = boundUpper_;
-	boundLowerTmp[0] = min(xStart_[0], xHit_[0]);
+	boundLowerTmp[0] = min(xStart_[0], boundLower_[0]);
 	boundUpperTmp[0] = max(xStart_[0], xHit_[0]);
 
 	// Find Middle Point in hitting

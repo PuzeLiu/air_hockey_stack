@@ -30,6 +30,7 @@
 //#include "air_hockey_baseline_agent/planner/bezier_hit.h"
 //#include "air_hockey_baseline_agent/planner/stable_dynamics_motion.h"
 #include "air_hockey_baseline_agent/planner/combinatorial_hit.h"
+#include "air_hockey_baseline_agent/planner/combinatorial_hit_new.h"
 #include "air_hockey_baseline_agent/planner/cubic_linear_motion.h"
 
 #include "air_hockey_baseline_agent/transformations.h"
@@ -49,6 +50,7 @@ struct TrajectoryGenerator {
 			iiwas_kinematics::Kinematics::JointArrayType &dq);
 
 	CombinatorialHit *combinatorialHit;
+	CombinatorialHitNew *combinatorialHitNew;
 	CubicLinearMotion *cubicLinearMotion;
 	iiwas_kinematics::Kinematics *kinematics;
 	Transformations *transformations;

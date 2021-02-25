@@ -59,7 +59,7 @@ Vector3d Smash::computeTarget(Vector3d puckPosition) {
 	Vector3d xTarget;
 	auto random_integer = dist(gen);
 	//TODO comment
-	random_integer = 0;
+	random_integer = 1;
 	if (puckPosition.y() > 0.1) {
 		xTarget.y() = -0.05;
 	} else if (puckPosition.y() < -0.1) {
@@ -145,12 +145,15 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 			return false;
 		}
 
+		if (!generator.combinatorialHitNew->plan(xCur2d, xHit2d, vHit2d, state.cartTrajectory)){
+			return false;
+		}
+
 		generator.transformations->transformTrajectory(state.cartTrajectory);
-		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, state.observation.jointPosition,
+		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, qCur,
 		                                                       qHitRef, state.jointTrajectory)) {
 //		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory,
-//				state.observation.jointPosition, state.jointTrajectory)) {
-
+//		                                                 qCur, state.jointTrajectory)) {
 			if (ros::Time::now() > tStart){
 				tStart = ros::Time::now();
 			}

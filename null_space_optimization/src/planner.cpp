@@ -90,10 +90,10 @@ bool BezierCurve2D::getPoint(double t, null_space_optimization::CartersianTrajec
 //        dz_dt = 3 * phaseCoeff_[3] * pow(t, 2) + 4 * phaseCoeff_[4] * pow(t, 3);
 //        dz_ddt = 6 * phaseCoeff_[3] * t + 12 * phaseCoeff_[4] * pow(t, 2);
 //
-//        x_ = xMiddleStop_ + pow((1 - z), 2) * (xHit_ - xMiddleStop_) + pow(z, 2) * (xStart_ - xMiddleStop_) ;
-//        dx_dz_ = (2 * (1 - z) * (xMiddleStop_ - xHit_) + 2 * z * (xStart_ - xMiddleStop_));
+//        x_ = xMiddleStop_ + pow((1 - z), 2) * (xHit_ - xMiddleStop_) + pow(z, 2) * (xStart - xMiddleStop_) ;
+//        dx_dz_ = (2 * (1 - z) * (xMiddleStop_ - xHit_) + 2 * z * (xStart - xMiddleStop_));
 //        dx_dt_ = dx_dz_ * dz_dt;
-//        dx_ddz_ = 2 * (xHit_ - 2 * xMiddleStop_ + xStart_);
+//        dx_ddz_ = 2 * (xHit_ - 2 * xMiddleStop_ + xStart);
 //        dx_ddt = dx_ddz_ * pow(dz_dt, 2) + dx_dz_ * dz_ddt;
     }
     else{

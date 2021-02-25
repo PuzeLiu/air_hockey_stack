@@ -50,26 +50,31 @@ NullSpaceOptimizer::NullSpaceOptimizer(Kinematics *kinematics, double rate) :
 
     solver_.initSolver();
 
-    jointViaPoint_.positions.resize(iiwas_kinematics::NUM_OF_JOINTS);
-    jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
-
     K_.setConstant(1 / stepSize_);
     weights_ << 10., 10., 5., 10., 1., 1., 0.;
     weightsAnchor_ << 1., 1., 5., 1, 10., 10., 0.;
 }
 
-NullSpaceOptimizer::~NullSpaceOptimizer() {
-
-}
+NullSpaceOptimizer::~NullSpaceOptimizer() = default;
 
 bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
                                                  const Kinematics::JointArrayType &qStart,
                                                  trajectory_msgs::JointTrajectory &jointTraj) {
-    if (cartTraj.points.size() > 0) {
+    if (!cartTraj.points.empty()) {
         Vector3d xDes, dxDes;
         Kinematics::JointArrayType qCur, qNext, dqNext;
 
         qCur = qStart;
+
+	    trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
+	    jointViaPoint_.positions.resize(iiwas_kinematics::NUM_OF_JOINTS);
+	    jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
+	    jointViaPoint_.accelerations.resize(iiwas_kinematics::NUM_OF_JOINTS);
+	    for (int i = 0; i < NUM_OF_JOINTS; ++i) {
+		    jointViaPoint_.positions[i] = 0;
+		    jointViaPoint_.velocities[i] = 0;
+		    jointViaPoint_.accelerations[i] = 0;
+	    }
 
         for (size_t i = 0; i < cartTraj.points.size(); ++i) {
             xDes[0] = cartTraj.points[i].transforms[0].translation.x;
@@ -85,12 +90,13 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
                 return false;
             }
 
-            SolveJoint7(qNext);
+            SolveJoint7(qNext, dqNext);
 
             jointViaPoint_.time_from_start = cartTraj.points[i].time_from_start;
             for (size_t row = 0; row < NUM_OF_JOINTS; row++) {
+	            jointViaPoint_.accelerations[row] = (dqNext[row] - jointViaPoint_.velocities[row]) / stepSize_;
+	            jointViaPoint_.velocities[row] = dqNext[row];
                 jointViaPoint_.positions[row] = qNext[row];
-                jointViaPoint_.velocities[row] = dqNext[row];
             }
             jointTraj.points.push_back(jointViaPoint_);
 
@@ -107,12 +113,22 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
                                                        const Kinematics::JointArrayType &qAnchor,
                                                        trajectory_msgs::JointTrajectory &jointTraj) {
 
-    if (cartTraj.points.size() > 0) {
+    if (!cartTraj.points.empty()) {
         Vector3d xDes, dxDes;
         Kinematics::JointArrayType qCur, qNext, dqNext, dqAnchorTmp;
         double tTogo;
 
         qCur = qStart;
+
+	    trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
+	    jointViaPoint_.positions.resize(iiwas_kinematics::NUM_OF_JOINTS);
+	    jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
+	    jointViaPoint_.accelerations.resize(iiwas_kinematics::NUM_OF_JOINTS);
+	    for (int i = 0; i < NUM_OF_JOINTS; ++i) {
+		    jointViaPoint_.positions[i] = 0;
+		    jointViaPoint_.velocities[i] = 0;
+		    jointViaPoint_.accelerations[i] = 0;
+	    }
 
         for (size_t i = 0; i < cartTraj.points.size(); ++i) {
             xDes[0] = cartTraj.points[i].transforms[0].translation.x;
@@ -123,12 +139,15 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
             dxDes[1] = cartTraj.points[i].velocities[0].linear.y;
             dxDes[2] = cartTraj.points[i].velocities[0].linear.z;
 
-            tTogo = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec() * 0.8;
+            tTogo = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec();
             if (tTogo > 0) {
                 dqAnchorTmp = (qAnchor - qCur) / tTogo;
             } else {
                 dqAnchorTmp.setZero();
             }
+
+            //! Multiply the phase variable
+            dqAnchorTmp = dqAnchorTmp * cartTraj.points[i].time_from_start.toSec() / cartTraj.points.back().time_from_start.toSec();
 
             if (!solveQPAnchor(xDes, dxDes, qCur, dqAnchorTmp, qNext, dqNext)) {
 	            ROS_INFO_STREAM("Optimization failed at : " << i);
@@ -140,12 +159,13 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
                 return false;
             }
 
-            SolveJoint7(qNext);
+            SolveJoint7(qNext, dqNext);
 
             jointViaPoint_.time_from_start = cartTraj.points[i].time_from_start;
             for (size_t row = 0; row < NUM_OF_JOINTS; row++) {
-                jointViaPoint_.positions[row] = qNext[row];
-                jointViaPoint_.velocities[row] = dqNext[row];
+	            jointViaPoint_.accelerations[row] = (dqNext[row] - jointViaPoint_.velocities[row]) / stepSize_;
+	            jointViaPoint_.velocities[row] = dqNext[row];
+	            jointViaPoint_.positions[row] = qNext[row];
             }
             jointTraj.points.push_back(jointViaPoint_);
 
@@ -205,10 +225,13 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 
     kinematics_->jacobianPos(qCur, jacobian_);
     getNullSpace(jacobian_, nullSpace_);
-
-    auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() *
-             (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
-    auto omega = b - dqAnchor;
+//	auto b = jacobian_.completeOrthogonalDecomposition().solve((K_.asDiagonal() * (xDes - xCurPos_) + dxDes));
+    auto jacInv = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse();
+    auto b =  jacInv * (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
+    MatrixXd I(7, 7);
+    I.setIdentity();
+    auto dqAnchorProjected = (I - jacInv * jacobian_) * dqAnchor;
+    auto omega = b - dqAnchorProjected;
 
     if (nullSpace_.cols() != dimNullSpace_) {
         ROS_ERROR_STREAM("Null space of jacobian should be:" << dimNullSpace_);
@@ -234,7 +257,7 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
     return true;
 }
 
-void NullSpaceOptimizer::SolveJoint7(Kinematics::JointArrayType &q) {
+void NullSpaceOptimizer::SolveJoint7(JointArrayType &q, JointArrayType &dq) {
 	double qCur7 = q[6];
     // Set last joint to 0 solve desired joint position
     q[6] = 0.0;
@@ -255,4 +278,5 @@ void NullSpaceOptimizer::SolveJoint7(Kinematics::JointArrayType &q) {
     }
 
     q[6] = boost::algorithm::clamp(target, kinematics_->posLimitsLower_[6], kinematics_->posLimitsUpper_[6]);
+    dq[6] = (q[6] - qCur7) / stepSize_;
 }

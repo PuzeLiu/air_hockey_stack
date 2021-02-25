@@ -32,7 +32,7 @@ using namespace air_hockey_baseline_agent;
 Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
              SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
-
+	debugCount = 0;
 }
 
 bool Ready::ready() {
@@ -87,7 +87,10 @@ void Ready::setNextState() {
 	if (ros::Time::now().toSec() > state.tNewTactics) {
 		if (state.isPuckStatic()) {
 			if (canSmash()) {
-				setTactic(SMASH);
+				if (debugCount == 0){
+					setTactic(SMASH);
+					++debugCount;
+				}
 			} else if (puckStuck()) {
 				setTactic(PREPARE);
 			} else {

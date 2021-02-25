@@ -54,7 +54,7 @@ namespace air_hockey_baseline_agent {
                                            const JointArrayType &qAnchor,
                                            trajectory_msgs::JointTrajectory &jointTraj);
 
-        void SolveJoint7(JointArrayType &q);
+        void SolveJoint7(JointArrayType &q, JointArrayType &dq);
 
     private:
         bool solveQP(const Eigen::Vector3d& xDes,
@@ -75,8 +75,6 @@ namespace air_hockey_baseline_agent {
         double stepSize_;
 
         iiwas_kinematics::Kinematics *kinematics_;
-
-        trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 
         OsqpEigen::Solver solver_;
         int dimNullSpace_;
