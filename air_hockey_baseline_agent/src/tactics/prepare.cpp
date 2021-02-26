@@ -102,6 +102,8 @@ bool Prepare::generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArray
 		}
 	}
 	ROS_INFO_STREAM("Optimization Failed [PREPARE]. Failed to find a feasible hitting movement");
+	state.jointTrajectory.points.clear();
+	state.cartTrajectory.points.clear();
 	return false;
 
 }

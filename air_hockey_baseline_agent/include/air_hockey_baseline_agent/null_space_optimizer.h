@@ -52,7 +52,8 @@ namespace air_hockey_baseline_agent {
         bool optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
                                            const JointArrayType &qStart,
                                            const JointArrayType &qAnchor,
-                                           trajectory_msgs::JointTrajectory &jointTraj);
+                                           trajectory_msgs::JointTrajectory &jointTraj,
+                                           bool increasing=true);
 
         void SolveJoint7(JointArrayType &q, JointArrayType &dq);
 
@@ -69,6 +70,8 @@ namespace air_hockey_baseline_agent {
                            const JointArrayType &qAnchor,
 						   JointArrayType &qNext,
 						   JointArrayType &dqNext);
+
+        void interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj);
 
 
     private:

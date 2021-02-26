@@ -46,7 +46,7 @@ bool Smash::apply() {
 	ros::Time tStart;
 	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
 
-	if (dqStart.norm() > 0.05){
+	if (dqStart.norm() > 0.05) {
 		generateStopTrajectory();
 		return true;
 	} else {
@@ -126,41 +126,92 @@ void Smash::setNextState() {
 }
 
 
-bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart){
+bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart) {
 	Vector2d xCur2d, xHit2d, vHit2d;
 	iiwas_kinematics::Kinematics::JointArrayType qHitRef;
 
 	Vector3d xCur;
-	generator.kinematics->forwardKinematics(qCur,xCur);
+	generator.kinematics->forwardKinematics(qCur, xCur);
 	generator.transformations->applyInverseTransform(xCur);
 	xCur2d = xCur.block<2, 1>(0, 0);
 
 	getHitPointVelocity(xHit2d, vHit2d, qHitRef);
 
+	trajectory_msgs::MultiDOFJointTrajectory cartTrajStop;
+	trajectory_msgs::JointTrajectory jointTrajStop;
+	cartTrajStop.joint_names = state.cartTrajectory.joint_names;
+	jointTrajStop.joint_names = state.jointTrajectory.joint_names;
+
 	for (size_t i = 0; i < 10; ++i) {
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
+		cartTrajStop.points.clear();
+		jointTrajStop.points.clear();
 
 //		if (!generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.cartTrajectory, 0.1)){
 //			return false;
 //		}
 
-		if (!generator.combinatorialHitNew->plan(xCur2d, xHit2d, vHit2d, state.cartTrajectory)){
+		//! Trajectory Planning
+		Vector2d vZero;
+		vZero.setZero();
+		if (!generator.combinatorialHitNew->plan(xCur2d, vZero, xHit2d, vHit2d, state.cartTrajectory)) {
 			return false;
 		}
+		state.cartTrajectory.points.pop_back();
+		Vector2d xPhase2Start(state.cartTrajectory.points.back().transforms[0].translation.x,
+		                      state.cartTrajectory.points.back().transforms[0].translation.y);
+		Vector2d vPhase2Start(state.cartTrajectory.points.back().velocities[0].linear.x,
+		                      state.cartTrajectory.points.back().velocities[0].linear.y);
+		Vector2d xStop2d(xHit2d.x() + 0.2, 0.0);
+		cartTrajStop.points.push_back(state.cartTrajectory.points.back());
+		if (!generator.combinatorialHitNew->plan(xPhase2Start, vPhase2Start, xStop2d, vZero, cartTrajStop)) {
+			return false;
+		}
+
 		generator.transformations->transformTrajectory(state.cartTrajectory);
-		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, qCur,
-		                                                       qHitRef, state.jointTrajectory)) {
-//		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory,
-//		                                                 qCur, state.jointTrajectory)) {
-			if (ros::Time::now() > tStart){
+		generator.transformations->transformTrajectory(cartTrajStop);
+
+		//! Trajectory Optimization
+		bool success = generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, qCur,
+		                                                                  qHitRef, state.jointTrajectory,
+		                                                                  true);
+		if (!success) {
+			vHit2d *= .9;
+			ROS_INFO_STREAM("Optimization Failed [HITTING Phase 1]. Reduce the velocity: " << vHit2d.transpose());
+			continue;
+		}
+
+		//! Append cartesian trajectory
+		cartTrajStop.points.erase(cartTrajStop.points.begin());
+		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
+		                                   cartTrajStop.points.begin(),
+		                                   cartTrajStop.points.end());
+
+		//! Trajectory Optimization for second part
+		iiwas_kinematics::Kinematics::JointArrayType qHitOpt(state.jointTrajectory.points.back().positions.data());
+		success = success && generator.optimizer->optimizeJointTrajectoryAnchor(cartTrajStop, qHitOpt, qHitRef,
+		                                                                        jointTrajStop, false);
+		if (!success) {
+			vHit2d *= .9;
+			ROS_INFO_STREAM("Optimization Failed [HITTING Phase 2]. Reduce the velocity: " << vHit2d.transpose());
+			continue;
+		}
+
+		if (success) {
+			state.jointTrajectory.points.insert(state.jointTrajectory.points.end(),
+			                                    jointTrajStop.points.begin(),
+			                                    jointTrajStop.points.end());
+
+
+			if (ros::Time::now() > tStart) {
 				tStart = ros::Time::now();
 			}
 
 			auto tHitStart = state.observation.stamp +
-					ros::Duration(agentParams.tPredictionMax) -
-					state.jointTrajectory.points.back().time_from_start;
-			if (tStart < tHitStart){
+			                 ros::Duration(agentParams.tPredictionMax) -
+			                 state.jointTrajectory.points.back().time_from_start;
+			if (tStart < tHitStart) {
 				tStart = tHitStart;
 			}
 
@@ -180,6 +231,8 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 		}
 	}
 
+	state.jointTrajectory.points.clear();
+	state.cartTrajectory.points.clear();
 	ROS_INFO_STREAM("Failed to find a feasible movement [HITTING]");
 	return false;
 }

@@ -28,40 +28,45 @@
 #include "trajectory_msgs/MultiDOFJointTrajectory.h"
 #include "trajectory_msgs/MultiDOFJointTrajectoryPoint.h"
 
-namespace air_hockey_baseline_agent{
+namespace air_hockey_baseline_agent {
 	class CombinatorialHitNew {
 	public:
 		CombinatorialHitNew(Eigen::Vector2d bound_lower, Eigen::Vector2d bound_upper, double rate, double height);
+
 		~CombinatorialHitNew();
 
-		bool plan(const Eigen::Vector2d &xStart, const Eigen::Vector2d &xHit, const Eigen::Vector2d &vHit,
-				  trajectory_msgs::MultiDOFJointTrajectory &cartTraj);
+		bool plan(const Eigen::Vector2d &xStart, const Eigen::Vector2d &vStart,
+		          const Eigen::Vector2d &xEnd, const Eigen::Vector2d &vEnd,
+		          trajectory_msgs::MultiDOFJointTrajectory &cartTraj);
 
 	private:
 		bool getMiddlePoint();
+
 		bool getArcCenter();
+
 		void fitPhase();
+
 		void getPoint(const double t);
 
 	private:
 		Eigen::Vector2d boundLower, boundUpper;
 
-		Eigen::Vector2d xStart, xMiddle1, xHit, xMiddle2, xStop;      //! Start point, middle point, final point, final velocity
-		Eigen::Vector2d vecDir1, vecDir2, vecDir3;           //! Unit vector of linear 1 and 2
-		Eigen::Vector2d xArcCenter1, xArcCenter2, xVia1, xVia2, xVia3, xVia4;   //! Via point of arc
+		Eigen::Vector2d xStart, xMiddle, xEnd;      //! Start point, middle point, final point, final velocity
+		Eigen::Vector2d vecDir1, vecDir2, vDir;     //! Unit vector of linear 1, 2 and velocity direction
+		Eigen::Vector2d xArcCenter, xVia1, xVia2;   //! Via point of arc
 		double stepSize;
 		double height;
-		double vHitMag;                                      //! Magnitude of hitting velocity
-		double tHitPhase, tStopPhase;
-		double arcAngle1, arcRadius1, arcLength1, arcAngle2, arcRadius2, arcLength2;
-		double counterClockWise1, counterClockWise2;         //! Indicator of arc direction 1: clockwise, -1: counterclockwise
-		double l1, l2, l3, l4, lHit;                         //! Length of different segments
+		double vMag;                  				//! Magnitude of hitting velocity
+		double tEnd;
+		double arcAngle, arcRadius, arcLength;
+		double counterClockWise;         			//! Indicator of arc direction 1: clockwise, -1: counterclockwise
+		double l1, l2, lHit;                        //! Length of different segments
 		Eigen::Matrix<double, 5, 1> phaseCoeff;
-		Eigen::Matrix<double, 5, 1> stopPhaseCoeff;
 
 		double z, dz_dt, dz_ddt;                    //! Phase variable (arc length, velocity, acceleration)
 		Eigen::Vector2d x, dx_dt, dx_ddt;           //! 2d position variable (arc length, velocity, acceleration)
 		trajectory_msgs::MultiDOFJointTrajectoryPoint viaPoint;
+		bool isStartPart;
 	};
 }
 

@@ -32,7 +32,6 @@ using namespace air_hockey_baseline_agent;
 Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
              SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
-	debugCount = 0;
 }
 
 bool Ready::ready() {
@@ -42,40 +41,47 @@ bool Ready::ready() {
 bool Ready::apply() {
 	state.isNewTactics = false;
 
-	Vector3d xStart, vStart;
-	Vector2d xStart2d, vStart2d;
+	Vector3d xCur, vCur;
+	Vector2d xCur2d, vCur2d;
 	ros::Time tStart;
 	Kinematics::JointArrayType qStart, dqStart;
 
-	state.getPlannedJointState(qStart, dqStart, tStart,
-	                           agentParams.planTimeOffset);
+	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
 
-	generator.getCartesianPosAndVel(xStart, vStart, qStart, dqStart);
+	generator.getCartesianPosAndVel(xCur, vCur, qStart, dqStart);
 
-	generator.transformations->applyInverseTransform(xStart);
-	generator.transformations->applyInverseRotation(vStart);
+	generator.transformations->applyInverseTransform(xCur);
+	generator.transformations->applyInverseRotation(vCur);
 
-	xStart2d = xStart.block<2, 1>(0, 0);
-	vStart2d = vStart.block<2, 1>(0, 0);
+	xCur2d = xCur.block<2, 1>(0, 0);
+	vCur2d = vCur.block<2, 1>(0, 0);
 
-	double tStop = std::max((agentParams.xHome.block<2, 1>(0, 0) - xStart2d).norm() / 0.5, 1 / 0.5);
-	for (int i = 0; i < 10; ++i) {
+	double tStop = std::max((agentParams.xHome.block<2, 1>(0, 0) - xCur2d).norm() / 0.5, 2.0);
+	for (int i = 0; i < 1; ++i) {
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
-		generator.cubicLinearMotion->plan(xStart2d, vStart2d, agentParams.xHome.block<2, 1>(0, 0),
+		generator.cubicLinearMotion->plan(xCur2d, vCur2d, agentParams.xHome.block<2, 1>(0, 0),
 		                                  Vector2d(0., 0.), tStop, state.cartTrajectory);
 		generator.transformations->transformTrajectory(state.cartTrajectory);
+
 		if (!generator.optimizer->optimizeJointTrajectoryAnchor(
-				state.cartTrajectory, qStart, agentParams.qHome, state.jointTrajectory)) {
+				state.cartTrajectory, qStart, agentParams.qHome, state.jointTrajectory, true)) {
+			ROS_INFO_STREAM("xStart: " << xCur2d.transpose() << " vStart: "<< vCur2d.transpose() << " tStop: "<< tStop << " xHome: " << agentParams.xHome.transpose());
 			ROS_INFO_STREAM("Optimization Failed [READY]. Increase the motion time: " << tStop);
+			failed = true;
+			return true;
 			tStop += 0.5;
 		} else {
+			failed = false;
 			state.jointTrajectory.header.stamp = tStart;
 			state.cartTrajectory.header.stamp = tStart;
 			return true;
 		}
 	}
 	ROS_INFO_STREAM("Optimization Failed [READY]. Unable to find trajectory for Ready");
+	state.jointTrajectory.points.clear();
+	state.cartTrajectory.points.clear();
+	exit(-1);
 	return false;
 }
 
@@ -84,6 +90,9 @@ Ready::~Ready() {
 }
 
 void Ready::setNextState() {
+	if (failed){
+		exit(-1);
+	}
 	if (ros::Time::now().toSec() > state.tNewTactics) {
 		if (state.isPuckStatic()) {
 			if (canSmash()) {

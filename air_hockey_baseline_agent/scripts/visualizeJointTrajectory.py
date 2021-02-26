@@ -5,8 +5,8 @@ import rosbag
 from trajectory_msgs.msg import JointTrajectory
 from iiwas_kinematics_py import Kinematics
 
-input_dir = os.path.abspath("/home/puze/air_hockey_record/joint_trajectory")
-file_name = "AnchorProjected+Phase.bag"
+input_dir = os.path.abspath("/home/puze/air_hockey_record/joint_trajectory/NewHit")
+file_name = "2021-02-26-16-47-08.bag"
 
 desired_positions = []
 desired_velocities = []
@@ -25,21 +25,25 @@ kinematics = Kinematics(np.array([0., 0., 0.515]), np.array([0., 0., 0., 1.]))
 
 bag = rosbag.Bag(os.path.join(input_dir, file_name))
 t_start = bag.get_start_time()
+i = 0
 for topic, msg, t in bag.read_messages():
     if topic == "/iiwa_front/joint_position_trajectory_controller/state":
         msg: JointTrajectory
-        desired_positions.append(msg.desired.positions)
-        desired_velocities.append(msg.desired.velocities)
-        desired_accelerations.append(msg.desired.accelerations)
-        actual_positions.append(msg.actual.positions)
-        actual_velocities.append(msg.actual.velocities)
-        actual_accelerations.append(msg.actual.accelerations)
-        error_positions.append(msg.error.positions)
-        error_velocities.append(msg.error.velocities)
-        error_accelerations.append(msg.error.accelerations)
-        time.append(msg.header.stamp.to_sec() - t_start)
-        desired_cart_pos.append(kinematics.forward_kinematics(np.array(msg.desired.positions))[0])
-        actual_cart_pos.append(kinematics.forward_kinematics(np.array(msg.actual.positions))[0])
+        i += 1
+        if(i%1 == 0):
+            desired_positions.append(msg.desired.positions)
+            desired_velocities.append(msg.desired.velocities)
+            desired_accelerations.append(msg.desired.accelerations)
+            actual_positions.append(msg.actual.positions)
+            actual_velocities.append(msg.actual.velocities)
+            actual_accelerations.append(msg.actual.accelerations)
+            error_positions.append(msg.error.positions)
+            error_velocities.append(msg.error.velocities)
+            error_accelerations.append(msg.error.accelerations)
+            time.append(msg.header.stamp.to_sec() - t_start)
+            desired_cart_pos.append(kinematics.forward_kinematics(np.array(msg.desired.positions))[0])
+            actual_cart_pos.append(kinematics.forward_kinematics(np.array(msg.actual.positions))[0])
+
 
 desired_positions = np.array(desired_positions)
 desired_velocities = np.array(desired_velocities)
@@ -55,7 +59,7 @@ actual_cart_pos = np.array(actual_cart_pos)
 time = np.array(time)
 
 for i in range(7):
-    fig, axes = plt.subplots(2)
+    fig, axes = plt.subplots(3)
     fig.suptitle("Joint_" + str(i + 1))
     axes[0].scatter(time, desired_positions[:, i], s=3, label='desired')
     axes[0].scatter(time, actual_positions[:, i], s=3, label='actual')
@@ -65,6 +69,9 @@ for i in range(7):
     axes[1].scatter(time, actual_velocities[:, i], s=3, label='actual')
     axes[1].legend()
     # axes[1].plot(time, error_velocities[:, i])
+    axes[2].scatter(time, desired_accelerations[:, i], s=3, label='desired')
+    # axes[2].scatter(time, actual_accelerations[:, i], s=3, label='actual')
+    axes[2].legend()
 
 fig, axes = plt.subplots(3)
 fig.suptitle("Cartesian Position")

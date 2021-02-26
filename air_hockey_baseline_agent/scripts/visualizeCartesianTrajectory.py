@@ -4,8 +4,8 @@ import os
 import rosbag
 from trajectory_msgs.msg import MultiDOFJointTrajectory
 
-input_dir = os.path.abspath("/home/puze/air_hockey_record")
-file_name = "2021-01-28-18-28-34.bag"
+input_dir = os.path.abspath("/home/puze/air_hockey_record/joint_trajectory/NewHit")
+file_name = "2021-02-26-19-22-55.bag"
 
 positions = []
 velocities = []
@@ -14,7 +14,7 @@ time = []
 
 bag = rosbag.Bag(os.path.join(input_dir, file_name))
 for topic, msg, t in bag.read_messages():
-    if topic == "/iiwa_back/cartesian_trajectory":
+    if topic == "/iiwa_front/cartesian_trajectory":
         msg:MultiDOFJointTrajectory
         for i in range(msg.points.__len__()):
             positions.append([msg.points[i].transforms[0].translation.x, msg.points[i].transforms[0].translation.y,
@@ -59,5 +59,8 @@ fig1.suptitle("Velocities")
 
 fig3, axes3 = plt.subplots(1, 1)
 axes3.scatter(positions[:, 0], positions[:, 1], s=5)
+axes3.set_xlim([0.5, 1.5])
+axes3.set_ylim([-0.45, 0.45])
+axes3.set_aspect(aspect=1)
 
 plt.show()

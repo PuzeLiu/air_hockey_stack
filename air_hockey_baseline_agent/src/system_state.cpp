@@ -61,10 +61,12 @@ void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
 	q = observation.jointPosition;
 	dq = observation.jointVelocity;
 
-	if (jointTrajectory.points.size() > 0) {
+	if (!jointTrajectory.points.empty()) {
 		tStart = ros::Time::now() + ros::Duration(offset_t);
 		ros::Time tLast = jointTrajectory.header.stamp
 		                  + jointTrajectory.points.back().time_from_start;
+		ROS_INFO_STREAM("DEBUG##########" << tStart<< " ############ " << tLast);
+
 		if (tStart <= tLast) {
 			for (int i = 0; i < jointTrajectory.points.size(); ++i) {
 				if (tStart < jointTrajectory.header.stamp + jointTrajectory.points[i].time_from_start) {
@@ -75,6 +77,12 @@ void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
 					}
 					break;
 				}
+			}
+		} else {
+			for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+				q[j] = jointTrajectory.points.back().positions[j];
+				dq[j] = jointTrajectory.points.back().velocities[j];
+				tStart = jointTrajectory.header.stamp + jointTrajectory.points.back().time_from_start;
 			}
 		}
 	}

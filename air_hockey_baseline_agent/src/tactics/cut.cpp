@@ -40,9 +40,15 @@ bool Cut::ready() {
 	if (collisionNumPrev != state.observation.puckPredictedState.numOfCollisions){
 		collisionNumPrev = state.observation.puckPredictedState.numOfCollisions;
 		waitForSteps = 5;
-	} else if (state.observation.puckPredictedState.predictedTime > 0.05 &&
+	} else if (state.observation.puckPredictedState.predictedTime > 0.3 &&
 	     (xCut - xCutPrev).norm() > (envParams.puckRadius + envParams.malletRadius)) {
-		state.isNewTactics = true;
+		if (differenceCount > 5){
+			state.isNewTactics = true;
+		} else {
+			++differenceCount;
+		}
+	} else {
+		differenceCount = 0;
 	}
 
 	return state.isNewTactics;
@@ -78,24 +84,22 @@ bool Cut::apply() {
 	                                   -envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
 	                                   envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
 
-	for (int i = 0; i < 10; ++i) {
-		state.cartTrajectory.points.clear();
-		state.jointTrajectory.points.clear();
-		generator.cubicLinearMotion->plan(xCur2d, vCur2d, xCut,
-		                                  Vector2d(0., 0.), tStop, state.cartTrajectory);
-		generator.transformations->transformTrajectory(state.cartTrajectory);
+	state.cartTrajectory.points.clear();
+	state.jointTrajectory.points.clear();
+	generator.cubicLinearMotion->plan(xCur2d, vCur2d, xCut,
+	                                  Vector2d(0., 0.), tStop, state.cartTrajectory);
+	generator.transformations->transformTrajectory(state.cartTrajectory);
 
-		if (!generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, qStart,	state.jointTrajectory)) {
-			ROS_INFO_STREAM("Optimization Failed [Cut]. Increase the motion time: " << tStop);
-			tStop += 0.1;
-		} else {
-			state.jointTrajectory.header.stamp = tStart;
-			state.cartTrajectory.header.stamp = tStart;
-			return true;
-		}
+	ROS_INFO_STREAM("x: " << xCur2d.transpose() << " v: " << vCur2d.transpose() << " cut: " << xCut.transpose());
+	if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, qStart,	state.jointTrajectory)) {
+		state.jointTrajectory.header.stamp = tStart;
+		state.cartTrajectory.header.stamp = tStart;
+		return true;
 	}
 
 	ROS_INFO_STREAM("Optimization Failed [Cut].");
+	state.jointTrajectory.points.clear();
+	state.cartTrajectory.points.clear();
 	return false;
 }
 
@@ -104,7 +108,7 @@ Cut::~Cut() {
 }
 
 void Cut::setNextState() {
-	if (state.isPuckApproaching() &&
+	if (state.isPuckApproaching() && state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax &&
 	    abs(state.observation.puckPredictedState.state.y()) > agentParams.defendZoneWidth / 2) {
 		setTactic(CUT);
 	} else {

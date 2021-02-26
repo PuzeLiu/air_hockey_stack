@@ -91,7 +91,7 @@ public:
 	~Ready() override;
 
 protected:
-	int debugCount;
+	bool failed;
 };
 
 class Cut: public Tactic {
@@ -105,8 +105,11 @@ public:
 
 protected:
 	void calculateCutPosition();
+	bool generateCutTrajectory(iiwas_kinematics::Kinematics::JointArrayType &qStart,
+	                           iiwas_kinematics::Kinematics::JointArrayType &dqStart,
+	                           ros::Time tStart);
 	Eigen::Vector2d xCut, xCutPrev;
-	int collisionNumPrev, waitForSteps;
+	int collisionNumPrev, waitForSteps, differenceCount;
 };
 
 class Repel: public Tactic {
