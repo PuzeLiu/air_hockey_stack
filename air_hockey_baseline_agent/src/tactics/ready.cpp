@@ -87,10 +87,7 @@ void Ready::setNextState() {
 	if (ros::Time::now().toSec() > state.tNewTactics) {
 		if (state.isPuckStatic()) {
 			if (canSmash()) {
-				if (debugCount == 0){
-					setTactic(SMASH);
-					++debugCount;
-				}
+                setTactic(SMASH);
 			} else if (puckStuck()) {
 				setTactic(PREPARE);
 			} else {
