@@ -67,8 +67,8 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &x_start, const Eigen::Vect
 
 	//! check the position at start and end point
 	if ((xEnd - xStart).x() * vDir.x() < 0) {
-		cerr << "Unable to plan the trajectory. The points relative position is not aligned with hitting direction"
-		     << endl;
+		cerr << "Unable to plan the trajectory. The points relative position is not aligned with hitting direction" << endl;
+		return false;
 	}
 
 	if (!getMiddlePoint()) {
@@ -182,14 +182,14 @@ bool CombinatorialHitNew::getArcCenter() {
 
 void CombinatorialHitNew::fitPhase() {
 	if (isStartPart) {
-		tEnd = 2 * (l1 + arcLength + l2) / vMag;
+		tEnd = 2 * lHit / vMag;
 		phaseCoeff[0] = 0.;
 		phaseCoeff[1] = 0.;
 		phaseCoeff[2] = 0.;
 		phaseCoeff[3] = pow(vMag, 3) / 4 / pow(l1 + arcLength + l2, 2);
 		phaseCoeff[4] = -pow(vMag, 4) / 16 / pow(l1 + arcLength + l2, 3);
 	} else {
-		tEnd = 2 * (l1 + arcLength + l2) / vMag;
+		tEnd = 2 * lHit / vMag;
 		phaseCoeff[0] = 0.;
 		phaseCoeff[1] = vMag;
 		phaseCoeff[2] = 0.;
