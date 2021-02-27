@@ -219,9 +219,11 @@ void PuckTracker::startTracking() {
 bool PuckTracker::getMeasurement() {
 	try {
 		tfPuck_ = tfBuffer_.lookupTransform(tableRefName_, "Puck", ros::Time(0));
-		if (abs((tfPuck_.header.stamp - stamp_).toSec()) > rate_->expectedCycleTime().toSec()) {
-			ROS_WARN_STREAM("Time Difference is too big" << (tfPuck_.header.stamp - stamp_).toSec());
-			return false;
+		if ((tfPuck_.header.stamp - stamp_) > rate_->expectedCycleTime()) {
+			stamp_ = tfPuck_.header.stamp;
+		} else if (tfPuck_.header.stamp - stamp_ < -rate_->expectedCycleTime()) {
+		    ROS_WARN_STREAM("TF data is " << tfPuck_.header.stamp - stamp_<< "s behind, Ignored");
+            return false;
 		}
 		measurement_.x() = tfPuck_.transform.translation.x;
 		measurement_.y() = tfPuck_.transform.translation.y;
