@@ -35,7 +35,7 @@ Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Ready::ready() {
-	return state.isNewTactics || !state.hasActiveTrajectory();
+	return !state.hasActiveTrajectory();
 }
 
 bool Ready::apply() {
@@ -66,10 +66,7 @@ bool Ready::apply() {
 
 		if (!generator.optimizer->optimizeJointTrajectoryAnchor(
 				state.cartTrajectory, qStart, agentParams.qHome, state.jointTrajectory, true)) {
-			ROS_INFO_STREAM("xStart: " << xCur2d.transpose() << " vStart: "<< vCur2d.transpose() << " tStop: "<< tStop << " xHome: " << agentParams.xHome.transpose());
 			ROS_INFO_STREAM("Optimization Failed [READY]. Increase the motion time: " << tStop);
-			failed = true;
-			return true;
 			tStop += 0.5;
 		} else {
 			failed = false;
@@ -81,7 +78,6 @@ bool Ready::apply() {
 	ROS_INFO_STREAM("Optimization Failed [READY]. Unable to find trajectory for Ready");
 	state.jointTrajectory.points.clear();
 	state.cartTrajectory.points.clear();
-	exit(-1);
 	return false;
 }
 
@@ -90,9 +86,6 @@ Ready::~Ready() {
 }
 
 void Ready::setNextState() {
-	if (failed){
-		exit(-1);
-	}
 	if (ros::Time::now().toSec() > state.tNewTactics) {
 		if (state.isPuckStatic()) {
 			if (canSmash()) {

@@ -90,7 +90,6 @@ bool Cut::apply() {
 	                                  Vector2d(0., 0.), tStop, state.cartTrajectory);
 	generator.transformations->transformTrajectory(state.cartTrajectory);
 
-	ROS_INFO_STREAM("x: " << xCur2d.transpose() << " v: " << vCur2d.transpose() << " cut: " << xCut.transpose());
 	if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, qStart,	state.jointTrajectory)) {
 		state.jointTrajectory.header.stamp = tStart;
 		state.cartTrajectory.header.stamp = tStart;

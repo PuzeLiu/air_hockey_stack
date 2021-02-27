@@ -65,7 +65,6 @@ void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
 		tStart = ros::Time::now() + ros::Duration(offset_t);
 		ros::Time tLast = jointTrajectory.header.stamp
 		                  + jointTrajectory.points.back().time_from_start;
-		ROS_INFO_STREAM("DEBUG##########" << tStart<< " ############ " << tLast);
 
 		if (tStart <= tLast) {
 			for (int i = 0; i < jointTrajectory.points.size(); ++i) {
@@ -82,7 +81,6 @@ void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
 			for (int j = 0; j < NUM_OF_JOINTS; ++j) {
 				q[j] = jointTrajectory.points.back().positions[j];
 				dq[j] = jointTrajectory.points.back().velocities[j];
-				tStart = jointTrajectory.header.stamp + jointTrajectory.points.back().time_from_start;
 			}
 		}
 	}

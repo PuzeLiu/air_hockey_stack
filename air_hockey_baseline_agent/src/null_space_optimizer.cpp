@@ -216,11 +216,14 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
 	q_ = b.transpose() * weights_.asDiagonal() * nullSpace_;
 	A_ = nullSpace_.sparseView();
 
+	upperBound_ = kinematics_->velLimitsUpper_.cwiseMin((kinematics_->posLimitsUpper_ * 0.95 - qCur) / stepSize_);
+    lowerBound_ = kinematics_->velLimitsLower_.cwiseMax((kinematics_->posLimitsLower_ * 0.95 - qCur) / stepSize_);
+
 	if (!solver_.clearSolverVariables()) { return false; }
 	if (!solver_.updateHessianMatrix(P_)) { return false; }
 	if (!solver_.updateGradient(q_)) { return false; }
 	if (!solver_.updateLinearConstraintsMatrix(A_)) { return false; }
-	if (!solver_.updateBounds(kinematics_->velLimitsLower_ - b, kinematics_->velLimitsUpper_ - b)) { return false; }
+	if (!solver_.updateBounds(lowerBound_ - b, upperBound_ - b)) { return false; }
 	if (!solver_.solve()) {
 		return false;
 	}
@@ -258,11 +261,14 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 	q_ = omega.transpose() * weightsAnchor_.asDiagonal() * nullSpace_;
 	A_ = nullSpace_.sparseView();
 
+    upperBound_ = kinematics_->velLimitsUpper_.cwiseMin((kinematics_->posLimitsUpper_ * 0.95 - qCur) / stepSize_);
+    lowerBound_ = kinematics_->velLimitsLower_.cwiseMax((kinematics_->posLimitsLower_ * 0.95 - qCur) / stepSize_);
+
 	if (!solver_.clearSolverVariables()) { return false; }
 	if (!solver_.updateHessianMatrix(P_)) { return false; }
 	if (!solver_.updateGradient(q_)) { return false; }
 	if (!solver_.updateLinearConstraintsMatrix(A_)) { return false; }
-	if (!solver_.updateBounds(kinematics_->velLimitsLower_ - b, kinematics_->velLimitsUpper_ - b)) { return false; }
+	if (!solver_.updateBounds(lowerBound_ - b, upperBound_ - b)) { return false; }
 	if (!solver_.solve()) {
 		return false;
 	}

@@ -90,6 +90,7 @@ namespace air_hockey_baseline_agent {
         JacobianPosType jacobian_;
         Eigen::MatrixXd nullSpace_;
 
+        JointArrayType upperBound_, lowerBound_;
         JointArrayType weights_, weightsAnchor_;
     };
 }
