@@ -106,7 +106,7 @@ void Smash::getHitPointVelocity(Vector2d &xHit2d, Vector2d &vHit2d,
 	// prepare output
 	generator.transformations->applyInverseTransform(xHit);
 	generator.transformations->applyInverseRotation(vHit);
-	vHit = vHit * velMag;
+	vHit = vHit * velMag * agentParams.hitVelocityScale;
 	xHit2d = xHit.block<2, 1>(0, 0);
 	vHit2d = vHit.block<2, 1>(0, 0);
 }
@@ -148,31 +148,25 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 		cartTrajStop.points.clear();
 		jointTrajStop.points.clear();
 
-//		if (!generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.cartTrajectory, 0.1)){
-//			return false;
-//		}
-
-		//! Trajectory Planning
+		//! ############ Phase 1 ############
 		Vector2d vZero;
 		vZero.setZero();
 		if (!generator.combinatorialHitNew->plan(xCur2d, vZero, xHit2d, vHit2d, state.cartTrajectory)) {
 			return false;
 		}
-		state.cartTrajectory.points.pop_back();
+
 		Vector2d xPhase2Start(state.cartTrajectory.points.back().transforms[0].translation.x,
 		                      state.cartTrajectory.points.back().transforms[0].translation.y);
 		Vector2d vPhase2Start(state.cartTrajectory.points.back().velocities[0].linear.x,
 		                      state.cartTrajectory.points.back().velocities[0].linear.y);
-		Vector2d xStop2d(xHit2d.x() + 0.2, 0.0);
+		Vector2d xStop2d = getStopPoint(xHit2d);
 		cartTrajStop.points.push_back(state.cartTrajectory.points.back());
-		if (!generator.combinatorialHitNew->plan(xPhase2Start, vPhase2Start, xStop2d, vZero, cartTrajStop)) {
-			return false;
-		}
 
 		generator.transformations->transformTrajectory(state.cartTrajectory);
-		generator.transformations->transformTrajectory(cartTrajStop);
 
-		//! Trajectory Optimization
+		//! TODO debug last point
+		state.cartTrajectory.points.pop_back();
+
 		bool success = generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, qCur,
 		                                                                  qHitRef, state.jointTrajectory,
 		                                                                  true);
@@ -182,11 +176,11 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 			continue;
 		}
 
-		//! Append cartesian trajectory
-		cartTrajStop.points.erase(cartTrajStop.points.begin());
-		state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
-		                                   cartTrajStop.points.begin(),
-		                                   cartTrajStop.points.end());
+		//! ############ Phase 2 ############
+		if (!generator.combinatorialHitNew->plan(xPhase2Start, vPhase2Start, xStop2d, vZero, cartTrajStop)) {
+			return false;
+		}
+		generator.transformations->transformTrajectory(cartTrajStop);
 
 		//! Trajectory Optimization for second part
 		iiwas_kinematics::Kinematics::JointArrayType qHitOpt(state.jointTrajectory.points.back().positions.data());
@@ -196,13 +190,15 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 			vHit2d *= .9;
 			ROS_INFO_STREAM("Optimization Failed [HITTING Phase 2]. Reduce the velocity: " << vHit2d.transpose());
 			continue;
-		}
-
-		if (success) {
+		} else {
+			//! Concatenate trajectory
+			cartTrajStop.points.erase(cartTrajStop.points.begin());
+			state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
+			                                   cartTrajStop.points.begin(),
+			                                   cartTrajStop.points.end());
 			state.jointTrajectory.points.insert(state.jointTrajectory.points.end(),
 			                                    jointTrajStop.points.begin(),
 			                                    jointTrajStop.points.end());
-
 
 			if (ros::Time::now() > tStart) {
 				tStart = ros::Time::now();
@@ -211,6 +207,7 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 			auto tHitStart = state.observation.stamp +
 			                 ros::Duration(agentParams.tPredictionMax) -
 			                 state.jointTrajectory.points.back().time_from_start;
+
 			if (tStart < tHitStart) {
 				tStart = tHitStart;
 			}
@@ -219,15 +216,11 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 //            std::ofstream file("/home/puze/Desktop/100/weighted_lp_nl_opt_left.csv", std::ios::app);
 //			file << xHit2d.x() << ", " << xHit2d.y() << ", " << vHit2d.x() << ", " <<vHit2d.y() << ", " << vHit2d.norm() << std::endl;
 //			file.close();
-//
+
 			ROS_INFO_STREAM("[HITTING] velocity: " << vHit2d.norm());
 			state.jointTrajectory.header.stamp = tStart;
 			state.cartTrajectory.header.stamp = tStart;
 			return true;
-		} else {
-			vHit2d *= .9;
-			ROS_INFO_STREAM("Optimization Failed [HITTING]. Reduce the velocity: " << vHit2d.transpose());
-			continue;
 		}
 	}
 
@@ -235,4 +228,18 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 	state.cartTrajectory.points.clear();
 	ROS_INFO_STREAM("Failed to find a feasible movement [HITTING]");
 	return false;
+}
+
+Vector2d Smash::getStopPoint(Eigen::Vector2d hitPoint) {
+	Vector2d stopPoint;
+	if (hitPoint.y() > 0) {
+		stopPoint = hitPoint + Vector2d(0.2, -0.2);
+	} else {
+		stopPoint = hitPoint + Vector2d(0.2, 0.2);
+	}
+
+	stopPoint.x() = fmin(stopPoint.x(), agentParams.hitRange[1]);
+	stopPoint.y() = fmax(fmin(stopPoint.y(), envParams.tableWidth/2 - envParams.malletRadius - 0.05),
+	                     -envParams.tableWidth/2 + envParams.malletRadius + 0.05);
+	return stopPoint;
 }

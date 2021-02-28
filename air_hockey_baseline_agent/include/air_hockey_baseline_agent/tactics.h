@@ -168,6 +168,7 @@ public:
 
 protected:
 	Eigen::Vector3d computeTarget(Eigen::Vector3d puckPosition);
+	Eigen::Vector2d getStopPoint(Eigen::Vector2d hitPoint);
     void getHitPointVelocity(Eigen::Vector2d &xHit2d, Eigen::Vector2d &vHit2d,
                              iiwas_kinematics::Kinematics::JointArrayType &qHitRef);
     bool generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart);

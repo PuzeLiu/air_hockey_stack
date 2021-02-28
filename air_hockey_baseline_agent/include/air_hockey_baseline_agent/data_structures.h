@@ -76,6 +76,7 @@ struct AgentParams {
 	double planTimeOffset;
 	double tPredictionMax;
 	double tTacticSwitchMin;
+	double hitVelocityScale;
 };
 
 struct ObservationState {
