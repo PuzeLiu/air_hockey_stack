@@ -22,7 +22,7 @@ def main():
             set_puck_state.model_state.pose.position.z = 0.
 
             set_puck_state_service(set_puck_state)
-            rospy.sleep(3)
+            rospy.sleep(5)
 
             set_puck_state.model_state.pose.position.x = 0.4
             set_puck_state.model_state.pose.position.y = 0.

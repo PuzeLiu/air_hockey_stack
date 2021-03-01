@@ -94,7 +94,7 @@ void Ready::setNextState() {
 //			else if (puckStuck()) {
 //				setTactic(PREPARE);
 //			} else {
-				setTactic(READY);
+//				setTactic(READY);
 //			}
 		} else if (state.isPuckApproaching()) {
 //			if (shouldRepel()) {
@@ -102,7 +102,7 @@ void Ready::setNextState() {
 //			} else if (shouldCut()) {
 //				setTactic(CUT);
 //			} else {
-				setTactic(READY);
+//				setTactic(READY);
 //			}
 		} else {
 			setTactic(READY);

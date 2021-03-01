@@ -183,10 +183,10 @@ void PuckTracker::setCovariance() {
 }
 
 void PuckTracker::startTracking() {
-	stamp_ = ros::Time::now();
 	rate_->sleep();
-
+    stamp_ = ros::Time::now();
 	while (nh_.ok()) {
+	    rate_->sleep();
 		if (doPrediction_) {
 			//! predict step
 			kalmanFilter_->predict(*systemModel_, u_);
@@ -212,7 +212,6 @@ void PuckTracker::startTracking() {
 			}
 		}
 		stamp_ += rate_->expectedCycleTime();
-		rate_->sleep();
 	}
 }
 
@@ -222,7 +221,7 @@ bool PuckTracker::getMeasurement() {
 		if ((tfPuck_.header.stamp - stamp_) > rate_->expectedCycleTime()) {
 			stamp_ = tfPuck_.header.stamp;
 		} else if (tfPuck_.header.stamp - stamp_ < -rate_->expectedCycleTime()) {
-		    ROS_WARN_STREAM("TF data is " << tfPuck_.header.stamp - stamp_<< "s behind, Ignored");
+//		    ROS_WARN_STREAM("TF data is " << tfPuck_.header.stamp - stamp_<< "s behind, Ignored");
             return false;
 		}
 		measurement_.x() = tfPuck_.transform.translation.x;

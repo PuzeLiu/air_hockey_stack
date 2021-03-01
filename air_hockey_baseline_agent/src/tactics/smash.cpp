@@ -72,10 +72,10 @@ bool Smash::apply() {
 Vector3d Smash::computeTarget(Vector3d puckPosition) {
 	Vector3d xTarget;
 	auto random_integer = dist(gen);
-	//TODO comment
-	if (puckPosition.y() >= 0.2) {
+	// TODO comment
+	if (puckPosition.y() < 0.) {
 	    random_integer = 1;
-	} else if (puckPosition.y() <= -0.2){
+	} else if (puckPosition.y() > 0.){
 	    random_integer = 2;
 	} else {
 	    random_integer = 0;
@@ -148,7 +148,6 @@ void Smash::setNextState() {
 
 
 bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart) {
-	Vector2d xCur2d, xHit2d, vHit2d;
 	iiwas_kinematics::Kinematics::JointArrayType qHitRef;
 
 	Vector3d xCur;
