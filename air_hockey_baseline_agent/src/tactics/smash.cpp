@@ -187,6 +187,7 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 		//! TODO debug last point
 		state.cartTrajectory.points.pop_back();
 
+//		bool success = generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, qCur, state.jointTrajectory);
 		bool success = generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, qCur,
 		                                                                  qHitRef, state.jointTrajectory,
 		                                                                  true);
