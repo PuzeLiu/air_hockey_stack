@@ -25,7 +25,8 @@
 #include <Eigen/Dense>
 
 ////! TODO delete
-//#include <fstream>
+#include <fstream>
+#include <chrono>
 
 using namespace Eigen;
 using namespace trajectory_msgs;
@@ -51,7 +52,20 @@ bool Smash::apply() {
 		return true;
 	} else {
 		state.isNewTactics = false;
-		return generateHitTrajectory(qStart, tStart);
+        auto t_start = std::chrono::high_resolution_clock::now();
+
+		bool success = generateHitTrajectory(qStart, tStart);
+
+		auto t_end = std::chrono::high_resolution_clock::now();
+		double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+
+		//! TODO delete
+		std::ofstream file("/home/puze/Dropbox/PHD/AirHockey/IROS/hitting_point_optimization/3_levels/easy/lp_nlopt.csv", std::ios::app);
+		file << xHit2d.x() << ", " << xHit2d.y() << ", " << vHit2d.x() << ", " <<vHit2d.y()
+		<< ", " << vHit2d.norm() << ", " << elapsed_time_ms << std::endl;
+        file.close();
+
+		return success;
 	}
 }
 
@@ -59,7 +73,14 @@ Vector3d Smash::computeTarget(Vector3d puckPosition) {
 	Vector3d xTarget;
 	auto random_integer = dist(gen);
 	//TODO comment
-	random_integer = 0;
+	if (puckPosition.y() >= 0.2) {
+	    random_integer = 1;
+	} else if (puckPosition.y() <= -0.2){
+	    random_integer = 2;
+	} else {
+	    random_integer = 0;
+	}
+
 	if (puckPosition.y() > 0.1) {
 		xTarget.y() = -0.05;
 	} else if (puckPosition.y() < -0.1) {
@@ -212,11 +233,6 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 				tStart = tHitStart;
 			}
 
-//            //! TODO delete
-//            std::ofstream file("/home/puze/Desktop/100/weighted_lp_nl_opt_left.csv", std::ios::app);
-//			file << xHit2d.x() << ", " << xHit2d.y() << ", " << vHit2d.x() << ", " <<vHit2d.y() << ", " << vHit2d.norm() << std::endl;
-//			file.close();
-
 			ROS_INFO_STREAM("[HITTING] velocity: " << vHit2d.norm());
 			state.jointTrajectory.header.stamp = tStart;
 			state.cartTrajectory.header.stamp = tStart;
@@ -224,6 +240,7 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 		}
 	}
 
+    vHit2d = vHit2d * 0.;
 	state.jointTrajectory.points.clear();
 	state.cartTrajectory.points.clear();
 	ROS_INFO_STREAM("Failed to find a feasible movement [HITTING]");

@@ -13,9 +13,8 @@ def main():
     set_puck_state.model_state.model_name ='puck'
     set_puck_state.model_state.reference_frame = 'air_hockey_table::Table'
 
-    x_array = np.linspace(0.25, 0.9, 10, endpoint=True)
-    y_array = np.linspace(-0.38, 0.38, 10, endpoint=True)
-    x_array = [0.89]
+    x_array = [0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8]
+    y_array = [-0.35, -0.3, -0.25, -0.2, -0.15, -0.1, -0.05, 0.0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35]
     for x in x_array:
         for y in y_array:
             set_puck_state.model_state.pose.position.x = x - 1.956 / 2
@@ -24,8 +23,6 @@ def main():
 
             set_puck_state_service(set_puck_state)
             rospy.sleep(3)
-            if x > 0.8:
-                rospy.sleep(2)
 
             set_puck_state.model_state.pose.position.x = 0.4
             set_puck_state.model_state.pose.position.y = 0.

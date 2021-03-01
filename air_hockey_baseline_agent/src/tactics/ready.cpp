@@ -90,19 +90,20 @@ void Ready::setNextState() {
 		if (state.isPuckStatic()) {
 			if (canSmash()) {
                 setTactic(SMASH);
-			} else if (puckStuck()) {
-				setTactic(PREPARE);
-			} else {
-				setTactic(READY);
 			}
+//			else if (puckStuck()) {
+//				setTactic(PREPARE);
+//			} else {
+				setTactic(READY);
+//			}
 		} else if (state.isPuckApproaching()) {
-			if (shouldRepel()) {
-				setTactic(REPEL);
-			} else if (shouldCut()) {
-				setTactic(CUT);
-			} else {
+//			if (shouldRepel()) {
+//				setTactic(REPEL);
+//			} else if (shouldCut()) {
+//				setTactic(CUT);
+//			} else {
 				setTactic(READY);
-			}
+//			}
 		} else {
 			setTactic(READY);
 		}
