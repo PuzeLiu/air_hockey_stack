@@ -60,7 +60,7 @@ bool Smash::apply() {
 		double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
 
 		//! TODO delete
-		std::ofstream file("/home/puze/Dropbox/PHD/AirHockey/IROS/hitting_point_optimization/3_levels/easy/lp_nlopt.csv", std::ios::app);
+		std::ofstream file("/home/puze/Dropbox/PHD/AirHockey/IROS/hitting_point_optimization/3_levels/hard/lp_nlopt.csv", std::ios::app);
 		file << xHit2d.x() << ", " << xHit2d.y() << ", " << vHit2d.x() << ", " <<vHit2d.y()
 		<< ", " << vHit2d.norm() << ", " << elapsed_time_ms << std::endl;
         file.close();
@@ -74,9 +74,9 @@ Vector3d Smash::computeTarget(Vector3d puckPosition) {
 	auto random_integer = dist(gen);
 	// TODO comment
 	if (puckPosition.y() < 0.) {
-	    random_integer = 1;
-	} else if (puckPosition.y() > 0.){
 	    random_integer = 2;
+	} else if (puckPosition.y() > 0.){
+	    random_integer = 1;
 	} else {
 	    random_integer = 0;
 	}
