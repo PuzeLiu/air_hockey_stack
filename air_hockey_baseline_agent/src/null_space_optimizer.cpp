@@ -69,11 +69,11 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
 		trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 		jointViaPoint_.positions.resize(iiwas_kinematics::NUM_OF_JOINTS);
 		jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
-		jointViaPoint_.accelerations.resize(iiwas_kinematics::NUM_OF_JOINTS);
+//		jointViaPoint_.accelerations.resize(iiwas_kinematics::NUM_OF_JOINTS);
 		for (int i = 0; i < NUM_OF_JOINTS; ++i) {
 			jointViaPoint_.positions[i] = 0;
 			jointViaPoint_.velocities[i] = 0;
-			jointViaPoint_.accelerations[i] = 0;
+//			jointViaPoint_.accelerations[i] = 0;
 		}
 
 		for (size_t i = 0; i < cartTraj.points.size(); ++i) {
@@ -100,7 +100,7 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
 
 			jointViaPoint_.time_from_start = cartTraj.points[i].time_from_start;
 			for (size_t row = 0; row < NUM_OF_JOINTS; row++) {
-				jointViaPoint_.accelerations[row] = 0;
+//				jointViaPoint_.accelerations[row] = 0;
 				jointViaPoint_.velocities[row] = dqNext[row];
 				jointViaPoint_.positions[row] = qNext[row];
 			}
@@ -109,7 +109,6 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
 			qCur = qNext;
 		}
 
-		interpolateAcceleration(jointTraj);
 		return true;
 	} else {
 		return false;
@@ -132,11 +131,11 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 		trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 		jointViaPoint_.positions.resize(iiwas_kinematics::NUM_OF_JOINTS);
 		jointViaPoint_.velocities.resize(iiwas_kinematics::NUM_OF_JOINTS);
-		jointViaPoint_.accelerations.resize(iiwas_kinematics::NUM_OF_JOINTS);
+//		jointViaPoint_.accelerations.resize(iiwas_kinematics::NUM_OF_JOINTS);
 		for (int i = 0; i < NUM_OF_JOINTS; ++i) {
 			jointViaPoint_.positions[i] = 0;
 			jointViaPoint_.velocities[i] = 0;
-			jointViaPoint_.accelerations[i] = 0;
+//			jointViaPoint_.accelerations[i] = 0;
 		}
 
 		for (size_t i = 0; i < cartTraj.points.size(); ++i) {
@@ -177,7 +176,7 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 
 			jointViaPoint_.time_from_start = cartTraj.points[i].time_from_start;
 			for (size_t row = 0; row < NUM_OF_JOINTS; row++) {
-				jointViaPoint_.accelerations[row] = 0.;
+//				jointViaPoint_.accelerations[row] = 0.;
 				jointViaPoint_.velocities[row] = dqNext[row];
 				jointViaPoint_.positions[row] = qNext[row];
 			}
@@ -186,7 +185,6 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 			qCur = qNext;
 		}
 
-		interpolateAcceleration(jointTraj);
 		return true;
 	} else {
 		return false;
@@ -303,12 +301,3 @@ void NullSpaceOptimizer::SolveJoint7(JointArrayType &q, JointArrayType &dq) {
 	dq[6] = (q[6] - qCur7) / stepSize_;
 }
 
-void NullSpaceOptimizer::interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj) {
-	for (int i = 1; i < jointTraj.points.size() - 1; ++i) {
-		for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-			jointTraj.points[i].accelerations[j] =
-					(jointTraj.points[i + 1].velocities[j] - jointTraj.points[i - 1].velocities[j]) / (2 * stepSize_);
-		}
-	}
-
-}

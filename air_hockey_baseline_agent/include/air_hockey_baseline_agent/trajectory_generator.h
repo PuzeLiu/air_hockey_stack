@@ -49,6 +49,8 @@ struct TrajectoryGenerator {
 			iiwas_kinematics::Kinematics::JointArrayType &q,
 			iiwas_kinematics::Kinematics::JointArrayType &dq);
 
+    void interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj);
+
 	CombinatorialHit *combinatorialHit;
 	CombinatorialHitNew *combinatorialHitNew;
 	CubicLinearMotion *cubicLinearMotion;
@@ -56,6 +58,7 @@ struct TrajectoryGenerator {
 	Transformations *transformations;
 	NullSpaceOptimizer *optimizer;
 	HittingPointOptimizer *hittingPointOptimizer;
+	double stepSize;
 };
 
 }

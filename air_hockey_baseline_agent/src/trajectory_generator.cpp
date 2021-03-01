@@ -42,7 +42,7 @@ TrajectoryGenerator::TrajectoryGenerator(std::string ns, EnvironmentParams data,
 			data.universalJointHeight);
 	combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, rate, data.universalJointHeight);
 	cubicLinearMotion = new CubicLinearMotion(rate, data.universalJointHeight);
-
+    stepSize = 1 / rate;
 }
 
 void TrajectoryGenerator::getCartesianPosAndVel(Vector3d &x, Vector3d &dx,
@@ -59,5 +59,16 @@ TrajectoryGenerator::~TrajectoryGenerator() {
 	delete transformations;
 	delete combinatorialHit;
 	delete cubicLinearMotion;
+}
+
+void TrajectoryGenerator::interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj) {
+    for (int i = 0; i < jointTraj.points.size() ; ++i) {
+        jointTraj.points[i].accelerations.clear();
+//        auto dt = jointTraj.points[i+1].time_from_start - jointTraj.points[i-1].time_from_start;
+//        for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+//            jointTraj.points[i].accelerations[j] = (jointTraj.points[i + 1].velocities[j] -
+//                    jointTraj.points[i - 1].velocities[j]) / dt.toSec();
+//        }
+    }
 }
 

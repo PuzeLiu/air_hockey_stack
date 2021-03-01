@@ -89,7 +89,7 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &x_start, const Eigen::Vect
 
 	double t = 0.;
 
-	while (t <= tEnd) {
+	while (t + stepSize < tEnd) {
 		t += stepSize;
 		getPoint(t);
 		viaPoint.time_from_start = ros::Duration(t + t_prev);

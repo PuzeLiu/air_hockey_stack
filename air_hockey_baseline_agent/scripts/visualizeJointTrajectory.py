@@ -5,8 +5,8 @@ import rosbag
 from trajectory_msgs.msg import JointTrajectory
 from iiwas_kinematics_py import Kinematics
 
-input_dir = os.path.abspath("/home/puze/air_hockey_record/joint_trajectory/NewHit")
-file_name = "2021-02-26-16-47-08.bag"
+input_dir = os.path.abspath("/home/puze/Desktop/real_trajectory")
+file_name = "2021-03-01-20-24-54.bag"
 
 desired_positions = []
 desired_velocities = []

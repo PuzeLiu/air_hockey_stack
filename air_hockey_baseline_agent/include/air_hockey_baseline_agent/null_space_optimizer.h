@@ -71,8 +71,6 @@ namespace air_hockey_baseline_agent {
 						   JointArrayType &qNext,
 						   JointArrayType &dqNext);
 
-        void interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj);
-
 
     private:
         double stepSize_;
