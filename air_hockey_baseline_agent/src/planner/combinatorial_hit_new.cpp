@@ -37,6 +37,7 @@ CombinatorialHitNew::CombinatorialHitNew(Eigen::Vector2d bound_lower, Eigen::Vec
 
 	viaPoint.transforms.resize(1);
 	viaPoint.velocities.resize(1);
+	tDecelerateAngular = stepSize;
 }
 
 CombinatorialHitNew::~CombinatorialHitNew() = default;
@@ -89,7 +90,7 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &x_start, const Eigen::Vect
 
 	double t = 0.;
 
-	while (t + stepSize < tEnd) {
+	while (t + stepSize <= tEnd + tDecelerateAngular) {
 		t += stepSize;
 		getPoint(t);
 		viaPoint.time_from_start = ros::Duration(t + t_prev);
@@ -203,29 +204,32 @@ void CombinatorialHitNew::getPoint(const double t) {
 	if (t <= tEnd) {
 		z = phaseCoeff[1] * t + phaseCoeff[3] * pow(t, 3) + phaseCoeff[4] * pow(t, 4);
 		dz_dt = phaseCoeff[1] + 3 * phaseCoeff[3] * pow(t, 2) + 4 * phaseCoeff[4] * pow(t, 3);
-//        dz_ddt = 6 * phaseCoeff[3] * t + 12 * phaseCoeff[4] * pow(t, 2);
+        dz_ddt = 6 * phaseCoeff[3] * t + 12 * phaseCoeff[4] * pow(t, 2);
 
 		if (z <= l1) {
 			x = xStart + z * vecDir1;
 			dx_dt = dz_dt * vecDir1;
-//            dx_ddt = dz_ddt * vecDir1;
+            dx_ddt = dz_ddt * vecDir1;
+			aAngularAcc.setZero();
 		} else if (z <= l1 + arcLength) {
 			double angleCur = (z - l1) / abs(arcRadius) * counterClockWise;
 			Rotation2Dd rot(angleCur);
 			x = rot.matrix() * (xVia1 - xArcCenter) + xArcCenter;
 			dx_dt = rot.matrix() * vecDir1 * dz_dt;
+			aAngularAcc = (xArcCenter - x) * pow(dx_dt.norm(), 2) / abs(arcRadius);
+			dx_ddt = dz_ddt * dx_dt.normalized() + aAngularAcc;
 		} else if (z <= l1 + arcLength + l2) {
 			x = xVia2 + (z - l1 - arcLength) * vecDir2;
 			dx_dt = dz_dt * vecDir2;
-//            dx_ddt = dz_ddt * vecDir2;
+			aAngularAcc.setZero();
+			dx_ddt = dz_ddt * vecDir2;
 		}
+	} else if (t <= tEnd + tDecelerateAngular){
+		auto psi = (t - tEnd) / tDecelerateAngular;
+		dx_dt += (1 - psi) * aAngularAcc * stepSize;
+		x += dx_dt * stepSize;
 	} else {
-		z = phaseCoeff[1] * (tEnd) + phaseCoeff[3] * pow(tEnd, 3)
-		    + phaseCoeff[4] * pow(tEnd, 4);
-		dz_dt = phaseCoeff[1] + 3 * phaseCoeff[3] * pow(tEnd, 2)
-		        + 4 * phaseCoeff[4] * pow(tEnd, 3);
-		x = xVia2 + (z - l1 - arcLength) * vecDir2;
-		dx_dt = dz_dt * vecDir2;
+		x += dx_dt * stepSize;
 	}
 	viaPoint.transforms[0].translation.x = x[0];
 	viaPoint.transforms[0].translation.y = x[1];

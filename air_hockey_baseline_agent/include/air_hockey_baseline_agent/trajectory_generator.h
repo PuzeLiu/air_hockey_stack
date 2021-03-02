@@ -50,6 +50,7 @@ struct TrajectoryGenerator {
 			iiwas_kinematics::Kinematics::JointArrayType &dq);
 
     void interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj);
+	void interpolateVelocity(trajectory_msgs::JointTrajectory &jointTraj);
 
 	CombinatorialHit *combinatorialHit;
 	CombinatorialHitNew *combinatorialHitNew;

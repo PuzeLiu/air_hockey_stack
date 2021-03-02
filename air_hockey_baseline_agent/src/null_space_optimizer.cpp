@@ -293,11 +293,11 @@ void NullSpaceOptimizer::SolveJoint7(JointArrayType &q, JointArrayType &dq) {
 
 	if (target - qCur7 > M_PI_2) {
 		target -= M_PI;
-	} else if (target - qCur7 < M_PI_2) {
+	} else if (target - qCur7 < -M_PI_2) {
 		target += M_PI;
 	}
 
-	q[6] = boost::algorithm::clamp(target, kinematics_->posLimitsLower_[6], kinematics_->posLimitsUpper_[6]);
-	dq[6] = (q[6] - qCur7) / stepSize_;
+    dq[6] = boost::algorithm::clamp((target - qCur7) / stepSize_, kinematics_->velLimitsLower_[6], kinematics_->velLimitsUpper_[6]);
+	q[6] = boost::algorithm::clamp(qCur7 + dq[6] * stepSize_, kinematics_->posLimitsLower_[6], kinematics_->posLimitsUpper_[6]);
 }
 

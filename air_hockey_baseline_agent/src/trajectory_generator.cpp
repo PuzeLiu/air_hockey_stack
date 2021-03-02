@@ -62,13 +62,33 @@ TrajectoryGenerator::~TrajectoryGenerator() {
 }
 
 void TrajectoryGenerator::interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj) {
-    for (int i = 0; i < jointTraj.points.size() ; ++i) {
-        jointTraj.points[i].accelerations.clear();
-//        auto dt = jointTraj.points[i+1].time_from_start - jointTraj.points[i-1].time_from_start;
-//        for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-//            jointTraj.points[i].accelerations[j] = (jointTraj.points[i + 1].velocities[j] -
-//                    jointTraj.points[i - 1].velocities[j]) / dt.toSec();
-//        }
+    for (int i = 1; i < jointTraj.points.size() - 1 ; ++i) {
+        auto dt = jointTraj.points[i+1].time_from_start - jointTraj.points[i-1].time_from_start;
+        jointTraj.points[i].accelerations.resize(7);
+        for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+        	auto d1 = jointTraj.points[i].velocities[j] - jointTraj.points[i-1].velocities[j];
+	        auto d2 = jointTraj.points[i+1].velocities[j] - jointTraj.points[i].velocities[j];
+	        if (d1 * d2 < 0){
+	        	jointTraj.points[i].accelerations[j] = 0;
+	        } else {
+		        jointTraj.points[i].accelerations[j] = (d1 + d2) / dt.toSec();
+	        }
+       }
     }
+}
+
+void TrajectoryGenerator::interpolateVelocity(trajectory_msgs::JointTrajectory &jointTraj) {
+	for (int i = 1; i < jointTraj.points.size() - 1 ; ++i) {
+		auto dt = jointTraj.points[i+1].time_from_start - jointTraj.points[i-1].time_from_start;
+		for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+			auto d1 = jointTraj.points[i].positions[j] - jointTraj.points[i-1].positions[j];
+			auto d2 = jointTraj.points[i+1].positions[j] - jointTraj.points[i].positions[j];
+			if (d1 * d2 < 0){
+				jointTraj.points[i].velocities[j] = 0;
+			} else {
+				jointTraj.points[i].velocities[j] = (d1 + d2) / dt.toSec();
+			}
+		}
+	}
 }
 

@@ -54,6 +54,7 @@ namespace air_hockey_baseline_agent {
 		Eigen::Vector2d xStart, xMiddle, xEnd;      //! Start point, middle point, final point, final velocity
 		Eigen::Vector2d vecDir1, vecDir2, vDir;     //! Unit vector of linear 1, 2 and velocity direction
 		Eigen::Vector2d xArcCenter, xVia1, xVia2;   //! Via point of arc
+		Eigen::Vector2d aAngularAcc;                   //! angular acceleration
 		double stepSize;
 		double height;
 		double vMag;                  				//! Magnitude of hitting velocity
@@ -61,6 +62,7 @@ namespace air_hockey_baseline_agent {
 		double arcAngle, arcRadius, arcLength;
 		double counterClockWise;         			//! Indicator of arc direction 1: clockwise, -1: counterclockwise
 		double l1, l2, lHit;                        //! Length of different segments
+		double tDecelerateAngular;                  //! time for smooth angular acceleration
 		Eigen::Matrix<double, 5, 1> phaseCoeff;
 
 		double z, dz_dt, dz_ddt;                    //! Phase variable (arc length, velocity, acceleration)

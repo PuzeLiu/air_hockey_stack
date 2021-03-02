@@ -199,6 +199,7 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 			return false;
 		}
 		generator.transformations->transformTrajectory(cartTrajStop);
+		cartTrajStop.points.erase(cartTrajStop.points.begin());
 
 		//! Trajectory Optimization for second part
 		iiwas_kinematics::Kinematics::JointArrayType qHitOpt(state.jointTrajectory.points.back().positions.data());
@@ -210,8 +211,6 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 			continue;
 		} else {
 			//! Concatenate trajectory
-            cartTrajStop.points.erase(cartTrajStop.points.begin());
-            jointTrajStop.points.erase(jointTrajStop.points.begin());
 			state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
 			                                   cartTrajStop.points.begin(),
 			                                   cartTrajStop.points.end());
@@ -219,6 +218,7 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 			                                    jointTrajStop.points.begin(),
 			                                    jointTrajStop.points.end());
 //			generator.interpolateAcceleration(state.jointTrajectory);
+			generator.interpolateVelocity(state.jointTrajectory);
 
 			if (ros::Time::now() > tStart) {
 				tStart = ros::Time::now();
