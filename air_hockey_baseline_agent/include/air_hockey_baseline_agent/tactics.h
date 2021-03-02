@@ -177,8 +177,7 @@ protected:
 	std::random_device rd;
 	std::mt19937 gen;
 	std::uniform_int_distribution<int> dist;
-
-
+	Eigen::Vector2d xCur2d, xHit2d, vHit2d;
 };
 
 }

@@ -60,10 +60,10 @@ bool Smash::apply() {
 		double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
 
 		//! TODO delete
-//		std::ofstream file("/home/puze/Dropbox/PHD/AirHockey/IROS/hitting_point_optimization/3_levels/hard/lp_nlopt.csv", std::ios::app);
-//		file << xHit2d.x() << ", " << xHit2d.y() << ", " << vHit2d.x() << ", " <<vHit2d.y()
-//		<< ", " << vHit2d.norm() << ", " << elapsed_time_ms << std::endl;
-//        file.close();
+		std::ofstream file("/home/puze/Dropbox/PHD/AirHockey/IROS/hitting_point_optimization/3_levels/hard/lp_nlopt.csv", std::ios::app);
+		file << xHit2d.x() << ", " << xHit2d.y() << ", " << vHit2d.x() << ", " <<vHit2d.y()
+		<< ", " << vHit2d.norm() << ", " << elapsed_time_ms << std::endl;
+        file.close();
 
 		return success;
 	}
@@ -73,13 +73,13 @@ Vector3d Smash::computeTarget(Vector3d puckPosition) {
 	Vector3d xTarget;
 	auto random_integer = dist(gen);
 	// TODO comment
-//	if (puckPosition.y() < 0.) {
-//	    random_integer = 2;
-//	} else if (puckPosition.y() > 0.){
-//	    random_integer = 1;
-//	} else {
-//	    random_integer = 0;
-//	}
+	if (puckPosition.y() < 0.) {
+	    random_integer = 2;
+	} else if (puckPosition.y() > 0.){
+	    random_integer = 1;
+	} else {
+	    random_integer = 0;
+	}
 
 	if (puckPosition.y() > 0.1) {
 		xTarget.y() = -0.05;
@@ -184,7 +184,13 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 
 		generator.transformations->transformTrajectory(state.cartTrajectory);
 
+<<<<<<< HEAD
+=======
+		//! TODO debug last point
+		state.cartTrajectory.points.pop_back();
+
 //		bool success = generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, qCur, state.jointTrajectory);
+>>>>>>> hitting_experiment
 		bool success = generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, qCur,
 		                                                                  qHitRef, state.jointTrajectory,
 		                                                                  true);

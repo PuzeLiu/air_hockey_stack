@@ -90,7 +90,8 @@ void Ready::setNextState() {
 		if (state.isPuckStatic()) {
 			if (canSmash()) {
                 setTactic(SMASH);
-			} else if (puckStuck()) {
+			}
+			else if (puckStuck()) {
 				setTactic(PREPARE);
 			} else {
 				setTactic(READY);
