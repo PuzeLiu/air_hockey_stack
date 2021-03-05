@@ -4,10 +4,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy import stats
 
+plt.rcParams['pdf.fonttype'] = 42
+plt.rcParams['ps.fonttype'] = 42
+
 
 def plot_voilin(data_list, out_dir):
     ax = plt.subplot(111)
-    ax.set_position([0.1, 0.25, 0.8, 0.7])
     position = 0
     position_list = []
     label_list = []
@@ -16,7 +18,7 @@ def plot_voilin(data_list, out_dir):
         for alg in data_dict:
             position += 1
             data = data_dict[alg][:, -2]
-            # data = data[np.where(data != 0)]
+            data = data[np.where(data != 0)]
             pc = ax.violinplot(data, [position], showmeans=True,
                                showmedians=True, quantiles=[0.25, 0.75], points=100, widths=0.75)
             pc['bodies'][0].set_color(color_dict[alg])
@@ -39,7 +41,10 @@ def plot_voilin(data_list, out_dir):
 
     ax.set_xticks([2, 7, 12])
     ax.set_xticklabels(['Forward Bounce', 'Direct Hit', 'Reverse Bounce'], fontsize=15)
+    ax.set_ylabel('velocity', fontsize=15)
+    ax.tick_params(axis="y", labelsize=15)
     ax.legend(bbox_to_anchor=(0.5, -0.1), loc='upper center', ncol=3, fontsize=15)
+    ax.set_position([0.12, 0.2, 0.8, 0.75])
     plt.savefig(os.path.join(out_dir, 'with_failure.pdf'))
     plt.show()
 
