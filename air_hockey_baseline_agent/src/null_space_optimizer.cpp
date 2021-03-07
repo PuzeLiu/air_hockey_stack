@@ -172,6 +172,14 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 				ROS_INFO_STREAM("xCur: " << xTmp.transpose());
 				return false;
 			}
+
+//			kinematics_->forwardKinematics(qCur, xCurPos_);
+//			kinematics_->jacobianPos(qCur, jacobian_);
+//			auto b = jacobian_.transpose() * (jacobian_ * jacobian_.transpose()).inverse() *
+//			         (K_.asDiagonal() * (xDes - xCurPos_) + dxDes);
+//			dqNext = b;
+//			qNext = qCur + dqNext * stepSize_;
+
 			SolveJoint7(qNext, dqNext);
 
 			jointViaPoint_.time_from_start = cartTraj.points[i].time_from_start;

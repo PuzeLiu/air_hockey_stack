@@ -80,6 +80,7 @@ Vector3d Smash::computeTarget(Vector3d puckPosition) {
 //	} else {
 //	    random_integer = 0;
 //	}
+//	random_integer = 0;
 
 	if (puckPosition.y() > 0.1) {
 		xTarget.y() = -0.05;
