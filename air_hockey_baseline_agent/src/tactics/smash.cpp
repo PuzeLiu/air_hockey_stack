@@ -250,9 +250,9 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 Vector2d Smash::getStopPoint(Eigen::Vector2d hitPoint) {
 	Vector2d stopPoint;
 	if (hitPoint.y() > 0) {
-		stopPoint = hitPoint + Vector2d(0.2, -0.2);
+		stopPoint = hitPoint + Vector2d(0.2, -0.25);
 	} else {
-		stopPoint = hitPoint + Vector2d(0.2, 0.2);
+		stopPoint = hitPoint + Vector2d(0.2, 0.25);
 	}
 
 	stopPoint.x() = fmin(stopPoint.x(), agentParams.hitRange[1]);

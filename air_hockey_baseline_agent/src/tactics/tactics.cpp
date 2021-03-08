@@ -171,7 +171,7 @@ bool Tactic::shouldCut() {
 	if (state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax &&
 	    (state.observation.puckPredictedState.numOfCollisions > 0 ||
 	     (abs(state.observation.puckPredictedState.state.y()) <
-	      (envParams.tableWidth / 2 - envParams.malletRadius - 0.1)))) {
+	      (envParams.tableWidth / 2 - envParams.malletRadius)))) {
 		return true;
 	}
 	return false;

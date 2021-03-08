@@ -92,6 +92,7 @@ public:
 
 protected:
 	bool failed;
+	int debugCount;
 };
 
 class Cut: public Tactic {

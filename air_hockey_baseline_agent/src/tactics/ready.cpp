@@ -32,6 +32,7 @@ using namespace air_hockey_baseline_agent;
 Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
              SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
+    debugCount = 0;
 }
 
 bool Ready::ready() {
