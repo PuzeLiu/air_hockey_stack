@@ -5,10 +5,11 @@
     <arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
     <arg name="machine_name" default="realtime" />
     <arg name="machine_address" default="192.168.10.1" />
-    <arg name="front_controllers" default="joint_torque_trajectory_controller"/>
-    <arg name="back_controllers" default="joint_torque_trajectory_controller"/>
+    <arg name="front_controllers" default="joint_feedforward_trajectory_controller"/>
+    <arg name="back_controllers" default="joint_feedforward_trajectory_controller"/>
 
     <include file="$(find air_hockey_description)/launch/air_hockey_description.launch">
+        <arg name="hardware_interface" value="$(arg hardware_interface)"/>
     </include>
 
     <node name="rviz" pkg="rviz" type="rviz"

@@ -7,7 +7,7 @@ from trajectory_msgs.msg import JointTrajectory
 from iiwas_kinematics_py import Kinematics
 
 input_dir = os.path.abspath("/home/puze/Desktop/real_trajectory")
-file_name = "2021-03-08-15-27-43.bag"
+file_name = "2021-03-24-16-29-10.bag"
 start_time_offset = 0
 stop_time_offset = 10
 
@@ -31,7 +31,7 @@ t_start = rospy.Time(bag.get_start_time() + start_time_offset)
 t_stop = rospy.Time(bag.get_start_time() + stop_time_offset)
 i = 0
 for topic, msg, t in bag.read_messages(start_time=t_start, end_time=t_stop):
-    if topic == "/iiwa_front/joint_torque_trajectory_controller/state":
+    if topic == "/iiwa_front/joint_feedforward_trajectory_controller/state":
         msg: JointTrajectory
         i += 1
         if(i%1 == 0):

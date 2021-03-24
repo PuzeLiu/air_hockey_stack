@@ -207,7 +207,12 @@ std::string Agent::getControllerName() {
 			              + "/joint_torque_trajectory_controller/state") {
 				controllerName = "joint_torque_trajectory_controller";
 				break;
-			}
+			} else if (topics[i].name
+                      == nh.getNamespace()
+                         + "/joint_feedforward_trajectory_controller/state") {
+                controllerName = "joint_feedforward_trajectory_controller";
+                break;
+            }
 		}
 
 		if (controllerName == "") {

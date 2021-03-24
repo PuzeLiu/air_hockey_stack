@@ -30,6 +30,7 @@
 
     <gazebo>
         <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+          <robotSimType>iiwas_gazebo/GravityCompensationHWSim</robotSimType>
         </plugin>
     </gazebo>
 </robot>
