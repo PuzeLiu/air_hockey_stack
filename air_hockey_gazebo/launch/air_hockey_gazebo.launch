@@ -4,6 +4,7 @@
     <arg name="world_name" default="$(find iiwas_gazebo)/worlds/iiwas_world.world"/>
     <arg name="gui" default="true"/>
     <arg name="paused" default="false"/>
+    <arg name="physics" default="ode" />
 
     <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
 
@@ -30,6 +31,7 @@
         <arg name="gui" value="$(arg gui)" />
         <arg name="paused" value="$(arg paused)"/>
         <arg name="use_sim_time" value="true"/>
+        <arg name="physics" value="$(arg physics)" />
     </include>
 
     <!-- Controllers -->
