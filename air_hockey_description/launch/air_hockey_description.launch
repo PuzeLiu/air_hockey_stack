@@ -8,6 +8,11 @@
 
     <arg name="table_parent" default="Table"/>
     <arg name="puck_parent" default="Puck"/>
+    
+    <arg name="front_xyz" default="0.19 0.813 0.03" />
+    <arg name="front_rpy" default="0 0 0" />
+    <arg name="back_xyz" default="3.198 0.813 0.03" />
+    <arg name="back_rpy" default="0 0 3.14159265359" />
 
     <rosparam file="$(find air_hockey_description)/config/config.yaml" command="load" subst_value="true"/>
 
@@ -27,11 +32,11 @@
 
     <group ns="iiwa_front">
         <param name="robot_description" command="$(find xacro)/xacro '$(arg iiwa_urdf)' robot_name:='F'
-        parent:='front_base' hardware_interface:='$(arg hardware_interface)'"/>
+        hardware_interface:='$(arg hardware_interface)' base_xyz:='$(arg front_xyz)' base_rpy:='$(arg front_rpy)'"/>
     </group>
 
     <group ns="iiwa_back">
         <param name="robot_description" command="$(find xacro)/xacro '$(arg iiwa_urdf)' robot_name:='B'
-        parent:='back_base' hardware_interface:='$(arg hardware_interface)'"/>
+        hardware_interface:='$(arg hardware_interface)' base_xyz:='$(arg back_xyz)' base_rpy:='$(arg back_rpy)'"/>
     </group>
 </launch>
