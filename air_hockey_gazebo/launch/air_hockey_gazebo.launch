@@ -4,6 +4,7 @@
     <arg name="world_name" default="$(find iiwas_gazebo)/worlds/iiwas_world.world"/>
     <arg name="gui" default="true"/>
     <arg name="paused" default="false"/>
+    <arg name="physics" default="ode" />
 
     <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
 
@@ -30,6 +31,7 @@
         <arg name="gui" value="$(arg gui)" />
         <arg name="paused" value="$(arg paused)"/>
         <arg name="use_sim_time" value="true"/>
+        <arg name="physics" value="$(arg physics)" />
     </include>
 
     <!-- Controllers -->
@@ -71,14 +73,12 @@
 
     <group ns="iiwa_front" if="$(arg use_front_iiwa)">
         <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-urdf -model iiwa_front -param robot_description -wait iiwas_frame
-              -reference_frame iiwas_frame::front_base"/>
+              args="-urdf -model iiwa_front -param robot_description -wait iiwas_frame"/>
     </group>
 
     <group ns="iiwa_back" if="$(arg use_back_iiwa)">
         <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-urdf -model iiwa_back -param robot_description -wait iiwas_frame
-              -reference_frame iiwas_frame::back_base"/>
+              args="-urdf -model iiwa_back -param robot_description -wait iiwas_frame"/>
     </group>
 
     <!-- Start Air Hockey Referee -->
