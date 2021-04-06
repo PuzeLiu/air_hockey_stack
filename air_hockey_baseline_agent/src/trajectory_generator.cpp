@@ -34,19 +34,19 @@ TrajectoryGenerator::TrajectoryGenerator(std::string ns, EnvironmentParams data,
 	hittingPointOptimizer = new HittingPointOptimizer(*kinematics);
 
 	Vector2d bound_lower(data.malletRadius + 0.02,
-			-data.tableWidth / 2 + data.malletRadius + 0.02);
+	                     -data.tableWidth / 2 + data.malletRadius + 0.02);
 	Vector2d bound_upper(data.tableLength / 2 - data.malletRadius,
-			data.tableWidth / 2 - data.malletRadius - 0.02);
+	                     data.tableWidth / 2 - data.malletRadius - 0.02);
 
 	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, rate,
-			data.universalJointHeight);
+	                                        data.universalJointHeight);
 	combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, rate, data.universalJointHeight);
 	cubicLinearMotion = new CubicLinearMotion(rate, data.universalJointHeight);
-    stepSize = 1 / rate;
+	stepSize = 1 / rate;
 }
 
 void TrajectoryGenerator::getCartesianPosAndVel(Vector3d &x, Vector3d &dx,
-		Kinematics::JointArrayType &q, Kinematics::JointArrayType &dq) {
+                                                Kinematics::JointArrayType &q, Kinematics::JointArrayType &dq) {
 	kinematics->forwardKinematics(q, x);
 	Kinematics::JacobianPosType jacobian;
 	kinematics->jacobianPos(q, jacobian);
@@ -62,32 +62,54 @@ TrajectoryGenerator::~TrajectoryGenerator() {
 }
 
 void TrajectoryGenerator::interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj) {
-    for (int i = 1; i < jointTraj.points.size() - 1 ; ++i) {
-        auto dt = jointTraj.points[i+1].time_from_start - jointTraj.points[i-1].time_from_start;
-        jointTraj.points[i].accelerations.resize(7);
-        for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-        	auto d1 = jointTraj.points[i].velocities[j] - jointTraj.points[i-1].velocities[j];
-	        auto d2 = jointTraj.points[i+1].velocities[j] - jointTraj.points[i].velocities[j];
-	        if (d1 * d2 < 0){
-	        	jointTraj.points[i].accelerations[j] = 0;
-	        } else {
-		        jointTraj.points[i].accelerations[j] = (d1 + d2) / dt.toSec();
-	        }
-       }
-    }
+	for (int i = 1; i < jointTraj.points.size() - 1; ++i) {
+		auto dt = jointTraj.points[i + 1].time_from_start - jointTraj.points[i - 1].time_from_start;
+		jointTraj.points[i].accelerations.resize(7);
+		for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+			auto d1 = jointTraj.points[i].velocities[j] - jointTraj.points[i - 1].velocities[j];
+			auto d2 = jointTraj.points[i + 1].velocities[j] - jointTraj.points[i].velocities[j];
+			if (d1 * d2 < 0) {
+				jointTraj.points[i].accelerations[j] = 0;
+			} else {
+				jointTraj.points[i].accelerations[j] = (d1 + d2) / dt.toSec();
+			}
+		}
+	}
 }
 
 void TrajectoryGenerator::interpolateVelocity(trajectory_msgs::JointTrajectory &jointTraj) {
-	for (int i = 1; i < jointTraj.points.size() - 1 ; ++i) {
-		auto dt = jointTraj.points[i+1].time_from_start - jointTraj.points[i-1].time_from_start;
+	for (int i = 1; i < jointTraj.points.size() - 1; ++i) {
+		auto dt = jointTraj.points[i + 1].time_from_start - jointTraj.points[i - 1].time_from_start;
 		for (int j = 0; j < NUM_OF_JOINTS; ++j) {
-			auto d1 = jointTraj.points[i].positions[j] - jointTraj.points[i-1].positions[j];
-			auto d2 = jointTraj.points[i+1].positions[j] - jointTraj.points[i].positions[j];
-			if (d1 * d2 < 0){
+			auto d1 = jointTraj.points[i].positions[j] - jointTraj.points[i - 1].positions[j];
+			auto d2 = jointTraj.points[i + 1].positions[j] - jointTraj.points[i].positions[j];
+			if (d1 * d2 < 0) {
 				jointTraj.points[i].velocities[j] = 0;
 			} else {
 				jointTraj.points[i].velocities[j] = (d1 + d2) / dt.toSec();
 			}
+		}
+	}
+}
+
+void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTrajectory &jointTraj) {
+	int n = jointTraj.points.size();
+	std::vector<double> x(n);
+	std::vector<double> y(n);
+
+	for (int i = 0; i < NUM_OF_JOINTS; ++i) {
+		for (int j = 0; j < n; ++j) {
+			x[j] = jointTraj.points[j].time_from_start.toSec();
+			y[j] = jointTraj.points[j].positions[i];
+			jointTraj.points[j].velocities.resize(NUM_OF_JOINTS);
+			jointTraj.points[j].accelerations.clear();
+		}
+		tk::spline spline(x, y, tk::spline::cspline, false,
+		                  tk::spline::first_deriv, 0.0,
+		                  tk::spline::first_deriv, 0.0);
+
+		for (int j = 0; j < n; ++j) {
+			jointTraj.points[j].velocities[i] = spline.deriv(1, x[j]);
 		}
 	}
 }

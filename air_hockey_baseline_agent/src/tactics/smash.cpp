@@ -219,7 +219,8 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 			                                    jointTrajStop.points.begin(),
 			                                    jointTrajStop.points.end());
 //			generator.interpolateAcceleration(state.jointTrajectory);
-			generator.interpolateVelocity(state.jointTrajectory);
+//			generator.interpolateVelocity(state.jointTrajectory);
+			generator.cubicSplineInterpolation(state.jointTrajectory);
 
 			if (ros::Time::now() > tStart) {
 				tStart = ros::Time::now();

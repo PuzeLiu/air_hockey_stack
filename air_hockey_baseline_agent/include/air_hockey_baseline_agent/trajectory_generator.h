@@ -26,9 +26,6 @@
 
 #include "air_hockey_baseline_agent/data_structures.h"
 #include "air_hockey_baseline_agent/system_state.h"
-
-//#include "air_hockey_baseline_agent/planner/bezier_hit.h"
-//#include "air_hockey_baseline_agent/planner/stable_dynamics_motion.h"
 #include "air_hockey_baseline_agent/planner/combinatorial_hit.h"
 #include "air_hockey_baseline_agent/planner/combinatorial_hit_new.h"
 #include "air_hockey_baseline_agent/planner/cubic_linear_motion.h"
@@ -37,6 +34,8 @@
 #include "air_hockey_baseline_agent/null_space_optimizer.h"
 #include "air_hockey_baseline_agent/hitting_point_optimizer.h"
 #include "air_hockey_baseline_agent/observer.h"
+
+#include "spline/spline.h"
 
 namespace air_hockey_baseline_agent {
 
@@ -51,6 +50,7 @@ struct TrajectoryGenerator {
 
     void interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj);
 	void interpolateVelocity(trajectory_msgs::JointTrajectory &jointTraj);
+	void cubicSplineInterpolation(trajectory_msgs::JointTrajectory &jointTraj);
 
 	CombinatorialHit *combinatorialHit;
 	CombinatorialHitNew *combinatorialHitNew;
