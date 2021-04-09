@@ -2,8 +2,8 @@
 <launch>
     <arg name="use_front_iiwa" default="true"/>
     <arg name="use_back_iiwa" default="true"/>
-    <arg name="front_controllers" default="joint_position_trajectory_controller"/>
-    <arg name="back_controllers" default="joint_position_trajectory_controller"/>
+    <arg name="front_controllers" default="joint_feedforward_trajectory_controller"/>
+    <arg name="back_controllers" default="joint_feedforward_trajectory_controller"/>
 
     <!-- Load joint controller configurations from YAML file to parameter server -->
     <include file="$(find iiwas_control)/launch/iiwas_control.launch">
