@@ -1,9 +1,11 @@
 #Installation
+
 Create a new catkin workspace and clone the repository into the src folder. 
 Install all the dependencies listed below and build the project. 
 Do not forget to source the setup.* file.
 
 #Usage
+
 Starting the baseline agent can be done by starting the gazebo simulator and the baseline argent
 with the following commands:
 ```
@@ -12,6 +14,7 @@ roslaunch air_hockey_baseline_agent air_hockey_baseline_agent.launch use_back_ii
 ```
 
 #Dependencies
+
 1. OSQP https://osqp.org/
 2. OSQP Eigen https://robotology.github.io/osqp-eigen/doxygen/doc/html/index.html
 3. NLopt https://nlopt.readthedocs.io/en/latest/
