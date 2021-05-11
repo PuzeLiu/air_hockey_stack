@@ -8,6 +8,11 @@
 
     <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
 
+    <arg name="front_controllers" default="joint_position_trajectory_controller"/>
+    <arg name="back_controllers" default="joint_position_trajectory_controller"/>
+
+    <arg name="simulation" default="true"/>
+
     <arg name="use_front_iiwa" default="true"/>
     <arg name="use_back_iiwa" default="true"/>
 
@@ -38,8 +43,9 @@
     <include file="$(find air_hockey_gazebo)/launch/gazebo_control.launch">
         <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />
         <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />
-        <arg name="front_controllers" value="joint_position_trajectory_controller"/>
-        <arg name="back_controllers" value="joint_position_trajectory_controller"/>
+        <arg name="front_controllers" value="$(arg front_controllers)" />
+        <arg name="back_controllers" value="$(arg back_controllers)" />
+        <arg name="simulation" value="$(arg simulation)" />
     </include>
 
     <!-- Spawn Gazebo Model -->
