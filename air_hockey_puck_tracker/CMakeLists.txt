@@ -45,7 +45,7 @@ add_library(puck_tracker
     src/CollisionModel.cpp
     src/EKF_Wrapper.cpp
     src/VisualizationInterface.cpp
-    )
+        src/ParticleFilter.cpp include/air_hockey_puck_tracker/ParticleFilter.hpp src/ParticleVisualizationInterface.cpp include/air_hockey_puck_tracker/ParticleVisualizationInterface.hpp)
 
 add_dependencies(puck_tracker
     ${${PROJECT_NAME}_EXPORTED_TARGETS}

@@ -34,6 +34,8 @@
 #include "CollisionModel.hpp"
 #include "EKF_Wrapper.hpp"
 #include "VisualizationInterface.hpp"
+#include "ParticleFilter.hpp"
+#include "ParticleVisualizationInterface.hpp"
 
 namespace air_hockey_baseline_agent {
     struct PuckPredictedState{
@@ -93,6 +95,8 @@ namespace air_hockey_baseline_agent {
         ObservationModel *observationModel_;
         CollisionModel *collisionModel_;
         VisualizationInterface *visualizer_;
+        ParticleFilter *particleFilter_;
+        ParticleVisualizationInterface *particleVisualizationInterface_;
 
         Control u_;
         int maxPredictionSteps_;
@@ -103,6 +107,7 @@ namespace air_hockey_baseline_agent {
         double defendingLine_;
 
         bool doPrediction_;
+        bool useParticleFilter_;
 
         boost::thread thread_;
 
