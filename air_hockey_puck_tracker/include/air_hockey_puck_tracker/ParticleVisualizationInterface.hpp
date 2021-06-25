@@ -18,7 +18,7 @@ namespace air_hockey_baseline_agent {
 
         ros::Publisher m_particlePub;
 
-        visualization_msgs::MarkerArray m_particleMarkerMsg;
+        visualization_msgs::Marker m_marker;
     public:
         void visualize(ParticleFilter& pf, const std::string& refName);
         explicit ParticleVisualizationInterface(const ros::NodeHandle &nh);
