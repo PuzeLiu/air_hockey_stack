@@ -104,6 +104,7 @@ void PuckTracker::loadParams() {
     nh_.param<double>("/air_hockey/puck_tracker/restitution_mallet", restitutionMallet, 0.1);
     nh_.param<int>("/air_hockey/puck_tracker/max_prediction_steps", maxPredictionSteps_, 20);
     nh_.param<double>("/air_hockey/puck_tracker/frequency", frequency, 120.0);
+    nh_.param<bool>("/air_hockey/puck_tracker/turn_on_pf", turn_on_pf, false);
 
     if (nh_.getNamespace() == "/iiwa_back") {
         tableRefName_ = "TableAway";
@@ -201,7 +202,7 @@ void PuckTracker::startTracking() {
             if (useParticleFilter_) {
                 particleFilter_->sampleParticles(kalmanFilter_->getState(),
                                                  const_cast<Eigen::Matrix<double, 6, 6> &>(kalmanFilter_->getCovariance()));
-                //particleVisualizationInterface_->visualize(*particleFilter_, tableRefName_);
+                particleVisualizationInterface_->visualize(*particleFilter_, tableRefName_);
             }
         }
 
@@ -213,7 +214,7 @@ void PuckTracker::startTracking() {
             if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
                 doPrediction_ = true;
                 if (checkGating()) {
-                    if (useParticleFilter_) {
+                    if (useParticleFilter_ && turn_on_pf) {
                         kalmanFilter_->setCovariance(particleFilter_->applyParticleFilter(u_));
                     } else {
                         kalmanFilter_->update(*observationModel_, measurement_);
@@ -253,6 +254,7 @@ bool PuckTracker::getMeasurement() {
         measurement_.theta() = yaw;
         return true;
     } catch (tf2::TransformException &exception) {
+        ROS_WARN_STREAM("Transformation table to puck failed: " << exception.what());
         return false;
     }
 }
@@ -305,6 +307,9 @@ void PuckTracker::getPrediction(double &predictedTime, int &nCollision) {
                 puckPredictor_->moveOneStep(*systemModel_, u_);
                 if (collisionModel_->applyCollision(puckPredictor_->getState(), true)) {
                     nCollision += 1;
+                    useParticleFilter_ = true;
+                }else{
+                    useParticleFilter_ = false;
                 }
                 predictedTime = (i + 1) * rate_->expectedCycleTime().toSec();
             }
@@ -358,8 +363,7 @@ void PuckTracker::reset() {
         puckPredictor_->setCovariance(covInit);
 
     } catch (tf2::TransformException &exception) {
-        ROS_ERROR_STREAM(exception.what());
-        ROS_INFO_STREAM("Reset Failed: Kill");
+        ROS_INFO_STREAM("Reset Failed: " << exception.what() << " Kill Puck Tracker");
         exit(-1);
     }
 }

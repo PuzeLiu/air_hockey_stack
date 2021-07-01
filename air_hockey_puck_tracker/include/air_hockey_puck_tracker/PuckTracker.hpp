@@ -112,6 +112,7 @@ namespace air_hockey_baseline_agent {
         boost::thread thread_;
 
         std::vector<PuckState> stateBuffer_;
+        bool turn_on_pf;
     };
 }
 

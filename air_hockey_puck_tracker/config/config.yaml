@@ -1,7 +1,7 @@
 air_hockey:
   puck_tracker:
     max_prediction_steps:
-      180
+      60
     frequency:
       120
     friction_drag:
@@ -26,3 +26,5 @@ air_hockey:
       1.0e-6
     reset_threshold:
       4.605170185988092   # gating value pG = 0.9 of cdf from Chi squared distribution in 2 DoF (x, y)
+    turn_on_pf:
+      true
