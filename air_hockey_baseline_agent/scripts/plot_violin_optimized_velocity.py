@@ -18,7 +18,7 @@ def plot_voilin(data_list, out_dir):
         for alg in data_dict:
             position += 1
             data = data_dict[alg][:, -2]
-            data = data[np.where(data != 0)]
+            # data = data[np.where(data != 0)]
             pc = ax.violinplot(data, [position], showmeans=True,
                                showmedians=True, quantiles=[0.25, 0.75], points=100, widths=0.75)
             pc['bodies'][0].set_color(color_dict[alg])
