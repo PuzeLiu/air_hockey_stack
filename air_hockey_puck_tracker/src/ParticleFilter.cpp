@@ -71,7 +71,9 @@ Eigen::Matrix<double, 6 , 6> ParticleFilter::applyParticleFilter(Control& u) {
 }
 
 Eigen::Matrix<double, 6, 1> ParticleFilter::stateToVector(PuckState &state){
-    return Eigen::Matrix<double, 6, 1>{state.x(), state.y(), state.dx(), state.dy(), state.theta(), state.dtheta()};
+    Eigen::Matrix<double, 6, 1> m;
+    m << state.x(), state.y(), state.dx(), state.dy(), state.theta(), state.dtheta();
+    return m;
 }
 
 
