@@ -4,8 +4,19 @@
 
 <!--    <node name="rviz" pkg="rviz" type="rviz"-->
 <!--          args="-d $(find puck_tracker)/rviz/config.rviz"/>-->
+    <arg name="table_parent" default="Table"/>
+    <arg name="table_urdf" default="$(find air_hockey_description)/urdf/air_hockey_table/model.urdf.xacro"/>
+
+    <group ns="air_hockey_table">
+            <param name="robot_description" command="$(find xacro)/xacro '$(arg table_urdf)' parent:=$(arg table_parent)"/>
+
+            <node pkg="robot_state_publisher" type="robot_state_publisher" name="table_state_publisher" output="screen">
+                        <param name="publish_frequency" type="double" value="50.0"/>
+                    </node>
+    </group>
 
 <!--    <include file="$(find ias_optitrack_bridge)/launch/optitrack_tf.launch"/>-->
+    <node pkg="tf" type="static_transform_publisher" name="table_broadcaster" args="1.504 0 0.07 0 0 0 1 world Table 10" />
 
     <node name="puck_tracker" pkg="air_hockey_puck_tracker" type="tracker_node" output="screen" ns="iiwa_front"/>
 <!--    <node name="puck_tracker" pkg="air_hockey_puck_tracker" type="tracker_node" output="screen" ns="iiwa_back"/>-->
