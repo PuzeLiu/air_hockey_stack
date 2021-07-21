@@ -15,7 +15,7 @@ namespace air_hockey_baseline_agent {
         std::vector<PuckState> particles;
         SystemModel systemModel_;
     public:
-        const int sampleSize = 10;
+        const int sampleSize = 50;
         void sampleParticles(PuckState& state, Eigen::Matrix<double, 6,6>& covariance);
         std::vector<PuckState> getParticles();
         ParticleFilter(SystemModel& systemModel);
