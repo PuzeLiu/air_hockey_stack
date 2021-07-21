@@ -21,38 +21,37 @@
  * SOFTWARE.
  */
 
-#ifndef PUCK_TRACKER_VALIDATION_HPP
-#define PUCK_TRACKER_VALIDATION_HPP
 
-#include <ros/ros.h>
-#include <rosbag/bag.h>
-#include "air_hockey_puck_tracker/InnovationMsg.h"
-#include "air_hockey_puck_tracker/ObservationModel.hpp"
+#include <ros/package.h>
+#include "air_hockey_puck_tracker/ValidationInterface.hpp"
 
 
-namespace air_hockey_baseline_agent{
-    class ValidationInterface{
-        typedef Kalman::Covariance<Measurement> InnovationCovariance;
+using namespace air_hockey_baseline_agent;
 
-    public:
-        ValidationInterface(ros::NodeHandle nh_, bool save=false);
-
-        ~ValidationInterface();
-
-        void record(const Measurement& prediction, const Measurement& measurement, const InnovationCovariance& S);
-
-
-    public:
-        ros::NodeHandle m_nh;
-        rosbag::Bag bag;
-        ros::Publisher m_pub_predict;
-        ros::Publisher m_pub_true;
-        ros::Publisher m_pub_diff;
-        air_hockey_puck_tracker::InnovationMsg m_msg;
-
-    protected:
-        bool m_save;
-    };
+ValidationInterface::ValidationInterface(const ros::NodeHandle &mNh): m_nh(mNh) {
+    m_pub_predict = m_nh.advertise<air_hockey_puck_tracker::InnovationMsg>("prediction", 1000);
+    m_pub_true = m_nh.advertise<air_hockey_puck_tracker::InnovationMsg>("measured", 1000);
+    m_pub_diff = m_nh.advertise<air_hockey_puck_tracker::InnovationMsg>("difference", 1000);
 }
 
-#endif //PUCK_TRACKER_VALIDATION_HPP
+void ValidationInterface::record(const PuckState &prediction, const PuckState &measurement) {
+    m_msg.header.stamp = ros::Time::now();
+    m_msg.size = 1;
+    m_msg.x = prediction.x();
+    m_msg.y = prediction.y();
+    m_msg.theta = prediction.theta();
+    m_pub_predict.publish(m_msg);
+
+    m_msg.size = 1;
+    m_msg.x = measurement.x();
+    m_msg.y = measurement.y();
+    m_msg.theta = measurement.theta();
+    m_pub_true.publish(m_msg);
+
+    m_msg.size = 1;
+    m_msg.x = prediction.x() - measurement.x();
+    m_msg.y = prediction.y() - measurement.y();
+    m_msg.theta = prediction.theta() - measurement.theta();
+    m_pub_diff.publish(m_msg);
+}
+

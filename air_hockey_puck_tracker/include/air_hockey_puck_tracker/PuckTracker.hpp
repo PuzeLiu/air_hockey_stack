@@ -36,6 +36,7 @@
 #include "VisualizationInterface.hpp"
 #include "ParticleFilter.hpp"
 #include "ParticleVisualizationInterface.hpp"
+#include "ValidationInterface.hpp"
 
 namespace air_hockey_baseline_agent {
     struct PuckPredictedState{
@@ -63,6 +64,8 @@ namespace air_hockey_baseline_agent {
         inline double getMaxPredictionTime() {
         	return maxPredictionSteps_ * rate_->expectedCycleTime().toSec();
         }
+
+        void publishData(const PuckState &prediction, const PuckState &measurement);
 
     private:
         void loadParams();
@@ -97,6 +100,7 @@ namespace air_hockey_baseline_agent {
         VisualizationInterface *visualizer_;
         ParticleFilter *particleFilter_;
         ParticleVisualizationInterface *particleVisualizationInterface_;
+        ValidationInterface *validation_;
 
         Control u_;
         int maxPredictionSteps_;

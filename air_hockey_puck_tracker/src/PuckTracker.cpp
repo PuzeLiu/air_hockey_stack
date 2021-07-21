@@ -136,6 +136,7 @@ void PuckTracker::loadParams() {
     visualizer_ = new VisualizationInterface(nh_, tableRefName_);
     particleFilter_ = new ParticleFilter(*systemModel_);
     particleVisualizationInterface_ = new ParticleVisualizationInterface(nh_);
+    validation_ = new ValidationInterface(nh_);
 
     //! Initialize Kalman Filter
     PuckState sInit;
@@ -366,4 +367,8 @@ void PuckTracker::reset() {
         ROS_INFO_STREAM("Reset Failed: " << exception.what() << " Kill Puck Tracker");
         exit(-1);
     }
+}
+
+void PuckTracker::publishData(const PuckState &prediction, const PuckState &measurement) {
+    validation_->record(prediction, measurement);
 }

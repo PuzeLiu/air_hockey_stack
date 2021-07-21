@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 def com_t(steps):
     return (1/120) * steps * 1e9
 
-def read_puckPose_bag(bag):
+def read_puckPose_bag(bag, topicname=''):
     puck_poses = []
     for topic, msg, t in bag.read_messages():
         if topic == '/iiwa_front/marker':
@@ -31,9 +31,15 @@ def read_puckPose_bag(bag):
                                msg.transforms[0].transform.rotation.w,
                                t.to_nsec()])
             puck_poses.append(pose_i)
+        elif topic == topicname:
+            pose_i = np.array([msg.x,
+                               msg.y,
+                               msg.theta,
+                               t.to_nsec()])
+            puck_poses.append(pose_i)
     return puck_poses
 
-# data = [(bag_data, predicted_steps),...]
+# data = [(bag_data, predicted_steps, name, topic),...]
 def plot_xy_pos_over_t(data):
     fig, (ax1, ax2) = plt.subplots(2, 1)
 
@@ -43,13 +49,13 @@ def plot_xy_pos_over_t(data):
     ax1.set_ylabel('X Position')
     ax1.set_xlabel('ROS Time [nsec]')
     for d in data:
-        poses = read_puckPose_bag(d[0])
+        poses = read_puckPose_bag(d[0], d[3])
         x = [pos[0] for pos in poses]
         y = [pos[1] for pos in poses]
         t = [pos[-1] + com_t(d[1]) for pos in poses]
 
-        ax1.plot(t, x, label="x_" + str(d[2]) + str(d[1]))
-        ax2.plot(t, y, label="y_" + str(d[2]) + str(d[1]))
+        ax1.plot(t, x, label="x_" + str(d[1]) + str(d[2]))
+        ax2.plot(t, y, label="y_" + str(d[1]) + str(d[2]))
 
     ax1.legend()
     ax2.legend()
@@ -83,5 +89,18 @@ if __name__ == "__main__":
     file_path = os.path.join(os.path.abspath(__file__ + "/../data"), file_name)
     pf_60_data = rosbag.Bag(file_path)
 
-    plot_xy_pos_over_t([(pf_60_data, 60, "pf"), (recorded_data, 0, "rec"), (prediction60_data, 60, "kf")])
+    file_name = "estimation_2021-07-09-14-35-39.bag"
+    file_path = os.path.join(os.path.abspath(__file__ + "/../data"), file_name)
+    estimation = rosbag.Bag(file_path)
+
+    file_name = "particleFilter60_2021-07-12-11-34-40.bag"
+    file_path = os.path.join(os.path.abspath(__file__ + "/../data"), file_name)
+    particle = rosbag.Bag(file_path)
+
+    file_name = "50par60pred_2021-07-12.bag"
+    file_path = os.path.join(os.path.abspath(__file__ + "/../data"), file_name)
+    pf50pred60 = rosbag.Bag(file_path)
+
+    plot_xy_pos_over_t([(estimation, 0, '', '/iiwa_front/measured'), (estimation, 60, 'pf10', '/iiwa_front/prediction'),
+                        (particle, 60, 'kf', '/iiwa_front/prediction'), (pf50pred60, 60, 'pf50', '/iiwa_front/prediction')])
 
