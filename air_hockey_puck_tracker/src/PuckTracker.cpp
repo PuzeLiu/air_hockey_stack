@@ -76,7 +76,10 @@ const PuckPredictedState &PuckTracker::getPredictedState(bool visualize, bool de
         }
         stateBuffer_.erase(stateBuffer_.begin());
     }
-    validation_->publishPrediction(predictedState_.state, predictedState_.stamp, predictedState_.predictedTime);
+    if (doPrediction_){
+        ROS_INFO_STREAM("Debug");
+        validation_->publishPrediction(predictedState_.state, predictedState_.stamp, predictedState_.predictedTime);
+    }
     return predictedState_;
 }
 
@@ -218,22 +221,23 @@ void PuckTracker::startTracking() {
             //! Check if puck measurement outside the table range, if not, update.
             if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
                 doPrediction_ = true;
-                if (checkGating()) {
+//                if (checkGating()) {
                     ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter");
                     if (useParticleFilter_ && turn_on_pf) {
                         kalmanFilter_->setCovariance(particleFilter_->applyParticleFilter(u_));
                     } else {
                         kalmanFilter_->update(*observationModel_, measurement_);
                     }
-                } else {
-                    ROS_INFO_STREAM("[Puck Tracker] The innovation is too big, reset the puck tracker");
-                    reset();
-                    continue;
-                }
+//                } else {
+//                    ROS_INFO_STREAM("[Puck Tracker] The innovation is too big, reset the puck tracker");
+//                    reset();
+//                    continue;
+//                }
             } else {
                 doPrediction_ = false;
             }
         }else{
+            doPrediction_ = false;
             ROS_INFO_STREAM("No measurement - no prediction");
         }
         stamp_ += rate_->expectedCycleTime();

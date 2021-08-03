@@ -75,6 +75,8 @@ namespace air_hockey_baseline_agent {
         bool resetService(air_hockey_puck_tracker::PuckTrackerResetService::Request &req,
                                   air_hockey_puck_tracker::PuckTrackerResetService::Response &res);
 
+        void provideServices();
+
     private:
         void loadParams();
 
@@ -89,8 +91,6 @@ namespace air_hockey_baseline_agent {
 	    bool updateOpponentMallet();
 
 	    bool checkGating();
-
-	    void provideServices();
 
     private:
         ros::NodeHandle nh_;

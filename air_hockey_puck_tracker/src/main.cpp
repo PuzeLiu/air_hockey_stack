@@ -22,9 +22,6 @@
  */
 
 #include <ros/ros.h>
-#include <rosbag/bag.h>
-#include <rosbag/view.h>
-#include <tf/transform_broadcaster.h>
 #include <thread>
 
 #include "air_hockey_puck_tracker/PuckTracker.hpp"
