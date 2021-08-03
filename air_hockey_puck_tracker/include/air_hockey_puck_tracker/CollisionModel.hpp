@@ -63,6 +63,8 @@ namespace air_hockey_baseline_agent {
 
         bool isOutsideBoundary(Measurement &measurement);
 
+        void setME(double mE);
+
     };
 
     class Mallet {
@@ -84,6 +86,8 @@ namespace air_hockey_baseline_agent {
 
         Mallet(double puckRadius, double malletRadius, double restitution, double dt);
 
+        void setME(double mE);
+
         void setState(const geometry_msgs::TransformStamped &tfMallet);
 
         bool applyCollision(PuckState &puckState);
@@ -98,6 +102,10 @@ namespace air_hockey_baseline_agent {
 
         CollisionModel(double tableLength, double tableWidth, double goalWidth, double puckRadius, double malletRadius,
                        double &restitutionTable, double &restitutionMallet, double dt);
+
+        void setTableRestitution(const double tableRes);
+
+        void setMalletRestitution(const double malletRes);
 
         bool applyCollision(PuckState &puckState, const bool& checkMallet);
 

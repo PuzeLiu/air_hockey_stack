@@ -12,6 +12,12 @@ add_message_files(
         InnovationMsg.msg
 )
 
+add_service_files(
+        FILES
+        SetDynamicsParameter.srv
+        PuckTrackerResetService.srv
+)
+
 generate_messages(
         DEPENDENCIES
         std_msgs actionlib_msgs geometry_msgs

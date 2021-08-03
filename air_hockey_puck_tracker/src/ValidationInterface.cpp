@@ -29,29 +29,49 @@
 using namespace air_hockey_baseline_agent;
 
 ValidationInterface::ValidationInterface(const ros::NodeHandle &mNh): m_nh(mNh) {
-    m_pub_predict = m_nh.advertise<air_hockey_puck_tracker::InnovationMsg>("prediction", 1000);
-    m_pub_true = m_nh.advertise<air_hockey_puck_tracker::InnovationMsg>("measured", 1000);
-    m_pub_diff = m_nh.advertise<air_hockey_puck_tracker::InnovationMsg>("difference", 1000);
+    m_pub_predict = m_nh.advertise<air_hockey_puck_tracker::InnovationMsg>("prediction", 10);
+    m_pub_true = m_nh.advertise<air_hockey_puck_tracker::InnovationMsg>("measured", 10);
+    m_pub_one = m_nh.advertise<air_hockey_puck_tracker::InnovationMsg>("onestep", 10);
+}
+
+
+void ValidationInterface::publishMeasurement(const PuckState &measurement) {
+    m_msg.header.stamp = ros::Time::now();
+    m_msg.x = measurement.x();
+    m_msg.y = measurement.y();
+    m_msg.theta = measurement.theta();
+    m_pub_true.publish(m_msg);
+}
+
+void ValidationInterface::publishOneStepPrediction(const PuckState &prediction, const double predictionTime) {
+    m_msg.header.stamp = ros::Time::now();
+    m_msg.x = prediction.x();
+    m_msg.y = prediction.y();
+    m_msg.theta = prediction.theta();
+    m_msg.predictionTime = predictionTime;
+    m_pub_one.publish(m_msg);
 }
 
 void ValidationInterface::record(const PuckState &prediction, const PuckState &measurement) {
     m_msg.header.stamp = ros::Time::now();
-    m_msg.size = 1;
     m_msg.x = prediction.x();
     m_msg.y = prediction.y();
     m_msg.theta = prediction.theta();
     m_pub_predict.publish(m_msg);
 
-    m_msg.size = 1;
     m_msg.x = measurement.x();
     m_msg.y = measurement.y();
     m_msg.theta = measurement.theta();
     m_pub_true.publish(m_msg);
+}
 
-    m_msg.size = 1;
-    m_msg.x = prediction.x() - measurement.x();
-    m_msg.y = prediction.y() - measurement.y();
-    m_msg.theta = prediction.theta() - measurement.theta();
-    m_pub_diff.publish(m_msg);
+void ValidationInterface::publishPrediction(const PuckState &prediction, ros::Time stamp, const double predictedTime) {
+    m_msg.header.stamp = ros::Time::now();
+    m_msg.currentTime = stamp;
+    m_msg.x = prediction.x();
+    m_msg.y = prediction.y();
+    m_msg.theta = prediction.theta();
+    m_msg.predictionTime = predictedTime;
+    m_pub_predict.publish(m_msg);
 }
 
