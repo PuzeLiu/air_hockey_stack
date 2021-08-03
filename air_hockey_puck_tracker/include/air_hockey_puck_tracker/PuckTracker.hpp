@@ -28,6 +28,8 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include "air_hockey_puck_tracker/SetDynamicsParameter.h"
+#include "air_hockey_puck_tracker/PuckTrackerResetService.h"
 
 #include "SystemModel.hpp"
 #include "ObservationModel.hpp"
@@ -67,6 +69,12 @@ namespace air_hockey_baseline_agent {
 
         void publishData(const PuckState &prediction, const PuckState &measurement);
 
+        bool setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParameter::Request &req,
+                                  air_hockey_puck_tracker::SetDynamicsParameter::Response &res);
+
+        bool resetService(air_hockey_puck_tracker::PuckTrackerResetService::Request &req,
+                                  air_hockey_puck_tracker::PuckTrackerResetService::Response &res);
+
     private:
         void loadParams();
 
@@ -81,6 +89,8 @@ namespace air_hockey_baseline_agent {
 	    bool updateOpponentMallet();
 
 	    bool checkGating();
+
+	    void provideServices();
 
     private:
         ros::NodeHandle nh_;
@@ -113,7 +123,7 @@ namespace air_hockey_baseline_agent {
         bool doPrediction_;
         bool useParticleFilter_;
 
-        boost::thread thread_;
+        boost::thread thread_, thread1_;
 
         std::vector<PuckState> stateBuffer_;
         bool turn_on_pf;

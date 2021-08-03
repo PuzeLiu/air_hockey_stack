@@ -35,16 +35,20 @@ namespace air_hockey_baseline_agent{
         ros::NodeHandle m_nh;
         ros::Publisher m_pub_predict;
         ros::Publisher m_pub_true;
-        ros::Publisher m_pub_diff;
+        ros::Publisher m_pub_one;
         air_hockey_puck_tracker::InnovationMsg m_msg;
 
     public:
         ValidationInterface(const ros::NodeHandle &mNh);
 
+        void publishPrediction(const PuckState& prediction, ros::Time stamp, double predictedTime);
+
+        void publishMeasurement(const PuckState& measurement);
+
+        void publishOneStepPrediction(const PuckState& prediction, double predictedTime);
+
         void record(const PuckState& prediction, const PuckState& measurement);
 
-    protected:
-        bool m_save;
     };
 }
 

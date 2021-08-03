@@ -147,18 +147,22 @@ public:
 	 */
 	SystemModel(double damping, double friction);
 
-	/**
-	 * @brief Definition of (non-linear) state transition function
-	 *
-	 * This function defines how the system state is propagated through time,
-	 * i.e. it defines in which state \f$\hat{x}_{k+1}\f$ is system is expected to
-	 * be in time-step \f$k+1\f$ given the current state \f$x_k\f$ in step \f$k\f$ and
-	 * the system control input \f$u\f$.
-	 *
-	 * @param [in] x The system state in current time-step
-	 * @param [in] u The control vector input
-	 * @returns The (predicted) system state in the next time-step
-	 */
+    void setDamping(double damping);
+
+    void setMu(double mu);
+
+    /**
+     * @brief Definition of (non-linear) state transition function
+     *
+     * This function defines how the system state is propagated through time,
+     * i.e. it defines in which state \f$\hat{x}_{k+1}\f$ is system is expected to
+     * be in time-step \f$k+1\f$ given the current state \f$x_k\f$ in step \f$k\f$ and
+     * the system control input \f$u\f$.
+     *
+     * @param [in] x The system state in current time-step
+     * @param [in] u The control vector input
+     * @returns The (predicted) system state in the next time-step
+     */
 	S f(const S &x, const C &u) const;
 
 protected:

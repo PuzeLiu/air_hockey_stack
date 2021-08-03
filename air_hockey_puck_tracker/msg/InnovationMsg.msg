@@ -1,5 +1,6 @@
 std_msgs/Header header
-uint8 size
+time currentTime
+float64 predictionTime
 float64 x
 float64 y
 float64 theta

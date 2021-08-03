@@ -33,31 +33,12 @@
 using namespace air_hockey_baseline_agent;
 using namespace std;
 
-void tfdata(ros::Rate rate) {
-    rosbag::Bag bag;
-    bag.open("/home/airhockey/catkin_ws/src/air_hockey_stack/air_hockey_puck_tracker/data/2021-06-11-12-02-05.bag");
-    static tf2_ros::TransformBroadcaster br;
-    //
-    for(rosbag::MessageInstance const m: rosbag::View(bag)){
-        tf2_msgs::TFMessageConstPtr i = m.instantiate<tf2_msgs::TFMessage>();
-        if (i != nullptr) {
-            geometry_msgs::TransformStamped transformStamped;
-            transformStamped.transform = i->transforms.data()->transform;
-            transformStamped.child_frame_id = i->transforms.data()->child_frame_id;
-            transformStamped.header.frame_id = i->transforms.data()->header.frame_id;
-            transformStamped.header.stamp = ros::Time::now();
-            br.sendTransform(transformStamped);
-        }
-        rate.sleep();
-    }
-    bag.close();
-}
+
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "puck_tracker");
     ros::NodeHandle nh("/");
     ros::Rate rate(120);
-    std::thread t1(tfdata, rate);
 
     PuckTracker puckTracker(nh, 0.0);
     PuckPredictedState state_predict;
@@ -65,12 +46,10 @@ int main(int argc, char **argv) {
 
     puckTracker.start();
     while (ros::ok()){
-        state_predict = puckTracker.getPredictedState(true, true);
+        puckTracker.getPredictedState(true, true);
 		state_estimate = puckTracker.getEstimatedState(false);
-		puckTracker.publishData(state_predict.state, state_estimate);
         rate.sleep();
     }
-    t1.join();
     nh.shutdown();
     return 0;
 }

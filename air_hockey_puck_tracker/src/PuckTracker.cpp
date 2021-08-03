@@ -35,6 +35,9 @@ PuckTracker::~PuckTracker() {
     if (thread_.joinable()) {
         thread_.join();
     }
+    if (thread1_.joinable()) {
+        thread1_.join();
+    }
     delete rate_;
     delete kalmanFilter_;
     delete puckPredictor_;
@@ -47,6 +50,7 @@ PuckTracker::~PuckTracker() {
 }
 
 void PuckTracker::start() {
+    thread1_ = boost::thread(&PuckTracker::provideServices, this);
     thread_ = boost::thread(&PuckTracker::startTracking, this);
 }
 
@@ -72,7 +76,7 @@ const PuckPredictedState &PuckTracker::getPredictedState(bool visualize, bool de
         }
         stateBuffer_.erase(stateBuffer_.begin());
     }
-
+    validation_->publishPrediction(predictedState_.state, predictedState_.stamp, predictedState_.predictedTime);
     return predictedState_;
 }
 
@@ -215,6 +219,7 @@ void PuckTracker::startTracking() {
             if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
                 doPrediction_ = true;
                 if (checkGating()) {
+                    ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter");
                     if (useParticleFilter_ && turn_on_pf) {
                         kalmanFilter_->setCovariance(particleFilter_->applyParticleFilter(u_));
                     } else {
@@ -228,6 +233,8 @@ void PuckTracker::startTracking() {
             } else {
                 doPrediction_ = false;
             }
+        }else{
+            ROS_INFO_STREAM("No measurement - no prediction");
         }
         stamp_ += rate_->expectedCycleTime();
     }
@@ -255,7 +262,7 @@ bool PuckTracker::getMeasurement() {
         measurement_.theta() = yaw;
         return true;
     } catch (tf2::TransformException &exception) {
-        ROS_WARN_STREAM("Transformation table to puck failed: " << exception.what());
+        //ROS_WARN_STREAM("Transformation table to puck failed: " << exception.what());
         return false;
     }
 }
@@ -297,6 +304,9 @@ void PuckTracker::getPrediction(double &predictedTime, int &nCollision) {
                     useParticleFilter_ = false;
                 }
                 predictedTime = (i + 1) * rate_->expectedCycleTime().toSec();
+                if(i == 0){
+                    validation_->publishOneStepPrediction(puckPredictor_->getState(), predictedTime);
+                }
             }
         } else {
             //! If consider defending line
@@ -371,4 +381,50 @@ void PuckTracker::reset() {
 
 void PuckTracker::publishData(const PuckState &prediction, const PuckState &measurement) {
     validation_->record(prediction, measurement);
+}
+
+void PuckTracker::provideServices(){
+    ros::ServiceServer dynamicsService = nh_.advertiseService("set_dynamics_parameter", &PuckTracker::setDynamicsParameter, this);
+    ros::ServiceServer resetService = nh_.advertiseService("reset_puck_tracker", &PuckTracker::resetService, this);
+    ROS_INFO_STREAM("Services ready to call");
+    ros::spin();
+}
+
+
+bool PuckTracker::setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParameter::Request &req,
+                         air_hockey_puck_tracker::SetDynamicsParameter::Response &res){
+    ROS_INFO_STREAM("Setting dynamics parameter to Damping:" << req.frictionDrag << " mu: " << req.frictionSlide);
+    systemModel_->setDamping(req.frictionDrag);
+    systemModel_->setMu(req.frictionSlide);
+
+    collisionModel_->setMalletRestitution(req.restitutionMallet);
+    collisionModel_->setTableRestitution(req.restitutionTable);
+    res.success = true;
+    return true;
+}
+
+bool PuckTracker::resetService(air_hockey_puck_tracker::PuckTrackerResetService::Request &req,
+                               air_hockey_puck_tracker::PuckTrackerResetService::Response &res){
+    ROS_INFO_STREAM("Setting initial Puck State via Service");
+    //! set Initial State
+    PuckState initState;
+    initState.dx() = req.dx;
+    initState.dy() = req.dy;
+    initState.x() = req.x;
+    initState.y() = req.y;
+
+    initState.dtheta() = req.dtheta;
+    initState.theta() = req.theta;
+
+    kalmanFilter_->init(initState);
+
+    Kalman::Covariance<PuckState> covInit;
+    covInit.setIdentity();
+    kalmanFilter_->setCovariance(covInit);
+
+    puckPredictor_->init(initState);
+    puckPredictor_->setCovariance(covInit);
+
+    res.success = true;
+    return true;
 }
