@@ -390,10 +390,45 @@ void PuckTracker::publishData(const PuckState &prediction, const PuckState &meas
 void PuckTracker::provideServices(){
     ros::ServiceServer dynamicsService = nh_.advertiseService("set_dynamics_parameter", &PuckTracker::setDynamicsParameter, this);
     ros::ServiceServer resetService = nh_.advertiseService("reset_puck_tracker", &PuckTracker::resetService, this);
+    ros::ServiceServer kalmanFilter = nh_.advertiseService("kalman_filter_prediction", &PuckTracker::updateKalmanFilter, this);
     ROS_INFO_STREAM("Services ready to call");
     ros::spin();
 }
 
+bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPrediction::Request &req,
+                                     air_hockey_puck_tracker::KalmanFilterPrediction::Response &res){
+    measurement_.x() = req.state.x;
+    measurement_.y() = req.state.y;
+    measurement_.theta() = req.state.theta;
+
+    //! predict step
+    kalmanFilter_->predict(*systemModel_, u_);
+    if( collisionModel_->applyCollision(kalmanFilter_->getState(), false)){
+        useParticleFilter_ = true;
+    }
+    if (useParticleFilter_) {
+        particleFilter_->sampleParticles(kalmanFilter_->getState(),
+                                         const_cast<Eigen::Matrix<double, 6, 6> &>(kalmanFilter_->getCovariance()));
+    }
+
+    if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
+        doPrediction_ = true;
+        ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter");
+        if (useParticleFilter_ && turn_on_pf) {
+            kalmanFilter_->setCovariance(particleFilter_->applyParticleFilter(u_));
+        } else {
+            kalmanFilter_->update(*observationModel_, measurement_);
+        }
+    }
+    PuckPredictedState predState = getPredictedState(false, false);
+    res.prediction.header.stamp = ros::Time::now();
+    res.prediction.x = predState.state.x();
+    res.prediction.y = predState.state.y();
+    res.prediction.theta = predState.state.theta();
+    res.prediction.predictionTime = predState.predictedTime;
+
+    return true;
+}
 
 bool PuckTracker::setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParameter::Request &req,
                          air_hockey_puck_tracker::SetDynamicsParameter::Response &res){
