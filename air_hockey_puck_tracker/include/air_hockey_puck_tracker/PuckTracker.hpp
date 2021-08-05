@@ -30,6 +30,7 @@
 #include <tf2/LinearMath/Matrix3x3.h>
 #include "air_hockey_puck_tracker/SetDynamicsParameter.h"
 #include "air_hockey_puck_tracker/PuckTrackerResetService.h"
+#include "air_hockey_puck_tracker/KalmanFilterPrediction.h"
 
 #include "SystemModel.hpp"
 #include "ObservationModel.hpp"
@@ -68,6 +69,9 @@ namespace air_hockey_baseline_agent {
         }
 
         void publishData(const PuckState &prediction, const PuckState &measurement);
+
+        bool updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPrediction::Request &req,
+                                  air_hockey_puck_tracker::KalmanFilterPrediction::Response &res);
 
         bool setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParameter::Request &req,
                                   air_hockey_puck_tracker::SetDynamicsParameter::Response &res);

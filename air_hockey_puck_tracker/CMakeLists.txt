@@ -16,6 +16,7 @@ add_service_files(
         FILES
         SetDynamicsParameter.srv
         PuckTrackerResetService.srv
+        KalmanFilterPrediction.srv
 )
 
 generate_messages(
