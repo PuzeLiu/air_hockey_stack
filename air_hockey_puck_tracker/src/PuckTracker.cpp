@@ -432,11 +432,11 @@ bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPredic
 
 bool PuckTracker::setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParameter::Request &req,
                          air_hockey_puck_tracker::SetDynamicsParameter::Response &res){
-    ROS_INFO_STREAM("Setting dynamics parameter to Damping:" << req.frictionDrag << " mu: " << req.frictionSlide);
+    ROS_INFO_STREAM("Setting dynamics parameter to Damping:" << req.frictionDrag << " mu: " << req.frictionSlide
+    << "restitution Table: " << req.restitutionTable);
     systemModel_->setDamping(req.frictionDrag);
     systemModel_->setMu(req.frictionSlide);
 
-    collisionModel_->setMalletRestitution(req.restitutionMallet);
     collisionModel_->setTableRestitution(req.restitutionTable);
     res.success = true;
     return true;
