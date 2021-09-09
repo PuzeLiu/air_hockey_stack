@@ -104,8 +104,11 @@ namespace air_hockey_baseline_agent {
                     double vtNextScalar =
                             2. / 3. * vtScalar - m_puckRadius / 5 * dtheta; // - m_puckRadius / 3 * dtheta;
                     double vnNextScalar = -m_e * vnScalar;
-                    double dthetaNext = 1. / 3. * dtheta
-                                        - 2. / (3. * m_puckRadius) * vtScalar;
+                    double dthetaNext = 0;
+                    if (dtheta != 0) {
+                        dthetaNext = 1. / 3. * dtheta
+                                            - 2. / (3. * m_puckRadius) * vtScalar;
+                    }
                     Vector2 vNext = vnNextScalar * vecN + vtNextScalar * vecT;
 
                     // Position of intersection point
