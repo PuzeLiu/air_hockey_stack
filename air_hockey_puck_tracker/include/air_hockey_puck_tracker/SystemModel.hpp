@@ -165,6 +165,8 @@ public:
      */
 	S f(const S &x, const C &u) const;
 
+    void setSystemNoise(Kalman::Jacobian<State, State> noise);
+
 protected:
 	/**
 	 * @brief Update jacobian matrices for the system state transition function using current state

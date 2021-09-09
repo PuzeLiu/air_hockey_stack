@@ -52,5 +52,9 @@ void ObservationModel::updateJacobians(const State &x) {
 	this->H(Measurement::THETA, State::THETA) = 1.0;
 }
 
+void ObservationModel::setMeasurementNoise(Kalman::Jacobian<Measurement, Measurement> &noise){
+    this->V = noise;
+}
+
 }
 
