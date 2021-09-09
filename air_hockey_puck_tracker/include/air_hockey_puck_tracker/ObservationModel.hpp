@@ -63,9 +63,12 @@ namespace air_hockey_baseline_agent {
 
         Measurement h(const PuckState &x) const;
         Kalman::Jacobian<Measurement, PuckState>& getH();
+
+        void setMeasurementNoise(Kalman::Jacobian<Measurement, Measurement> &noise);
     protected:
 
         void updateJacobians(const PuckState &x);
+
     };
 }
 #endif //PUCK_TRACKER_OBSERVATIONMODEL_H
