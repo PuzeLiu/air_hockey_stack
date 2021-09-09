@@ -12,7 +12,7 @@
         </node>
     </group>
 
-    <node pkg="tf" type="static_transform_publisher" name="table_broadcaster" args="1.504 0 0.07 0 0 0 1 world Table 10" />
+    <node pkg="tf" type="static_transform_publisher" name="table_broadcaster" args="0 0. 0. 0 0 0 1 world Table 10" />
 
     <node name="puck_tracker_wrapper" pkg="air_hockey_puck_tracker" type="puck_tracker_wrapper_node" output="screen" ns="iiwa_front"/>
 
