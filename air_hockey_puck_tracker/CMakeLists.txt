@@ -10,6 +10,9 @@ find_package(Kalman REQUIRED)
 add_message_files(
         FILES
         InnovationMsg.msg
+        EstimationMsg.msg
+        MeasurementMsg.msg
+        PredictionMsg.msg
 )
 
 add_service_files(
@@ -17,6 +20,7 @@ add_service_files(
         SetDynamicsParameter.srv
         PuckTrackerResetService.srv
         KalmanFilterPrediction.srv
+        SetKalmanFilterJacobians.srv
 )
 
 generate_messages(
