@@ -465,11 +465,16 @@ bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPredic
 
     if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
         //ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter");
-        if (useParticleFilter_ && turn_on_pf) {
-            ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter with Particle Filter");
-            kalmanFilter_->setCovariance(particleFilter_->applyParticleFilter(u_));
-        } else {
-            kalmanFilter_->update(*observationModel_, measurement_);
+        if (checkGating()) {
+            if (useParticleFilter_ && turn_on_pf) {
+                ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter with Particle Filter");
+                kalmanFilter_->setCovariance(particleFilter_->applyParticleFilter(u_));
+            } else {
+                kalmanFilter_->update(*observationModel_, measurement_);
+            }
+        }
+        else{
+            ROS_INFO_STREAM("[Puck Tracker] The innovation is too big, reset the puck tracker");
         }
     }
     PuckState estimatedState = getEstimatedState(false);
