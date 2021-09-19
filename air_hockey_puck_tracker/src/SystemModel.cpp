@@ -84,8 +84,5 @@ namespace air_hockey_baseline_agent {
         SystemModel::mu = mu;
     }
 
-    void SystemModel::setSystemNoise(Kalman::Jacobian<State, State> noise){
-        this->W = noise;
-    }
 
 }

@@ -27,4 +27,4 @@ air_hockey:
     reset_threshold:
       4.605170185988092   # gating value pG = 0.9 of cdf from Chi squared distribution in 2 DoF (x, y)
     turn_on_pf:
-      true
+      false
