@@ -165,7 +165,6 @@ public:
      */
 	S f(const S &x, const C &u) const;
 
-    void setSystemNoise(Kalman::Jacobian<State, State> noise);
 
 protected:
 	/**
