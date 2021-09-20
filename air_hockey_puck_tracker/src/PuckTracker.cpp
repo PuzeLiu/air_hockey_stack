@@ -472,6 +472,9 @@ bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPredic
 				kalmanFilter_->update(*observationModel_, measurement_);
 			}
 		} else {
+			Kalman::Covariance<PuckState> covInit;
+			covInit.setIdentity();
+			kalmanFilter_->setCovariance(covInit);
 			ROS_INFO_STREAM("[Puck Tracker] The innovation is too big, reset the puck tracker");
 		}
 	}
