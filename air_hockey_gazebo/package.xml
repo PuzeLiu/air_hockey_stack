@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>air_hockey_gazebo</name>
+  <version>0.0.0</version>
+  <description>The air_hockey_gazebo package</description>
+
+  <maintainer email="puze@robot-learning.de">Puze Liu</maintainer>
+
+  <license>MIT</license>
+
+  <author email="puze@robot-learning.de">Puze Liu</author>
+  <author email="davide@robot-learning.de">Davide tateo</author>
+
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>gazebo_ros</build_depend>
+  <build_export_depend>roscpp</build_export_depend>
+  <build_export_depend>rospy</build_export_depend>
+  <build_export_depend>std_msgs</build_export_depend>
+  <exec_depend>roscpp</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+
+
+  <export>
+    <gazebo_ros_control plugin="${prefix}/air_hockey_gazebo_plugins.xml"/>
+  </export>
+
+</package>

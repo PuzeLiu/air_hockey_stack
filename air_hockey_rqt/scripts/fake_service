@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+from air_hockey_referee.srv import *
+from air_hockey_referee.msg import GameStatus
+
+import rospy
+import numpy as np
+
+game_status = 'stopped'
+
+
+def handle_start(req):
+    global game_status
+    print('Start Game')
+    game_status = 'started'
+
+    return StartGameResponse(msg='Game started', success=True)
+
+
+def handle_pause(req):
+    global game_status
+    print('Pause Game')
+    game_status = 'paused'
+
+    return PauseGameResponse(msg='Game Paused', success=True)
+
+
+def handle_stop(req):
+    global game_status
+    print('Stop Game')
+    game_status = 'stopped'
+
+    return StopGameResponse(msg='Game Stopped', success=True)
+
+
+def handle_reset(req):
+    global game_status
+
+    if game_status in ['paused', 'stopped']:
+        print('Reset Robot')
+        res = ResetRobotResponse(msg='OK RESET', success=True)
+    else:
+        print('Error Reset Robot')
+        res = ResetRobotResponse(msg='KO RESET', success=False)
+
+    return res
+
+
+if __name__ == "__main__":
+    rospy.init_node('fake_service')
+    s_start_game = rospy.Service('start_game', StartGame, handle_start)
+    s_pause_game = rospy.Service('pause_game', PauseGame, handle_pause)
+    s_stop_game = rospy.Service('stop_game', StopGame, handle_stop)
+    s_reset_game = rospy.Service('reset_robot', ResetRobot, handle_reset)
+
+    rate = rospy.Rate(0.5)
+
+    pub = rospy.Publisher('game_status', GameStatus, queue_size=10)
+
+    scores = [0, 0]
+    while not rospy.is_shutdown():
+
+        msg = GameStatus()
+
+        if game_status == 'started':
+            idx = np.random.randint(0, 2)
+            scores[idx] += 1
+
+        msg.score_home = scores[0]
+        msg.score_away = scores[1]
+        msg.status = 0
+
+        rate.sleep()
+        pub.publish(msg)

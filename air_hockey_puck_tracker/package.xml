@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>air_hockey_puck_tracker</name>
+  <version>0.0.0</version>
+  <description>The air_hockey_puck_tracker package</description>
+
+  <maintainer email="puze@robot-learning.de">PUze Liu</maintainer>
+  <maintainer email="davide@robot-learning.de">Davide Tateo</maintainer>
+  <license>MIT</license>
+
+  <author email="puze@robot-learning.de">Puze Liu</author>
+  <author email="davide@robot-learning.de">Davide Tateo</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>tf2_ros</depend>
+  <depend>geometry_msgs</depend>
+  <build_depend>message_generation</build_depend>
+  <exec_depend>tf2</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+</package>

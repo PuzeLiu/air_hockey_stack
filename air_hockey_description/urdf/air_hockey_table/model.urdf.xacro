@@ -1,0 +1,608 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name="air_hockey_table" xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <material name="grey">
+        <color rgba="0.8 0.8 0.8 1"/>
+    </material>
+    <material name="white">
+        <color rgba="1.0 1.0 1.0 1"/>
+    </material>
+    <material name="red">
+        <color rgba="1.0 0.0 0.0 1"/>
+    </material>
+
+    <xacro:arg name="parent" default="Table"/>
+    <xacro:arg name="collide_bitmask" default="0x01"/>
+    <xacro:arg name="restitution_longitude" default="0.8468189914210034"/>
+    <xacro:arg name="restitution_latitude" default="0.9697840083850648"/>
+    <xacro:arg name="lateral_friction_rim" default="0.12931021481683416"/>
+    <xacro:arg name="lateral_friction_surface" default="0.0002959345937628299"/>
+
+    <xacro:property name="M_PI" value="3.1415926535897931"/>
+    <xacro:property name="table_base_length" value="2.136"/>
+    <xacro:property name="table_base_width" value="1.222"/>
+    <xacro:property name="table_base_height" value="0.11"/>
+    <xacro:property name="table_rim_horizon_length" value="0.09"/>
+    <xacro:property name="table_rim_horizon_width" value="0.396"/>
+    <xacro:property name="table_rim_horizon_height" value="0.01"/>
+    <xacro:property name="table_rim_horizon_top_height" value="0.02"/>
+    <xacro:property name="table_rim_vertical_length" value="2.136"/>
+    <xacro:property name="table_rim_vertical_width" value="0.09"/>
+    <xacro:property name="table_rim_vertical_height" value="0.03"/>
+
+
+    <xacro:macro name="air_hockey_table" params="parent collide_bitmask restitution_longitude restitution_latitude
+                                                 lateral_friction_rim lateral_friction_surface">
+        <link name="${parent}"/>
+        <joint name="base_joint" type="fixed">
+            <origin xyz="0 0 ${-table_base_height/2}" rpy="0 0 0"/>
+            <parent link="${parent}"/>
+            <child link="t_base"/>
+        </joint>
+        <link name="t_base">
+            <inertial>
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <mass value="1"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual>
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${table_base_length} ${table_base_width} ${table_base_height}"/>
+                </geometry>
+                <material name="white"/>
+            </visual>
+            <collision>
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <geometry>
+                    <box size="${table_base_length} ${table_base_width} ${table_base_height}"/>
+                </geometry>
+            </collision>
+            <contact>
+                <restitution value="${restitution_longitude}"/>
+                <lateral_friction value="${lateral_friction_surface}"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_home_joint" type="fixed">
+            <origin xyz="-${table_base_length / 2 - table_rim_horizon_length} 0 0" rpy="0 0 0"/>
+            <parent link="${parent}"/>
+            <child link="TableHome"/>
+        </joint>
+        <link name="TableHome"/>
+
+        <joint name="base_away_joint" type="fixed">
+            <origin xyz="${table_base_length / 2 - table_rim_horizon_length} 0 0" rpy="0 0 ${M_PI}"/>
+            <parent link="${parent}"/>
+            <child link="TableAway"/>
+        </joint>
+        <link name="TableAway"/>
+
+        <joint name="base_down_rim_l" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="${(table_base_length - table_rim_horizon_length) / 2}
+                                           ${table_base_width/2 - table_rim_vertical_width - table_rim_horizon_width / 2}
+                                           ${(table_base_height + table_rim_horizon_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_down_rim_l"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
+        </joint>
+        <link name="t_down_rim_l">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
+                </geometry>
+            </collision>
+            <contact>
+                <restitution value="${restitution_latitude}"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_down_rim_r" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="${(table_base_length - table_rim_horizon_length) / 2}
+                                           -${table_base_width/2 - table_rim_vertical_width - table_rim_horizon_width / 2}
+                                           ${(table_base_height + table_rim_horizon_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_down_rim_r"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
+        </joint>
+        <link name="t_down_rim_r">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
+                </geometry>
+            </collision>
+            <contact>
+                <restitution value="${restitution_latitude}"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_down_rim_top" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="${(table_base_length - table_rim_horizon_length) / 2}
+                                           0.0
+                                           ${(table_base_height + table_rim_horizon_top_height) / 2 + table_rim_horizon_height}"/>
+            <parent link="t_base"/>
+            <child link="t_down_rim_top"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
+
+        </joint>
+        <link name="t_down_rim_top">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+<!--            <collision>-->
+<!--                <geometry>-->
+<!--                    <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>-->
+<!--                </geometry>-->
+<!--            </collision>-->
+            <contact>
+                <restitution value="${restitution_latitude}"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_up_rim_l" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="-${(table_base_length - table_rim_horizon_length) / 2}
+                                           ${table_base_width/2 - table_rim_vertical_width - table_rim_horizon_width / 2}
+                                           ${(table_base_height + table_rim_horizon_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_up_rim_l"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
+        </joint>
+        <link name="t_up_rim_l">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
+                </geometry>
+            </collision>
+            <contact>
+                <restitution value="${restitution_latitude}"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_up_rim_r" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="-${(table_base_length - table_rim_horizon_length) / 2}
+                                           -${table_base_width/2 - table_rim_vertical_width - table_rim_horizon_width / 2}
+                                           ${(table_base_height + table_rim_horizon_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_up_rim_r"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
+        </joint>
+        <link name="t_up_rim_r">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_rim_horizon_width} ${table_rim_horizon_height + 0.1}"/>
+                </geometry>
+            </collision>
+            <contact>
+                <restitution value="${restitution_latitude}"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_up_rim_top" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="-${(table_base_length - table_rim_horizon_length) / 2}
+                                           0.0
+                                           ${(table_base_height + table_rim_horizon_top_height) / 2 + table_rim_horizon_height}"/>
+            <parent link="t_base"/>
+            <child link="t_up_rim_top"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
+        </joint>
+        <link name="t_up_rim_top">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual>
+                <geometry>
+                    <box size="${table_rim_horizon_length} ${table_base_width - 2 * table_rim_vertical_width} ${table_rim_horizon_top_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <contact>
+                <restitution value="${restitution_latitude}"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_left_rim" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="0.0
+                                           ${(table_base_width - table_rim_vertical_width) / 2}
+                                           ${(table_base_height + table_rim_vertical_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_left_rim"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
+        </joint>
+        <link name="t_left_rim">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual>
+                <geometry>
+                    <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height + 0.1}"/>
+                </geometry>
+            </collision>
+            <contact>
+                <restitution value="${restitution_longitude}"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <joint name="base_right_rim" type="fixed">
+            <origin rpy="0.0 0.0 0.0" xyz="0.0
+                                           -${(table_base_width - table_rim_vertical_width) / 2}
+                                           ${(table_base_height + table_rim_vertical_height) / 2}"/>
+            <parent link="t_base"/>
+            <child link="t_right_rim"/>
+            <preserveFixedJoint>true</preserveFixedJoint>
+        </joint>
+        <link name="t_right_rim">
+            <inertial>
+                <mass value="1.0"/>
+                <inertia ixx="1" ixy="0" ixz="0" iyy="1" iyz="0" izz="1"/>
+            </inertial>
+            <visual>
+                <geometry>
+                    <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height}"/>
+                </geometry>
+                <material name="grey"/>
+            </visual>
+            <collision>
+                <origin xyz="0.0 0.0 0.0"/>
+                <geometry>
+                    <box size="${table_rim_vertical_length} ${table_rim_vertical_width} ${table_rim_vertical_height + 0.1}"/>
+                </geometry>
+            </collision>
+            <contact>
+                <restitution value="${restitution_longitude}"/>
+                <lateral_friction value="${lateral_friction_rim}"/>
+                <rolling_friction value="0.0"/>
+                <spinning_friction value="0.0"/>
+            </contact>
+        </link>
+
+        <gazebo reference="t_base">
+            <collision>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>${restitution_longitude}</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                        <ode>
+                            <mu>${lateral_friction_surface}</mu>
+                            <mu2>${lateral_friction_surface}</mu2>
+                        </ode>
+                    </friction>
+                    <contact>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
+                        <ode>
+                            <max_vel>10</max_vel>
+                        </ode>
+                    </contact>
+                </surface>
+            </collision>
+            <material>Gazebo/White</material>
+        </gazebo>
+
+        <gazebo reference="base_down_rim_l">
+            <preserveFixedJoint>1</preserveFixedJoint>
+        </gazebo>
+        <gazebo reference="t_down_rim_l">
+            <collision>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                        <ode>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
+                        </ode>
+                    </friction>
+                    <contact>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
+                        <ode>
+                            <max_vel>10</max_vel>
+                        </ode>
+                    </contact>
+                </surface>
+            </collision>
+            <material>Gazebo/Grey</material>
+        </gazebo>
+
+        <gazebo reference="base_down_rim_r">
+            <preserveFixedJoint>1</preserveFixedJoint>
+        </gazebo>
+        <gazebo reference="t_down_rim_r">
+            <collision>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                        <ode>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
+                        </ode>
+                    </friction>
+                    <contact>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
+                        <ode>
+                            <max_vel>10</max_vel>
+                        </ode>
+                    </contact>
+                </surface>
+            </collision>
+            <material>Gazebo/Grey</material>
+        </gazebo>
+
+        <gazebo reference="base_down_rim_top">
+            <preserveFixedJoint>1</preserveFixedJoint>
+        </gazebo>
+        <gazebo reference="t_down_rim_top">
+<!--            <collision>-->
+<!--                <surface>-->
+<!--                    <bounce>-->
+<!--                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>-->
+<!--                        <threshold>0</threshold>-->
+<!--                    </bounce>-->
+<!--                    <friction>-->
+<!--                        &lt;!&ndash; For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 &ndash;&gt;-->
+<!--                        &lt;!&ndash; https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc &ndash;&gt;-->
+<!--                        <ode>-->
+<!--                            <mu>${lateral_friction_rim}</mu>-->
+<!--                            <mu2>${lateral_friction_rim}</mu2>-->
+<!--                        </ode>-->
+<!--                    </friction>-->
+<!--                    <contact>-->
+<!--                        <ode>-->
+<!--                            <max_vel>10</max_vel>-->
+<!--                        </ode>-->
+<!--                    </contact>-->
+<!--                </surface>-->
+<!--            </collision>-->
+            <material>Gazebo/Grey</material>
+        </gazebo>
+
+        <gazebo reference="base_up_rim_l">
+            <preserveFixedJoint>1</preserveFixedJoint>
+        </gazebo>
+        <gazebo reference="t_up_rim_l">
+            <collision>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                        <ode>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
+                        </ode>
+                    </friction>
+                    <contact>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
+                        <ode>
+                            <max_vel>10</max_vel>
+                        </ode>
+                    </contact>
+                </surface>
+            </collision>
+            <material>Gazebo/Grey</material>
+        </gazebo>
+
+        <gazebo reference="base_up_rim_r">
+            <preserveFixedJoint>1</preserveFixedJoint>
+        </gazebo>
+        <gazebo reference="t_up_rim_r">
+            <collision>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                        <ode>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
+                        </ode>
+                    </friction>
+                    <contact>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
+                        <ode>
+                            <max_vel>10</max_vel>
+                        </ode>
+                    </contact>
+                </surface>
+            </collision>
+            <material>Gazebo/Grey</material>
+        </gazebo>
+
+        <gazebo reference="base_up_rim_top">
+            <preserveFixedJoint>1</preserveFixedJoint>
+        </gazebo>
+        <gazebo reference="t_up_rim_top">
+<!--            <collision>-->
+<!--                <surface>-->
+<!--                    <bounce>-->
+<!--                        <restitution_coefficient>${restitution_latitude}</restitution_coefficient>-->
+<!--                        <threshold>0</threshold>-->
+<!--                    </bounce>-->
+<!--                    <friction>-->
+<!--                        &lt;!&ndash; For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 &ndash;&gt;-->
+<!--                        &lt;!&ndash; https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc &ndash;&gt;-->
+<!--                        <ode>-->
+<!--                            <mu>${lateral_friction_rim}</mu>-->
+<!--                            <mu2>${lateral_friction_rim}</mu2>-->
+<!--                        </ode>-->
+<!--                    </friction>-->
+<!--                    <contact>-->
+<!--                        <ode>-->
+<!--                            <max_vel>10</max_vel>-->
+<!--                        </ode>-->
+<!--                    </contact>-->
+<!--                </surface>-->
+<!--            </collision>-->
+            <material>Gazebo/Grey</material>
+        </gazebo>
+
+        <gazebo reference="base_left_rim">
+            <preserveFixedJoint>1</preserveFixedJoint>
+        </gazebo>
+        <gazebo reference="t_left_rim">
+            <collision>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>${restitution_longitude}</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                        <ode>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
+                        </ode>
+                    </friction>
+                    <contact>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
+                        <ode>
+                            <max_vel>10</max_vel>
+                        </ode>
+                    </contact>
+                </surface>
+            </collision>
+            <material>Gazebo/Grey</material>
+        </gazebo>
+
+        <gazebo reference="base_right_rim">
+            <preserveFixedJoint>1</preserveFixedJoint>
+        </gazebo>
+        <gazebo reference="t_right_rim">
+            <collision>
+                <surface>
+                    <bounce>
+                        <restitution_coefficient>${restitution_longitude}</restitution_coefficient>
+                        <threshold>0</threshold>
+                    </bounce>
+                    <friction>
+                        <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
+                        <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
+                        <ode>
+                            <mu>${lateral_friction_rim}</mu>
+                            <mu2>${lateral_friction_rim}</mu2>
+                        </ode>
+                    </friction>
+                    <contact>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
+                        <ode>
+                            <max_vel>10</max_vel>
+                        </ode>
+                    </contact>
+                </surface>
+            </collision>
+            <material>Gazebo/Grey</material>
+        </gazebo>
+
+        <gazebo>
+            <static>true</static>
+        </gazebo>
+    </xacro:macro>
+
+    <xacro:air_hockey_table parent="$(arg parent)"
+                            collide_bitmask="$(arg collide_bitmask)"
+                            restitution_longitude="$(arg restitution_longitude)"
+                            restitution_latitude="$(arg restitution_latitude)"
+                            lateral_friction_rim="$(arg lateral_friction_rim)"
+                            lateral_friction_surface="$(arg lateral_friction_surface)"/>
+</robot>
+

@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="AirHockeyManager" type="air_hockey_rqt.air_hockey_manager.AirHockeyManager" base_class_type="rqt_gui_py::Plugin">
+    <description>
+     	User interface to use the Iiwas robot.
+    </description>
+    <qtgui>
+      <group>
+        <label>Robot Tools</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to robot tools.</statustip>
+      </group>
+      <label>Air Hockey Manager</label>
+      <icon type="file">resource/icon.png</icon>
+      <statustip>Manage Air Hockey Game</statustip>
+    </qtgui>
+  </class>
+</library>

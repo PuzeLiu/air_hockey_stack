@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<robot name="iiwa_striker" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <!-- Import Rviz colors -->
+    <xacro:include filename="$(find iiwas_description)/urdf/materials.xacro" />
+    <!--Import the lbr iiwa macro -->
+    <xacro:include filename="$(find iiwas_description)/urdf/iiwa14.xacro"/>
+    <!--Import the striker macro -->
+    <xacro:include filename="$(find air_hockey_description)/urdf/striker.xacro"/>
+
+    <xacro:arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+    <xacro:arg name="robot_name" default="F"/>
+    <xacro:arg name="parent" default="world"/>
+    <xacro:arg name="base_xyz" default="0 0 0"/>
+    <xacro:arg name="base_rpy" default="0 0 0"/>
+
+    <link name="$(arg parent)"/>
+
+    <!--iiwa-->
+    <xacro:iiwa14 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)" parent="$(arg parent)">
+        <origin xyz="$(arg base_xyz)" rpy="$(arg base_rpy)" />
+    </xacro:iiwa14>
+    <xacro:striker hardware_interface="hardware_interface/EffortJointInterface" robot_name="$(arg robot_name)"/>
+
+    <gazebo>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+          <robotSimType>iiwas_gazebo/GravityCompensationHWSim</robotSimType>
+        </plugin>
+    </gazebo>
+</robot>

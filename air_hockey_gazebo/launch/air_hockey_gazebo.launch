@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- Arguments -->
+    <arg name="world_name" default="$(find iiwas_gazebo)/worlds/iiwas_world.world"/>
+    <arg name="gui" default="true"/>
+    <arg name="paused" default="false"/>
+    <arg name="physics" default="ode" />
+
+    <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+
+    <arg name="front_controllers" default="joint_position_trajectory_controller"/>
+    <arg name="back_controllers" default="joint_position_trajectory_controller"/>
+
+    <arg name="simulation" default="true"/>
+
+    <arg name="use_front_iiwa" default="true"/>
+    <arg name="use_back_iiwa" default="true"/>
+
+    <arg name="table_surface_x" default="1.694"/>
+    <arg name="table_surface_y" default="0.813"/>
+    <arg name="table_surface_z" default="0.1"/>
+
+    <arg name="puck_sdf" default="$(find air_hockey_description)/urdf/puck/model.sdf"/>
+
+    <!-- Description -->
+    <include file="$(find air_hockey_description)/launch/air_hockey_description.launch">
+        <arg name="hardware_interface" value="$(arg hardware_interface)"/>
+    </include>
+
+    <node name="rviz" pkg="rviz" type="rviz"
+          args="-d $(find air_hockey_description)/rviz/air_hockey.rviz"/>
+
+    <!-- Simulation -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(arg world_name)"/>
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="physics" value="$(arg physics)" />
+    </include>
+
+    <!-- Controllers -->
+    <include file="$(find air_hockey_gazebo)/launch/gazebo_control.launch">
+        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />
+        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />
+        <arg name="front_controllers" value="$(arg front_controllers)" />
+        <arg name="back_controllers" value="$(arg back_controllers)" />
+        <arg name="simulation" value="$(arg simulation)" />
+    </include>
+
+    <!-- Spawn Gazebo Model -->
+    <group ns="iiwas_frame">
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+        <node name="frame_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+              args="-urdf -model iiwas_frame -param robot_description"/>
+    </group>
+
+    <group ns="air_hockey_table">
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+        <node name="table_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+              args="-urdf -model air_hockey_table -param robot_description
+              -x $(arg table_surface_x) -y $(arg table_surface_y) -z $(arg table_surface_z)"/>
+        <node name="table_tf_publisher" pkg="tf" type="static_transform_publisher"
+              args="$(arg table_surface_x) $(arg table_surface_y) $(arg table_surface_z) 0 0 0 1.0 /world /Table 120"/>
+    </group>
+
+    <group ns="puck">
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+        <node name="puck_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+              args="-sdf -model puck -file $(arg puck_sdf) -wait air_hockey_table
+              -x 1.08075 -y 1.013 -z $(arg table_surface_z)"/>
+    </group>
+
+    <group ns="iiwa_front" if="$(arg use_front_iiwa)">
+        <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+              args="-urdf -model iiwa_front -param robot_description -wait iiwas_frame"/>
+    </group>
+
+    <group ns="iiwa_back" if="$(arg use_back_iiwa)">
+        <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+              args="-urdf -model iiwa_back -param robot_description -wait iiwas_frame"/>
+    </group>
+
+    <!-- Start Air Hockey Referee -->
+    <node pkg="air_hockey_referee" type="air_hockey_referee" name="air_hockey_referee" output="screen">
+        <param name="gazebo" value="true"/>
+    </node>
+
+    <!-- Start Air Hockey rqt -->
+    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
+
+<!--    &lt;!&ndash; Load Parameters of kalman filter &ndash;&gt;-->
+<!--    <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>-->
+
+</launch>

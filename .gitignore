@@ -1,0 +1,12 @@
+CATKIN_IGNORE
+*~
+*user
+*pyc
+
+.idea/
+*.npy
+*data/
+*result/
+*cmake-build-debug/
+*.egg-info
+*.bag

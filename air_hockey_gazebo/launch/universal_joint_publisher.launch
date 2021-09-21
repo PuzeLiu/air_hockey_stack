@@ -1,0 +1,21 @@
+<launch>
+    <arg name="frequency" default="100.0"/>
+    <arg name="use_front_iiwa" default="true"/>
+    <arg name="use_back_iiwa" default="true"/>
+
+    <group ns="iiwa_front" if="$(arg use_front_iiwa)">
+
+        <node name="universal_joint_state_publisher" pkg="air_hockey_gazebo" type="universal_joint_state_publisher"
+              output="screen">
+            <param name="frequency" value="$(arg frequency)"/>
+        </node>
+    </group>
+
+    <group ns="iiwa_back" if="$(arg use_back_iiwa)">
+        <node name="universal_joint_state_publisher" pkg="air_hockey_gazebo" type="universal_joint_state_publisher"
+              output="screen">
+            <param name="frequency" value="$(arg frequency)"/>
+        </node>
+    </group>
+
+</launch>

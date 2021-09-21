@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>air_hockey_description</name>
+  <version>0.0.0</version>
+  <description>The air_hockey_description package</description>
+
+  <maintainer email="puze@robot-learning.de">Puze Liu</maintainer>
+
+  <license>MIT</license>
+
+  <author email="puze@robot-learning.de">Puze Liu</author>
+  <author email="davide@robot-learning.de">Davide tateo</author>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+</package>
