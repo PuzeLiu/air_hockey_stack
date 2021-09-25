@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #ifndef AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_AGENT_DATA_STRUCTURES_H_
 #define AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_AGENT_DATA_STRUCTURES_H_
 
@@ -109,8 +110,10 @@ namespace air_hockey_baseline_agent {
 
 		// Data for Null Space Optimizer
 		int dimNullSpace;
+
+		// Variable for QP Solver
 		double rate;
-		Eigen::SparseMatrix<double> P;
+		Eigen::SparseMatrix<double>P;
 		Eigen::VectorXd q;
 		Eigen::SparseMatrix<double> A;
 		Eigen::VectorXd K;            // Weight for correcting position error
@@ -119,6 +122,7 @@ namespace air_hockey_baseline_agent {
 		Eigen::MatrixXd J;
 		JointArrayType weights, weightsAnchor;
 		JointArrayType upperBound, lowerBound;
+		Eigen::VectorXd alphaLast;
 
 		AgentParams& agentParams;
 
@@ -141,6 +145,8 @@ namespace air_hockey_baseline_agent {
 			P.setIdentity();
 			A.setZero();
 			K.resize(3);
+			alphaLast.resize(dimNullSpace);
+			alphaLast.setZero();
 		}
 	};
 }

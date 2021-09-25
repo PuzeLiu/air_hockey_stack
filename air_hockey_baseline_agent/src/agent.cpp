@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -186,7 +186,7 @@ void Agent::computeBaseConfigurations() {
 	}
 
 	JointArrayType dqTmp(agentParams.nq);
-	optimizer->SolveJoint7(agentParams.qHome, dqTmp);
+	optimizer->solveJoint7(agentParams.qHome, dqTmp);
 
 	// compute qinit
 	xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight + agentParams.initHeight;
@@ -196,7 +196,7 @@ void Agent::computeBaseConfigurations() {
 		ROS_ERROR_STREAM("Inverse Kinematics fail, unable to find solution for INIT position");
 	}
 
-	optimizer->SolveJoint7(agentParams.qInit, dqTmp);
+	optimizer->solveJoint7(agentParams.qInit, dqTmp);
 }
 
 void Agent::loadTactics() {

@@ -1,11 +1,27 @@
-//
-// Created by puze on 11.02.21.
-//
+/*
+ * MIT License
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 #include <iostream>
 #include "air_hockey_baseline_agent/hitting_point_optimizer.h"
-#include <chrono>
-#include <coin/CoinPackedVector.hpp>
-
 
 using namespace std;
 using namespace nlopt;
@@ -13,13 +29,14 @@ using namespace Eigen;
 using namespace air_hockey_baseline_agent;
 
 
-HittingPointOptimizer::HittingPointOptimizer(AgentParams& agentParameters, OptimizerData &optimizerData) :
+HittingPointOptimizer::HittingPointOptimizer(AgentParams &agentParameters, OptimizerData &optimizerData) :
 		agentParams(agentParameters), optData(optimizerData) {
 	nlSolver = opt(LD_SLSQP, agentParams.pinoModel.nq);
 	nlSolver.set_max_objective(objective, &optData);
 
 	double tol = 1e-4;
 	nlSolver.add_equality_constraint(this->equalityConstraint, &optData, tol);
+//	nlSolver.add_inequality_constraint(this->inEqualityConstraint, &optData, 0);
 
 	std::vector<double> qLower(agentParams.pinoModel.lowerPositionLimit.data(),
 	                           agentParams.pinoModel.lowerPositionLimit.data() +
@@ -64,9 +81,7 @@ bool HittingPointOptimizer::solve(const Eigen::Vector3d &hitPoint, const Eigen::
 	}
 
 	if (h(qCur, &optData) < 1e-4) {
-		for (int i = 0; i < qCur.size(); ++i) {
-			qInOut[i] = qCur[i];
-		}
+		qInOut = JointArrayType::Map(qCur.data(), qCur.size());
 
 		//! LP optimization
 		velMagMax = getMaxVelocityLP(qInOut);
@@ -94,12 +109,20 @@ double HittingPointOptimizer::equalityConstraint(const vector<double> &x, vector
 	return h(x, optData);
 }
 
+double HittingPointOptimizer::inEqualityConstraint(const vector<double> &x, vector<double> &grad, void *f_data) {
+	auto optData = (OptimizerData *) f_data;
+	if (!grad.empty()) {
+		numerical_grad(g, x, optData, grad);
+	}
+	return g(x, optData);
+}
+
 double HittingPointOptimizer::f(const vector<double> &x, const OptimizerData *data) {
 	Eigen::Map<const JointArrayType> qCur(x.data(), x.size());
 	pinocchio::Data::Matrix6x jacobian(6, data->agentParams.pinoModel.nv);
 	pinocchio::computeFrameJacobian(data->agentParams.pinoModel, data->agentParams.pinoData, qCur,
-								    data->agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED,
-									jacobian);
+	                                data->agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED,
+	                                jacobian);
 	auto vec = data->hitDirection.transpose() * jacobian.topRows(3);
 	return vec.squaredNorm();
 }
@@ -116,6 +139,14 @@ double HittingPointOptimizer::h(const vector<double> &x, const OptimizerData *da
 	return distance;
 }
 
+double HittingPointOptimizer::g(const vector<double> &x, const OptimizerData *data) {
+	JointArrayType qCur = JointArrayType::Map(x.data(), x.size());
+	pinocchio::forwardKinematics(data->agentParams.pinoModel, data->agentParams.pinoData, qCur);
+	pinocchio::updateFramePlacements(data->agentParams.pinoModel, data->agentParams.pinoData);
+	int elbow_index = data->agentParams.pinoModel.getFrameId("F_joint_4");
+	return 0.2 - data->agentParams.pinoData.oMf[elbow_index].translation()[2];
+}
+
 void HittingPointOptimizer::numerical_grad(HittingPointOptimizer::functype function, const vector<double> &x,
                                            const OptimizerData *data, vector<double> &grad) {
 	vector<double> x_pos, x_neg;
@@ -130,7 +161,8 @@ void HittingPointOptimizer::numerical_grad(HittingPointOptimizer::functype funct
 
 bool HittingPointOptimizer::getInitPoint(JointArrayType &qInOut) {
 	if (!inverseKinematicsPosition(agentParams, optData.hitPoint, qInOut, qInOut, 1e-4, 200)) {
-		qInOut = qInOut.cwiseMax(agentParams.pinoModel.lowerPositionLimit).cwiseMin(agentParams.pinoModel.upperPositionLimit);
+		qInOut = qInOut.cwiseMax(agentParams.pinoModel.lowerPositionLimit).cwiseMin(
+				agentParams.pinoModel.upperPositionLimit);
 		return false;
 	}
 	return true;
@@ -151,7 +183,7 @@ double HittingPointOptimizer::getMaxVelocity(const JointArrayType &q) {
 double HittingPointOptimizer::getMaxVelocityLP(const JointArrayType &q) {
 	pinocchio::Data::Matrix6x jacobian(6, agentParams.pinoModel.nv);
 	pinocchio::computeFrameJacobian(agentParams.pinoModel, agentParams.pinoData, q,
-	                            agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED, jacobian);
+	                                agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED, jacobian);
 	auto jac = jacobian.topRows(3);
 
 	MatrixXd orthogonalComplement;
@@ -182,13 +214,12 @@ double HittingPointOptimizer::getMaxVelocityLP(const JointArrayType &q) {
 	}
 
 	// Generate Problem
+	Eigen::VectorXd velLowerLimit = -agentParams.pinoModel.velocityLimit;
 	simplexModel.loadProblem(matrix, columnLower.data(), columnUpper.data(), objective.data(),
-	                         agentParams.pinoModel.lowerPositionLimit.data(),
-							 agentParams.pinoModel.upperPositionLimit.data());
-
+	                         velLowerLimit.data(), agentParams.pinoModel.velocityLimit.data());
 	// Get Solution
-	simplexModel.dual();
-
+	simplexModel.initialSolve();
+	simplexModel.primal(0);
 	return -simplexModel.getObjValue();
 }
 

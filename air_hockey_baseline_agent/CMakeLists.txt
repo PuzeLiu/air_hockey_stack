@@ -67,10 +67,15 @@ add_executable(${PROJECT_NAME}
    src/main.cpp
    ${SOURCES})
 
-add_executable(hitting_point_optimizer_test
+add_executable(hitting_point_optimizer_example
    src/utils.cpp
    src/hitting_point_optimizer.cpp
-   src/test/hitting_point_optimizer_test.cpp)
+    examples/hitting_point_optimizer_example.cpp)
+
+add_executable(null_space_optimizer_example
+    src/utils.cpp
+    src/null_space_optimizer.cpp
+    examples/null_space_optimizer_example.cpp)
 
 target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
@@ -81,13 +86,21 @@ target_link_libraries(${PROJECT_NAME}
    CoinUtils
    pinocchio::pinocchio
    )
-target_link_libraries(hitting_point_optimizer_test
+target_link_libraries(hitting_point_optimizer_example
    ${catkin_LIBRARIES}
    NLopt::nlopt
    Clp
    CoinUtils
    pinocchio::pinocchio
    )
+target_link_libraries(null_space_optimizer_example
+    ${catkin_LIBRARIES}
+    osqp::osqp
+    OsqpEigen
+    Clp
+    CoinUtils
+    pinocchio::pinocchio
+    )
 
 
 #############

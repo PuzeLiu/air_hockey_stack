@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,6 @@
 
 #include "air_hockey_baseline_agent/tactics.h"
 #include <Eigen/Dense>
-
-////! TODO delete
-#include <fstream>
-#include <chrono>
 
 using namespace Eigen;
 using namespace trajectory_msgs;
@@ -59,12 +55,6 @@ bool Smash::apply() {
 		auto t_end = std::chrono::high_resolution_clock::now();
 		double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
 
-		//! TODO delete
-//		std::ofstream file("/home/puze/Dropbox/PHD/AirHockey/IROS/hitting_point_optimization/3_levels/hard/lp_nlopt.csv", std::ios::app);
-//		file << xHit2d.x() << ", " << xHit2d.y() << ", " << vHit2d.x() << ", " <<vHit2d.y()
-//		<< ", " << vHit2d.norm() << ", " << elapsed_time_ms << std::endl;
-//        file.close();
-
 		return success;
 	}
 }
@@ -72,15 +62,6 @@ bool Smash::apply() {
 Vector3d Smash::computeTarget(Vector3d puckPosition) {
 	Vector3d xTarget;
 	auto random_integer = dist(gen);
-	// TODO comment
-//	if (puckPosition.y() < 0.) {
-//	    random_integer = 2;
-//	} else if (puckPosition.y() > 0.){
-//	    random_integer = 1;
-//	} else {
-//	    random_integer = 0;
-//	}
-//	random_integer = 0;
 
 	if (puckPosition.y() > 0.1) {
 		xTarget.y() = -0.05;

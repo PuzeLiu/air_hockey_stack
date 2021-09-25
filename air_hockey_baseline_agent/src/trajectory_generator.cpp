@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -124,7 +124,7 @@ void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTraject
 void TrajectoryGenerator::initOptimizerData(const ros::NodeHandle &nh) {
 	nh.getParam("/air_hockey/agent/rate", optData.rate);
 	optData.K.setConstant(optData.rate);
-	optData.weights << 10., 10., 5., 10., 1., 1., 0.;
-	optData.weightsAnchor << 1., 1., 5., 1, 10., 10., 0.;
+	optData.weights << 10., 10., 5., 10., 1., 1., 0.01;
+	optData.weightsAnchor << 1., 1., 5., 1, 10., 10., 0.01;
 }
 

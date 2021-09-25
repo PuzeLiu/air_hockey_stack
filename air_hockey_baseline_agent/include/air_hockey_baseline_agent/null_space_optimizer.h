@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,9 @@
 #ifndef SRC_NULL_SPACE_OPTIMIZER_H
 #define SRC_NULL_SPACE_OPTIMIZER_H
 
+#include "data_structures.h"
+#include "observer.h"
+
 #include <ros/ros.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
@@ -31,49 +34,56 @@
 
 #include <osqp/osqp.h>
 #include <OsqpEigen/OsqpEigen.h>
-
-#include "observer.h"
-#include "data_structures.h"
+#include <coin/ClpSimplex.hpp>
+#include <coin/ClpSolve.hpp>
 
 namespace air_hockey_baseline_agent {
-    class NullSpaceOptimizer {
-    public:
-        NullSpaceOptimizer(AgentParams& agentParams, OptimizerData& optimizationData);
+	class NullSpaceOptimizer {
+	public:
+		NullSpaceOptimizer(AgentParams &agentParams, OptimizerData &optimizationData);
 
-        ~NullSpaceOptimizer();
+		~NullSpaceOptimizer();
 
-        bool optimizeJointTrajectory(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-                                     const JointArrayType &qStart,
-                                     trajectory_msgs::JointTrajectory &jointTraj);
+		bool optimizeJointTrajectory(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
+		                             const JointArrayType &qStart,
+		                             trajectory_msgs::JointTrajectory &jointTraj);
 
-        bool optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-                                           const JointArrayType &qStart,
-                                           const JointArrayType &qAnchor,
-                                           trajectory_msgs::JointTrajectory &jointTraj,
-                                           bool increasing=true);
+		bool optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
+		                                   const JointArrayType &qStart,
+		                                   const JointArrayType &qAnchor,
+		                                   trajectory_msgs::JointTrajectory &jointTraj,
+		                                   bool increasing = true);
 
-        void SolveJoint7(JointArrayType &q, JointArrayType &dq);
+		void solveJoint7(JointArrayType &q, JointArrayType &dq);
 
-    private:
-        bool solveQP(const Eigen::Vector3d& xDes,
-                     const Eigen::Vector3d& dxDes,
-                     const JointArrayType& qCur,
-					 JointArrayType& qNext,
-					 JointArrayType& dqNext);
+	private:
+		bool solveQP(const Eigen::Vector3d &xDes,
+		             const Eigen::Vector3d &dxDes,
+		             const JointArrayType &qCur,
+		             JointArrayType &qNext,
+		             JointArrayType &dqNext);
 
-        bool solveQPAnchor(const Eigen::Vector3d &xDes,
-                           const Eigen::Vector3d &dxDes,
-                           const JointArrayType &qCur,
-                           const JointArrayType &qAnchor,
-						   JointArrayType &qNext,
-						   JointArrayType &dqNext);
+		bool solveQPAnchor(const Eigen::Vector3d &xDes,
+		                   const Eigen::Vector3d &dxDes,
+		                   const JointArrayType &qCur,
+		                   const JointArrayType &qAnchor,
+		                   JointArrayType &qNext,
+		                   JointArrayType &dqNext);
+
+		bool constructQPSolver(bool verbose = false);
+
+		bool checkFeasibility(const Eigen::MatrixXd A,
+		                      const Eigen::VectorXd lowerBound,
+		                      const Eigen::VectorXd upperBound,
+		                      Eigen::VectorXd &feasiblePoint);
 
 
-    private:
-		AgentParams& agentParams;
-	    OptimizerData& optData;
-        OsqpEigen::Solver solver;
-    };
+	private:
+		AgentParams &agentParams;
+		OptimizerData &optData;
+		OsqpEigen::Solver solver;
+		ClpSimplex simplexModel;
+	};
 }
 
 
