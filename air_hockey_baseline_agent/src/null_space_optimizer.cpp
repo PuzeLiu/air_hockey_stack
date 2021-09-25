@@ -80,14 +80,6 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
 
 			if (!solveQP(xDes, dxDes, qCur, qNext, dqNext)) {
 				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Optimization failed at : " << i);
-				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "xDes: " << xDes.transpose());
-				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "dxDes: " << dxDes.transpose());
-
-				pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, qCur);
-				pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
-				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "qCur: " << qCur.transpose());
-				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "xCur: "
-						<< agentParams.pinoData.oMf[agentParams.pinoFrameId].translation());
 				return false;
 			}
 

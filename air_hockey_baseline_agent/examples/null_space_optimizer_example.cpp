@@ -22,6 +22,7 @@
  */
 
 #include "air_hockey_baseline_agent/null_space_optimizer.h"
+#include "air_hockey_baseline_agent/utils.h"
 #include <iostream>
 #include <ros/package.h>
 #include <rosbag/bag.h>
@@ -64,7 +65,7 @@ void loadAgentParams(AgentParams &agentParams) {
 	agentParams.initHeight = 0.2;
 }
 
-void initOptimizerData(OptimizerData& optData) {
+void initOptimizerData(OptimizerData &optData) {
 	optData.rate = 100.;
 	optData.K.setConstant(optData.rate);
 	optData.weights << 10., 10., 5., 10., 1., 1., 0.;
@@ -75,7 +76,7 @@ trajectory_msgs::MultiDOFJointTrajectory readCartesianTrajectory() {
 	rosbag::Bag bag;
 
 	string parent_dir = ros::package::getPath("air_hockey_baseline_agent");
-	string bag_file = parent_dir + "/examples/cartesian_trajectory_example.bag";
+	string bag_file = parent_dir + "/examples/cartesian_hit.bag";
 	bag.open(bag_file, rosbag::BagMode::Read);
 	rosbag::View view(bag, rosbag::TopicQuery("/iiwa_front/cartesian_trajectory"));
 	return *view.begin()->instantiate<trajectory_msgs::MultiDOFJointTrajectory>().get();
@@ -95,8 +96,15 @@ int main(int argc, char *argv[]) {
 	trajectory_msgs::JointTrajectory jointTraj;
 
 	JointArrayType qStart(agentParams.nq), qAnchor(agentParams.nq);
-	qStart << 5.61301e-16, 0.101997, 3.65357e-16, -1.49799, -2.66706e-16, 1.29371, 0;
 
+	// Set up start configuration
+	Eigen::Vector3d xDes;
+	xDes << cartTraj.points[0].transforms[0].translation.x,
+			cartTraj.points[0].transforms[0].translation.y,
+			cartTraj.points[0].transforms[0].translation.z;
+	Eigen::VectorXd qInit(7);
+	qInit << 0., 0.15378149,  0., -1.3630843, 0.,  1.3767066, 0.;
+	air_hockey_baseline_agent::inverseKinematicsPosition(agentParams, xDes, qInit, qStart);
 
 	bool success;
 
@@ -117,13 +125,10 @@ int main(int argc, char *argv[]) {
 	cout << "#################################" << endl;
 	cout << "#    Test AQP Optimization      #" << endl;
 	cout << "#################################" << endl;
+	qAnchor.setZero();
 	jointTraj.points.clear();
 	start = chrono::high_resolution_clock::now();
-
-
-	qStart << 5.61301e-16, 0.101997, 3.65357e-16, -1.49799, -2.66706e-16, 1.29371, 0;
-	qAnchor << -1.129, 1.14775, 1.22164, -1.9139, 0.254541, 0.187797, -2.5609e-05;
-	for (int j = 0; j < 1; ++j) {
+	for (int j = 0; j < 100; ++j) {
 		success = optimizer.optimizeJointTrajectoryAnchor(cartTraj, qStart, qAnchor, jointTraj, true);
 	}
 	finish = chrono::high_resolution_clock::now();
