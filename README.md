@@ -22,5 +22,4 @@ roslaunch air_hockey_baseline_agent air_hockey_baseline_agent.launch use_back_ii
 5. Coin-or-CLP (apt-get install coinor-libclp-dev)
 6. Eigen3 https://eigen.tuxfamily.org
 7. Kalman Filter https://github.com/mherb/kalman
-8. Ros Packages: rqt 
-9. Python Packages: pyqt, pydot
+8. Ros Packages: rqt
