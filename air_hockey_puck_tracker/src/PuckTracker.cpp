@@ -100,11 +100,12 @@ void PuckTracker::loadParams() {
 	nh_.param<double>("/air_hockey/goal_width", goalWidth_, 0.25);
 
 	ROS_INFO_STREAM("Read Puck Tracker Parameters");
-	double frequency, frictionDrag, frictionSliding, restitutionTable, restitutionMallet;
+	double frequency, frictionDrag, frictionSliding, restitutionTable, restitutionMallet, rimFriction;
 	nh_.param<double>("/air_hockey/puck_tracker/friction_drag", frictionDrag, 0.1);
 	nh_.param<double>("/air_hockey/puck_tracker/friction_sliding", frictionSliding, 0.0);
 	nh_.param<double>("/air_hockey/puck_tracker/restitution_table", restitutionTable, 0.8);
 	nh_.param<double>("/air_hockey/puck_tracker/restitution_mallet", restitutionMallet, 0.1);
+    nh_.param<double>("/air_hockey/puck_tracker/rim_friction", rimFriction, 0.01);
 	nh_.param<int>("/air_hockey/puck_tracker/max_prediction_steps", maxPredictionSteps_, 20);
 	nh_.param<double>("/air_hockey/puck_tracker/frequency", frequency, 120.0);
 	nh_.param<bool>("/air_hockey/puck_tracker/turn_on_pf", turn_on_pf, false);
@@ -133,7 +134,7 @@ void PuckTracker::loadParams() {
 	systemModel_ = new SystemModel(frictionDrag, frictionSliding);
 	observationModel_ = new ObservationModel;
 	collisionModel_ = new CollisionModel(tableLength_, tableWidth_, goalWidth_, puckRadius, malletRadius,
-	                                     restitutionTable, restitutionMallet, rate_->expectedCycleTime().toSec());
+	                                     restitutionTable, restitutionMallet, rimFriction, rate_->expectedCycleTime().toSec());
 	kalmanFilter_ = new EKF_Wrapper;
 	puckPredictor_ = new EKF_Wrapper;
 	visualizer_ = new VisualizationInterface(nh_, tableRefName_);
@@ -186,19 +187,6 @@ void PuckTracker::setCovariance() {
 	covObs(0, 0) = obsVarPos;
 	covObs(1, 1) = obsVarPos;
 	covObs(2, 2) = obsVarAng;
-
-	Kalman::Jacobian<PuckState, PuckState> sysNoise;
-	Kalman::Jacobian<Measurement, Measurement> measurementNoise;
-
-	sysNoise << 9.82798060e-04, -1.22092524e-03, 1.31183565e-03, -5.50120627e-03, 0., 0.,
-			-1.22092524e-03, 2.31494749e-02, -9.56399518e-04, 5.48014778e-02, 0., 0.,
-			1.31183565e-03, -9.56399518e-04, 9.04226079e-03, 8.74093403e-01, 0., 0.,
-			-5.50120627e-03, 5.48014778e-02, 8.74093403e-01, 2.10913677e+02, 0., 0.,
-			0., 0., 0., 0., 1.e-02, 0.,
-			0., 0., 0., 0., 0., 1.e-02;
-
-	measurementNoise.setIdentity();
-	measurementNoise = measurementNoise * 1e-3;
 
 	systemModel_->setCovariance(covDyn);
 	observationModel_->setCovariance(covObs);
@@ -463,20 +451,19 @@ bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPredic
 	}
 
 	if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
-		//ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter");
-		if (checkGating()) {
+        //if (checkGating()) {
 			if (useParticleFilter_ && turn_on_pf) {
 				ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter with Particle Filter");
 				kalmanFilter_->setCovariance(particleFilter_->applyParticleFilter(u_));
 			} else {
 				kalmanFilter_->update(*observationModel_, measurement_);
 			}
-		} else {
+		/*} else {
 			Kalman::Covariance<PuckState> covInit;
 			covInit.setIdentity();
 			kalmanFilter_->setCovariance(covInit);
 			ROS_INFO_STREAM("[Puck Tracker] The innovation is too big, reset the puck tracker");
-		}
+		}*/
 	}
 	PuckState estimatedState = getEstimatedState(false);
 	res.estimation.x = estimatedState.x();
@@ -529,6 +516,7 @@ bool PuckTracker::setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParam
 	systemModel_->setMu(req.frictionSlide);
 
 	collisionModel_->setTableRestitution(req.restitutionTable);
+	collisionModel_->setRimFriction(req.rimFriction);
 	res.success = true;
 	return true;
 }

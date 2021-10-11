@@ -12,6 +12,8 @@ air_hockey:
       0.92
     restitution_mallet:
       0.8
+    rim_friction:
+      0.2
     observation_variance_position:
       2.5e-7
     observation_variance_angular:

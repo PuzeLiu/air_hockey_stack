@@ -52,10 +52,13 @@ namespace air_hockey_baseline_agent {
         //! restitution coefficient
         double m_e;
 
+        //! friction of rim and puck
+        double m_mu;
+
         BoundaryType m_boundary;
 
     public:
-        AirHockeyTable(double length, double width, double goalWidth, double puckRadius, double restitution, double dt = 1 / 120.);
+        AirHockeyTable(double length, double width, double goalWidth, double puckRadius, double restitution, double rimFriction, double dt = 1 / 120.);
 
         ~AirHockeyTable();
 
@@ -64,6 +67,8 @@ namespace air_hockey_baseline_agent {
         bool isOutsideBoundary(Measurement &measurement);
 
         void setME(double mE);
+
+        void setMu(double mu);
 
     };
 
@@ -101,11 +106,13 @@ namespace air_hockey_baseline_agent {
         Mallet m_mallet;
 
         CollisionModel(double tableLength, double tableWidth, double goalWidth, double puckRadius, double malletRadius,
-                       double &restitutionTable, double &restitutionMallet, double dt);
+                       double &restitutionTable, double &restitutionMallet, double &frictionRim, double dt);
 
         void setTableRestitution(const double tableRes);
 
         void setMalletRestitution(const double malletRes);
+
+        void setRimFriction(const double rimFric);
 
         bool applyCollision(PuckState &puckState, const bool& checkMallet);
 

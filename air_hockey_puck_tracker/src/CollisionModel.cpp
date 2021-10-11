@@ -31,13 +31,14 @@ namespace air_hockey_baseline_agent {
         return v1.x() * v2.y() - v1.y() * v2.x();
     }
 
-    AirHockeyTable::AirHockeyTable(double length, double width, double goalWidth, double puckRadius, double e, double dt) {
+    AirHockeyTable::AirHockeyTable(double length, double width, double goalWidth, double puckRadius, double e, double rimFric, double dt) {
         m_length = length;
         m_width = width;
         m_puckRadius = puckRadius;
         m_goalWidth = goalWidth;
 
         m_e = e;
+        m_mu = rimFric;
         m_dt = dt;
 
         Vector2 ref, offsetP1, offsetP2, offsetP3, offsetP4;
@@ -99,16 +100,29 @@ namespace air_hockey_baseline_agent {
 
                     double vtScalar = vel.dot(vecT);
                     double vnScalar = vel.dot(vecN);
+                    double dthetaNext = 0.;
+                    double vtNextScalar;
+                    double vnNextScalar;
 
-                    // Velocity on next time step
-                    double vtNextScalar =
-                            2. / 3. * vtScalar - m_puckRadius / 5 * dtheta; // - m_puckRadius / 3 * dtheta;
-                    double vnNextScalar = -m_e * vnScalar;
-                    double dthetaNext = 0;
-                    if (dtheta != 0) {
-                        dthetaNext = 1. / 3. * dtheta
-                                            - 2. / (3. * m_puckRadius) * vtScalar;
+                    if(abs(vtScalar + m_puckRadius * dtheta) < 3* m_mu * (1+m_e) * abs(vnScalar)){
+                        // Velocity on next time step without sliding
+                        vtNextScalar =
+                                2. / 3. * vtScalar - m_puckRadius / 5 * dtheta; // - m_puckRadius / 3 * dtheta;
+                        vnNextScalar = -m_e * vnScalar;
+                        if (dtheta != 0) {
+                            dthetaNext = 1. / 3. * dtheta - 2. / (3. * m_puckRadius) * vtScalar;
+                        }
+                    }else {
+                        // Velocity on next time step with sliding
+                        double sliding = vtScalar + dtheta * m_puckRadius;
+                        sliding = sliding / abs(sliding);
+                        vtNextScalar = vtScalar + m_mu * sliding * (1 + m_e) * vnScalar;
+                        vnNextScalar = -m_e * vnScalar;
+                        if (dtheta != 0) {
+                            dthetaNext = dtheta + (2. * m_mu * sliding * (1 + m_e) / m_puckRadius) * vnScalar;
+                        }
                     }
+
                     Vector2 vNext = vnNextScalar * vecN + vtNextScalar * vecT;
 
                     // Position of intersection point
@@ -142,6 +156,10 @@ namespace air_hockey_baseline_agent {
 
     void AirHockeyTable::setME(double mE) {
         m_e = mE;
+    }
+
+    void AirHockeyTable::setMu(double mu) {
+        m_mu = mu;
     }
 
     Mallet::Mallet(double puckRadius, double malletRadius, double restitution, double dt) {
@@ -222,8 +240,8 @@ namespace air_hockey_baseline_agent {
     }
 
     CollisionModel::CollisionModel(double tableLength, double tableWidth, double goalWidth, double puckRadius, double malletRadius,
-                                   double &restitutionTable, double &restitutionMallet, double dt) :
-            m_table(tableLength, tableWidth, goalWidth, puckRadius, restitutionTable, dt), m_mallet(puckRadius, malletRadius, restitutionMallet, dt) {
+                                   double &restitutionTable, double &restitutionMallet, double &rimFriction, double dt) :
+            m_table(tableLength, tableWidth, goalWidth, puckRadius, restitutionTable, rimFriction, dt), m_mallet(puckRadius, malletRadius, restitutionMallet, dt) {
 
     }
 
@@ -241,6 +259,10 @@ namespace air_hockey_baseline_agent {
 
     void CollisionModel::setMalletRestitution(const double malletRes) {
         m_mallet.setME(malletRes);
+    }
+
+    void CollisionModel::setRimFriction(const double rimFric) {
+        m_table.setMu(rimFric);
     }
 
 }
