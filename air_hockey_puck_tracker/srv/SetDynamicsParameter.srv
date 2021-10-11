@@ -1,5 +1,6 @@
 float64 frictionSlide
 float64 frictionDrag
 float64 restitutionTable
+float64 rimFriction
 ---
 bool success
