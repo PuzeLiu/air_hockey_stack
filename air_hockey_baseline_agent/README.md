@@ -1,10 +1,11 @@
-<p align="center">
-<h1 align="center">Tactical Agent for Air Hockey</h1>
-</p>
+# air_hockey_baseline_agent
 
-A hard-coded agent of air hockey player.
+- Examples can be found in example
 
-## Dependeces
-- [osqp](https://osqp.org/);
-- [osqp-eigen](https://github.com/robotology/osqp-eigen);
-- [Eigen3](http://eigen.tuxfamily.org/index.php?title=Main_Page);
+## Dependencies
+1. OSQP https://osqp.org/
+2. OSQP Eigen https://github.com/robotology/osqp-eigen
+3. NLopt https://nlopt.readthedocs.io
+4. Coin-or-CLP (apt-get install coinor-libclp-dev)
+5. Eigen3 https://eigen.tuxfamily.org
+6. Kalman Filter https://github.com/mherb/kalman

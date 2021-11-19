@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@
 #include <Eigen/Dense>
 
 using namespace Eigen;
-using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
 Cut::Cut(EnvironmentParams &envParams, AgentParams &agentParams,
@@ -55,7 +54,6 @@ bool Cut::ready() {
 }
 
 bool Cut::apply() {
-	ROS_INFO_STREAM("Cut planning");
 	state.isNewTactics = false;
 
 	xCutPrev = xCut;
@@ -63,7 +61,7 @@ bool Cut::apply() {
 	Vector3d xCur, vCur;
 	Vector2d xCur2d, vCur2d;
 	ros::Time tStart;
-	Kinematics::JointArrayType qStart, dqStart;
+	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
 
 	state.getPlannedJointState(qStart, dqStart, tStart,
 	                           agentParams.planTimeOffset);
@@ -96,7 +94,7 @@ bool Cut::apply() {
 		return true;
 	}
 
-	ROS_INFO_STREAM("Optimization Failed [Cut].");
+	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Optimization Failed [Cut].");
 	state.jointTrajectory.points.clear();
 	state.cartTrajectory.points.clear();
 	return false;

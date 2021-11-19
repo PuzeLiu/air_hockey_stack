@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 #include "air_hockey_baseline_agent/system_state.h"
 
 using namespace std;
-using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
 SystemState::SystemState(const string& ns) {
@@ -56,8 +55,8 @@ SystemState::SystemState(const string& ns) {
 	approachingCount = 0;
 }
 
-void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
-                                       Kinematics::JointArrayType &dq, ros::Time &tStart, double offset_t) {
+void SystemState::getPlannedJointState(JointArrayType &q,
+                                       JointArrayType &dq, ros::Time &tStart, double offset_t) {
 	q = observation.jointPosition;
 	dq = observation.jointVelocity;
 
@@ -69,7 +68,7 @@ void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
 		if (tStart <= tLast) {
 			for (int i = 0; i < jointTrajectory.points.size(); ++i) {
 				if (tStart < jointTrajectory.header.stamp + jointTrajectory.points[i].time_from_start) {
-					for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+					for (int j = 0; j < 7; ++j) {
 						q[j] = jointTrajectory.points[i].positions[j];
 						dq[j] = jointTrajectory.points[i].velocities[j];
 						tStart = jointTrajectory.header.stamp + jointTrajectory.points[i].time_from_start;
@@ -78,7 +77,7 @@ void SystemState::getPlannedJointState(Kinematics::JointArrayType &q,
 				}
 			}
 		} else {
-			for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+			for (int j = 0; j < 7; ++j) {
 				q[j] = jointTrajectory.points.back().positions[j];
 				dq[j] = jointTrajectory.points.back().velocities[j];
 			}

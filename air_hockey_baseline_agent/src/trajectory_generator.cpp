@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,37 +24,44 @@
 #include "air_hockey_baseline_agent/trajectory_generator.h"
 
 using namespace Eigen;
-using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
-TrajectoryGenerator::TrajectoryGenerator(std::string ns, EnvironmentParams data, double rate) {
-	kinematics = new Kinematics(data.tcp_position, data.tcp_quaternion);
-	optimizer = new NullSpaceOptimizer(kinematics);
-	transformations = new Transformations(ns);
-	hittingPointOptimizer = new HittingPointOptimizer(*kinematics);
 
-	Vector2d bound_lower(data.malletRadius + 0.02,
-	                     -data.tableWidth / 2 + data.malletRadius + 0.02);
-	Vector2d bound_upper(data.tableLength / 2 - data.malletRadius,
-	                     data.tableWidth / 2 - data.malletRadius - 0.02);
+TrajectoryGenerator::TrajectoryGenerator(const ros::NodeHandle &nh, AgentParams &agentParams,
+                                         EnvironmentParams &envParams) : agentParams(agentParams),
+                                                                         envParams(envParams),
+                                                                         optData(agentParams) {
+	initOptimizerData(nh);
+	optimizer = new NullSpaceOptimizer(agentParams, optData);
+	transformations = new Transformations(nh.getNamespace());
+	hittingPointOptimizer = new HittingPointOptimizer(agentParams, optData);
 
-	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, rate,
-	                                        data.universalJointHeight);
-	combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, rate, data.universalJointHeight);
-	cubicLinearMotion = new CubicLinearMotion(rate, data.universalJointHeight);
-	stepSize = 1 / rate;
+	Vector2d bound_lower(envParams.malletRadius + 0.02,
+	                     -envParams.tableWidth / 2 + envParams.malletRadius + 0.02);
+	Vector2d bound_upper(envParams.tableLength / 2 - envParams.malletRadius,
+	                     envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
+
+	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, optData.rate,
+	                                        envParams.universalJointHeight);
+	combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, optData.rate,
+	                                              envParams.universalJointHeight);
+	cubicLinearMotion = new CubicLinearMotion(optData.rate, envParams.universalJointHeight);
 }
 
 void TrajectoryGenerator::getCartesianPosAndVel(Vector3d &x, Vector3d &dx,
-                                                Kinematics::JointArrayType &q, Kinematics::JointArrayType &dq) {
-	kinematics->forwardKinematics(q, x);
-	Kinematics::JacobianPosType jacobian;
-	kinematics->jacobianPos(q, jacobian);
-	dx = jacobian * dq;
+                                                JointArrayType &q, JointArrayType &dq) {
+	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, q, dq);
+	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
+	x = agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
+	dx = pinocchio::getFrameVelocity(agentParams.pinoModel, agentParams.pinoData,
+	                                 agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED).linear();
+//	kinematics->forwardKinematics(q, x);
+//	Kinematics::JacobianPosType jacobian;
+//	kinematics->jacobianPos(q, jacobian);
+//	dx = jacobian * dq;
 }
 
 TrajectoryGenerator::~TrajectoryGenerator() {
-	delete kinematics;
 	delete optimizer;
 	delete transformations;
 	delete combinatorialHit;
@@ -65,7 +72,7 @@ void TrajectoryGenerator::interpolateAcceleration(trajectory_msgs::JointTrajecto
 	for (int i = 1; i < jointTraj.points.size() - 1; ++i) {
 		auto dt = jointTraj.points[i + 1].time_from_start - jointTraj.points[i - 1].time_from_start;
 		jointTraj.points[i].accelerations.resize(7);
-		for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+		for (int j = 0; j < agentParams.pinoModel.nq; ++j) {
 			auto d1 = jointTraj.points[i].velocities[j] - jointTraj.points[i - 1].velocities[j];
 			auto d2 = jointTraj.points[i + 1].velocities[j] - jointTraj.points[i].velocities[j];
 			if (d1 * d2 < 0) {
@@ -80,7 +87,7 @@ void TrajectoryGenerator::interpolateAcceleration(trajectory_msgs::JointTrajecto
 void TrajectoryGenerator::interpolateVelocity(trajectory_msgs::JointTrajectory &jointTraj) {
 	for (int i = 1; i < jointTraj.points.size() - 1; ++i) {
 		auto dt = jointTraj.points[i + 1].time_from_start - jointTraj.points[i - 1].time_from_start;
-		for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+		for (int j = 0; j < agentParams.pinoModel.nq; ++j) {
 			auto d1 = jointTraj.points[i].positions[j] - jointTraj.points[i - 1].positions[j];
 			auto d2 = jointTraj.points[i + 1].positions[j] - jointTraj.points[i].positions[j];
 			if (d1 * d2 < 0) {
@@ -97,11 +104,11 @@ void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTraject
 	std::vector<double> x(n);
 	std::vector<double> y(n);
 
-	for (int i = 0; i < NUM_OF_JOINTS; ++i) {
+	for (int i = 0; i < agentParams.pinoModel.nq; ++i) {
 		for (int j = 0; j < n; ++j) {
 			x[j] = jointTraj.points[j].time_from_start.toSec();
 			y[j] = jointTraj.points[j].positions[i];
-			jointTraj.points[j].velocities.resize(NUM_OF_JOINTS);
+			jointTraj.points[j].velocities.resize(agentParams.pinoModel.nq);
 			jointTraj.points[j].accelerations.clear();
 		}
 		tk::spline spline(x, y, tk::spline::cspline, false,
@@ -112,5 +119,12 @@ void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTraject
 			jointTraj.points[j].velocities[i] = spline.deriv(1, x[j]);
 		}
 	}
+}
+
+void TrajectoryGenerator::initOptimizerData(const ros::NodeHandle &nh) {
+	nh.getParam("/air_hockey/agent/rate", optData.rate);
+	optData.K.setConstant(optData.rate);
+	optData.weights << 10., 10., 5., 10., 1., 1., 0.01;
+	optData.weightsAnchor << 1., 1., 5., 1, 10., 10., 0.01;
 }
 

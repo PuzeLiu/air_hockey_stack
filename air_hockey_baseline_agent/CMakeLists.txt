@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
    tf2
    tf2_ros
    tf2_geometry_msgs
-   iiwas_kinematics
    air_hockey_puck_tracker
    air_hockey_referee
    )
@@ -21,6 +20,7 @@ find_package(Eigen3 REQUIRED)
 find_package(osqp REQUIRED)
 find_package(OsqpEigen REQUIRED)
 find_package(NLopt REQUIRED)
+find_package(pinocchio REQUIRED)
 
 
 catkin_package(
@@ -38,7 +38,7 @@ include_directories(
    ${catkin_INCLUDE_DIRS}
 )
 
-set(SOURCE
+set(SOURCES
    src/agent.cpp
    src/system_state.cpp
    src/utils.cpp
@@ -65,12 +65,17 @@ set(SOURCE
 
 add_executable(${PROJECT_NAME}
    src/main.cpp
-   ${SOURCE})
+   ${SOURCES})
 
-add_executable(hitting_point_optimizer_test
+add_executable(hitting_point_optimizer_example
    src/utils.cpp
    src/hitting_point_optimizer.cpp
-   src/test/hitting_point_optimizer_test.cpp)
+    examples/hitting_point_optimizer_example.cpp)
+
+add_executable(null_space_optimizer_example
+    src/utils.cpp
+    src/null_space_optimizer.cpp
+    examples/null_space_optimizer_example.cpp)
 
 target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
@@ -79,13 +84,23 @@ target_link_libraries(${PROJECT_NAME}
    NLopt::nlopt
    Clp
    CoinUtils
+   pinocchio::pinocchio
    )
-target_link_libraries(hitting_point_optimizer_test
+target_link_libraries(hitting_point_optimizer_example
    ${catkin_LIBRARIES}
    NLopt::nlopt
    Clp
    CoinUtils
+   pinocchio::pinocchio
    )
+target_link_libraries(null_space_optimizer_example
+    ${catkin_LIBRARIES}
+    osqp::osqp
+    OsqpEigen
+    Clp
+    CoinUtils
+    pinocchio::pinocchio
+    )
 
 
 #############

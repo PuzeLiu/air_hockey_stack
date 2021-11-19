@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ using namespace air_hockey_baseline_agent;
 int main(int argc, char** argv){
     ros::init(argc, argv, "tactical_agent");
     ros::NodeHandle nh("/");
-    Agent agent(nh, 100.0);
+    Agent agent(nh);
 
     agent.start();
 

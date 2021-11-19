@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,8 @@
 #include "air_hockey_baseline_agent/observer.h"
 #include "air_hockey_baseline_agent/null_space_optimizer.h"
 #include "air_hockey_baseline_agent/transformations.h"
+#include "air_hockey_baseline_agent/utils.h"
+#include <ros/package.h>
 
 using namespace std;
 
@@ -38,7 +40,7 @@ namespace air_hockey_baseline_agent {
 
 class Agent {
 public:
-	Agent(ros::NodeHandle nh, double rate);
+	Agent(ros::NodeHandle nh);
 	~Agent();
 
 	void start();

@@ -2,12 +2,9 @@
 
 using namespace gazebo;
 using namespace Eigen;
-using namespace iiwas_kinematics;
 
-UniversalJointPlugin::UniversalJointPlugin() :
-		nh_("/") {
-	kinematics_ = new Kinematics(Vector3d(0., 0., 0.),
-			Quaterniond(1., 0., 0., 0.));
+UniversalJointPlugin::UniversalJointPlugin():nh_("/"){
+
 }
 
 UniversalJointPlugin::~UniversalJointPlugin() {
@@ -45,6 +42,15 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model,
 				"No namespace for the iiwa. Use /iiwa_front or /iiwa_back.");
 	}
 
+	std::string description_xml;
+	if(!nh_.getParam(robotNamespace_ + "iiwa_only_description", description_xml)){
+		ROS_ERROR_STREAM_NAMED("Universal Joint Plugin", "Did not find the urdf model");
+	}
+
+	pinocchio::urdf::buildModelFromXML(description_xml, pinoModel_);
+	pinoData_ = pinocchio::Data(this->pinoModel_);
+	frame_id = pinoModel_.nframes - 1;
+
 	iiwaJointNames_.push_back(prefix + "_joint_1");
 	iiwaJointNames_.push_back(prefix + "_joint_2");
 	iiwaJointNames_.push_back(prefix + "_joint_3");
@@ -52,6 +58,7 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model,
 	iiwaJointNames_.push_back(prefix + "_joint_5");
 	iiwaJointNames_.push_back(prefix + "_joint_6");
 	iiwaJointNames_.push_back(prefix + "_joint_7");
+	qCur_.resize(7);
 
 	universalJointState_.position.resize(2);
 	universalJointState_.velocity.push_back(0.);
@@ -81,14 +88,17 @@ void UniversalJointPlugin::OnUpdate() {
 	} else {
 		if (this->model_->GetJoints().size() != 0) {
 			for (int i = 0; i < iiwaJointNames_.size(); ++i) {
-				qCur_[i] =
-						this->model_->GetJoint(iiwaJointNames_[i])->Position();
+				qCur_[i] = this->model_->GetJoint(iiwaJointNames_[i])->Position();
 			}
-			kinematics_->forwardKinematics(qCur_, posCur_, quatCur_);
+
+			pinocchio::forwardKinematics(pinoModel_, pinoData_, qCur_);
+			pinocchio::updateFramePlacements(pinoModel_, pinoData_);
+
+			auto rot_mat = pinoData_.oMf[frame_id].rotation();
 
 			double q1, q2;
 
-			q1 = acos(quatCur_.toRotationMatrix().col(2).dot(Vector3d(0., 0., -1)));
+			q1 = acos(rot_mat.col(2).dot(Vector3d(0., 0., -1)));
 			q2 = 0.;
 
 			this->jointController_->SetPositionTarget(jointName1_, q1);

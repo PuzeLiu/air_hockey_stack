@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@
 
 using namespace Eigen;
 using namespace trajectory_msgs;
-using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
 Init::Init(EnvironmentParams &envParams, AgentParams &agentParams,
@@ -65,7 +64,7 @@ bool Init::apply() {
 
 	state.jointTrajectory.header.stamp = ros::Time::now();
 
-	ROS_INFO_STREAM("Go to initial position");
+	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Go to initial position");
 
 	return true;
 }

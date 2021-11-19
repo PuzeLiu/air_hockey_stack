@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #ifndef AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_SYSTEM_STATE_H_
 #define AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_SYSTEM_STATE_H_
 
@@ -28,38 +29,37 @@
 #include <ros/ros.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
-#include "iiwas_kinematics/iiwas_kinematics.h"
 
 #include "data_structures.h"
+namespace air_hockey_baseline_agent {
+	class SystemState {
+	public:
+		SystemState(const std::string &ns);
 
-class SystemState {
-public:
-	SystemState(const std::string &ns);
+		void getPlannedJointState(JointArrayType &q, JointArrayType &dq, ros::Time &tStart, double offset_t);
 
-	void getPlannedJointState(iiwas_kinematics::Kinematics::JointArrayType &q,
-	                          iiwas_kinematics::Kinematics::JointArrayType &dq, ros::Time &tStart,
-	                          double offset_t);
+		bool hasActiveTrajectory();
 
-	bool hasActiveTrajectory();
-	bool isPuckStatic();
-	bool isPuckApproaching();
+		bool isPuckStatic();
 
-	void updateObservationAndState(air_hockey_baseline_agent::ObservationState observationState,
-	                               const air_hockey_baseline_agent::AgentParams &agentParams);
+		bool isPuckApproaching();
 
-public:
-	trajectory_msgs::MultiDOFJointTrajectory cartTrajectory;
-	trajectory_msgs::JointTrajectory jointTrajectory;
+		void updateObservationAndState(air_hockey_baseline_agent::ObservationState observationState,
+		                               const air_hockey_baseline_agent::AgentParams &agentParams);
 
-	air_hockey_baseline_agent::ObservationState observation;
-	air_hockey_baseline_agent::Tactics currentTactic;
+	public:
+		trajectory_msgs::MultiDOFJointTrajectory cartTrajectory;
+		trajectory_msgs::JointTrajectory jointTrajectory;
 
-	double tNewTactics;
-	bool isNewTactics;
-	int staticCount;
-	int approachingCount;
+		air_hockey_baseline_agent::ObservationState observation;
+		air_hockey_baseline_agent::Tactics currentTactic;
 
-};
+		double tNewTactics;
+		bool isNewTactics;
+		int staticCount;
+		int approachingCount;
 
+	};
+}
 
 #endif //AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_SYSTEM_STATE_H_

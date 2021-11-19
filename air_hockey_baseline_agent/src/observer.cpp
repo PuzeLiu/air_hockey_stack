@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,11 +25,15 @@
 
 using namespace air_hockey_baseline_agent;
 
-Observer::Observer(ros::NodeHandle& nh, std::string controllerName, double defendLine) :  puckTracker(nh, defendLine){
+Observer::Observer(ros::NodeHandle& nh, std::string controllerName, double defendLine, int n_joints) :  puckTracker(nh, defendLine){
     jointSub = nh.subscribe(controllerName + "/state", 1, &Observer::jointStateCallback, this);
     refereeSub = nh.subscribe("/air_hockey_referee/game_status", 1, &Observer::refereeStatusCallback, this);
     maxPredictionTime = puckTracker.getMaxPredictionTime() - 1e-6;
     statusChanged = true;
+	observation.jointPosition.resize(n_joints);
+	observation.jointVelocity.resize(n_joints);
+	observation.jointDesiredPosition.resize(n_joints);
+	observation.jointDesiredVelocity.resize(n_joints);
 }
 
 void Observer::start(){
@@ -40,7 +44,7 @@ Observer::~Observer() {
 }
 
 void Observer::jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg) {
-    for (int i = 0; i < iiwas_kinematics::NUM_OF_JOINTS; ++i) {
+    for (int i = 0; i < msg->joint_names.size(); ++i) {
         observation.jointPosition[i] = msg->actual.positions[i];
         observation.jointVelocity[i] = msg->actual.velocities[i];
         observation.jointDesiredPosition[i] = msg->desired.positions[i];

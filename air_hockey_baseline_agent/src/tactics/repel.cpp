@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 #include "air_hockey_baseline_agent/tactics.h"
 
 using namespace Eigen;
-using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
 Repel::Repel(EnvironmentParams &envParams, AgentParams &agentParams,
@@ -43,7 +42,7 @@ bool Repel::ready() {
 }
 
 bool Repel::apply() {
-	iiwas_kinematics::Kinematics::JointArrayType qStart, dqStart;
+	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
 	ros::Time tStart;
 	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
 
@@ -71,11 +70,13 @@ void Repel::setNextState() {
 	}
 }
 
-bool Repel::generateRepelTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart) {
+bool Repel::generateRepelTrajectory(const JointArrayType &qCur, ros::Time &tStart) {
 	Vector2d xCur2d, xHit2d, vHit2d;
 	Vector3d xCur;
 
-	generator.kinematics->forwardKinematics(qCur,xCur);
+	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, qCur);
+	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
+	xCur = generator.agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
 	generator.transformations->applyInverseTransform(xCur);
 	xCur2d = xCur.block<2, 1>(0, 0);
 
@@ -97,7 +98,6 @@ bool Repel::generateRepelTrajectory(const iiwas_kinematics::Kinematics::JointArr
 			                 state.jointTrajectory.points.back().time_from_start;
 			if (ros::Time::now() <= tHitStart){
 				tStart = tHitStart;
-				ROS_INFO_STREAM("[REPEL] velocity: " << vHit2d.norm());
 				state.jointTrajectory.header.stamp = tStart;
 				state.cartTrajectory.header.stamp = tStart;
 				return true;
@@ -108,7 +108,8 @@ bool Repel::generateRepelTrajectory(const iiwas_kinematics::Kinematics::JointArr
 			}
 		} else {
 			vHit2d *= .9;
-			ROS_INFO_STREAM("Optimization Failed [REPEL]. Reduce the velocity: " << vHit2d.transpose());
+			ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
+								  "Optimization Failed [REPEL]. Reduce the velocity: " << vHit2d.transpose());
 			continue;
 		}
 	}

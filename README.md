@@ -15,11 +15,11 @@ roslaunch air_hockey_baseline_agent air_hockey_baseline_agent.launch use_back_ii
 
 # Dependencies
 
-1. OSQP https://osqp.org/
-2. OSQP Eigen https://robotology.github.io/osqp-eigen/doxygen/doc/html/index.html
-3. NLopt https://nlopt.readthedocs.io/en/latest/
-4. Coin-or-CLP (apt-get install coinor-libclp-dev)
-5. Eigen3 https://eigen.tuxfamily.org/index.php?title=Main_Page
-6. Kalman Filter https://github.com/mherb/kalman (clone recursive)
-7. Ros Packages: rqt 
-8. Python Packages: pyqt, pydot
+1. iiwas_core https://github.com/PuzeLiu/iiwas_core
+2. OSQP https://osqp.org/
+3. OSQP Eigen https://github.com/robotology/osqp-eigen
+4. NLopt https://nlopt.readthedocs.io
+5. Coin-or-CLP (apt-get install coinor-libclp-dev)
+6. Eigen3 https://eigen.tuxfamily.org
+7. Kalman Filter https://github.com/mherb/kalman
+8. Ros Packages: rqt

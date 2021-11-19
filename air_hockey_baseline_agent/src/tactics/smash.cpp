@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,10 +24,6 @@
 #include "air_hockey_baseline_agent/tactics.h"
 #include <Eigen/Dense>
 
-////! TODO delete
-#include <fstream>
-#include <chrono>
-
 using namespace Eigen;
 using namespace trajectory_msgs;
 using namespace air_hockey_baseline_agent;
@@ -43,7 +39,7 @@ bool Smash::ready() {
 }
 
 bool Smash::apply() {
-	iiwas_kinematics::Kinematics::JointArrayType qStart, dqStart;
+	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
 	ros::Time tStart;
 	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
 
@@ -52,18 +48,12 @@ bool Smash::apply() {
 		return true;
 	} else {
 		state.isNewTactics = false;
-        auto t_start = std::chrono::high_resolution_clock::now();
+		auto t_start = std::chrono::high_resolution_clock::now();
 
 		bool success = generateHitTrajectory(qStart, tStart);
 
 		auto t_end = std::chrono::high_resolution_clock::now();
-		double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
-
-		//! TODO delete
-//		std::ofstream file("/home/puze/Dropbox/PHD/AirHockey/IROS/hitting_point_optimization/3_levels/hard/lp_nlopt.csv", std::ios::app);
-//		file << xHit2d.x() << ", " << xHit2d.y() << ", " << vHit2d.x() << ", " <<vHit2d.y()
-//		<< ", " << vHit2d.norm() << ", " << elapsed_time_ms << std::endl;
-//        file.close();
+		double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
 
 		return success;
 	}
@@ -72,15 +62,6 @@ bool Smash::apply() {
 Vector3d Smash::computeTarget(Vector3d puckPosition) {
 	Vector3d xTarget;
 	auto random_integer = dist(gen);
-	// TODO comment
-//	if (puckPosition.y() < 0.) {
-//	    random_integer = 2;
-//	} else if (puckPosition.y() > 0.){
-//	    random_integer = 1;
-//	} else {
-//	    random_integer = 0;
-//	}
-//	random_integer = 0;
 
 	if (puckPosition.y() > 0.1) {
 		xTarget.y() = -0.05;
@@ -94,22 +75,22 @@ Vector3d Smash::computeTarget(Vector3d puckPosition) {
 	xTarget.z() = 0.0;
 
 	if (random_integer == 1) {
-		ROS_INFO_STREAM("Strategy: Right");
+		ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Strategy: Right");
 		xTarget.y() = -2 * (envParams.tableWidth / 2 - envParams.puckRadius)
 		              - agentParams.xGoal.y();
 	} else if (random_integer == 2) {
-		ROS_INFO_STREAM("Strategy: Left");
+		ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Strategy: Left");
 		xTarget.y() = 2 * (envParams.tableWidth / 2 - envParams.puckRadius)
 		              - agentParams.xGoal.y();
 	} else {
-		ROS_INFO_STREAM("Strategy: Middle");
+		ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Strategy: Middle");
 	}
 
 	return xTarget;
 }
 
 void Smash::getHitPointVelocity(Vector2d &xHit2d, Vector2d &vHit2d,
-                                iiwas_kinematics::Kinematics::JointArrayType &qHitRef) {
+                                JointArrayType &qHitRef) {
 	Vector3d puckPredict;
 	puckPredict.x() = state.observation.puckPredictedState.state.x();
 	puckPredict.y() = state.observation.puckPredictedState.state.y();
@@ -148,11 +129,14 @@ void Smash::setNextState() {
 }
 
 
-bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart) {
-	iiwas_kinematics::Kinematics::JointArrayType qHitRef;
+bool Smash::generateHitTrajectory(const JointArrayType &qCur, ros::Time &tStart) {
+	JointArrayType qHitRef(agentParams.nq);
 
 	Vector3d xCur;
-	generator.kinematics->forwardKinematics(qCur, xCur);
+	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, qCur);
+	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
+	xCur = generator.agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
+
 	generator.transformations->applyInverseTransform(xCur);
 	xCur2d = xCur.block<2, 1>(0, 0);
 
@@ -191,7 +175,8 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 		                                                                  true);
 		if (!success) {
 			vHit2d *= .9;
-			ROS_INFO_STREAM("Optimization Failed [HITTING Phase 1]. Reduce the velocity: " << vHit2d.transpose());
+			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
+					"Optimization Failed [HITTING Phase 1]. Reduce the velocity: " << vHit2d.transpose());
 			continue;
 		}
 
@@ -203,12 +188,14 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 		cartTrajStop.points.erase(cartTrajStop.points.begin());
 
 		//! Trajectory Optimization for second part
-		iiwas_kinematics::Kinematics::JointArrayType qHitOpt(state.jointTrajectory.points.back().positions.data());
+		JointArrayType qHitOpt = JointArrayType::Map(state.jointTrajectory.points.back().positions.data(),
+		                                             state.jointTrajectory.points.back().positions.size());
 		success = success && generator.optimizer->optimizeJointTrajectoryAnchor(cartTrajStop, qHitOpt, qHitRef,
 		                                                                        jointTrajStop, false);
 		if (!success) {
 			vHit2d *= .9;
-			ROS_INFO_STREAM("Optimization Failed [HITTING Phase 2]. Reduce the velocity: " << vHit2d.transpose());
+			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
+					"Optimization Failed [HITTING Phase 2]. Reduce the velocity: " << vHit2d.transpose());
 			continue;
 		} else {
 			//! Concatenate trajectory
@@ -234,17 +221,17 @@ bool Smash::generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArray
 				tStart = tHitStart;
 			}
 
-			ROS_INFO_STREAM("[HITTING] velocity: " << vHit2d.norm());
 			state.jointTrajectory.header.stamp = tStart;
 			state.cartTrajectory.header.stamp = tStart;
 			return true;
 		}
 	}
 
-    vHit2d = vHit2d * 0.;
+	vHit2d = vHit2d * 0.;
 	state.jointTrajectory.points.clear();
 	state.cartTrajectory.points.clear();
-	ROS_INFO_STREAM("Failed to find a feasible movement [HITTING]");
+	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
+			"Failed to find a feasible movement [HITTING]");
 	return false;
 }
 
@@ -257,7 +244,7 @@ Vector2d Smash::getStopPoint(Eigen::Vector2d hitPoint) {
 	}
 
 	stopPoint.x() = fmin(stopPoint.x(), agentParams.hitRange[1]);
-	stopPoint.y() = fmax(fmin(stopPoint.y(), envParams.tableWidth/2 - envParams.malletRadius - 0.05),
-	                     -envParams.tableWidth/2 + envParams.malletRadius + 0.05);
+	stopPoint.y() = fmax(fmin(stopPoint.y(), envParams.tableWidth / 2 - envParams.malletRadius - 0.05),
+	                     -envParams.tableWidth / 2 + envParams.malletRadius + 0.05);
 	return stopPoint;
 }

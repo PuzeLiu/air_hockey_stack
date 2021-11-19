@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +27,6 @@
 #include <ros/ros.h>
 #include <geometry_msgs/TransformStamped.h>
 
-#include <iiwas_kinematics/iiwas_kinematics.h>
-
 #include <control_msgs/JointTrajectoryControllerState.h>
 
 #include "air_hockey_baseline_agent/data_structures.h"
@@ -36,7 +34,7 @@
 namespace air_hockey_baseline_agent {
     class Observer {
     public:
-        Observer(ros::NodeHandle& nh, std::string controllerName, double defendLine);
+        Observer(ros::NodeHandle& nh, std::string controllerName, double defendLine, int n_joints);
 
         ~Observer();
 

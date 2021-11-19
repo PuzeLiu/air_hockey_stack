@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -106,8 +106,8 @@ public:
 
 protected:
 	void calculateCutPosition();
-	bool generateCutTrajectory(iiwas_kinematics::Kinematics::JointArrayType &qStart,
-	                           iiwas_kinematics::Kinematics::JointArrayType &dqStart,
+	bool generateCutTrajectory(JointArrayType &qStart,
+	                           JointArrayType &dqStart,
 	                           ros::Time tStart);
 	Eigen::Vector2d xCut, xCutPrev;
 	int collisionNumPrev, waitForSteps, differenceCount;
@@ -122,7 +122,7 @@ public:
 	void setNextState() override;
 	~Repel() override;
 protected:
-	bool generateRepelTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart);
+	bool generateRepelTrajectory(const JointArrayType &qCur, ros::Time &tStart);
 
 	int counter;
 };
@@ -137,8 +137,8 @@ public:
 	~Prepare() override;
 
 protected:
-	bool generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArrayType &qStart,
-	                               iiwas_kinematics::Kinematics::JointArrayType &dqStart,
+	bool generatePrepareTrajectory(JointArrayType &qStart,
+	                               JointArrayType &dqStart,
 	                               ros::Time tStart);
 
 	void getPreparePosAndVel(const Eigen::Vector2d &xStart,
@@ -171,8 +171,8 @@ protected:
 	Eigen::Vector3d computeTarget(Eigen::Vector3d puckPosition);
 	Eigen::Vector2d getStopPoint(Eigen::Vector2d hitPoint);
     void getHitPointVelocity(Eigen::Vector2d &xHit2d, Eigen::Vector2d &vHit2d,
-                             iiwas_kinematics::Kinematics::JointArrayType &qHitRef);
-    bool generateHitTrajectory(const iiwas_kinematics::Kinematics::JointArrayType &qCur, ros::Time &tStart);
+                             JointArrayType &qHitRef);
+    bool generateHitTrajectory(const JointArrayType &qCur, ros::Time &tStart);
 
 protected:
 	std::random_device rd;

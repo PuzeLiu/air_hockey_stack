@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@
 #include <Eigen/Dense>
 
 using namespace Eigen;
-using namespace iiwas_kinematics;
 using namespace trajectory_msgs;
 using namespace air_hockey_baseline_agent;
 
@@ -40,7 +39,7 @@ bool Prepare::ready() {
 }
 
 bool Prepare::apply() {
-	iiwas_kinematics::Kinematics::JointArrayType qStart, dqStart;
+	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
 	ros::Time tStart;
 	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
 
@@ -67,8 +66,8 @@ void Prepare::setNextState() {
 	}
 }
 
-bool Prepare::generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArrayType &qStart,
-                                        iiwas_kinematics::Kinematics::JointArrayType &dqStart,
+bool Prepare::generatePrepareTrajectory(JointArrayType &qStart,
+                                        JointArrayType &dqStart,
                                         ros::Time tStart) {
 	Vector3d xStart, vStart;
 	Vector2d xStart2d, vStart2d, xPuck, xPrepare, vPrepare;
@@ -98,23 +97,25 @@ bool Prepare::generatePrepareTrajectory(iiwas_kinematics::Kinematics::JointArray
 			return true;
 		} else {
 			vPrepare *= .8;
-			ROS_INFO_STREAM("Optimization Failed [PREPARE]. Reduce the velocity: " << vPrepare.transpose());
+			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
+									"Optimization Failed [PREPARE]. Reduce the velocity: " << vPrepare.transpose());
 		}
 	}
-	ROS_INFO_STREAM("Optimization Failed [PREPARE]. Failed to find a feasible hitting movement");
+	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
+							"Optimization Failed [PREPARE]. Failed to find a feasible hitting movement");
 	state.jointTrajectory.points.clear();
 	state.cartTrajectory.points.clear();
 	return false;
 
 }
 
-void Prepare::getPreparePosAndVel(const Vector2d &xStart, Vector2d &xPuck, Vector2d &xPrepare, Vector2d &vPrepare){
+void Prepare::getPreparePosAndVel(const Vector2d &xStart, Vector2d &xPuck, Vector2d &xPrepare, Vector2d &vPrepare) {
 	xPuck = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
 
-	if (xPuck.x() >= xStart.x()){
+	if (xPuck.x() >= xStart.x()) {
 		vPrepare.y() = envParams.tableWidth / 2 - envParams.puckRadius - xPuck.y();
 		vPrepare.x() = xPuck.x() + envParams.puckRadius;
-	} else if (xPuck.y() >= 0){
+	} else if (xPuck.y() >= 0) {
 		vPrepare.y() = fmax(xPuck.y() + envParams.puckRadius, agentParams.defendZoneWidth / 2 + envParams.puckRadius);
 		vPrepare.x() = envParams.puckRadius - xPuck.x();
 	} else if (xPuck.y() < 0) {
@@ -128,7 +129,9 @@ void Prepare::getPreparePosAndVel(const Vector2d &xStart, Vector2d &xPuck, Vecto
 	                                       envParams.malletRadius + 0.02,
 	                                       envParams.tableLength - envParams.malletRadius - 0.02);
 	xPrepare.y() = boost::algorithm::clamp(xPrepare.y(),
-	                                       -envParams.tableWidth / 2 + envParams.malletRadius + envParams.puckRadius + 0.02,
-	                                       envParams.tableWidth / 2 - envParams.malletRadius - envParams.puckRadius - 0.02);
+	                                       -envParams.tableWidth / 2 + envParams.malletRadius + envParams.puckRadius +
+	                                       0.02,
+	                                       envParams.tableWidth / 2 - envParams.malletRadius - envParams.puckRadius -
+	                                       0.02);
 	vPrepare = vPrepare * 0.8;
 }

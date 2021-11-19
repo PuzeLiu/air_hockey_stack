@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,78 +20,136 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
 #ifndef AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_AGENT_DATA_STRUCTURES_H_
 #define AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_AGENT_DATA_STRUCTURES_H_
 
+#include <pinocchio/algorithm/model.hpp>
+#include <pinocchio/parsers/urdf.hpp>
+#include <pinocchio/algorithm/kinematics.hpp>
+#include <pinocchio/algorithm/frames.hpp>
+#include <pinocchio/algorithm/joint-configuration.hpp>
+#include <pinocchio/spatial/explog.hpp>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <trajectory_msgs/JointTrajectory.h>
 
-#include "iiwas_kinematics/iiwas_kinematics.h"
 #include "air_hockey_puck_tracker/PuckTracker.hpp"
 #include "air_hockey_referee/referee.h"
 
 namespace air_hockey_baseline_agent {
-enum Tactics {
-	INIT = 0,      //!< go to init position
-	HOME,      //!< go to home position from init
-	READY,     //!< go to home position
-	PREPARE,   //!< adjust the puck's position when smash fails
-	CUT,       //!< defend the incoming puck and control it in our court
-	REPEL,     //!< hit back the puck regardless of the direction
-	SMASH,     //!< hit the static or slow-moving puck
-	N_TACTICS  //!< Total number of available tacticsProcessor
-};
+	typedef Eigen::VectorXd JointArrayType;
 
-struct EnvironmentParams {
-	double puckRadius;
-	double puckHeight;
-	double malletRadius;
-	double tableLength;
-	double tableWidth;
-	double universalJointHeight;
-	double prepareHeight;
-	double initHeight;
+	enum Tactics {
+		INIT = 0,      //!< go to init position
+		HOME,      //!< go to home position from init
+		READY,     //!< go to home position
+		PREPARE,   //!< adjust the puck's position when smash fails
+		CUT,       //!< defend the incoming puck and control it in our court
+		REPEL,     //!< hit back the puck regardless of the direction
+		SMASH,     //!< hit the static or slow-moving puck
+		N_TACTICS  //!< Total number of available tacticsProcessor
+	};
 
-	Eigen::Vector3d tcp_position;
-	Eigen::Quaterniond tcp_quaternion;
-};
+	struct EnvironmentParams {
+		double puckRadius;
+		double puckHeight;
+		double malletRadius;
+		double tableLength;
+		double tableWidth;
+		double universalJointHeight;
+		double prepareHeight;
+	};
 
+	struct AgentParams {
+		std::string name;
 
-struct AgentParams {
-	iiwas_kinematics::Kinematics::JointArrayType qRef;
-	iiwas_kinematics::Kinematics::JointArrayType qHome;
-	iiwas_kinematics::Kinematics::JointArrayType qInit;
-	Eigen::Vector2d xGoal;
-	Eigen::Vector3d xHome;
-	Eigen::Vector3d xPrepare;
+		pinocchio::Model pinoModel;
+		pinocchio::Data pinoData;
+		int pinoFrameId;
+		int nq;
 
-	Eigen::Vector2d hitRange;
+		JointArrayType qRef;
+		JointArrayType qHome;
+		JointArrayType qInit;
+		Eigen::Vector2d xGoal;
+		Eigen::Vector3d xHome;
+		Eigen::Vector3d xPrepare;
 
-	double vDefendMin;
-	double tDefendMin;
-	double defendZoneWidth;
-	double defendLine;
-	double planTimeOffset;
-	double tPredictionMax;
-	double tTacticSwitchMin;
-	double hitVelocityScale;
-};
+		Eigen::Vector2d hitRange;
 
-struct ObservationState {
-	ros::Time stamp;
-	iiwas_kinematics::Kinematics::JointArrayType jointPosition;
-	iiwas_kinematics::Kinematics::JointArrayType jointVelocity;
-	iiwas_kinematics::Kinematics::JointArrayType jointDesiredPosition;
-	iiwas_kinematics::Kinematics::JointArrayType jointDesiredVelocity;
-    PuckState puckEstimatedState;
-    PuckPredictedState puckPredictedState;
-    air_hockey_referee::GameStatus gameStatus;
-};
+		double vDefendMin;
+		double tDefendMin;
+		double defendZoneWidth;
+		double defendLine;
+		double planTimeOffset;
+		double tPredictionMax;
+		double tTacticSwitchMin;
+		double hitVelocityScale;
+		double initHeight;
+	};
 
+	struct ObservationState {
+		ros::Time stamp;
+		JointArrayType jointPosition;
+		JointArrayType jointVelocity;
+		JointArrayType jointDesiredPosition;
+		JointArrayType jointDesiredVelocity;
+		PuckState puckEstimatedState;
+		PuckPredictedState puckPredictedState;
+		air_hockey_referee::GameStatus gameStatus;
+	};
+
+	struct OptimizerData {
+		// Data for planner
+		Eigen::Vector3d hitPoint;
+		Eigen::Vector3d hitDirection;
+		double epsilon;
+
+		// Data for Null Space Optimizer
+		int dimNullSpace;
+
+		// Variable for QP Solver
+		double rate;
+		Eigen::SparseMatrix<double>P;
+		Eigen::VectorXd q;
+		Eigen::SparseMatrix<double> A;
+		Eigen::VectorXd K;            // Weight for correcting position error
+		Eigen::Vector3d xCurPos;
+		Eigen::MatrixXd N_J;
+		Eigen::MatrixXd J;
+		JointArrayType weights, weightsAnchor;
+		JointArrayType upperBound, lowerBound;
+		Eigen::VectorXd alphaLast;
+
+		AgentParams& agentParams;
+
+		OptimizerData(AgentParams& params): agentParams(params){
+			epsilon = sqrt(std::numeric_limits<double>::epsilon());
+			dimNullSpace = 4;
+
+			J.resize(3, agentParams.pinoModel.nv);
+			N_J.resize(agentParams.pinoModel.nv, agentParams.pinoModel.nv-3);
+			weights.resize(agentParams.nq);
+			weightsAnchor.resize(agentParams.nq);
+			upperBound.resize(agentParams.nq);
+			lowerBound.resize(agentParams.nq);
+
+			q.resize(dimNullSpace);
+
+			P.resize(dimNullSpace, dimNullSpace);
+			q.resize(dimNullSpace);
+			A.resize(agentParams.pinoModel.nq, dimNullSpace);
+			P.setIdentity();
+			A.setZero();
+			K.resize(3);
+			alphaLast.resize(dimNullSpace);
+			alphaLast.setZero();
+		}
+	};
 }
-
 
 
 #endif /* AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_AGENT_DATA_STRUCTURES_H_ */

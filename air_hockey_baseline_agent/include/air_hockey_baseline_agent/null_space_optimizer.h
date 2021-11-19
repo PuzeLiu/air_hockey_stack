@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,9 @@
 #ifndef SRC_NULL_SPACE_OPTIMIZER_H
 #define SRC_NULL_SPACE_OPTIMIZER_H
 
+#include "data_structures.h"
+#include "observer.h"
+
 #include <ros/ros.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
@@ -31,66 +34,56 @@
 
 #include <osqp/osqp.h>
 #include <OsqpEigen/OsqpEigen.h>
-
-#include "observer.h"
-#include "iiwas_kinematics/iiwas_kinematics.h"
+#include <coin/ClpSimplex.hpp>
+#include <coin/ClpSolve.hpp>
 
 namespace air_hockey_baseline_agent {
-    class NullSpaceOptimizer {
-    	typedef iiwas_kinematics::Kinematics::JointArrayType JointArrayType;
-    	typedef iiwas_kinematics::Kinematics::JacobianPosType JacobianPosType;
+	class NullSpaceOptimizer {
+	public:
+		NullSpaceOptimizer(AgentParams &agentParams, OptimizerData &optimizationData);
 
-    public:
-        NullSpaceOptimizer(iiwas_kinematics::Kinematics *kinematics, double rate = 100.);
+		~NullSpaceOptimizer();
 
-        ~NullSpaceOptimizer();
+		bool optimizeJointTrajectory(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
+		                             const JointArrayType &qStart,
+		                             trajectory_msgs::JointTrajectory &jointTraj);
 
-        bool optimizeJointTrajectory(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-                                     const JointArrayType &qStart,
-                                     trajectory_msgs::JointTrajectory &jointTraj);
+		bool optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
+		                                   const JointArrayType &qStart,
+		                                   const JointArrayType &qAnchor,
+		                                   trajectory_msgs::JointTrajectory &jointTraj,
+		                                   bool increasing = true);
 
-        bool optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-                                           const JointArrayType &qStart,
-                                           const JointArrayType &qAnchor,
-                                           trajectory_msgs::JointTrajectory &jointTraj,
-                                           bool increasing=true);
+		void solveJoint7(JointArrayType &q, JointArrayType &dq);
 
-        void SolveJoint7(JointArrayType &q, JointArrayType &dq);
+	private:
+		bool solveQP(const Eigen::Vector3d &xDes,
+		             const Eigen::Vector3d &dxDes,
+		             const JointArrayType &qCur,
+		             JointArrayType &qNext,
+		             JointArrayType &dqNext);
 
-    private:
-        bool solveQP(const Eigen::Vector3d& xDes,
-                     const Eigen::Vector3d& dxDes,
-                     const JointArrayType& qCur,
-					 JointArrayType& qNext,
-					 JointArrayType& dqNext);
+		bool solveQPAnchor(const Eigen::Vector3d &xDes,
+		                   const Eigen::Vector3d &dxDes,
+		                   const JointArrayType &qCur,
+		                   const JointArrayType &qAnchor,
+		                   JointArrayType &qNext,
+		                   JointArrayType &dqNext);
 
-        bool solveQPAnchor(const Eigen::Vector3d &xDes,
-                           const Eigen::Vector3d &dxDes,
-                           const JointArrayType &qCur,
-                           const JointArrayType &qAnchor,
-						   JointArrayType &qNext,
-						   JointArrayType &dqNext);
+		bool constructQPSolver(bool verbose = false);
+
+		bool checkFeasibility(const Eigen::MatrixXd A,
+		                      const Eigen::VectorXd lowerBound,
+		                      const Eigen::VectorXd upperBound,
+		                      Eigen::VectorXd &feasiblePoint);
 
 
-    private:
-        double stepSize_;
-
-        iiwas_kinematics::Kinematics *kinematics_;
-
-        OsqpEigen::Solver solver_;
-        int dimNullSpace_;
-        Eigen::SparseMatrix<double> P_;
-        Eigen::Matrix<double, 4, 1> q_;
-        Eigen::SparseMatrix<double> A_;
-        Eigen::Vector3d K_;            // Weight for correcting position error
-
-        Eigen::Vector3d xCurPos_;
-        JacobianPosType jacobian_;
-        Eigen::MatrixXd nullSpace_;
-
-        JointArrayType upperBound_, lowerBound_;
-        JointArrayType weights_, weightsAnchor_;
-    };
+	private:
+		AgentParams &agentParams;
+		OptimizerData &optData;
+		OsqpEigen::Solver solver;
+		ClpSimplex simplexModel;
+	};
 }
 
 

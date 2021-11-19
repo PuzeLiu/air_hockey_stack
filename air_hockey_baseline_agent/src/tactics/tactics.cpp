@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,6 @@
 
 using namespace std;
 using namespace Eigen;
-using namespace iiwas_kinematics;
 using namespace air_hockey_baseline_agent;
 
 Tactic::Tactic(EnvironmentParams &envParams, AgentParams &agentParams,
@@ -66,8 +65,8 @@ bool Tactic::planReturnTraj(const double &vMax,
 		cartTrajReturn.points.erase(cartTrajReturn.points.begin());
 		generator.transformations->transformTrajectory(cartTrajReturn);
 
-		Kinematics::JointArrayType qStart;
-		for (int j = 0; j < NUM_OF_JOINTS; ++j) {
+		JointArrayType qStart(agentParams.nq);
+		for (int j = 0; j < generator.agentParams.nq; ++j) {
 			qStart[j] = state.jointTrajectory.points.back().positions[j];
 		}
 
@@ -78,7 +77,7 @@ bool Tactic::planReturnTraj(const double &vMax,
 			return true;
 		} else {
 			vReadyMax *= 0.8;
-			ROS_INFO_STREAM(
+			ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
 					"Optimization Failed [RETURN]. Reduce the velocity for Ready: " << vReadyMax);
 		}
 	}
@@ -87,7 +86,7 @@ bool Tactic::planReturnTraj(const double &vMax,
 }
 
 void Tactic::generateStopTrajectory() {
-	iiwas_kinematics::Kinematics::JointArrayType q, dq;
+	JointArrayType q(agentParams.nq), dq(agentParams.nq);
 	ros::Time tTmp;
 	state.getPlannedJointState(q, dq, tTmp, agentParams.planTimeOffset / 2);
 
@@ -126,7 +125,8 @@ void Tactic::setTactic(Tactics tactic) {
 	if (tactic != state.currentTactic) {
 		state.isNewTactics = true;
 		state.tNewTactics = ros::Time::now().toSec() + agentParams.tTacticSwitchMin;
-		ROS_INFO_STREAM("Tactics changed: " << tactic2String(state.currentTactic) << " -> " << tactic2String(tactic));
+		ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Tactics changed: " <<
+				tactic2String(state.currentTactic) << " -> " << tactic2String(tactic));
 		state.currentTactic = tactic;
 	}
 }
@@ -148,7 +148,7 @@ std::string Tactic::tactic2String(Tactics tactic) {
 		case Tactics::PREPARE:
 			return "PREPARE";
 		default:
-			ROS_FATAL_STREAM("Invalid Tactic");
+			ROS_ERROR_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Invalid Tactic");
 			exit(-1);
 	}
 }

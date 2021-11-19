@@ -1,6 +1,3 @@
-//
-// Created by puze on 16.02.21.
-//
 #include <iostream>
 #include "air_hockey_baseline_agent/hitting_point_optimizer.h"
 #include <chrono>
@@ -47,3 +44,4 @@ int main(int argc, char *argv[]) {
 
 	return 0;
 }
+

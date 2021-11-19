@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,7 @@ bool Home::apply() {
 
 	state.jointTrajectory.header.stamp = ros::Time::now();
 
-    ROS_INFO_STREAM("Go to home position");
+	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Go to home position");
 
 	return true;
 }

@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,28 +39,37 @@
 
 namespace air_hockey_baseline_agent {
 
-struct TrajectoryGenerator {
-	TrajectoryGenerator(std::string ns, EnvironmentParams data, double rate);
-	~TrajectoryGenerator();
+	class TrajectoryGenerator {
+	public:
+		TrajectoryGenerator(const ros::NodeHandle &nh, AgentParams &agentParams, EnvironmentParams &envParams);
 
-	void getCartesianPosAndVel(Eigen::Vector3d &x,
-			Eigen::Vector3d &dx,
-			iiwas_kinematics::Kinematics::JointArrayType &q,
-			iiwas_kinematics::Kinematics::JointArrayType &dq);
+		~TrajectoryGenerator();
 
-    void interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj);
-	void interpolateVelocity(trajectory_msgs::JointTrajectory &jointTraj);
-	void cubicSplineInterpolation(trajectory_msgs::JointTrajectory &jointTraj);
+		void getCartesianPosAndVel(Eigen::Vector3d &x,
+		                           Eigen::Vector3d &dx,
+		                           JointArrayType &q,
+		                           JointArrayType &dq);
 
-	CombinatorialHit *combinatorialHit;
-	CombinatorialHitNew *combinatorialHitNew;
-	CubicLinearMotion *cubicLinearMotion;
-	iiwas_kinematics::Kinematics *kinematics;
-	Transformations *transformations;
-	NullSpaceOptimizer *optimizer;
-	HittingPointOptimizer *hittingPointOptimizer;
-	double stepSize;
-};
+		void interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj);
+
+		void interpolateVelocity(trajectory_msgs::JointTrajectory &jointTraj);
+
+		void cubicSplineInterpolation(trajectory_msgs::JointTrajectory &jointTraj);
+
+		void initOptimizerData(const ros::NodeHandle &nh);
+
+
+		CombinatorialHit *combinatorialHit;
+		CombinatorialHitNew *combinatorialHitNew;
+		CubicLinearMotion *cubicLinearMotion;
+		Transformations *transformations;
+		NullSpaceOptimizer *optimizer;
+		HittingPointOptimizer *hittingPointOptimizer;
+
+		OptimizerData optData;
+		AgentParams &agentParams;
+		EnvironmentParams &envParams;
+	};
 
 }
 

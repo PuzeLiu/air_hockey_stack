@@ -1,6 +1,6 @@
 /*
  * MIT License
- * Copyright (c) 2020 Puze Liu, Davide Tateo
+ * Copyright (c) 2020-2021 Puze Liu, Davide Tateo
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,24 +28,26 @@ using namespace trajectory_msgs;
 using namespace Eigen;
 
 
-Agent::Agent(ros::NodeHandle nh, double rate) :
-		nh(nh), rate(rate), state(nh.getNamespace()) {
+Agent::Agent(ros::NodeHandle nh) :
+		nh(nh), state(nh.getNamespace()), rate(100) {
+	double r;
+	if (nh.getParam("/air_hockey/agent/rate", r)){
+		rate = ros::Rate(r);
+	}
 
 	loadEnvironmentParams();
 	loadAgentParam();
 
 	std::string controllerName = getControllerName();
-	observer = new Observer(nh, controllerName, agentParams.defendLine);
+	observer = new Observer(nh, controllerName, agentParams.defendLine, agentParams.nq);
 	agentParams.tPredictionMax = observer->getMaxPredictionTime();
 
-	generator = new TrajectoryGenerator(nh.getNamespace(), envParams, rate);
+	generator = new TrajectoryGenerator(nh, agentParams, envParams);
 
 	computeBaseConfigurations();
 
-	jointTrajectoryPub = nh.advertise<JointTrajectory>(
-			controllerName + "/command", 2);
-	cartTrajectoryPub = nh.advertise<MultiDOFJointTrajectory>(
-			"cartesian_trajectory", 1);
+	jointTrajectoryPub = nh.advertise<JointTrajectory>(controllerName + "/command", 2);
+	cartTrajectoryPub = nh.advertise<MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
 	loadTactics();
 }
@@ -54,14 +56,14 @@ Agent::~Agent() {
 	delete observer;
 	delete generator;
 
-	for (auto tactic : tacticsProcessor) {
+	for (auto tactic: tacticsProcessor) {
 		delete tactic;
 	}
 }
 
 void Agent::start() {
 	ros::Duration(2.).sleep();
-	ROS_INFO_STREAM("Agent Started");
+	ROS_INFO_STREAM_NAMED(nh.getNamespace(), nh.getNamespace() + ": " + "Agent Started");
 	observer->start();
 
 	while (ros::ok()) {
@@ -93,88 +95,108 @@ void Agent::loadEnvironmentParams() {
 	nh.getParam("/air_hockey/agent/universal_joint_height",
 	            envParams.universalJointHeight);
 	nh.getParam("/air_hockey/agent/prepare_height", envParams.prepareHeight);
-
-	std::vector<double> tcp_position;
-	nh.getParam("/air_hockey/agent/tcp_position", tcp_position);
-	envParams.tcp_position.x() = tcp_position[0];
-	envParams.tcp_position.y() = tcp_position[1];
-	envParams.tcp_position.z() = tcp_position[2];
-
-	std::vector<double> tcp_quaternion;
-	nh.getParam("/air_hockey/agent/tcp_quaternion", tcp_quaternion);
-	envParams.tcp_quaternion.w() = tcp_quaternion[0];
-	envParams.tcp_quaternion.x() = tcp_quaternion[1];
-	envParams.tcp_quaternion.y() = tcp_quaternion[2];
-	envParams.tcp_quaternion.z() = tcp_quaternion[3];
 }
 
 void Agent::loadAgentParam() {
+	agentParams.name = nh.getNamespace();
+
+	string parent_dir = ros::package::getPath("air_hockey_description");
+	string robot_description = parent_dir + "/urdf/iiwa_striker_extension_only.urdf";
+	pinocchio::urdf::buildModel(robot_description, agentParams.pinoModel);
+	agentParams.pinoData = pinocchio::Data(agentParams.pinoModel);
+	agentParams.pinoFrameId = agentParams.pinoModel.getFrameId("F_striker_tip");
+	agentParams.nq = agentParams.pinoModel.nq;
+
 	std::vector<double> xTmp;
 
-	nh.getParam("/air_hockey/agent/home", xTmp);
-	agentParams.xHome << xTmp[0], xTmp[1], 0.0;
+	if (!nh.getParam("/air_hockey/agent/q_ref", xTmp)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/q_ref");
+	}
+	agentParams.qRef = JointArrayType::Map(xTmp.data(), xTmp.size());
 
-	nh.getParam("/air_hockey/agent/prepare", xTmp);
-	agentParams.xPrepare << xTmp[0], xTmp[1], envParams.universalJointHeight
-	                                          + envParams.puckHeight;
-
-	nh.getParam("/air_hockey/agent/goal", xTmp);
+	if (!nh.getParam("/air_hockey/agent/goal", xTmp)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/goal");
+	}
 	agentParams.xGoal << xTmp[0], xTmp[1];
 
-	nh.getParam("/air_hockey/agent/hit_range", xTmp);
+	if (!nh.getParam("/air_hockey/agent/home", xTmp)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/home");
+	}
+	agentParams.xHome << xTmp[0], xTmp[1], 0.0;
+
+	if (!nh.getParam("/air_hockey/agent/prepare", xTmp)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/prepare");
+	}
+	agentParams.xPrepare << xTmp[0], xTmp[1], envParams.universalJointHeight + envParams.puckHeight;
+
+	if (!nh.getParam("/air_hockey/agent/hit_range", xTmp)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/hit_range");
+	}
 	agentParams.hitRange << xTmp[0], xTmp[1];
 
-	nh.getParam("/air_hockey/agent/q_ref", xTmp);
-	agentParams.qRef << xTmp[0], xTmp[1], xTmp[2], xTmp[3], xTmp[4], xTmp[5], xTmp[6];
+	if (!nh.getParam("/air_hockey/agent/min_defend_velocity", agentParams.vDefendMin)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/min_defend_velocity");
+	}
 
-	nh.getParam("/air_hockey/agent/defend_line", agentParams.defendLine);
+	if (!nh.getParam("/air_hockey/agent/min_defend_time", agentParams.tDefendMin)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/min_defend_time");
+	}
 
-	nh.getParam("/air_hockey/agent/min_defend_velocity",
-	            agentParams.vDefendMin);
+	if (!nh.getParam("/air_hockey/agent/defend_zone_width", agentParams.defendZoneWidth)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/defend_zone_width");
+	}
 
-	nh.getParam("/air_hockey/agent/min_defend_time", agentParams.tDefendMin);
-	nh.getParam("/air_hockey/agent/min_tactic_switch_time", agentParams.tTacticSwitchMin);
+	if (!nh.getParam("/air_hockey/agent/defend_line", agentParams.defendLine)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/defend_line");
+	}
 
-	nh.getParam("/air_hockey/agent/defend_zone_width", agentParams.defendZoneWidth);
-	nh.getParam("/air_hockey/agent/plan_time_offset",agentParams.planTimeOffset);
+	if (!nh.getParam("/air_hockey/agent/plan_time_offset", agentParams.planTimeOffset)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/plan_time_offset");
+	}
 
-	nh.getParam("/air_hockey/agent/hit_velocity_scale",agentParams.hitVelocityScale);
+	if (!nh.getParam("/air_hockey/agent/min_tactic_switch_time", agentParams.tTacticSwitchMin)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/min_tactic_switch_time");
+	}
 
-	envParams.initHeight = 0.2; //TODO in config
+	if (!nh.getParam("/air_hockey/agent/hit_velocity_scale", agentParams.hitVelocityScale)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/hit_velocity_scale");
+	}
+
+	if (!nh.getParam("/air_hockey/agent/init_position_height", agentParams.initHeight)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/init_position_height");
+	}
 }
 
 void Agent::computeBaseConfigurations() {
-
-	auto kinematics = generator->kinematics;
 	auto transformations = generator->transformations;
 	auto optimizer = generator->optimizer;
 
 	// Compute global configuration
 	Vector3d xTmp, gc;
 	Quaterniond quatTmp;
-	double psi;
 
-	kinematics->forwardKinematics(agentParams.qRef, xTmp, quatTmp);
-	kinematics->getRedundancy(agentParams.qRef, gc, psi);
-
-	// compute qHome
+	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, agentParams.qRef);
+	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
 	xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight;
 	transformations->applyForwardTransform(xTmp);
-	if (!kinematics->inverseKinematics(xTmp, quatTmp, gc, psi, agentParams.qHome)) {
+
+	pinocchio::SE3 oMhome(agentParams.pinoData.oMf[agentParams.pinoFrameId].rotation(), xTmp);
+	if (!inverseKinematics(agentParams, oMhome, agentParams.qRef, agentParams.qHome)) {
 		ROS_ERROR_STREAM("Inverse Kinematics fail, unable to find solution for HOME position");
 	}
-	iiwas_kinematics::Kinematics::JointArrayType dqTmp;
-	optimizer->SolveJoint7(agentParams.qHome, dqTmp);
+
+	JointArrayType dqTmp(agentParams.nq);
+	optimizer->solveJoint7(agentParams.qHome, dqTmp);
 
 	// compute qinit
-	xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight
-	                                                    + envParams.initHeight;
+	xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight + agentParams.initHeight;
 	transformations->applyForwardTransform(xTmp);
-	if (!kinematics->inverseKinematics(xTmp, quatTmp, gc, psi, agentParams.qInit)) {
+	pinocchio::SE3 oMinit(agentParams.pinoData.oMf[agentParams.pinoFrameId].rotation(), xTmp);
+	if (!inverseKinematics(agentParams, oMinit, agentParams.qRef, agentParams.qInit)) {
 		ROS_ERROR_STREAM("Inverse Kinematics fail, unable to find solution for INIT position");
 	}
 
-	optimizer->SolveJoint7(agentParams.qInit, dqTmp);
+	optimizer->solveJoint7(agentParams.qInit, dqTmp);
 }
 
 void Agent::loadTactics() {
@@ -197,22 +219,16 @@ std::string Agent::getControllerName() {
 	ros::master::V_TopicInfo topics;
 	if (ros::master::getTopics(topics)) {
 		for (int i = 0; i < topics.size(); ++i) {
-			if (topics[i].name
-			    == nh.getNamespace()
-			       + "/joint_position_trajectory_controller/state") {
+			if (topics[i].name == nh.getNamespace() + "/joint_position_trajectory_controller/state") {
 				controllerName = "joint_position_trajectory_controller";
 				break;
-			} else if (topics[i].name
-			           == nh.getNamespace()
-			              + "/joint_torque_trajectory_controller/state") {
+			} else if (topics[i].name == nh.getNamespace() + "/joint_torque_trajectory_controller/state") {
 				controllerName = "joint_torque_trajectory_controller";
 				break;
-			} else if (topics[i].name
-                      == nh.getNamespace()
-                         + "/joint_feedforward_trajectory_controller/state") {
-                controllerName = "joint_feedforward_trajectory_controller";
-                break;
-            }
+			} else if (topics[i].name == nh.getNamespace() + "/joint_feedforward_trajectory_controller/state") {
+				controllerName = "joint_feedforward_trajectory_controller";
+				break;
+			}
 		}
 
 		if (controllerName == "") {

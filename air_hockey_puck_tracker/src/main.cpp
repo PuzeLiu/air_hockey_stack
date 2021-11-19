@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 
     puckTracker.start();
     while (ros::ok()){
-        state_predict = puckTracker.getPredictedState(true, true);
+        state_predict = puckTracker.getPredictedState(true, false);
 //		puckTracker.getEstimatedState(true);
         rate.sleep();
     }
