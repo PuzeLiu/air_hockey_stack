@@ -219,7 +219,6 @@ void PuckTracker::startTracking() {
 			if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
 				doPrediction_ = true;
 				if (checkGating()) {
-					ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter");
 					if (useParticleFilter_ && turn_on_pf) {
 						kalmanFilter_->setCovariance(particleFilter_->applyParticleFilter(u_));
 					} else {
@@ -436,10 +435,6 @@ bool PuckTracker::updateNoiseCovarianceService(air_hockey_puck_tracker::SetKalma
 
 bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPrediction::Request &req,
                                      air_hockey_puck_tracker::KalmanFilterPrediction::Response &res) {
-	measurement_.x() = req.state.x;
-	measurement_.y() = req.state.y;
-	measurement_.theta() = req.state.theta;
-
 	//! predict step
 	PuckState predictedState = kalmanFilter_->predict(*systemModel_, u_);
 	if (collisionModel_->applyCollision(kalmanFilter_->getState(), false)) {
@@ -449,22 +444,29 @@ bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPredic
 		particleFilter_->sampleParticles(kalmanFilter_->getState(),
 		                                 const_cast<Eigen::Matrix<double, 6, 6> &>(kalmanFilter_->getCovariance()));
 	}
+    if(!isnan(req.state.x)) {
+        measurement_.x() = req.state.x;
+        measurement_.y() = req.state.y;
+        measurement_.theta() = req.state.theta;
 
-	if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
-        //if (checkGating()) {
-			if (useParticleFilter_ && turn_on_pf) {
-				ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter with Particle Filter");
-				kalmanFilter_->setCovariance(particleFilter_->applyParticleFilter(u_));
-			} else {
-				kalmanFilter_->update(*observationModel_, measurement_);
-			}
-		/*} else {
-			Kalman::Covariance<PuckState> covInit;
-			covInit.setIdentity();
-			kalmanFilter_->setCovariance(covInit);
-			ROS_INFO_STREAM("[Puck Tracker] The innovation is too big, reset the puck tracker");
-		}*/
-	}
+        if (!collisionModel_->m_table.isOutsideBoundary(measurement_)) {
+            //if (checkGating()) {
+            if (useParticleFilter_ && turn_on_pf) {
+                ROS_INFO_STREAM("[Puck Tracker] Update Kalman Filter with Particle Filter");
+                kalmanFilter_->setCovariance(particleFilter_->applyParticleFilter(u_));
+            } else {
+                kalmanFilter_->update(*observationModel_, measurement_);
+            }
+            /*} else {
+                Kalman::Covariance<PuckState> covInit;
+                covInit.setIdentity();
+                kalmanFilter_->setCovariance(covInit);
+                ROS_INFO_STREAM("[Puck Tracker] The innovation is too big, reset the puck tracker");
+            }*/
+        }
+    }else{
+        ROS_INFO_STREAM("[Puck Tracker] no update, because of data loss " << req.state.x);
+    }
 	PuckState estimatedState = getEstimatedState(false);
 	res.estimation.x = estimatedState.x();
 	res.estimation.dx = estimatedState.dx();
