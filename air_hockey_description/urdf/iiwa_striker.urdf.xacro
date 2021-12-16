@@ -13,11 +13,13 @@
     <xacro:arg name="parent" default="world"/>
     <xacro:arg name="base_xyz" default="0 0 0"/>
     <xacro:arg name="base_rpy" default="0 0 0"/>
+    <xacro:arg name="dynamics_parameter" default="identified"/>
 
     <link name="$(arg parent)"/>
 
     <!--iiwa-->
-    <xacro:iiwa14 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)" parent="$(arg parent)">
+    <xacro:iiwa14 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)" parent="$(arg parent)"
+                  dynamics_parameter="$(arg dynamics_parameter)">
         <origin xyz="$(arg base_xyz)" rpy="$(arg base_rpy)" />
     </xacro:iiwa14>
     <xacro:striker hardware_interface="hardware_interface/EffortJointInterface" robot_name="$(arg robot_name)"/>
