@@ -47,7 +47,6 @@ int main(int argc, char **argv) {
 		state_estimate = puckTracker.getEstimatedState(false);
         rate.sleep();
     }
-
     nh.shutdown();
     return 0;
 }
