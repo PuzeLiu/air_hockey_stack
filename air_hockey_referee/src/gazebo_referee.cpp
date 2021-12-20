@@ -89,7 +89,7 @@ void GazeboReferee::update() {
                 statusPub.publish(gameStatusMsg);
             }
 
-            tfMalletB = tfBuffer.lookupTransform("Table", "B_striker_mallet_tip", ros::Time(0), ros::Duration(1.0));
+            /*tfMalletB = tfBuffer.lookupTransform("Table", "B_striker_mallet_tip", ros::Time(0), ros::Duration(1.0));
             tf2::fromMsg(tfMalletB.transform.rotation, quatTmp);
             rotMatTmp.setRotation(quatTmp);
 
@@ -100,7 +100,7 @@ void GazeboReferee::update() {
                 gameStatusMsg.score_away = 0;
                 gameStatusMsg.score_home = 0;
                 statusPub.publish(gameStatusMsg);
-            }
+            }*/
         }
     }
 

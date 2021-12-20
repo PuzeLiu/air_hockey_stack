@@ -22,6 +22,16 @@ find_package(OsqpEigen REQUIRED)
 find_package(NLopt REQUIRED)
 find_package(pinocchio REQUIRED)
 
+add_service_files(
+        FILES
+        SetTacticsService.srv
+)
+
+generate_messages(
+        DEPENDENCIES
+        std_msgs
+)
+
 
 catkin_package(
    INCLUDE_DIRS include

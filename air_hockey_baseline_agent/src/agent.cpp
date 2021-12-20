@@ -64,12 +64,13 @@ Agent::~Agent() {
 void Agent::start() {
 	ros::Duration(2.).sleep();
 	ROS_INFO_STREAM_NAMED(nh.getNamespace(), nh.getNamespace() + ": " + "Agent Started");
+    ros::ServiceServer tacticService = nh.advertiseService("set_tactic", &Agent::setTacticService, this);
 	observer->start();
 
 	while (ros::ok()) {
 		state.updateObservationAndState(observer->getObservation(), agentParams);
 
-		tacticsProcessor[state.currentTactic]->updateTactic();
+		tacticsProcessor[state.currentTactic]->initTactic();
 
 		auto &activeTactic = *tacticsProcessor[state.currentTactic];
 		if (activeTactic.ready()) {
@@ -238,4 +239,27 @@ std::string Agent::getControllerName() {
 	}
 
 	return controllerName;
+}
+
+bool Agent::setTacticService(SetTacticsService::Request &req, SetTacticsService::Response &res) {
+    if (req.tactic == "SMASH") { tacticsProcessor[state.currentTactic]->setTactic(Tactics::SMASH); }
+    else if (req.tactic == "CUT") { tacticsProcessor[state.currentTactic]->setTactic(Tactics::CUT); }
+    else if (req.tactic == "REPEL") { tacticsProcessor[state.currentTactic]->setTactic(Tactics::REPEL); }
+    else {
+        res.success = false;
+        return false;
+    }
+
+    auto &activeTactic = *tacticsProcessor[state.currentTactic];
+    if (activeTactic.ready()) {
+        if (activeTactic.apply()) {
+            publishTrajectory();
+        }
+    }
+
+    rate.sleep();
+    tacticsProcessor[state.currentTactic]->updateTactic();
+
+    res.success = true;
+    return true;
 }

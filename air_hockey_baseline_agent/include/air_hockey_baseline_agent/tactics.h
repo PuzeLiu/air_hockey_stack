@@ -37,13 +37,14 @@ public:
 	virtual bool ready() = 0;
 	virtual bool apply() = 0;
 	virtual void updateTactic();
+    void setTactic(Tactics tactic);
+    void initTactic();
 
 protected:
 	virtual void setNextState() = 0;
 	bool planReturnTraj(const double &vMax,
 			trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
 			trajectory_msgs::JointTrajectory &jointTrajReturn);
-	void setTactic(Tactics tactic);
 	std::string tactic2String(Tactics tactic);
 	void generateStopTrajectory();
 
