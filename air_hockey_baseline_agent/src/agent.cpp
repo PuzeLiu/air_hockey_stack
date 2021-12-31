@@ -228,6 +228,9 @@ std::string Agent::getControllerName() {
 			} else if (topics[i].name == nh.getNamespace() + "/joint_feedforward_trajectory_controller/state") {
 				controllerName = "joint_feedforward_trajectory_controller";
 				break;
+			} else if (topics[i].name == nh.getNamespace() + "/adrc_trajectory_controller/state") {
+				controllerName = "adrc_trajectory_controller";
+				break;
 			}
 		}
 
