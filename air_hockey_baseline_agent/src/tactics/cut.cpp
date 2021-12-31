@@ -68,8 +68,8 @@ bool Cut::apply() {
 
 	generator.getCartesianPosAndVel(xCur, vCur, qStart, dqStart);
 
-	generator.transformations->applyInverseTransform(xCur);
-	generator.transformations->applyInverseRotation(vCur);
+	generator.transformations->transformRobot2Table(xCur);
+	generator.transformations->rotationRobot2Table(vCur);
 
 	xCur2d = xCur.block<2, 1>(0, 0);
 	vCur2d = vCur.block<2, 1>(0, 0);

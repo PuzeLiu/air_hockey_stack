@@ -74,8 +74,8 @@ bool Prepare::generatePrepareTrajectory(JointArrayType &qStart,
 
 	generator.getCartesianPosAndVel(xStart, vStart, qStart, dqStart);
 
-	generator.transformations->applyInverseTransform(xStart);
-	generator.transformations->applyInverseRotation(vStart);
+	generator.transformations->transformRobot2Table(xStart);
+	generator.transformations->rotationRobot2Table(vStart);
 
 	xStart2d = xStart.block<2, 1>(0, 0);
 

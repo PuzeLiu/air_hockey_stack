@@ -2,7 +2,7 @@
 <launch>
     <!-- Arguments -->
     <arg name="world_name" default="$(find iiwas_gazebo)/worlds/iiwas_world.world"/>
-    <arg name="gui" default="true"/>
+    <arg name="gui" default="false"/>
     <arg name="paused" default="false"/>
     <arg name="physics" default="ode" />
 

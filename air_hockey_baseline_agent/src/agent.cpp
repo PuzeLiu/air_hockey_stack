@@ -178,7 +178,7 @@ void Agent::computeBaseConfigurations() {
 	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, agentParams.qRef);
 	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
 	xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight;
-	transformations->applyForwardTransform(xTmp);
+	transformations->transformTable2Robot(xTmp);
 
 	pinocchio::SE3 oMhome(agentParams.pinoData.oMf[agentParams.pinoFrameId].rotation(), xTmp);
 	if (!inverseKinematics(agentParams, oMhome, agentParams.qRef, agentParams.qHome)) {
@@ -190,7 +190,7 @@ void Agent::computeBaseConfigurations() {
 
 	// compute qinit
 	xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight + agentParams.initHeight;
-	transformations->applyForwardTransform(xTmp);
+	transformations->transformTable2Robot(xTmp);
 	pinocchio::SE3 oMinit(agentParams.pinoData.oMf[agentParams.pinoFrameId].rotation(), xTmp);
 	if (!inverseKinematics(agentParams, oMinit, agentParams.qRef, agentParams.qInit)) {
 		ROS_ERROR_STREAM("Inverse Kinematics fail, unable to find solution for INIT position");

@@ -37,10 +37,10 @@ public:
 	Transformations(std::string ns);
 
 	void transformTrajectory(trajectory_msgs::MultiDOFJointTrajectory &cartesianTrajectory);
-	void applyForwardTransform(Eigen::Vector3d &v_in_out);
-	void applyInverseTransform(Eigen::Vector3d &v_in_out);
-    void applyForwardRotation(Eigen::Vector3d &v_in_out);
-	void applyInverseRotation(Eigen::Vector3d &v_in_out);
+	void transformTable2Robot(Eigen::Vector3d &v_in_out);
+	void transformRobot2Table(Eigen::Vector3d &v_in_out);
+    void rotationTable2Robot(Eigen::Vector3d &v_in_out);
+	void rotationRobot2Table(Eigen::Vector3d &v_in_out);
 
 
 private:

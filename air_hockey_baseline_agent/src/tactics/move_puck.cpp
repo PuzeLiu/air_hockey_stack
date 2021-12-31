@@ -43,7 +43,7 @@ bool MovePuck::apply() {
 	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, state.observation.jointPosition);
 	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
 	xCur = generator.agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
-	generator.transformations->applyInverseTransform(xCur);
+	generator.transformations->transformRobot2Table(xCur);
 
 	Vector3d xLiftUp, xSetDown;
 	xLiftUp = state.observation.puckPredictedState.state.block<3, 1>(0, 0);

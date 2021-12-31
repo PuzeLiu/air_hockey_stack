@@ -64,7 +64,9 @@ void TrajectoryGenerator::getCartesianPosAndVel(Vector3d &x, Vector3d &dx,
 TrajectoryGenerator::~TrajectoryGenerator() {
 	delete optimizer;
 	delete transformations;
+	delete hittingPointOptimizer;
 	delete combinatorialHit;
+	delete combinatorialHitNew;
 	delete cubicLinearMotion;
 }
 

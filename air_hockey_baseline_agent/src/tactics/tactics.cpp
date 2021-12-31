@@ -56,7 +56,7 @@ bool Tactic::planReturnTraj(const double &vMax,
 		Vector3d xStop;
 		xStop
 				<< lastPoint.transforms[0].translation.x, lastPoint.transforms[0].translation.y, lastPoint.transforms[0].translation.z;
-		generator.transformations->applyInverseTransform(xStop);
+		generator.transformations->transformRobot2Table(xStop);
 		Vector2d xStop2d = xStop.block<2, 1>(0, 0);
 		Vector2d xHome2d = agentParams.xHome.block<2, 1>(0, 0);
 		double tStop = (xHome2d - xStop2d).norm() / vReadyMax;

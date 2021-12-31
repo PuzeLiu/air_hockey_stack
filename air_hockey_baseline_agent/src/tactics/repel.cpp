@@ -77,7 +77,7 @@ bool Repel::generateRepelTrajectory(const JointArrayType &qCur, ros::Time &tStar
 	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, qCur);
 	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
 	xCur = generator.agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
-	generator.transformations->applyInverseTransform(xCur);
+	generator.transformations->transformRobot2Table(xCur);
 	xCur2d = xCur.block<2, 1>(0, 0);
 
 	xHit2d = state.observation.puckPredictedState.state.block<2, 1>(0, 0);

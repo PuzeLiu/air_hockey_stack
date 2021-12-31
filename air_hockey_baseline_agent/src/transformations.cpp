@@ -66,7 +66,7 @@ void Transformations::transformTrajectory(
 	}
 }
 
-void Transformations::applyForwardTransform(Vector3d &v_in_out) {
+void Transformations::transformTable2Robot(Vector3d &v_in_out) {
 	geometry_msgs::Point point;
 	point.x = v_in_out.x();
 	point.y = v_in_out.y();
@@ -77,7 +77,7 @@ void Transformations::applyForwardTransform(Vector3d &v_in_out) {
 	v_in_out.z() = point.z;
 }
 
-void Transformations::applyForwardRotation(Vector3d &v_in_out) {
+void Transformations::rotationTable2Robot(Vector3d &v_in_out) {
     geometry_msgs::Vector3 point;
     point.x = v_in_out.x();
     point.y = v_in_out.y();
@@ -90,7 +90,7 @@ void Transformations::applyForwardRotation(Vector3d &v_in_out) {
     v_in_out.z() = point.z;
 }
 
-void Transformations::applyInverseTransform(Vector3d &v_in_out) {
+void Transformations::transformRobot2Table(Vector3d &v_in_out) {
 	geometry_msgs::Point point;
 	point.x = v_in_out.x();
 	point.y = v_in_out.y();
@@ -101,7 +101,7 @@ void Transformations::applyInverseTransform(Vector3d &v_in_out) {
 	v_in_out.z() = point.z;
 }
 
-void Transformations::applyInverseRotation(Vector3d &v_in_out) {
+void Transformations::rotationRobot2Table(Vector3d &v_in_out) {
 	geometry_msgs::Vector3 point;
 	point.x = v_in_out.x();
 	point.y = v_in_out.y();

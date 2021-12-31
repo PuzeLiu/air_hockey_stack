@@ -102,13 +102,13 @@ void Smash::getHitPointVelocity(Vector2d &xHit2d, Vector2d &vHit2d,
 	// optimize the hitting point
 	double velMag;
 	qHitRef = state.observation.jointPosition;
-	generator.transformations->applyForwardTransform(xHit);
-	generator.transformations->applyForwardRotation(vHit);
+	generator.transformations->transformTable2Robot(xHit);
+	generator.transformations->rotationTable2Robot(vHit);
 	generator.hittingPointOptimizer->solve(xHit, vHit, qHitRef, velMag);
 
 	// prepare output
-	generator.transformations->applyInverseTransform(xHit);
-	generator.transformations->applyInverseRotation(vHit);
+	generator.transformations->transformRobot2Table(xHit);
+	generator.transformations->rotationRobot2Table(vHit);
 	vHit = vHit * velMag * agentParams.hitVelocityScale;
 	xHit2d = xHit.block<2, 1>(0, 0);
 	vHit2d = vHit.block<2, 1>(0, 0);
@@ -137,7 +137,7 @@ bool Smash::generateHitTrajectory(const JointArrayType &qCur, ros::Time &tStart)
 	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
 	xCur = generator.agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
 
-	generator.transformations->applyInverseTransform(xCur);
+	generator.transformations->transformRobot2Table(xCur);
 	xCur2d = xCur.block<2, 1>(0, 0);
 
 	getHitPointVelocity(xHit2d, vHit2d, qHitRef);
