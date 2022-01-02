@@ -206,7 +206,7 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
 
 	success = success and constructQPSolver();
 
-	if (!solver.solve()) {
+	if (solver.solveProblem() != OsqpEigen::ErrorExitFlag::NoError) {
 		ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "solve Failed.");
 		success = false;
 	}
@@ -226,7 +226,7 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
 			                            optData.q.transpose() * feasiblePoint);
 			ROS_DEBUG_STREAM((optData.A * feasiblePoint - (optData.lowerBound - b)).transpose());
 			ROS_DEBUG_STREAM(((optData.upperBound - b) - optData.A * feasiblePoint).transpose());
-			solver.solve();
+			solver.solveProblem();
 			ROS_DEBUG_STREAM("After initialization: " << solver.workspace()->info->status);
 			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "xDes: " << xDes.transpose());
 			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "xCur: "
@@ -282,7 +282,7 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 
 	success = success and constructQPSolver();
 
-	if (!solver.solve()) {
+	if (solver.solveProblem() != OsqpEigen::ErrorExitFlag::NoError) {
 		ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "solve Failed.");
 		success = false;
 	}
@@ -301,7 +301,7 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 			                            optData.q.transpose() * feasiblePoint);
 			ROS_DEBUG_STREAM((optData.A * feasiblePoint - (optData.lowerBound - b)).transpose());
 			ROS_DEBUG_STREAM(((optData.upperBound - b) - optData.A * feasiblePoint).transpose());
-			solver.solve();
+			solver.solveProblem();
 			ROS_DEBUG_STREAM("After initialization: " << solver.workspace()->info->status);
 			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "xDes: " << xDes.transpose());
 			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "xCur: "
