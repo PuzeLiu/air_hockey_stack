@@ -48,13 +48,7 @@ bool Smash::apply() {
 		return true;
 	} else {
 		state.isNewTactics = false;
-		auto t_start = std::chrono::high_resolution_clock::now();
-
 		bool success = generateHitTrajectory(qStart, tStart);
-
-		auto t_end = std::chrono::high_resolution_clock::now();
-		double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-
 		return success;
 	}
 }

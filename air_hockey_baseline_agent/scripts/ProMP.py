@@ -8,8 +8,8 @@ class ProMP:
     def __init__(self, dim, n_basis, center, width, t_total=1., step=0.01, basis='rbf'):
         self.dim = dim
         self.n_basis = n_basis
-        self.center = center  # [dim, n_basis]
-        self.width = width  # [dim, n_basis]
+        self.center = center 
+        self.width = width
         self.t_total = t_total
         self.t_step = step
 

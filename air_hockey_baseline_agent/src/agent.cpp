@@ -204,14 +204,11 @@ void Agent::loadTactics() {
 
 	tacticsProcessor[Tactics::INIT] = new Init(envParams, agentParams, state, generator);
 	tacticsProcessor[Tactics::HOME] = new Home(envParams, agentParams, state, generator);
-	tacticsProcessor[Tactics::READY] = new Ready(envParams, agentParams, state,
-	                                             generator);
-	tacticsProcessor[Tactics::PREPARE] = new Prepare(envParams, agentParams, state,
-	                                                 generator);
+	tacticsProcessor[Tactics::READY] = new Ready(envParams, agentParams, state, generator);
+	tacticsProcessor[Tactics::PREPARE] = new Prepare(envParams, agentParams, state, generator);
 	tacticsProcessor[Tactics::CUT] = new Cut(envParams, agentParams, state, generator);
 	tacticsProcessor[Tactics::REPEL] = new Repel(envParams, agentParams, state, generator);
-	tacticsProcessor[Tactics::SMASH] = new Smash(envParams, agentParams, state,
-	                                             generator);
+	tacticsProcessor[Tactics::SMASH] = new Smash(envParams, agentParams, state, generator);
 }
 
 std::string Agent::getControllerName() {

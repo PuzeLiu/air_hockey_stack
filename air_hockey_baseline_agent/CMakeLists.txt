@@ -77,6 +77,9 @@ add_executable(null_space_optimizer_example
     src/null_space_optimizer.cpp
     examples/null_space_optimizer_example.cpp)
 
+add_executable(promp_test
+   src/test/ProMP_test.cpp)
+
 target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    osqp::osqp
@@ -102,6 +105,9 @@ target_link_libraries(null_space_optimizer_example
     pinocchio::pinocchio
     )
 
+target_link_libraries(promp_test
+   ${catkin_LIBRARIES}
+   )
 
 #############
 ## Install ##
