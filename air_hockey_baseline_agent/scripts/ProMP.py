@@ -8,7 +8,7 @@ class ProMP:
     def __init__(self, dim, n_basis, center, width, t_total=1., step=0.01, basis='rbf'):
         self.dim = dim
         self.n_basis = n_basis
-        self.center = center 
+        self.center = center
         self.width = width
         self.t_total = t_total
         self.t_step = step
@@ -24,7 +24,7 @@ class ProMP:
         return weight
 
     def get_trajectory(self, weight):
-        t_traj = to.linspace(0, self.t_total, int(self.t_total / self.t_step))
+        t_traj = to.linspace(0, self.t_total, int(self.t_total / self.t_step + 1))
         traj = []
         for t_i in t_traj:
             traj.append(self.get_point(t_i, weight, order=1).numpy())
