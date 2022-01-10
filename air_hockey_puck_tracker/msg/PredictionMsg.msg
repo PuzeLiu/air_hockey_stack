@@ -7,3 +7,4 @@ float64 dy
 float64 theta
 float64 dtheta
 float64[] innovation
+float64[] covariance

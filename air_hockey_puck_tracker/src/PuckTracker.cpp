@@ -484,6 +484,11 @@ bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPredic
 		res.prediction.theta = predState.state.theta();
 		res.prediction.dtheta = predState.state.dtheta();
 
+        res.prediction.covariance.resize(puckPredictor_->getCovariance().size());
+        res.prediction.covariance.assign(puckPredictor_->getCovariance().data(),
+                                         puckPredictor_->getCovariance().data() +
+                                         puckPredictor_->getCovariance().size());
+
 		res.prediction.predictionTime = predState.predictedTime;
 	} else {
 		//send one step prediction for noise estimation
