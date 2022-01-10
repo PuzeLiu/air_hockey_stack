@@ -47,7 +47,7 @@ NullSpaceOptimizer::NullSpaceOptimizer(AgentParams &agentParams_, OptimizerData 
 
 	solver.initSolver();
 
-	simplexModel.setLogLevel(1);
+	simplexModel.setLogLevel(0);
 }
 
 NullSpaceOptimizer::~NullSpaceOptimizer() = default;

@@ -70,7 +70,7 @@ void Agent::start() {
 	while (ros::ok()) {
 		state.updateObservationAndState(observer->getObservation(), agentParams);
 
-		tacticsProcessor[state.currentTactic]->initTactic();
+		tacticsProcessor[state.currentTactic]->updateTactic();
 
 		auto &activeTactic = *tacticsProcessor[state.currentTactic];
 		if (activeTactic.ready()) {
@@ -242,9 +242,20 @@ std::string Agent::getControllerName() {
 }
 
 bool Agent::setTacticService(SetTacticsService::Request &req, SetTacticsService::Response &res) {
-    if (req.tactic == "SMASH") { tacticsProcessor[state.currentTactic]->setTactic(Tactics::SMASH); }
-    else if (req.tactic == "CUT") { tacticsProcessor[state.currentTactic]->setTactic(Tactics::CUT); }
-    else if (req.tactic == "REPEL") { tacticsProcessor[state.currentTactic]->setTactic(Tactics::REPEL); }
+    if (req.tactic == "SMASH") {
+        agentParams.smashStrategy = req.smashStrategy;
+        ROS_INFO_STREAM("Set Tactic Service with smash Strategy: " << req.smashStrategy);
+        tacticsProcessor[state.currentTactic]->setTactic(Tactics::SMASH);
+    }
+    else if (req.tactic == "CUT") {
+        tacticsProcessor[state.currentTactic]->setTactic(Tactics::CUT);
+    }
+    else if (req.tactic == "REPEL") {
+        tacticsProcessor[state.currentTactic]->setTactic(Tactics::REPEL);
+    }
+    else if (req.tactic == "PREPARE") {
+        tacticsProcessor[state.currentTactic]->setTactic(Tactics::PREPARE);
+    }
     else {
         res.success = false;
         return false;

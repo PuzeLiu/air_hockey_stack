@@ -6,10 +6,10 @@
     <arg name="paused" default="false"/>
     <arg name="physics" default="ode" />
 
-    <arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
+    <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
 
-    <arg name="front_controllers" default="adrc_trajectory_controller"/>
-    <arg name="back_controllers" default="adrc_trajectory_controller"/>
+    <arg name="front_controllers" default="joint_position_trajectory_controller"/>
+    <arg name="back_controllers" default="joint_position_trajectory_controller"/>
 
     <arg name="simulation" default="true"/>
 

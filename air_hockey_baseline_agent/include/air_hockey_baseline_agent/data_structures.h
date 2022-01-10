@@ -70,6 +70,7 @@ namespace air_hockey_baseline_agent {
 		pinocchio::Data pinoData;
 		int pinoFrameId;
 		int nq;
+		int smashStrategy;
 
 		JointArrayType qRef;
 		JointArrayType qHome;
