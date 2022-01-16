@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <launch>
     <!-- Arguments -->
-    <arg name="pybullet_gui" default="false"/>
-    <arg name="paused" default="true"/>
+    <arg name="pybullet_gui" default="true"/>
+    <arg name="pause_simulation" default="false"/>
 
     <arg name="use_front_iiwa" default="true"/>
     <arg name="use_back_iiwa" default="true"/>
@@ -62,7 +62,7 @@
         <arg name="config_file" value="$(find iiwas_pybullet)/config/environment.config" />
         <arg name="environment" default="iiwas_pybullet.plugins.env_plugin" />
         <arg name="pybullet_gui" default="$(arg pybullet_gui)" /> <!-- if true pybullet gui will show -->
-        <arg name="pause_simulation" default="$(arg paused)" /> <!-- if true, will boot with paused physics -->
+        <arg name="pause_simulation" default="$(arg pause_simulation)" /> <!-- if true, will boot with paused physics -->
         <arg name="parallel_plugin_execution" default="False" />
         <arg name="use_deformable_world" default="False" /> <!-- enable/disable soft body simulation -->
         <arg name="gui_options" default="" />
