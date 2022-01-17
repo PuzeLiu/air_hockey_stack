@@ -31,8 +31,7 @@ class UniversalJointPlugin:
     def control_universal_joint(self):
         pino.forwardKinematics(self.pino_model, self.pino_data, self.current_positions)
         oMf_tip = pino.updateFramePlacement(self.pino_model, self.pino_data, self.pino_model.nframes - 1)
-        oMf_tip.rotation
-        q1 = np.arccos(oMf_tip.rotation[:, 2] @ np.array([0., 0., -1.]))
+        q1 = np.arccos(np.clip(oMf_tip.rotation[:, 2] @ np.array([0., 0., -1.]), -1, 1))
         q2 = 0
 
         axis = np.cross(oMf_tip.rotation[:, 2], np.array([0., 0., -1.]))
@@ -44,4 +43,5 @@ class UniversalJointPlugin:
         q1 = q1 * axis.dot(oMf_tip.rotation[:3, 1])
 
         self.pb.setJointMotorControlArray(self.model_id, self.joint_indices[7:], self.pb.POSITION_CONTROL,
-                                          targetPositions=[q1, q2], positionGains=[0.005, 0.005], velocityGains=[0.001, 0.001])
+                                          targetPositions=[q1, q2], targetVelocities=[0., 0.],
+                                          positionGains=[0.0003, 0.0003], velocityGains=[0.01, 0.01])
