@@ -3,6 +3,7 @@ import numpy as np
 import rospy
 import tf2_ros
 from air_hockey_pybullet.srv import ResetPuck, ResetPuckRequest, ResetPuckResponse
+import pybullet_utils.transformations as tr
 
 
 class PuckTfPublisher:
@@ -39,7 +40,6 @@ class PuckTfPublisher:
         world2parent_pos = np.array([0., 0., 0.])
         world2parent_quat = np.array([0., 0., 0., 1.])
         if req.transform.header.frame_id != '':
-
             world2parent = self.tf_buffer.lookup_transform('world', req.transform.header.frame_id, rospy.Time(0))
             world2parent_pos = np.array([world2parent.transform.translation.x,
                                          world2parent.transform.translation.y,
@@ -56,8 +56,14 @@ class PuckTfPublisher:
                                      req.transform.transform.rotation.y,
                                      req.transform.transform.rotation.z,
                                      req.transform.transform.rotation.w])
+        puck_lin_vel_parent = np.array([req.velocity.linear.x, req.velocity.linear.y, req.velocity.linear.z])
+        puck_ang_vel_parent = np.array([req.velocity.angular.x, req.velocity.angular.y, req.velocity.angular.z])
+        rot_world_parent = tr.quaternion_matrix(world2parent_quat)[:3, :3]
+        puck_lin_vel_world = rot_world_parent @ puck_lin_vel_parent
+        puck_ang_vel_world = rot_world_parent @ puck_ang_vel_parent
 
         self.pb.resetBasePositionAndOrientation(self.model_id,
                                                 *self.pb.multiplyTransforms(world2parent_pos, world2parent_quat,
                                                                             parent2puck_pos, parent2puck_quat))
+        self.pb.resetBaseVelocity(self.model_id, puck_lin_vel_world, puck_ang_vel_world)
         return ResetPuckResponse()
