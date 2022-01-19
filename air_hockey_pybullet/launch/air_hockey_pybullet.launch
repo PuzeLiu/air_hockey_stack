@@ -69,6 +69,13 @@
         <arg name="model_list" value="$(arg model_list)"/>
     </include>
 
+    <!-- Start Air Hockey Referee -->
+    <node pkg="air_hockey_referee" type="air_hockey_referee" name="air_hockey_referee" output="screen">
+        <param name="physics" value="pybullet"/>
+    </node>
+
+    <!-- Start Air Hockey rqt -->
+    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
 
 
 </launch>
