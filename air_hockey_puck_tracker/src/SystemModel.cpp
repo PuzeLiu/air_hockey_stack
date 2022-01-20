@@ -21,13 +21,25 @@
  * SOFTWARE.
  */
 
+#include <rosconsole/macros_generated.h>
 #include "air_hockey_puck_tracker/SystemModel.hpp"
 
 namespace air_hockey_baseline_agent {
 
-    SystemModel::SystemModel(double damping_, double mu_) {
+    SystemModel::SystemModel(double damping_, double mu_, double tableLength_, double tableWidth_, double goalWidth_, double puckRadius, double malletRadius,
+                             double restitutionTable, double restitutionMallet, double rimFriction, double dt) {
+
+        collisionModel = new CollisionModel(tableLength_, tableWidth_, goalWidth_, puckRadius, malletRadius,
+                                             restitutionTable, restitutionMallet, rimFriction, dt);
 	    damping = damping_;
 	    mu = mu_;
+	    rimFric = rimFriction;
+	    resTable = restitutionTable;
+	    pRadius = puckRadius;
+    }
+
+    SystemModel::~SystemModel(){
+        delete collisionModel;
     }
 
 /**
@@ -62,26 +74,112 @@ namespace air_hockey_baseline_agent {
 
         x_.theta() = angle;
         x_.dtheta() = x.dtheta();
+
+        //apply collision if there is one
+        collisionModel->applyCollision(x_,  true);
+
         // Return transitioned state vector
         return x_;
     }
 
     void SystemModel::updateJacobians(const S &x, const C &u) {
-        this->F.setIdentity();
-        this->F(S::X, S::DX) = u.dt();
-        this->F(S::Y, S::DY) = u.dt();
-        this->F(S::DX, S::DX) = 1. - u.dt() * damping;
-        this->F(S::DY, S::DY) = 1. - u.dt() * damping;
-        this->F(S::THETA, S::DTHETA) = u.dt();
-        this->F(S::DTHETA, S::DTHETA) = 1.;
+        int collisionForm;
+        if(collisionModel->hasCollision(x, collisionForm)){
+            printf("Collision detected boundary: %d", collisionForm);
+            Eigen::Matrix<double,6, 6> A;
+            Eigen::Matrix<double,6, 6> J;
+
+            // with sliding
+            /*J.setIdentity();
+            J(0,2) = u.dt();
+            J(1,3) = u.dt();
+            J(2,3) = rimFric * s + (1 + resTable);
+            J(3,3) = -resTable;
+            J(4,5) = u.dt();
+            J(5,3) = (2 * rimFric * s *(1 + resTable))/pRadius;*/
+
+            //without sliding
+            J.setIdentity();
+            J(0,2) = u.dt();
+            J(1,3) = u.dt();
+            J(2,2) = 2/3;
+            J(2, 5) = -pRadius / 3;
+            J(3,3) = -resTable;
+            J(4,5) = u.dt();
+            J(5,2) = -2/3 * pRadius;
+
+            if(collisionForm==1){
+                //boundary 0
+                A.setIdentity();
+            }else if(collisionForm ==2){
+                //boundary 1
+                A.setIdentity();
+                A(0,0) = 0.;
+                A(1,1) = 0.;
+                A(2,2) = 0.;
+                A(3,3) = 0.;
+                A(0,1) = 1.;
+                A(1, 0) = -1.;
+                A(2,3) = 1.;
+                A(3,2) = -1.;
+            }else if(collisionForm ==3){
+                //boundary 2
+                A.setIdentity();
+                A(0,0) = -1.;
+                A(1,1) = -1.;
+                A(2,2) = -1.;
+                A(3,3) = -1.;
+            }else if(collisionForm == 4){
+                // boundary 3
+                A.setIdentity();
+                A(0,0) = 0.;
+                A(1,1) = 0.;
+                A(2,2) = 0.;
+                A(3,3) = 0.;
+                A(0,1) = -1.;
+                A(1, 0) = 1.;
+                A(2,3) = -1.;
+                A(3,2) = 1.;
+            }
+            this->F = A * J * A.inverse();
+        }else {
+            this->F.setIdentity();
+            this->F(S::X, S::DX) = u.dt();
+            this->F(S::Y, S::DY) = u.dt();
+            this->F(S::DX, S::DX) = 1. - u.dt() * damping;
+            this->F(S::DY, S::DY) = 1. - u.dt() * damping;
+            this->F(S::THETA, S::DTHETA) = u.dt();
+            this->F(S::DTHETA, S::DTHETA) = 1.;
+            //ROS_INFO_STREAM("Update of system Jacobians" << F);
+        }
     }
 
-    void SystemModel::setDamping(double damping) {
-        SystemModel::damping = damping;
+    void SystemModel::updateJacobiansWithCollision(const Eigen::Matrix<double,6, 6>& J, const Eigen::Matrix<double,6, 6> &A) {
+        this->F = A * J * A.transpose();
     }
 
-    void SystemModel::setMu(double mu) {
-        SystemModel::mu = mu;
+    void SystemModel::setDamping(double damping_) {
+        SystemModel::damping = damping_;
+    }
+
+    void SystemModel::setMu(double mu_) {
+        SystemModel::mu = mu_;
+    }
+
+    void SystemModel::setTableRestitution(const double tableRes) {
+        collisionModel->setTableRestitution(tableRes);
+    }
+
+    void SystemModel::setMalletRestitution(const double malletRes) {
+        collisionModel->setMalletRestitution(malletRes);
+    }
+
+    void SystemModel::setRimFriction(const double rimFric) {
+        collisionModel->setRimFriction(rimFric);
+    }
+
+    bool SystemModel::isOutsideBoundary(Measurement &measurement) {
+        return collisionModel->m_table.isOutsideBoundary(measurement);
     }
 
 

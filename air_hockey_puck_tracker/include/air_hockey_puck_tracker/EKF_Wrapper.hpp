@@ -30,6 +30,7 @@
 #include <kalman/LinearizedMeasurementModel.hpp>
 
 #include "air_hockey_puck_tracker/ObservationModel.hpp"
+#include "air_hockey_puck_tracker/SystemModel.hpp"
 
 
 namespace air_hockey_baseline_agent {

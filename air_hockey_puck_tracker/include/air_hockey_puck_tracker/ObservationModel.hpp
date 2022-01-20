@@ -25,8 +25,7 @@
 #define PUCK_TRACKER_OBSERVATIONMODEL_H
 
 #include <kalman/LinearizedMeasurementModel.hpp>
-
-#include "air_hockey_puck_tracker/SystemModel.hpp"
+#include "air_hockey_puck_tracker/PuckState.hpp"
 
 namespace air_hockey_baseline_agent {
     class EKF_Wrapper;

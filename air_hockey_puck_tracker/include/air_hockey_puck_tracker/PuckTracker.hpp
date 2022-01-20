@@ -33,9 +33,8 @@
 #include "air_hockey_puck_tracker/KalmanFilterPrediction.h"
 #include "air_hockey_puck_tracker/SetKalmanFilterJacobians.h"
 
-#include "SystemModel.hpp"
 #include "ObservationModel.hpp"
-#include "CollisionModel.hpp"
+#include "SystemModel.hpp"
 #include "EKF_Wrapper.hpp"
 #include "VisualizationInterface.hpp"
 #include "ParticleFilter.hpp"
@@ -118,8 +117,8 @@ namespace air_hockey_baseline_agent {
         EKF_Wrapper *kalmanFilter_;
         EKF_Wrapper *puckPredictor_;
         SystemModel *systemModel_;
+        SystemModel *predictSystemModel_;
         ObservationModel *observationModel_;
-        CollisionModel *collisionModel_;
         VisualizationInterface *visualizer_;
         ParticleFilter *particleFilter_;
         ParticleVisualizationInterface *particleVisualizationInterface_;

@@ -28,9 +28,11 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
-#include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
+#include "air_hockey_puck_tracker/PuckState.hpp"
+#include "air_hockey_puck_tracker/ObservationModel.hpp"
 
 namespace air_hockey_baseline_agent {
+    typedef Kalman::Vector<double, 2> Vector2;
 
     static double cross2D(Vector2 v1, Vector2 v2);
 
@@ -62,7 +64,7 @@ namespace air_hockey_baseline_agent {
 
         ~AirHockeyTable();
 
-        bool applyCollision(EKF_Wrapper::State &state);
+        bool applyCollision(PuckState &state);
 
         bool isOutsideBoundary(Measurement &measurement);
 
@@ -70,6 +72,7 @@ namespace air_hockey_baseline_agent {
 
         void setMu(double mu);
 
+        bool hasCollision(const PuckState &state, int &collisionForm);
     };
 
     class Mallet {
@@ -114,10 +117,9 @@ namespace air_hockey_baseline_agent {
 
         void setRimFriction(const double rimFric);
 
-        bool applyCollision(PuckState &puckState, const bool& checkMallet);
+        bool applyCollision(PuckState &puckState, const bool &checkMallet);
 
-    private:
-        bool hasCollision;
+        bool hasCollision(const PuckState &puckState, int& collisionForm);
 
     };
 

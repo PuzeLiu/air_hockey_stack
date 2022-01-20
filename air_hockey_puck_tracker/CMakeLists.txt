@@ -59,7 +59,7 @@ add_library(puck_tracker
         src/ParticleFilter.cpp
         src/ParticleVisualizationInterface.cpp
         src/ValidationInterface.cpp
-        )
+        include/air_hockey_puck_tracker/PuckState.hpp)
 
 add_dependencies(puck_tracker
         ${${PROJECT_NAME}_EXPORTED_TARGETS}

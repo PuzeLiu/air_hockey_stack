@@ -25,96 +25,10 @@
 #define PUCK_TRACKER_SYSTEMMODEL_H
 
 #include <kalman/LinearizedSystemModel.hpp>
+#include "CollisionModel.hpp"
+#include "PuckState.hpp"
 
 namespace air_hockey_baseline_agent {
-typedef Kalman::Vector<double, 2> Vector2;
-
-/**
- * @brief System state vector-type for the puck
- *
- * This is a system state for a very simple planar robot that
- * is characterized by its (x,y)-Position and (x,y)-Velocity.
- *
- * @param T Numeric scalar type
- */
-
-class PuckState: public Kalman::Vector<double, 6> {
-public:KALMAN_VECTOR(PuckState, double, 6)
-
-	//! X-position
-	static constexpr size_t X = 0;
-	//! Y-position
-	static constexpr size_t Y = 1;
-	//! X-velocity
-	static constexpr size_t DX = 2;
-	//! Y-velocity
-	static constexpr size_t DY = 3;
-	//! Yaw
-	static constexpr size_t THETA = 4;
-	//! Yaw-angular-velocity
-	static constexpr size_t DTHETA = 5;
-
-	inline double x() const {
-		return (*this)[X];
-	}
-	inline double y() const {
-		return (*this)[Y];
-	}
-	inline double dx() const {
-		return (*this)[DX];
-	}
-	inline double dy() const {
-		return (*this)[DY];
-	}
-	inline double theta() const {
-		return (*this)[THETA];
-	}
-	inline double dtheta() const {
-		return (*this)[DTHETA];
-	}
-
-	inline double& x() {
-		return (*this)[X];
-	}
-	inline double& y() {
-		return (*this)[Y];
-	}
-	inline double& dx() {
-		return (*this)[DX];
-	}
-	inline double& dy() {
-		return (*this)[DY];
-	}
-	inline double& theta() {
-		return (*this)[THETA];
-	}
-	inline double& dtheta() {
-		return (*this)[DTHETA];
-	}
-};
-
-/**
- * @brief System control-input vector-type for the puck
- *
- * This is the system control-input of the puck, here
- * is the time step dt.
- *
- * @param T Numeric scalar type
- */
-class Control: public Kalman::Vector<double, 1> {
-public:KALMAN_VECTOR(Control, double, 1)
-
-	//! Velocity
-	static constexpr size_t DT = 0;
-
-	inline double dt() const {
-		return (*this)[DT];
-	}
-
-	inline double& dt() {
-		return (*this)[DT];
-	}
-};
 
 /**
  * @brief System model for the puck movement
@@ -137,19 +51,38 @@ public:
 
 	//! Friction coefficient for air drag
 	double damping;
-	//! Friction coefficient for sliding movement
+
+    //! Friction coefficient for sliding movement
 	double mu;
 
-	/**
+	double resTable;
+
+	double rimFric;
+
+	double pRadius;
+
+    /**
 	 * Constructor of the dynamic model
 	 * @param c Friction coefficient for air
 	 * @param d Friction coefficient for lateral movement
 	 */
-	SystemModel(double damping, double friction);
+    SystemModel(double damping_, double mu_, double tableLength_, double tableWidth_,
+                double goalWidth_, double puckRadius, double malletRadius, double restitutionTable,
+                double restitutionMallet, double rimFriction, double dt);
+
+	~SystemModel();
 
     void setDamping(double damping);
 
     void setMu(double mu);
+
+    void setTableRestitution(const double tableRes);
+
+    void setMalletRestitution(const double malletRes);
+
+    void setRimFriction(const double rimFric);
+
+    bool isOutsideBoundary(Measurement &measurement);
 
     /**
      * @brief Definition of (non-linear) state transition function
@@ -183,6 +116,11 @@ protected:
 	 * @param u The current system control input
 	 */
 	void updateJacobians(const S &x, const C &u);
+private:
+    //! Model for collision
+    CollisionModel *collisionModel;
+
+    void updateJacobiansWithCollision(const Eigen::Matrix<double, 6, 6> &J, const Eigen::Matrix<double, 6, 6> &A);
 };
 
 }
