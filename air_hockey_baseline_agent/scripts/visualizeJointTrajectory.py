@@ -7,7 +7,7 @@ from trajectory_msgs.msg import JointTrajectory
 from iiwas_kinematics_py import Kinematics
 
 input_dir = os.path.abspath("/home/puze/Desktop/real_trajectory")
-file_name = "2021-03-24-16-29-10.bag"
+file_name = "2021-03-24-16-24-46.bag"
 start_time_offset = 0
 stop_time_offset = 10
 
@@ -63,7 +63,7 @@ actual_cart_pos = np.array(actual_cart_pos)
 time = np.array(time)
 
 for i in range(7):
-    fig, axes = plt.subplots(3)
+    fig, axes = plt.subplots(4)
     fig.suptitle("Joint_" + str(i + 1))
     axes[0].scatter(time, desired_positions[:, i], s=3, label='desired')
     axes[0].scatter(time, actual_positions[:, i], s=3, label='actual')
@@ -76,8 +76,12 @@ for i in range(7):
     axes[2].plot(time, np.abs(desired_positions[:, i] - actual_positions[:, i]), label='position error')
     # axes[2].scatter(time, np.abs(desired_velocities[:, i] - actual_velocities[:, i]), s=3, label='velocity')
     # axes[2].scatter(time, actual_accelerations[:, i], s=3, label='actual')
-    axes[2].set_xlabel('t', fontsize=20)
     axes[2].legend()
+    axes[2].set_xlabel('t', fontsize=20)
+    axes[3].scatter(time, desired_accelerations[:, i], s=3, label='desired')
+    axes[3].set_ylabel('acceleration', fontsize=20)
+    axes[3].legend()
+
 
 fig, axes = plt.subplots(3)
 fig.suptitle("Cartesian Position Error")
