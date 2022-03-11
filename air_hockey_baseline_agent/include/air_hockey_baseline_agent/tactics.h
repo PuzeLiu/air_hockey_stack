@@ -39,6 +39,10 @@ public:
 	virtual void updateTactic();
     void setTactic(Tactics tactic);
     void initTactic();
+    bool canSmash();
+    bool shouldCut();
+    bool shouldRepel();
+    bool puckStuck();
 
 protected:
 	virtual void setNextState() = 0;
@@ -48,11 +52,6 @@ protected:
 	std::string tactic2String(Tactics tactic);
 	void generateStopTrajectory();
 
-protected:
-	bool canSmash();
-	bool shouldCut();
-	bool shouldRepel();
-	bool puckStuck();
 
 protected:
 	SystemState &state;
