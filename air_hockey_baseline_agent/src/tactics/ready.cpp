@@ -89,13 +89,21 @@ Ready::~Ready() {
 
 void Ready::setNextState() {
 	if (ros::Time::now().toSec() > state.tNewTactics) {
-			if (canSmash()) {
-				setTactic(SMASH);
-			} else if (puckStuck()) {
-				setTactic(PREPARE);
-			} else {
-				setTactic(READY);
-			}
+	    if(state.isPuckStatic()){
+            if (canSmash()) {
+                setTactic(SMASH);
+            } else if (puckStuck()) {
+                setTactic(PREPARE);
+            }
+	    } else if(state.isPuckApproaching()){
+	        if(shouldRepel()){
+                setTactic(REPEL);
+	        }else if (shouldCut()){
+                setTactic(CUT);
+	        }
+	    }else {
+            setTactic(READY);
+        }
 	}
 }
 

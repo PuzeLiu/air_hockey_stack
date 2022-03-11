@@ -126,6 +126,8 @@ void Tactic::initTactic() {
         setTactic(INIT);
     } else if (state.observation.gameStatus.status == PAUSE) {
         setTactic(HOME);
+    } else if (state.observation.gameStatus.status == START && state.currentTactic == HOME){
+        setTactic(READY);
     }
 }
 
