@@ -98,6 +98,7 @@ public:
      */
 	S f(const S &x, const C &u) const;
 
+    void updateMalletState(geometry_msgs::TransformStamped stamped);
 
 protected:
 	/**
@@ -119,8 +120,6 @@ protected:
 private:
     //! Model for collision
     CollisionModel *collisionModel;
-
-    void updateJacobiansWithCollision(const Eigen::Matrix<double, 6, 6> &J, const Eigen::Matrix<double, 6, 6> &A);
 };
 
 }

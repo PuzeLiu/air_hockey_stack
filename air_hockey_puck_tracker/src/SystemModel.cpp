@@ -85,20 +85,9 @@ namespace air_hockey_baseline_agent {
     void SystemModel::updateJacobians(const S &x, const C &u) {
         int collisionForm;
         if(collisionModel->hasCollision(x, collisionForm)){
-            printf("Collision detected boundary: %d", collisionForm);
             Eigen::Matrix<double,6, 6> A;
             Eigen::Matrix<double,6, 6> J;
 
-            // with sliding
-            /*J.setIdentity();
-            J(0,2) = u.dt();
-            J(1,3) = u.dt();
-            J(2,3) = rimFric * s + (1 + resTable);
-            J(3,3) = -resTable;
-            J(4,5) = u.dt();
-            J(5,3) = (2 * rimFric * s *(1 + resTable))/pRadius;*/
-
-            //without sliding
             J.setIdentity();
             J(0,2) = u.dt();
             J(1,3) = u.dt();
@@ -150,13 +139,9 @@ namespace air_hockey_baseline_agent {
             this->F(S::DY, S::DY) = 1. - u.dt() * damping;
             this->F(S::THETA, S::DTHETA) = u.dt();
             this->F(S::DTHETA, S::DTHETA) = 1.;
-            //ROS_INFO_STREAM("Update of system Jacobians" << F);
         }
     }
 
-    void SystemModel::updateJacobiansWithCollision(const Eigen::Matrix<double,6, 6>& J, const Eigen::Matrix<double,6, 6> &A) {
-        this->F = A * J * A.transpose();
-    }
 
     void SystemModel::setDamping(double damping_) {
         SystemModel::damping = damping_;
@@ -180,6 +165,10 @@ namespace air_hockey_baseline_agent {
 
     bool SystemModel::isOutsideBoundary(Measurement &measurement) {
         return collisionModel->m_table.isOutsideBoundary(measurement);
+    }
+
+    void SystemModel::updateMalletState(geometry_msgs::TransformStamped stamped) {
+        collisionModel->m_mallet.setState(stamped);
     }
 
 

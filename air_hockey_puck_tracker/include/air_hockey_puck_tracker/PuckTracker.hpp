@@ -37,8 +37,6 @@
 #include "SystemModel.hpp"
 #include "EKF_Wrapper.hpp"
 #include "VisualizationInterface.hpp"
-#include "ParticleFilter.hpp"
-#include "ParticleVisualizationInterface.hpp"
 #include "ValidationInterface.hpp"
 
 namespace air_hockey_baseline_agent {
@@ -120,8 +118,6 @@ namespace air_hockey_baseline_agent {
         SystemModel *predictSystemModel_;
         ObservationModel *observationModel_;
         VisualizationInterface *visualizer_;
-        ParticleFilter *particleFilter_;
-        ParticleVisualizationInterface *particleVisualizationInterface_;
         ValidationInterface *validation_;
 
         Control u_;

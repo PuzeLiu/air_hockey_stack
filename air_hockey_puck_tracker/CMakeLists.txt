@@ -56,8 +56,6 @@ add_library(puck_tracker
         src/CollisionModel.cpp
         src/EKF_Wrapper.cpp
         src/VisualizationInterface.cpp
-        src/ParticleFilter.cpp
-        src/ParticleVisualizationInterface.cpp
         src/ValidationInterface.cpp
         include/air_hockey_puck_tracker/PuckState.hpp)
 
