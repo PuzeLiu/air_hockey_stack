@@ -80,8 +80,8 @@ void GazeboReferee::update() {
             tf2::fromMsg(tfMalletF.transform.rotation, quatTmp);
             rotMatTmp.setRotation(quatTmp);
 
-            if (abs(tfMalletF.transform.translation.x) > (tableLength / 2 - malletRadius - 0.02) ||
-                abs(tfMalletF.transform.translation.y) > (tableWidth / 2 - malletRadius + 0.02)) {
+            if (abs(tfMalletF.transform.translation.x) > (tableLength / 2 - malletRadius) ||
+                abs(tfMalletF.transform.translation.y) > (tableWidth / 2 - malletRadius)) {
                 ROS_WARN_STREAM("[Referee]: Detect exceptional position on F_striker_mallet_tip, Game Stop");
                 gameStatusMsg.status = GameStatus::STOP;
                 gameStatusMsg.score_away = 0;
@@ -93,8 +93,8 @@ void GazeboReferee::update() {
             tf2::fromMsg(tfMalletB.transform.rotation, quatTmp);
             rotMatTmp.setRotation(quatTmp);
 
-            if (abs(tfMalletB.transform.translation.x) > (tableLength / 2 - malletRadius - 0.02) ||
-                abs(tfMalletB.transform.translation.y) > (tableWidth / 2 - malletRadius + 0.02)) {
+            if (abs(tfMalletB.transform.translation.x) > (tableLength / 2 - malletRadius) ||
+                abs(tfMalletB.transform.translation.y) > (tableWidth / 2 - malletRadius)) {
                 ROS_WARN_STREAM("[Referee]: Detect exceptional position on B_striker_mallet_tip, Game Stop");
                 gameStatusMsg.status = GameStatus::STOP;
                 gameStatusMsg.score_away = 0;
