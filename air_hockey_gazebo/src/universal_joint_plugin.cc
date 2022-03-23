@@ -44,12 +44,14 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model,
 
 	std::string description_xml;
 	if(!nh_.getParam(robotNamespace_ + "iiwa_only_description", description_xml)){
-		ROS_ERROR_STREAM_NAMED("Universal Joint Plugin", "Did not find the urdf model");
+		if (!nh_.getParam(robotNamespace_ + "robot_description", description_xml)) {
+			ROS_ERROR_STREAM_NAMED("Universal Joint Plugin", robotNamespace_ << " did not find the urdf model");
+		}
 	}
 
 	pinocchio::urdf::buildModelFromXML(description_xml, pinoModel_);
 	pinoData_ = pinocchio::Data(this->pinoModel_);
-	frame_id = pinoModel_.nframes - 1;
+	frame_id = pinoModel_.getFrameId(prefix + "_striker_base");
 
 	iiwaJointNames_.push_back(prefix + "_joint_1");
 	iiwaJointNames_.push_back(prefix + "_joint_2");
@@ -58,7 +60,8 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model,
 	iiwaJointNames_.push_back(prefix + "_joint_5");
 	iiwaJointNames_.push_back(prefix + "_joint_6");
 	iiwaJointNames_.push_back(prefix + "_joint_7");
-	qCur_.resize(7);
+	qCur_.resize(pinoModel_.nq);
+	qCur_.setZero();
 
 	universalJointState_.position.resize(2);
 	universalJointState_.velocity.push_back(0.);

@@ -6,12 +6,11 @@
     <arg name="paused" default="false"/>
     <arg name="physics" default="ode" />
 
-    <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+    <arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
+    <arg name="dynamics_parameter" default="epfl"/>
 
-    <arg name="front_controllers" default="joint_position_trajectory_controller"/>
-    <arg name="back_controllers" default="joint_position_trajectory_controller"/>
-
-    <arg name="simulation" default="true"/>
+    <arg name="front_controllers" default="joint_torque_trajectory_controller"/>
+    <arg name="back_controllers" default="joint_torque_trajectory_controller"/>
 
     <arg name="use_front_iiwa" default="true"/>
     <arg name="use_back_iiwa" default="true"/>
@@ -25,6 +24,7 @@
     <!-- Description -->
     <include file="$(find air_hockey_description)/launch/air_hockey_description.launch">
         <arg name="hardware_interface" value="$(arg hardware_interface)"/>
+        <arg name="dynamics_parameter" value="$(arg dynamics_parameter)"/>
     </include>
 
     <node name="rviz" pkg="rviz" type="rviz"
@@ -45,7 +45,6 @@
         <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />
         <arg name="front_controllers" value="$(arg front_controllers)" />
         <arg name="back_controllers" value="$(arg back_controllers)" />
-        <arg name="simulation" value="$(arg simulation)" />
     </include>
 
     <!-- Spawn Gazebo Model -->

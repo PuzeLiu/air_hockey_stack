@@ -4,7 +4,6 @@
     <arg name="use_back_iiwa" default="true"/>
     <arg name="front_controllers" default="joint_feedforward_trajectory_controller"/>
     <arg name="back_controllers" default="joint_feedforward_trajectory_controller"/>
-    <arg name="simulation" default="true"/>
 
     <!-- Load joint controller configurations from YAML file to parameter server -->
     <include file="$(find iiwas_control)/launch/iiwas_control.launch">
@@ -12,7 +11,7 @@
         <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />
         <arg name="front_controllers" value="$(arg front_controllers)"/>
         <arg name="back_controllers" value="$(arg back_controllers)"/>
-        <arg name="simulation" value="$(arg simulation)"/>
+        <arg name="control_config" value="$(find iiwas_gazebo)/config/epfl_dynamics_control.yaml"/>
     </include>
 
     <rosparam file="$(find air_hockey_gazebo)/config/gazebo_control.yaml" command="load"/>

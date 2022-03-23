@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <launch>
-    <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
     <arg name="iiwas_frame_urdf" default="$(find iiwas_description)/urdf/iiwas_frame.urdf.xacro"/>
     <arg name="iiwa_urdf" default="$(find air_hockey_description)/urdf/iiwa_striker.urdf.xacro"/>
     <arg name="table_urdf" default="$(find air_hockey_description)/urdf/air_hockey_table/model.urdf.xacro"/>
@@ -13,6 +12,9 @@
     <arg name="front_rpy" default="0 0 0"/>
     <arg name="back_xyz" default="3.198 0.813 0.03"/>
     <arg name="back_rpy" default="0 0 3.14159265359"/>
+
+    <arg name="hardware_interface" default="hardware_interface/PositionJointInterface"/>
+    <arg name="dynamics_parameter" default="identified"/>
 
     <rosparam file="$(find air_hockey_description)/config/config.yaml" command="load" subst_value="true"/>
 
@@ -32,17 +34,19 @@
 
     <group ns="iiwa_front">
         <param name="robot_description" command="$(find xacro)/xacro '$(arg iiwa_urdf)' robot_name:='F'
-        hardware_interface:='$(arg hardware_interface)' base_xyz:='$(arg front_xyz)' base_rpy:='$(arg front_rpy)'"/>
-        <param name="iiwa_only_description" command="$(find xacro)/xacro
-        '$(find iiwas_description)/robots/iiwa.urdf.xacro' robot_name:='F'
-         hardware_interface:='$(arg hardware_interface)' base_xyz:='$(arg front_xyz)' base_rpy:='$(arg front_rpy)'"/>
+        hardware_interface:='$(arg hardware_interface)' base_xyz:='$(arg front_xyz)' base_rpy:='$(arg front_rpy)'
+        dynamics_parameter:='$(arg dynamics_parameter)'"/>
+<!--        <param name="iiwa_only_description" command="$(find xacro)/xacro-->
+<!--        '$(find iiwas_description)/robots/iiwa.urdf.xacro' robot_name:='F'-->
+<!--         hardware_interface:='$(arg hardware_interface)' base_xyz:='$(arg front_xyz)' base_rpy:='$(arg front_rpy)'"/>-->
     </group>
 
     <group ns="iiwa_back">
         <param name="robot_description" command="$(find xacro)/xacro '$(arg iiwa_urdf)' robot_name:='B'
-        hardware_interface:='$(arg hardware_interface)' base_xyz:='$(arg back_xyz)' base_rpy:='$(arg back_rpy)'"/>
-        <param name="iiwa_only_description" command="$(find xacro)/xacro
-        '$(find iiwas_description)/robots/iiwa.urdf.xacro' robot_name:='B'
-        hardware_interface:='$(arg hardware_interface)' base_xyz:='$(arg back_xyz)' base_rpy:='$(arg back_rpy)'"/>
+        hardware_interface:='$(arg hardware_interface)' base_xyz:='$(arg back_xyz)' base_rpy:='$(arg back_rpy)'
+        dynamics_parameter:='$(arg dynamics_parameter)'"/>
+<!--        <param name="iiwa_only_description" command="$(find xacro)/xacro-->
+<!--        '$(find iiwas_description)/robots/iiwa.urdf.xacro' robot_name:='B'-->
+<!--        hardware_interface:='$(arg hardware_interface)' base_xyz:='$(arg back_xyz)' base_rpy:='$(arg back_rpy)'"/>-->
     </group>
 </launch>
