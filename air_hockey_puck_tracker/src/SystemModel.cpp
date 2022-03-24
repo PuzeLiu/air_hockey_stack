@@ -76,4 +76,12 @@ namespace air_hockey_baseline_agent {
         this->F(S::DTHETA, S::DTHETA) = 1.;
     }
 
+    void SystemModel::setDamping(double damping) {
+        SystemModel::damping = damping;
+    }
+
+    void SystemModel::setMu(double mu) {
+        SystemModel::mu = mu;
+    }
+
 }

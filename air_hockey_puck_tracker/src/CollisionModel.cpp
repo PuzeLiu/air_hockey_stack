@@ -137,6 +137,10 @@ namespace air_hockey_baseline_agent {
         return false;
     }
 
+    void AirHockeyTable::setME(double mE) {
+        m_e = mE;
+    }
+
     Mallet::Mallet(double puckRadius, double malletRadius, double restitution, double dt) {
         m_dt = dt;
         t_prev = 0.;
@@ -210,6 +214,10 @@ namespace air_hockey_baseline_agent {
         return false;
     }
 
+    void Mallet::setME(double mE) {
+        m_e = mE;
+    }
+
     CollisionModel::CollisionModel(double tableLength, double tableWidth, double goalWidth, double puckRadius, double malletRadius,
                                    double &restitutionTable, double &restitutionMallet, double dt) :
             m_table(tableLength, tableWidth, goalWidth, puckRadius, restitutionTable, dt), m_mallet(puckRadius, malletRadius, restitutionMallet, dt) {
@@ -222,6 +230,14 @@ namespace air_hockey_baseline_agent {
         }
         hasCollision = m_table.applyCollision(puckState) || hasCollision;
         return hasCollision;
+    }
+
+    void CollisionModel::setTableRestitution(const double tableRes) {
+        m_table.setME(tableRes);
+    }
+
+    void CollisionModel::setMalletRestitution(const double malletRes) {
+        m_mallet.setME(malletRes);
     }
 
 }

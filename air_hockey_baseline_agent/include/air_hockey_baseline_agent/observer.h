@@ -62,7 +62,7 @@ namespace air_hockey_baseline_agent {
         ros::Subscriber jointSub;
         ros::Subscriber refereeSub;
 
-        air_hockey_baseline_agent::PuckTracker  puckTracker;
+        PuckTracker puckTracker;
         double maxPredictionTime;
 
         ObservationState observation;

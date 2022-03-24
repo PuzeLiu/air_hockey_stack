@@ -28,12 +28,18 @@
 #include <tf2_ros/transform_listener.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/LinearMath/Matrix3x3.h>
+#include "air_hockey_puck_tracker/SetDynamicsParameter.h"
+#include "air_hockey_puck_tracker/PuckTrackerResetService.h"
+#include "air_hockey_puck_tracker/KalmanFilterPrediction.h"
 
 #include "SystemModel.hpp"
 #include "ObservationModel.hpp"
 #include "CollisionModel.hpp"
 #include "EKF_Wrapper.hpp"
 #include "VisualizationInterface.hpp"
+#include "ParticleFilter.hpp"
+#include "ParticleVisualizationInterface.hpp"
+#include "ValidationInterface.hpp"
 
 namespace air_hockey_baseline_agent {
     struct PuckPredictedState{
@@ -61,6 +67,19 @@ namespace air_hockey_baseline_agent {
         inline double getMaxPredictionTime() {
         	return maxPredictionSteps_ * rate_->expectedCycleTime().toSec();
         }
+
+        void publishData(const PuckState &prediction, const PuckState &measurement);
+
+        bool updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPrediction::Request &req,
+                                  air_hockey_puck_tracker::KalmanFilterPrediction::Response &res);
+
+        bool setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParameter::Request &req,
+                                  air_hockey_puck_tracker::SetDynamicsParameter::Response &res);
+
+        bool resetService(air_hockey_puck_tracker::PuckTrackerResetService::Request &req,
+                                  air_hockey_puck_tracker::PuckTrackerResetService::Response &res);
+
+        void provideServices();
 
     private:
         void loadParams();
@@ -93,6 +112,9 @@ namespace air_hockey_baseline_agent {
         ObservationModel *observationModel_;
         CollisionModel *collisionModel_;
         VisualizationInterface *visualizer_;
+        ParticleFilter *particleFilter_;
+        ParticleVisualizationInterface *particleVisualizationInterface_;
+        ValidationInterface *validation_;
 
         Control u_;
         int maxPredictionSteps_;
@@ -103,10 +125,12 @@ namespace air_hockey_baseline_agent {
         double defendingLine_;
 
         bool doPrediction_;
+        bool useParticleFilter_;
 
-        boost::thread thread_;
+        boost::thread thread_, thread1_;
 
         std::vector<PuckState> stateBuffer_;
+        bool turn_on_pf;
     };
 }
 

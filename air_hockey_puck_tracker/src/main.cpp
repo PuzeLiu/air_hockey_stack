@@ -22,13 +22,14 @@
  */
 
 #include <ros/ros.h>
+#include <thread>
 
 #include "air_hockey_puck_tracker/PuckTracker.hpp"
-#include "air_hockey_puck_tracker/Validation.hpp"
 
 
 using namespace air_hockey_baseline_agent;
 using namespace std;
+
 
 
 int main(int argc, char **argv) {
@@ -38,15 +39,14 @@ int main(int argc, char **argv) {
 
     PuckTracker puckTracker(nh, 0.0);
     PuckPredictedState state_predict;
-    air_hockey_baseline_agent::PuckState error, state;
+    PuckState state_estimate;
 
     puckTracker.start();
     while (ros::ok()){
-        state_predict = puckTracker.getPredictedState(true, false);
-//		puckTracker.getEstimatedState(true);
+        puckTracker.getPredictedState(true, true);
+		state_estimate = puckTracker.getEstimatedState(false);
         rate.sleep();
     }
-
     nh.shutdown();
     return 0;
 }
