@@ -19,7 +19,7 @@
     <arg name="table_surface_y" default="0.813"/>
     <arg name="table_surface_z" default="0.1"/>
 
-    <arg name="puck_sdf" default="$(find air_hockey_description)/urdf/puck/model.sdf"/>
+<!--    <arg name="puck_sdf" default="$(find air_hockey_description)/urdf/puck/model.sdf"/>-->
 
     <!-- Description -->
     <include file="$(find air_hockey_description)/launch/air_hockey_description.launch">
@@ -72,8 +72,10 @@
             <param name="publish_frequency" type="double" value="50.0"/>
         </node>
         <node name="puck_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
-              args="-sdf -model puck -file $(arg puck_sdf) -wait air_hockey_table
-              -x 1.08075 -y 1.013 -z $(arg table_surface_z)"/>
+              args="-urdf -model puck -param robot_description -wait air_hockey_table
+              -x 0 -y 0 -z 0 -reference_frame air_hockey_table::Table"/>
+<!--              args="-sdf -model puck -file $(arg puck_sdf) -wait air_hockey_table-->
+<!--              -x 1.08075 -y 1.013 -z $(arg table_surface_z)"/>-->
     </group>
 
     <group ns="iiwa_front" if="$(arg use_front_iiwa)">
@@ -92,7 +94,7 @@
     </node>
 
     <!-- Start Air Hockey rqt -->
-    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
+<!--    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>-->
 
 <!--    &lt;!&ndash; Load Parameters of kalman filter &ndash;&gt;-->
 <!--    <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>-->

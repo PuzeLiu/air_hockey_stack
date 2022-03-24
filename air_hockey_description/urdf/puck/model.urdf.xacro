@@ -28,6 +28,58 @@
                                      lateral_friction spinning_friction linear_vel_decay angular_vel_decay">
         <link name="${puck_name}"/>
 
+        <joint name="{puck_name}_joint_weight_1" type="fixed">
+            <origin xyz="${puck_radius} 0 ${puck_height/2}" rpy="0 0 0"/>
+            <parent link="${puck_name}"/>
+            <child link="${puck_name}_link_weight_1"/>
+        </joint>
+        <link name="${puck_name}_link_weight_1">
+            <inertial>
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <mass value="0.002"/>
+                <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="5e-6"/>
+            </inertial>
+        </link>
+
+        <joint name="{puck_name}_joint_weight_2" type="fixed">
+            <origin xyz="-${puck_radius} 0 ${puck_height/2}" rpy="0 0 0"/>
+            <parent link="${puck_name}"/>
+            <child link="${puck_name}_link_weight_2"/>
+        </joint>
+        <link name="${puck_name}_link_weight_2">
+            <inertial>
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <mass value="0.002"/>
+                <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="5e-6"/>
+            </inertial>
+        </link>
+
+        <joint name="{puck_name}_joint_weight_3" type="fixed">
+            <origin xyz="0 ${puck_radius} ${puck_height/2}" rpy="0 0 0"/>
+            <parent link="${puck_name}"/>
+            <child link="${puck_name}_link_weight_3"/>
+        </joint>
+        <link name="${puck_name}_link_weight_3">
+            <inertial>
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <mass value="0.002"/>
+                <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="5e-6"/>
+            </inertial>
+        </link>
+
+        <joint name="{puck_name}_joint_weight_4" type="fixed">
+            <origin xyz="0 -${puck_radius} ${puck_height/2}" rpy="0 0 0"/>
+            <parent link="${puck_name}"/>
+            <child link="${puck_name}_link_weight_4"/>
+        </joint>
+        <link name="${puck_name}_link_weight_4">
+            <inertial>
+                <origin xyz="0 0 0.0" rpy="0 0 0"/>
+                <mass value="0.002"/>
+                <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="5e-6"/>
+            </inertial>
+        </link>
+
         <joint name="{puck_name}_joint" type="fixed">
             <origin xyz="0 0 ${puck_height/2}" rpy="0 0 0"/>
             <parent link="${puck_name}"/>
@@ -37,7 +89,7 @@
         <link name="${puck_name}_link">
             <inertial>
                 <origin xyz="0 0 0.0" rpy="0 0 0"/>
-                <mass value="0.01"/>
+                <mass value="0.002"/>
                 <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="5e-6"/>
             </inertial>
             <visual>

@@ -115,6 +115,14 @@ Visualization Manager:
           Value: false
         Puck_link:
           Value: true
+        Puck_link_weight_1:
+          Value: false
+        Puck_link_weight_2:
+          Value: false
+        Puck_link_weight_3:
+          Value: false
+        Puck_link_weight_4:
+          Value: false
         Table:
           Value: false
         TableAway:
@@ -167,8 +175,44 @@ Visualization Manager:
       Show Names: true
       Tree:
         world:
+          B_link_0:
+            B_link_1:
+              B_link_2:
+                B_link_3:
+                  B_link_4:
+                    B_link_5:
+                      B_link_6:
+                        B_link_7:
+                          B_link_ee:
+                            B_striker_base:
+                              B_striker_joint_link:
+                                B_striker_mallet:
+                                  B_striker_mallet_tip:
+                                    {}
+          F_link_0:
+            F_link_1:
+              F_link_2:
+                F_link_3:
+                  F_link_4:
+                    F_link_5:
+                      F_link_6:
+                        F_link_7:
+                          F_link_ee:
+                            F_striker_base:
+                              F_striker_joint_link:
+                                F_striker_mallet:
+                                  F_striker_mallet_tip:
+                                    {}
           Puck:
             Puck_link:
+              {}
+            Puck_link_weight_1:
+              {}
+            Puck_link_weight_2:
+              {}
+            Puck_link_weight_3:
+              {}
+            Puck_link_weight_4:
               {}
           Table:
             TableAway:
@@ -194,35 +238,9 @@ Visualization Manager:
                 {}
           iiwa_frame_origin:
             back_base:
-              B_link_0:
-                B_link_1:
-                  B_link_2:
-                    B_link_3:
-                      B_link_4:
-                        B_link_5:
-                          B_link_6:
-                            B_link_7:
-                              B_link_ee:
-                                B_striker_base:
-                                  B_striker_joint_link:
-                                    B_striker_mallet:
-                                      B_striker_mallet_tip:
-                                        {}
+              {}
             front_base:
-              F_link_0:
-                F_link_1:
-                  F_link_2:
-                    F_link_3:
-                      F_link_4:
-                        F_link_5:
-                          F_link_6:
-                            F_link_7:
-                              F_link_ee:
-                                F_striker_base:
-                                  F_striker_joint_link:
-                                    F_striker_mallet:
-                                      F_striker_mallet_tip:
-                                        {}
+              {}
             h_bar_back_in:
               {}
             h_bar_front_in:
@@ -242,6 +260,7 @@ Visualization Manager:
       Name: Axes
       Radius: 0.029999999329447746
       Reference Frame: <Fixed Frame>
+      Show Trail: false
       Value: true
     - Alpha: 1
       Class: rviz/RobotModel
@@ -379,7 +398,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
         Link Tree Style: Links in Alphabetic Order
-        front_base:
+        world:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -461,7 +480,7 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        back_base:
+        world:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -563,6 +582,22 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        Puck_link_weight_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Puck_link_weight_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Puck_link_weight_3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Puck_link_weight_4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
       Name: Puck
       Robot Description: /puck/robot_description
       TF Prefix: ""
@@ -605,7 +640,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.789364337921143
+      Distance: 1.7941582202911377
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -613,17 +648,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.698933482170105
-        Y: 0.6018975377082825
-        Z: 0.9377196431159973
+        X: -0.2408864051103592
+        Y: -0.1146635040640831
+        Z: -0.3233868181705475
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5097956657409668
+      Pitch: 0.9097954034805298
       Target Frame: <Fixed Frame>
-      Yaw: 4.7183051109313965
+      Yaw: 4.728305339813232
     Saved: ~
 Window Geometry:
   Displays:
