@@ -92,8 +92,7 @@ void Agent::loadEnvironmentParams() {
 	nh.getParam("/air_hockey/mallet_radius", envParams.malletRadius);
 	nh.getParam("/air_hockey/puck_radius", envParams.puckRadius);
 	nh.getParam("/air_hockey/puck_height", envParams.puckHeight);
-	nh.getParam("/air_hockey/agent/universal_joint_height",
-	            envParams.universalJointHeight);
+	nh.getParam("/air_hockey/agent/universal_joint_height", envParams.universalJointHeight);
 	nh.getParam("/air_hockey/agent/prepare_height", envParams.prepareHeight);
 }
 

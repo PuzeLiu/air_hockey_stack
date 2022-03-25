@@ -22,16 +22,16 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model,
 
 	std::string prefix;
 	if (this->robotNamespace_ == "/iiwa_front/") {
-		jointStatePub_ = nh_.advertise<sensor_msgs::JointState>(
-				this->robotNamespace_ + "joint_states", 1);
+//		jointStatePub_ = nh_.advertise<sensor_msgs::JointState>(
+//				this->robotNamespace_ + "joint_states", 1);
 		prefix = "F";
 		jointName1_ = "iiwa_front::F_striker_joint_1";
 		jointName2_ = "iiwa_front::F_striker_joint_2";
 		universalJointState_.name.push_back("F_striker_joint_1");
 		universalJointState_.name.push_back("F_striker_joint_2");
 	} else if (this->robotNamespace_ == "/iiwa_back/") {
-		jointStatePub_ = nh_.advertise<sensor_msgs::JointState>(
-				this->robotNamespace_ + "joint_states", 1);
+//		jointStatePub_ = nh_.advertise<sensor_msgs::JointState>(
+//				this->robotNamespace_ + "joint_states", 1);
 		prefix = "B";
 		jointName1_ = "iiwa_back::B_striker_joint_1";
 		jointName2_ = "iiwa_back::B_striker_joint_2";
@@ -113,7 +113,7 @@ void UniversalJointPlugin::OnUpdate() {
 					jointName1_)->Position();
 			universalJointState_.position[1] = this->model_->GetJoint(
 					jointName2_)->Position();
-			jointStatePub_.publish(universalJointState_);
+//			jointStatePub_.publish(universalJointState_);
 
 		}
 	}

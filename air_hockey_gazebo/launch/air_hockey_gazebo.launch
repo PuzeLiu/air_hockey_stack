@@ -9,8 +9,8 @@
     <arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
     <arg name="dynamics_parameter" default="epfl"/>
 
-    <arg name="front_controllers" default="joint_torque_trajectory_controller"/>
-    <arg name="back_controllers" default="joint_torque_trajectory_controller"/>
+    <arg name="front_controllers" default="joint_feedforward_trajectory_controller"/>
+    <arg name="back_controllers" default="joint_feedforward_trajectory_controller"/>
 
     <arg name="use_front_iiwa" default="true"/>
     <arg name="use_back_iiwa" default="true"/>

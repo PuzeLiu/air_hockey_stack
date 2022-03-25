@@ -170,29 +170,29 @@
             <preserveFixedJoint>1</preserveFixedJoint>
         </gazebo>
 
-<!--        <transmission name="${robot_name}_striker_tran_1">-->
-<!--            <robotNamespace>/${robot_name}</robotNamespace>-->
-<!--            <type>transmission_interface/SimpleTransmission</type>-->
-<!--            <joint name="${robot_name}_striker_joint_1">-->
-<!--                <hardwareInterface>${hardware_interface}</hardwareInterface>-->
-<!--            </joint>-->
-<!--            <actuator name="${robot_name}_striker_motor_1">-->
-<!--                <hardwareInterface>${hardware_interface}</hardwareInterface>-->
-<!--                <mechanicalReduction>1</mechanicalReduction>-->
-<!--            </actuator>-->
-<!--        </transmission>-->
+        <transmission name="${robot_name}_striker_tran_1">
+            <robotNamespace>/${robot_name}</robotNamespace>
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${robot_name}_striker_joint_1">
+                <hardwareInterface>${hardware_interface}</hardwareInterface>
+            </joint>
+            <actuator name="${robot_name}_striker_motor_1">
+                <hardwareInterface>${hardware_interface}</hardwareInterface>
+                <mechanicalReduction>1</mechanicalReduction>
+            </actuator>
+        </transmission>
 
-<!--        <transmission name="${robot_name}_striker_tran_2">-->
-<!--            <robotNamespace>/${robot_name}</robotNamespace>-->
-<!--            <type>transmission_interface/SimpleTransmission</type>-->
-<!--            <joint name="${robot_name}_striker_joint_2">-->
-<!--                <hardwareInterface>${hardware_interface}</hardwareInterface>-->
-<!--            </joint>-->
-<!--            <actuator name="${robot_name}_striker_motor_2">-->
-<!--                <hardwareInterface>${hardware_interface}</hardwareInterface>-->
-<!--                <mechanicalReduction>1</mechanicalReduction>-->
-<!--            </actuator>-->
-<!--        </transmission>-->
+        <transmission name="${robot_name}_striker_tran_2">
+            <robotNamespace>/${robot_name}</robotNamespace>
+            <type>transmission_interface/SimpleTransmission</type>
+            <joint name="${robot_name}_striker_joint_2">
+                <hardwareInterface>${hardware_interface}</hardwareInterface>
+            </joint>
+            <actuator name="${robot_name}_striker_motor_2">
+                <hardwareInterface>${hardware_interface}</hardwareInterface>
+                <mechanicalReduction>1</mechanicalReduction>
+            </actuator>
+        </transmission>
 
         <gazebo>
             <plugin name="univsersal_joint_plugin" filename="libuniversal_joint_plugin.so">
