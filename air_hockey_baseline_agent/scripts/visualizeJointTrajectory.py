@@ -7,7 +7,7 @@ from trajectory_msgs.msg import JointTrajectory
 from iiwas_kinematics_py import Kinematics
 
 input_dir = os.path.abspath("/home/puze/Desktop/real_trajectory")
-file_name = "2021-03-24-16-24-46.bag"
+file_name = "2021-12-16-15-19-41.bag"
 start_time_offset = 0
 stop_time_offset = 10
 

@@ -28,9 +28,11 @@
 #include <geometry_msgs/TransformStamped.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 
-#include "air_hockey_puck_tracker/EKF_Wrapper.hpp"
+#include "air_hockey_puck_tracker/PuckState.hpp"
+#include "air_hockey_puck_tracker/ObservationModel.hpp"
 
 namespace air_hockey_baseline_agent {
+    typedef Kalman::Vector<double, 2> Vector2;
 
     static double cross2D(Vector2 v1, Vector2 v2);
 
@@ -38,6 +40,9 @@ namespace air_hockey_baseline_agent {
     public:
         //! BoundaryType of 4 lines, each row is line between <x1, y1, x2, y2>
         typedef Kalman::Matrix<double, 4, 4> BoundaryType;
+
+		int collisionRim;
+
     protected:
         //! Table length: X-direction, width: Y-direction
         double m_length;
@@ -59,12 +64,13 @@ namespace air_hockey_baseline_agent {
 
         ~AirHockeyTable();
 
-        bool applyCollision(EKF_Wrapper::State &state);
+		void applyCollision(PuckState &state);
 
         bool isOutsideBoundary(Measurement &measurement);
 
-        void setME(double mE);
+		void setDynamicsParameter(double restitution);
 
+        bool hasCollision(const PuckState &state);
     };
 
     class Mallet {
@@ -86,11 +92,11 @@ namespace air_hockey_baseline_agent {
 
         Mallet(double puckRadius, double malletRadius, double restitution, double dt);
 
-        void setME(double mE);
+        void setDynamicsParameter(double malletRes);
 
         void setState(const geometry_msgs::TransformStamped &tfMallet);
 
-        bool applyCollision(PuckState &puckState);
+		void applyCollision(PuckState &puckState);
     };
 
     class CollisionModel {
@@ -103,14 +109,13 @@ namespace air_hockey_baseline_agent {
         CollisionModel(double tableLength, double tableWidth, double goalWidth, double puckRadius, double malletRadius,
                        double &restitutionTable, double &restitutionMallet, double dt);
 
-        void setTableRestitution(const double tableRes);
+        void setTableDynamicsParam(const double tableRes);
 
-        void setMalletRestitution(const double malletRes);
+        void setMalletDynamicsParam(const double malletRes);
 
-        bool applyCollision(PuckState &puckState, const bool& checkMallet);
+        void applyCollision(PuckState &puckState, const bool &checkMallet);
 
-    private:
-        bool hasCollision;
+        bool hasCollision(const PuckState &puckState);
 
     };
 

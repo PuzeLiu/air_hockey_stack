@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="gui" default="false"/>
+    <arg name="use_front_iiwa" default="true"/>
+    <arg name="use_back_iiwa" default="false"/>
+
+    <include file="$(find air_hockey_gazebo)/launch/air_hockey_gazebo.launch">
+        <arg name="gui" default="$(arg gui)"/>
+        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />
+        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />
+    </include>
+
+    <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
+<!--    <node name="puck_tracker" pkg="air_hockey_puck_tracker" type="tracker_node" output="screen" ns="iiwa_front" if="$(arg use_front_iiwa)"/>-->
+<!--    <node name="puck_tracker" pkg="air_hockey_puck_tracker" type="tracker_node" output="screen" ns="iiwa_back" if="$(arg use_back_iiwa)"/>-->
+</launch>

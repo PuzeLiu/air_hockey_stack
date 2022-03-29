@@ -10,7 +10,7 @@ const PuckState& EKF_Wrapper::update(ObservationModel& m, const Measurement& z) 
     S = (m.H * P * m.H.transpose()) + (m.V * m.getCovariance() * m.V.transpose());
 
     // compute kalman gain
-    KalmanGain <Measurement> K = P * m.H.transpose() * S.inverse();
+    K = P * m.H.transpose() * S.inverse();
 
     // UPDATE STATE ESTIMATE AND COVARIANCE
     // Update state using computed kalman gain and innovation
@@ -36,5 +36,6 @@ void EKF_Wrapper::calculateInnovation(ObservationModel &m, const Measurement &z)
 }
 
 void EKF_Wrapper::moveOneStep(SystemModel &s, const Control &u) {
+	s.updateJacobians(x, u);
 	x = s.f(x, u);
 }

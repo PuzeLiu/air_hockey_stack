@@ -10,6 +10,9 @@ find_package(Kalman REQUIRED)
 add_message_files(
         FILES
         InnovationMsg.msg
+        EstimationMsg.msg
+        MeasurementMsg.msg
+        PredictionMsg.msg
 )
 
 add_service_files(
@@ -17,6 +20,7 @@ add_service_files(
         SetDynamicsParameter.srv
         PuckTrackerResetService.srv
         KalmanFilterPrediction.srv
+        SetKalmanFilterJacobians.srv
 )
 
 generate_messages(
@@ -52,10 +56,8 @@ add_library(puck_tracker
         src/CollisionModel.cpp
         src/EKF_Wrapper.cpp
         src/VisualizationInterface.cpp
-        src/ParticleFilter.cpp
-        src/ParticleVisualizationInterface.cpp
         src/ValidationInterface.cpp
-        )
+        include/air_hockey_puck_tracker/PuckState.hpp)
 
 add_dependencies(puck_tracker
         ${${PROJECT_NAME}_EXPORTED_TARGETS}
@@ -83,21 +85,6 @@ target_link_libraries(tracker_node
         puck_tracker
         )
 
-add_executable(puck_tracker_wrapper_node
-        src/PuckTrackerWrapper.cpp)
-
-add_dependencies(puck_tracker_wrapper_node
-        ${${PROJECT_NAME}_EXPORTED_TARGETS}
-        ${catkin_EXPORTED_TARGETS}
-        ${PROJECT_NAME}_generate_messages_cpp)
-
-target_link_libraries(puck_tracker_wrapper_node
-        ${catkin_LIBRARIES}
-        ${Eigen3_LIBRARIES}
-        ${Kalman_LIBRARIES}
-        puck_tracker
-        )
-
 #############
 ## Install ##
 #############
@@ -106,9 +93,7 @@ install(TARGETS tracker_node
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
         )
 
-install(TARGETS puck_tracker_wrapper_node
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-        )
+
 
 install(DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}

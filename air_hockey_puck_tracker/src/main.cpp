@@ -43,8 +43,9 @@ int main(int argc, char **argv) {
 
     puckTracker.start();
     while (ros::ok()){
-        puckTracker.getPredictedState(true, true);
+		state_predict = puckTracker.getPredictedState(true, false);
 		state_estimate = puckTracker.getEstimatedState(false);
+		ros::spinOnce();
         rate.sleep();
     }
     nh.shutdown();

@@ -21,13 +21,75 @@
  * SOFTWARE.
  */
 
+#include <rosconsole/macros_generated.h>
 #include "air_hockey_puck_tracker/SystemModel.hpp"
 
 namespace air_hockey_baseline_agent {
 
-    SystemModel::SystemModel(double damping_, double mu_) {
-	    damping = damping_;
-	    mu = mu_;
+    SystemModel::SystemModel(double tableDamping_, double tableFriction_, double tableLength, double tableWidth,
+		double goalWidth, double puckRadius, double malletRadius,
+		double restitutionTable, double restitutionMallet, double dt) {
+
+        collisionModel = new CollisionModel(tableLength, tableWidth, goalWidth, puckRadius, malletRadius,
+                                             restitutionTable, restitutionMallet, dt);
+		tableDamping = tableDamping_;
+	    tableFriction = tableFriction_;
+		tableRes = restitutionTable;
+	    pRadius = puckRadius;
+
+		J_collision.setIdentity();
+		J_collision(S::X,S::DX) = dt;
+		J_collision(S::Y,S::DY) = dt;
+		J_collision(S::DX,S::DX) = 2. / 3.;
+		J_collision(S::DX, S::DTHETA) = -pRadius / 3;
+		J_collision(S::DY,S::DY) = -tableRes;
+		J_collision(S::THETA,S::DTHETA) = dt;
+		J_collision(S::DTHETA,S::DX) = -2. / (3. * pRadius);
+		J_collision(S::DTHETA, S::DTHETA) = 1. / 3.;
+
+		J_linear.setIdentity();
+		J_linear(S::X, S::DX) = dt;
+		J_linear(S::Y, S::DY) = dt;
+		J_linear(S::DX, S::DX) = 1. - dt * tableDamping;
+		J_linear(S::DY, S::DY) = 1. - dt * tableDamping;
+		J_linear(S::THETA, S::DTHETA) = dt;
+		J_linear(S::DTHETA, S::DTHETA) = 1.;
+
+		Eigen::Matrix<double,6, 6> T_tmp;
+		// First Rim
+		T_tmp.setIdentity();
+		J_collision_vec.push_back(T_tmp.inverse() * J_collision * T_tmp);
+		// Second Rim
+		T_tmp.setZero();
+		T_tmp(0,1) = -1.;
+		T_tmp(1, 0) = 1.;
+		T_tmp(2,3) = -1.;
+		T_tmp(3,2) = 1.;
+		T_tmp(4,4) = 1.;
+		T_tmp(5,5) = 1.;
+		J_collision_vec.push_back(T_tmp.inverse() * J_collision * T_tmp);
+		// Third Rim
+		T_tmp.setZero();
+		T_tmp(0,0) = -1.;
+		T_tmp(1,1) = -1.;
+		T_tmp(2,2) = -1.;
+		T_tmp(3,3) = -1.;
+		T_tmp(4,4) = 1.;
+		T_tmp(5,5) = 1.;
+		J_collision_vec.push_back(T_tmp.inverse() * J_collision * T_tmp);
+		// Fourth Rim
+		T_tmp.setZero();
+		T_tmp(0,1) = 1.;
+		T_tmp(1, 0) = -1.;
+		T_tmp(2,3) = 1.;
+		T_tmp(3,2) = -1.;
+		T_tmp(4,4) = 1.;
+		T_tmp(5,5) = 1.;
+		J_collision_vec.push_back(T_tmp.inverse() * J_collision * T_tmp);
+    }
+
+    SystemModel::~SystemModel(){
+        delete collisionModel;
     }
 
 /**
@@ -44,44 +106,68 @@ namespace air_hockey_baseline_agent {
  */
     SystemModel::S SystemModel::f(const S &x, const C &u) const {
         //! Predicted state vector after transition
-        S x_;
+        S x_ = x;
+		if (hasCollision){
+			//apply collision if there is one
+			collisionModel->applyCollision(x_, false);
+		}
+		else {
+			x_.block<2, 1>(0, 0) = x.block<2, 1>(0, 0)
+				+ u.dt() * x.block<2, 1>(2, 0);
 
-        x_.block<2, 1>(0, 0) = x.block<2, 1>(0, 0)
-                               + u.dt() * x.block<2, 1>(2, 0);
+			if (x.block<2, 1>(2, 0).norm() > 1e-6) {
+				x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0)
+					- u.dt() * (tableDamping * x.block<2, 1>(2, 0) +
+						tableFriction * x.block<2, 1>(2, 0).cwiseSign());
+			} else {
+				x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0) - u.dt() * tableDamping * x.block<2, 1>(2, 0);
+			}
+			double angle = fmod(x.theta() + u.dt() * x.dtheta(), M_PI * 2);
+			if (angle > M_PI) angle -= M_PI * 2;
+			else if (angle < -M_PI) angle += M_PI * 2;
 
-        if (x.block<2, 1>(2, 0).norm() > 1e-6) {
-            x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0)
-                                   - u.dt() * (damping * x.block<2, 1>(2, 0) +
-                                               mu * x.block<2, 1>(2, 0).cwiseSign());
-        } else {
-            x_.block<2, 1>(2, 0) = x.block<2, 1>(2, 0) - u.dt() * damping * x.block<2, 1>(2, 0);
-        }
-        double angle = fmod(x.theta() + u.dt() * x.dtheta(), M_PI * 2);
-        if (angle > M_PI) angle -= M_PI * 2;
-        else if (angle < -M_PI) angle += M_PI * 2;
-
-        x_.theta() = angle;
-        x_.dtheta() = x.dtheta();
+			x_.theta() = angle;
+			x_.dtheta() = x.dtheta();
+		}
         // Return transitioned state vector
         return x_;
     }
 
     void SystemModel::updateJacobians(const S &x, const C &u) {
-        this->F.setIdentity();
-        this->F(S::X, S::DX) = u.dt();
-        this->F(S::Y, S::DY) = u.dt();
-        this->F(S::DX, S::DX) = 1. - u.dt() * damping;
-        this->F(S::DY, S::DY) = 1. - u.dt() * damping;
-        this->F(S::THETA, S::DTHETA) = u.dt();
-        this->F(S::DTHETA, S::DTHETA) = 1.;
+		hasCollision = collisionModel->hasCollision(x);
+        if (hasCollision){
+            this->F = J_collision_vec[collisionModel->m_table.collisionRim];
+        }
+		else {
+            this->F = J_linear;
+        }
     }
 
-    void SystemModel::setDamping(double damping) {
-        SystemModel::damping = damping;
+    void SystemModel::setDamping(double damping_) {
+        tableDamping = damping_;
     }
 
-    void SystemModel::setMu(double mu) {
-        SystemModel::mu = mu;
+    void SystemModel::setTableFriction(double mu_) {
+        tableFriction = mu_;
     }
+
+    void SystemModel::setTableDynamicsParam(const double tableRestitution) {
+		tableRes = tableRestitution;
+        collisionModel->setTableDynamicsParam(tableRes);
+    }
+
+    void SystemModel::setMalletDynamicsParam(const double malletRestitution) {
+		malletRes = malletRestitution;
+        collisionModel->setMalletDynamicsParam(malletRes);
+    }
+
+    bool SystemModel::isOutsideBoundary(Measurement &measurement) {
+        return collisionModel->m_table.isOutsideBoundary(measurement);
+    }
+
+    void SystemModel::updateMalletState(geometry_msgs::TransformStamped stamped) {
+        collisionModel->m_mallet.setState(stamped);
+    }
+
 
 }

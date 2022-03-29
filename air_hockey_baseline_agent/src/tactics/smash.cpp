@@ -53,34 +53,42 @@ bool Smash::apply() {
 	}
 }
 
+Vector3d Smash::computeTarget(Vector3d puckPosition, int strategy) {
+    Vector3d xTarget;
+    if (puckPosition.y() > 0.1) {
+        xTarget.y() = -0.05;
+    } else if (puckPosition.y() < -0.1) {
+        xTarget.y() = 0.05;
+    } else {
+        xTarget.y() = 0.0;
+    }
+
+    xTarget.x() = envParams.tableLength;
+    xTarget.z() = 0.0;
+
+    if (strategy == 1) {
+        ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Strategy: Right");
+        xTarget.y() = -2 * (envParams.tableWidth / 2 - envParams.puckRadius)
+                      - agentParams.xGoal.y();
+    } else if (strategy == 2) {
+        ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Strategy: Left");
+        xTarget.y() = 2 * (envParams.tableWidth / 2 - envParams.puckRadius)
+                      - agentParams.xGoal.y();
+    } else {
+        ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Strategy: Middle");
+    }
+
+    return xTarget;
+}
+
 Vector3d Smash::computeTarget(Vector3d puckPosition) {
-	Vector3d xTarget;
-	auto random_integer = dist(gen);
-
-	if (puckPosition.y() > 0.1) {
-		xTarget.y() = -0.05;
-	} else if (puckPosition.y() < -0.1) {
-		xTarget.y() = 0.05;
-	} else {
-		xTarget.y() = 0.0;
+	if (isnan(agentParams.smashStrategy)){
+        //use random strategy
+        return computeTarget(puckPosition, dist(gen));
+	} else{
+        ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Setting Strategy works");
+        return computeTarget(puckPosition, agentParams.smashStrategy);
 	}
-
-	xTarget.x() = envParams.tableLength;
-	xTarget.z() = 0.0;
-
-	if (random_integer == 1) {
-		ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Strategy: Right");
-		xTarget.y() = -2 * (envParams.tableWidth / 2 - envParams.puckRadius)
-		              - agentParams.xGoal.y();
-	} else if (random_integer == 2) {
-		ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Strategy: Left");
-		xTarget.y() = 2 * (envParams.tableWidth / 2 - envParams.puckRadius)
-		              - agentParams.xGoal.y();
-	} else {
-		ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Strategy: Middle");
-	}
-
-	return xTarget;
 }
 
 void Smash::getHitPointVelocity(Vector2d &xHit2d, Vector2d &vHit2d,

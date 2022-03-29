@@ -1,0 +1,4 @@
+string tactic
+int32 smashStrategy
+---
+bool success

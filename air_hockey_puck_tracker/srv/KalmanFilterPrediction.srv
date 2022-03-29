@@ -1,3 +1,5 @@
-InnovationMsg state
+MeasurementMsg state
+bool doPrediction
 ---
-InnovationMsg prediction
+EstimationMsg estimation
+PredictionMsg prediction

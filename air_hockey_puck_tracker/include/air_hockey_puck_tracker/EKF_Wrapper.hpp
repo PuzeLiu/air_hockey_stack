@@ -30,6 +30,7 @@
 #include <kalman/LinearizedMeasurementModel.hpp>
 
 #include "air_hockey_puck_tracker/ObservationModel.hpp"
+#include "air_hockey_puck_tracker/SystemModel.hpp"
 
 
 namespace air_hockey_baseline_agent {
@@ -61,6 +62,8 @@ namespace air_hockey_baseline_agent {
     protected:
         using ExtendedKalmanFilter::P;
         using ExtendedKalmanFilter::x;
+
+		KalmanGain <Measurement> K;
 
         //! Innovation
         InnovationType mu;

@@ -37,21 +37,21 @@ public:
 	virtual bool ready() = 0;
 	virtual bool apply() = 0;
 	virtual void updateTactic();
+    void setTactic(Tactics tactic);
+    void initTactic();
+    bool canSmash();
+    bool shouldCut();
+    bool shouldRepel();
+    bool puckStuck();
 
 protected:
 	virtual void setNextState() = 0;
 	bool planReturnTraj(const double &vMax,
 			trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
 			trajectory_msgs::JointTrajectory &jointTrajReturn);
-	void setTactic(Tactics tactic);
 	std::string tactic2String(Tactics tactic);
 	void generateStopTrajectory();
 
-protected:
-	bool canSmash();
-	bool shouldCut();
-	bool shouldRepel();
-	bool puckStuck();
 
 protected:
 	SystemState &state;
@@ -179,6 +179,8 @@ protected:
 	std::mt19937 gen;
 	std::uniform_int_distribution<int> dist;
 	Eigen::Vector2d xCur2d, xHit2d, vHit2d;
+
+    Eigen::Vector3d computeTarget(Eigen::Vector3d puckPosition, int strategy);
 };
 
 }

@@ -31,18 +31,16 @@
 #include "air_hockey_puck_tracker/SetDynamicsParameter.h"
 #include "air_hockey_puck_tracker/PuckTrackerResetService.h"
 #include "air_hockey_puck_tracker/KalmanFilterPrediction.h"
+#include "air_hockey_puck_tracker/SetKalmanFilterJacobians.h"
 
-#include "SystemModel.hpp"
 #include "ObservationModel.hpp"
-#include "CollisionModel.hpp"
+#include "SystemModel.hpp"
 #include "EKF_Wrapper.hpp"
 #include "VisualizationInterface.hpp"
-#include "ParticleFilter.hpp"
-#include "ParticleVisualizationInterface.hpp"
 #include "ValidationInterface.hpp"
 
 namespace air_hockey_baseline_agent {
-    struct PuckPredictedState{
+    struct PuckPredictedState {
         ros::Time stamp;
         PuckState state;
         int numOfCollisions;
@@ -50,34 +48,37 @@ namespace air_hockey_baseline_agent {
     };
 
     class PuckTracker {
-    private: friend class VisualizationInterface;
+    private:
+        friend class VisualizationInterface;
+
     public:
-        PuckTracker(ros::NodeHandle nh, double defendLine=0.0);
+        PuckTracker(ros::NodeHandle nh, double defendLine = 0.0);
 
         ~PuckTracker();
 
         void start();
 
-        const PuckPredictedState& getPredictedState(bool visualize = true, bool delayed=false);
+        const PuckPredictedState &getPredictedState(bool visualize = true, bool delayed = false);
 
-        const PuckState& getEstimatedState(bool visualize = false);
+        const PuckState &getEstimatedState(bool visualize = false);
 
         void reset();
 
         inline double getMaxPredictionTime() {
-        	return maxPredictionSteps_ * rate_->expectedCycleTime().toSec();
+            return maxPredictionSteps_ * rate_->expectedCycleTime().toSec();
         }
 
-        void publishData(const PuckState &prediction, const PuckState &measurement);
-
         bool updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPrediction::Request &req,
-                                  air_hockey_puck_tracker::KalmanFilterPrediction::Response &res);
+                                air_hockey_puck_tracker::KalmanFilterPrediction::Response &res);
 
         bool setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParameter::Request &req,
                                   air_hockey_puck_tracker::SetDynamicsParameter::Response &res);
 
         bool resetService(air_hockey_puck_tracker::PuckTrackerResetService::Request &req,
-                                  air_hockey_puck_tracker::PuckTrackerResetService::Response &res);
+                          air_hockey_puck_tracker::PuckTrackerResetService::Response &res);
+
+        bool updateNoiseCovarianceService(air_hockey_puck_tracker::SetKalmanFilterJacobians::Request &req,
+                                          air_hockey_puck_tracker::SetKalmanFilterJacobians::Response &res);
 
         void provideServices();
 
@@ -90,15 +91,18 @@ namespace air_hockey_baseline_agent {
 
         void getPrediction(double &predictedTime, int &nCollision);
 
-	    bool getMeasurement();
+        bool getMeasurement();
 
-	    bool updateOpponentMallet();
+        bool updateOpponentMallet();
 
-	    bool checkGating();
+        bool checkGating();
+
+        void updateNoiseCovariance(Kalman::Jacobian<Measurement, Measurement> &measurementNoise,
+                                   Kalman::Jacobian<PuckState, PuckState> &systemNoise);
 
     private:
         ros::NodeHandle nh_;
-        ros::Rate* rate_;
+        ros::Rate *rate_;
         ros::Time stamp_;
 
         tf2_ros::TransformListener tfListener_;
@@ -110,10 +114,7 @@ namespace air_hockey_baseline_agent {
         EKF_Wrapper *puckPredictor_;
         SystemModel *systemModel_;
         ObservationModel *observationModel_;
-        CollisionModel *collisionModel_;
         VisualizationInterface *visualizer_;
-        ParticleFilter *particleFilter_;
-        ParticleVisualizationInterface *particleVisualizationInterface_;
         ValidationInterface *validation_;
 
         Control u_;
@@ -125,12 +126,10 @@ namespace air_hockey_baseline_agent {
         double defendingLine_;
 
         bool doPrediction_;
-        bool useParticleFilter_;
 
-        boost::thread thread_, thread1_;
+        boost::thread thread_;
 
         std::vector<PuckState> stateBuffer_;
-        bool turn_on_pf;
     };
 }
 

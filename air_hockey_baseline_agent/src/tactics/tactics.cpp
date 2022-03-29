@@ -121,6 +121,16 @@ void Tactic::updateTactic() {
 	}
 }
 
+void Tactic::initTactic() {
+    if (state.observation.gameStatus.status == STOP) {
+        setTactic(INIT);
+    } else if (state.observation.gameStatus.status == PAUSE) {
+        setTactic(HOME);
+    } else if (state.observation.gameStatus.status == START && state.currentTactic == HOME){
+        setTactic(READY);
+    }
+}
+
 void Tactic::setTactic(Tactics tactic) {
 	if (tactic != state.currentTactic) {
 		state.isNewTactics = true;

@@ -25,8 +25,7 @@
 #define PUCK_TRACKER_OBSERVATIONMODEL_H
 
 #include <kalman/LinearizedMeasurementModel.hpp>
-
-#include "air_hockey_puck_tracker/SystemModel.hpp"
+#include "air_hockey_puck_tracker/PuckState.hpp"
 
 namespace air_hockey_baseline_agent {
     class EKF_Wrapper;
@@ -63,9 +62,11 @@ namespace air_hockey_baseline_agent {
 
         Measurement h(const PuckState &x) const;
         Kalman::Jacobian<Measurement, PuckState>& getH();
+
     protected:
 
         void updateJacobians(const PuckState &x);
+
     };
 }
 #endif //PUCK_TRACKER_OBSERVATIONMODEL_H
