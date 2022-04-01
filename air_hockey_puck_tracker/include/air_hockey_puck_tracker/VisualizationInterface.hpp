@@ -34,12 +34,12 @@ class VisualizationInterface{
 public:
     VisualizationInterface(const ros::NodeHandle& nh, const std::string& tableRefName);
 
-    void update(const PuckState& predictor, const EKF_Wrapper::InnovationCovariance& innovationCov, bool usePuckSize=false);
+    void update(const PuckState& predictor, const EKF_Wrapper::InnovationCovarianceType& innovationCov, bool usePuckSize=false);
 
 private:
     void visualize();
     void setPredictionMarker(const PuckState& state,
-                             const EKF_Wrapper::InnovationCovariance& cov, bool usePuckSize);
+                             const EKF_Wrapper::InnovationCovarianceType& cov, bool usePuckSize);
 
 private:
     ros::NodeHandle m_nh;

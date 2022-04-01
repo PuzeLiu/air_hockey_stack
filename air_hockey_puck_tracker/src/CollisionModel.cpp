@@ -31,14 +31,15 @@ namespace air_hockey_baseline_agent {
         return v1.x() * v2.y() - v1.y() * v2.x();
     }
 
-    AirHockeyTable::AirHockeyTable(double length, double width, double goalWidth, double puckRadius, double e,
-		double dt) {
+    AirHockeyTable::AirHockeyTable(double length, double width, double goalWidth, double puckRadius,
+		double restitution, double rimFriction, double dt) {
         m_length = length;
         m_width = width;
         m_puckRadius = puckRadius;
         m_goalWidth = goalWidth;
 
-        m_e = e;
+        m_e = restitution;
+		m_rimFriction = rimFriction;
         m_dt = dt;
 
         Vector2 ref, offsetP1, offsetP2, offsetP3, offsetP4;
@@ -58,26 +59,65 @@ namespace air_hockey_baseline_agent {
         m_boundary.row(3) << offsetP2.x(), offsetP2.y(), offsetP1.x(), offsetP1.y();
 
 		collisionRim = -1;
+
+		m_jacCollision.setIdentity();
+
+		Eigen::Matrix<double,6, 6> T_tmp;
+		// First Rim
+		T_tmp.setIdentity();
+		m_rimGlobalTransforms.push_back(T_tmp);
+		m_rimGlobalTransformsInv.push_back(T_tmp.inverse());
+		// Second Rim
+		T_tmp.setZero();
+		T_tmp(0,1) = -1.;
+		T_tmp(1, 0) = 1.;
+		T_tmp(2,3) = -1.;
+		T_tmp(3,2) = 1.;
+		T_tmp(4,4) = 1.;
+		T_tmp(5,5) = 1.;
+		m_rimGlobalTransforms.push_back(T_tmp);
+		m_rimGlobalTransformsInv.push_back(T_tmp.inverse());
+		// Third Rim
+		T_tmp.setZero();
+		T_tmp(0,0) = -1.;
+		T_tmp(1,1) = -1.;
+		T_tmp(2,2) = -1.;
+		T_tmp(3,3) = -1.;
+		T_tmp(4,4) = 1.;
+		T_tmp(5,5) = 1.;
+		m_rimGlobalTransforms.push_back(T_tmp);
+		m_rimGlobalTransformsInv.push_back(T_tmp.inverse());
+		// Fourth Rim
+		T_tmp.setZero();
+		T_tmp(0,1) = 1.;
+		T_tmp(1, 0) = -1.;
+		T_tmp(2,3) = 1.;
+		T_tmp(3,2) = -1.;
+		T_tmp(4,4) = 1.;
+		T_tmp(5,5) = 1.;
+		m_rimGlobalTransforms.push_back(T_tmp);
+		m_rimGlobalTransformsInv.push_back(T_tmp.inverse());
     }
 
     AirHockeyTable::~AirHockeyTable() {
 
     }
 
-	void AirHockeyTable::setDynamicsParameter(double restitution)
+	void AirHockeyTable::setDynamicsParameter(double restitution, double rimFriction)
 	{
 		m_e = restitution;
+		m_rimFriction = rimFriction;
 	}
 
-    bool AirHockeyTable::hasCollision(const PuckState &state) {
+    bool AirHockeyTable::applyCollision(PuckState &state, jacobianType &jacobian) {
 		collisionRim = -1;
         Vector2 p, vel;
         p = state.block<2, 1>(0, 0);
         vel = state.block<2, 1>(2, 0);
 
-        if (abs(p.y()) < m_goalWidth / 2 - m_puckRadius && p.x() < m_boundary(0, 0)) {
+        if (abs(p.y()) < m_goalWidth / 2  && p.x() < m_boundary(0, 0) + m_puckRadius) {
             return false;
-        } else if (abs(p.y()) < m_goalWidth / 2 - m_puckRadius && p.x() > m_boundary(0, 2)) {
+        } else if (abs(p.y()) < m_goalWidth / 2 && p.x() > m_boundary(0, 2) - m_puckRadius) {
             return false;
         }
 
@@ -99,62 +139,53 @@ namespace air_hockey_baseline_agent {
             if (cross2D(w, v) < 0
                 || (s >= 0 + 1e-4 && s <= 1 - 1e-4 && r >= 0 + 1e-4
                     && r <= 1 - 1e-4)) {
+
+				double theta = state.theta();
+				double dtheta = state.dtheta();
 				collisionRim = i;
+
+				Eigen::Rotation2D<double> rot(M_PI_2);
+				Vector2 vecT = v / v.norm();
+				Vector2 vecN = rot * vecT;
+
+				double vtScalar = vel.dot(vecT);
+				double vnScalar = vel.dot(vecN);
+				double vtNextScalar;
+				double vnNextScalar;
+
+//				// Velocity on next time step without sliding
+//				vtNextScalar = (2. / 3.) * vtScalar - (m_puckRadius / 3) * dtheta;
+//				vnNextScalar = -m_e * vnScalar;
+//				// Angular Velocity next point
+//				state.dtheta() = 1. / 3. * dtheta - 2. / (3. * m_puckRadius) * vtScalar;
+
+				slideDir = copysign(1, vtScalar + dtheta * m_puckRadius);
+				vtNextScalar = vtScalar + m_rimFriction * slideDir * (1 + m_e) * vnScalar;
+				vnNextScalar = -m_e * vnScalar;
+				state.dtheta() = dtheta + 2. * m_rimFriction * slideDir * (1 + m_e) / (m_puckRadius) * vtScalar;
+
+				// Linear Velocity next point
+				state.block<2, 1>(2, 0) = vnNextScalar * vecN + vtNextScalar * vecT;
+
+				// Position of next point
+				state.block<2, 1>(0, 0) = p + s * u + (1 - s) * state.block<2, 1>(2, 0) * m_dt;
+				// Angular Position of next point
+				state.theta() = theta + s * dtheta * m_dt + (1 - s) * state.dtheta() * m_dt;
+
+				// Update jacobian
+				m_jacCollision.setIdentity();
+				m_jacCollision(0, 2) = m_dt;
+				m_jacCollision(1, 3) = m_dt;
+				m_jacCollision(2, 3) = m_rimFriction * slideDir * (1 + m_e);
+				m_jacCollision(3, 3) = -m_e;
+				m_jacCollision(4, 5) = m_dt;
+				m_jacCollision(5, 3) = m_jacCollision(2, 3) * 2 / m_puckRadius;
+				jacobian = m_rimGlobalTransformsInv[i] * m_jacCollision * m_rimGlobalTransforms[i];
                 return true;
             }
         }
         return false;
     }
-
-	void AirHockeyTable::applyCollision(PuckState &state) {
-		Vector2 p, vel;
-		p = state.block<2, 1>(0, 0);
-		vel = state.block<2, 1>(2, 0);
-		double theta = state.theta();
-		double dtheta = state.dtheta();
-
-		Vector2 p1 = m_boundary.block<1, 2>(collisionRim, 0);
-		Vector2 p2 = m_boundary.block<1, 2>(collisionRim, 2);
-
-		Vector2 u = vel * m_dt;
-		Vector2 v = p2 - p1;
-		Vector2 w = p1 - p;
-
-		Eigen::Rotation2D<double> rot(M_PI_2);
-		Vector2 vecT = v / v.norm();
-		Vector2 vecN = rot * vecT;
-
-		double denominator = cross2D(v, u);
-
-		double s = cross2D(v, w) / denominator;
-
-		double vtScalar = vel.dot(vecT);
-		double vnScalar = vel.dot(vecN);
-		double vtNextScalar;
-		double vnNextScalar;
-
-		// Velocity on next time step without sliding
-		vtNextScalar = (2. / 3.) * vtScalar - (m_puckRadius / 3) * dtheta;
-		vnNextScalar = -m_e * vnScalar;
-		// Angular Velocity next point
-		state.dtheta() = 1. / 3. * dtheta - 2. / (3. * m_puckRadius) * vtScalar;
-		// Linear Velocity next point
-		state.block<2, 1>(2, 0) = vnNextScalar * vecN + vtNextScalar * vecT;
-
-		// Position of next point
-		state.block<2, 1>(0, 0) = p + s * u + (1 - s) * state.block<2, 1>(2, 0) * m_dt;
-		// Angular Position of next point
-		state.theta() = theta + s * dtheta * m_dt + (1 - s) * state.dtheta() * m_dt;
-	}
-
-	bool AirHockeyTable::isOutsideBoundary(Measurement &measurement) {
-		if (abs(measurement.y()) > m_width / 2 - m_puckRadius + 0.01 ||
-			measurement.x() < -0.01 ||
-			measurement.x() > m_length - m_puckRadius + 0.01) {
-			return true;
-		}
-		return false;
-	}
 
 	Mallet::Mallet(double puckRadius, double malletRadius, double restitution, double dt) {
 		m_dt = dt;
@@ -191,7 +222,7 @@ namespace air_hockey_baseline_agent {
 		}
 	}
 
-	void Mallet::applyCollision(PuckState &puckState) {
+	bool Mallet::applyCollision(PuckState &puckState, jacobianType &jacobian) {
 		Vector2 pPuck = puckState.block<2, 1>(0, 0);
 		Vector2 vPuck = puckState.block<2, 1>(2, 0);
 
@@ -224,7 +255,9 @@ namespace air_hockey_baseline_agent {
 			//! Update the state
 			puckState.block<2, 1>(0, 0) = pPuckCollide + (1 - t) * vPuckNext * m_dt;
 			puckState.block<2, 1>(2, 0) = vPuckNext;
+			return true;
 		}
+		return false;
 	}
 
 	void Mallet::setDynamicsParameter(double malletRes) {
@@ -232,27 +265,23 @@ namespace air_hockey_baseline_agent {
 	}
 
 	CollisionModel::CollisionModel(double tableLength, double tableWidth, double goalWidth,	double puckRadius,
-		double malletRadius, double & restitutionTable, double & restitutionMallet, double dt)
+		double malletRadius, double &restitutionTable, double &restitutionMallet, double &rimFriction, double dt)
 		: m_table(tableLength, tableWidth, goalWidth,
-			puckRadius, restitutionTable, dt),
-			m_mallet(puckRadius, malletRadius,restitutionMallet, dt)
-	{
+			puckRadius, restitutionTable, rimFriction, dt),
+			m_mallet(puckRadius, malletRadius,restitutionMallet, dt) {
+
 	}
 
-	void CollisionModel::applyCollision(PuckState &puckState, const bool &checkMallet) {
+	bool CollisionModel::applyCollision(PuckState &puckState, const bool &checkMallet, jacobianType &jacobian) {
 		if (checkMallet) {
-			m_mallet.applyCollision(puckState);
+			return m_mallet.applyCollision(puckState, jacobian);
 		}
-		m_table.applyCollision(puckState);
+		return m_table.applyCollision(puckState, jacobian);
 	}
 
-	bool CollisionModel::hasCollision(const PuckState &puckState) {
-		return m_table.hasCollision(puckState);
-	}
-
-	void CollisionModel::setTableDynamicsParam(const double tableRes)
+	void CollisionModel::setTableDynamicsParam(const double tableRes, const double rimFriction)
 	{
-		m_table.setDynamicsParameter(tableRes);
+		m_table.setDynamicsParameter(tableRes, rimFriction);
 	}
 
 	void CollisionModel::setMalletDynamicsParam(const double malletRes)

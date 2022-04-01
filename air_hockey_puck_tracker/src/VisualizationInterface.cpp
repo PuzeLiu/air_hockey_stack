@@ -67,7 +67,7 @@ void VisualizationInterface::visualize() {
 }
 
 void VisualizationInterface::setPredictionMarker(const PuckState &state,
-		const EKF_Wrapper::InnovationCovariance &cov, bool usePuckSize) {
+		const EKF_Wrapper::InnovationCovarianceType &cov, bool usePuckSize) {
 	m_predictionMarker.pose.position.x = state.x();
 	m_predictionMarker.pose.position.y = state.y();
 	m_predictionMarker.pose.position.z = 0.0;
@@ -88,7 +88,7 @@ void VisualizationInterface::setPredictionMarker(const PuckState &state,
 }
 
 void VisualizationInterface::update(const PuckState& puckState,
-									const EKF_Wrapper::InnovationCovariance& innovationCov,
+									const EKF_Wrapper::InnovationCovarianceType& innovationCov,
 									bool usePuckSize) {
 	setPredictionMarker(puckState, innovationCov, usePuckSize);
     visualize();

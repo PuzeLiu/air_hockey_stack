@@ -37,27 +37,31 @@ namespace air_hockey_baseline_agent {
     class EKF_Wrapper : public Kalman::ExtendedKalmanFilter<PuckState> {
     public:
         typedef Measurement InnovationType;
-        typedef Kalman::Covariance<Measurement> InnovationCovariance;
+        typedef Kalman::Covariance<Measurement> InnovationCovarianceType;
 
-        const PuckState &update(ObservationModel &m, const Measurement &z);
+		EKF_Wrapper();
 
-        inline PuckState &getState() {
-            return x;
-        }
+		const State& predict( SystemModel& s, const Control& u );
 
-        inline const InnovationCovariance &getInnovationCovariance() {
-            return S;
-        }
+        const PuckState &update( ObservationModel &m, const Measurement &z);
 
-        const InnovationCovariance &updateInnovationCovariance(ObservationModel &m);
+        inline PuckState &getState() { return x; }
+
+        inline const InnovationCovarianceType &getInnovationCovariance() { return innovationCovariance; }
+
+        const InnovationCovarianceType &updateInnovationCovariance(ObservationModel &m);
 
         inline const InnovationType &getInnovation() {
-            return mu;
+            return innovation;
         }
 
 	    void calculateInnovation(ObservationModel &m, const Measurement &z);
 
         void moveOneStep(SystemModel &s, const Control &u);
+
+		void isPuckOutsideBoundary(const SystemModel& s, const Measurement& m);
+
+		bool isStateInsideTable, isMeasurementInsideTable, hasCollision, checkMallet;
 
     protected:
         using ExtendedKalmanFilter::P;
@@ -66,9 +70,9 @@ namespace air_hockey_baseline_agent {
 		KalmanGain <Measurement> K;
 
         //! Innovation
-        InnovationType mu;
+        InnovationType innovation;
         //! Innovation Covariance
-        InnovationCovariance S;
+		InnovationCovarianceType innovationCovariance;
 
     };
 }

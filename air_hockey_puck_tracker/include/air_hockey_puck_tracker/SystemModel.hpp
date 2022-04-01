@@ -43,27 +43,22 @@ namespace air_hockey_baseline_agent {
  */
 class SystemModel: public Kalman::LinearizedSystemModel<PuckState, Control> {
 public:
+	friend class air_hockey_baseline_agent::EKF_Wrapper;
 	//! State type shortcut definition
 	typedef air_hockey_baseline_agent::PuckState S;
 
 	//! Control type shortcut definition
 	typedef air_hockey_baseline_agent::Control C;
 
-	//! Friction coefficient for air drag
-	double tableDamping;
+	//! Dimensions of the table and puck
+	double tableLength, tableWidth, puckRadius, malletRadius, goalWidth, dt;
 
-    //! Friction coefficient for sliding movement
-	double tableFriction;
+    //! Friction coefficient of the table surface
+	double tableDamping, tableFriction;
 
-	double tableRes, malletRes;
+	double tableRes, malletRes, rimFriction;
 
-	double pRadius;
-
-	bool hasCollision;
-	int collisionForm;
-
-	std::vector<Eigen::Matrix<double,6, 6>> J_collision_vec;
-	Eigen::Matrix<double,6, 6> J_collision, J_linear;
+	Eigen::Matrix<double,6, 6> J_linear;
 
     /**
 	 * Constructor of the dynamic model
@@ -71,8 +66,8 @@ public:
 	 * @param d Friction coefficient for lateral movement
 	 */
     SystemModel(double tableDamping, double tableFriction, double tableLength, double tableWidth,
-                double goalWidth, double puckRadius, double malletRadius, double restitutionTable,
-                double restitutionMallet, double dt);
+                double goalWidth, double puckRadius, double malletRadius, double tableRestitution,
+                double malletRestitution, double rimFriction, double dt);
 
 	~SystemModel();
 
@@ -80,11 +75,13 @@ public:
 
     void setTableFriction(double mu);
 
-    void setTableDynamicsParam(const double tableRes);
+    void setTableDynamicsParam(const double tableRes, const double rimFriction);
 
     void setMalletDynamicsParam(const double malletRes);
 
-    bool isOutsideBoundary(Measurement &measurement);
+    bool isOutsideBoundary(const Measurement &measurement) const;
+
+	bool isOutsideBoundary(const PuckState &puck_state) const;
 
     /**
      * @brief Definition of (non-linear) state transition function
@@ -117,7 +114,7 @@ public:
 	 * @param x The current system state around which to linearize
 	 * @param u The current system control input
 	 */
-	void updateJacobians(const S &x, const C &u);
+	void updateJacobians(S &x, const C &u);
 
 private:
     //! Model for collision

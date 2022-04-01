@@ -33,6 +33,7 @@
 
 namespace air_hockey_baseline_agent {
     typedef Kalman::Vector<double, 2> Vector2;
+	typedef Kalman::Jacobian<PuckState, PuckState> jacobianType;
 
     static double cross2D(Vector2 v1, Vector2 v2);
 
@@ -56,21 +57,25 @@ namespace air_hockey_baseline_agent {
         double m_puckRadius;
         //! restitution coefficient
         double m_e;
+		//! rim friction
+		double m_rimFriction;
+		//! sliding direction
+		double slideDir;
 
         BoundaryType m_boundary;
 
+		std::vector<jacobianType> m_rimGlobalTransforms, m_rimGlobalTransformsInv;
+		jacobianType m_jacCollision;
+
     public:
-        AirHockeyTable(double length, double width, double goalWidth, double puckRadius, double restitution, double dt = 1 / 120.);
+        AirHockeyTable(double length, double width, double goalWidth, double puckRadius, double restitution,
+			double rimFriction, double dt = 1 / 120.);
 
         ~AirHockeyTable();
 
-		void applyCollision(PuckState &state);
+		bool applyCollision(PuckState &state, jacobianType &jacobian);
 
-        bool isOutsideBoundary(Measurement &measurement);
-
-		void setDynamicsParameter(double restitution);
-
-        bool hasCollision(const PuckState &state);
+		void setDynamicsParameter(double restitution, double rimFriction);
     };
 
     class Mallet {
@@ -96,7 +101,7 @@ namespace air_hockey_baseline_agent {
 
         void setState(const geometry_msgs::TransformStamped &tfMallet);
 
-		void applyCollision(PuckState &puckState);
+		bool applyCollision(PuckState &puckState, jacobianType &jacobian);
     };
 
     class CollisionModel {
@@ -107,15 +112,13 @@ namespace air_hockey_baseline_agent {
         Mallet m_mallet;
 
         CollisionModel(double tableLength, double tableWidth, double goalWidth, double puckRadius, double malletRadius,
-                       double &restitutionTable, double &restitutionMallet, double dt);
+                       double &restitutionTable, double &restitutionMallet, double &rimFriction, double dt);
 
-        void setTableDynamicsParam(const double tableRes);
+        void setTableDynamicsParam(const double tableRes, const double rimFriction);
 
         void setMalletDynamicsParam(const double malletRes);
 
-        void applyCollision(PuckState &puckState, const bool &checkMallet);
-
-        bool hasCollision(const PuckState &puckState);
+        bool applyCollision(PuckState &puckState, const bool &checkMallet, jacobianType &jacobian);
 
     };
 

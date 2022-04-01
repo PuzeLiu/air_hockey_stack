@@ -125,8 +125,6 @@ namespace air_hockey_baseline_agent {
         double resetThreshold;
         double defendingLine_;
 
-        bool doPrediction_;
-
         boost::thread thread_;
 
         std::vector<PuckState> stateBuffer_;
