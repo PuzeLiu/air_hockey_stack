@@ -1,4 +1,5 @@
 MeasurementMsg state
+bool skipUpdate
 bool doPrediction
 ---
 EstimationMsg estimation

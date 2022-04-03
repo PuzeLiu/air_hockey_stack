@@ -25,15 +25,18 @@
 
 using namespace air_hockey_baseline_agent;
 
-PuckTracker::PuckTracker(ros::NodeHandle nh, double defendLine) : nh_(nh), tfBuffer_(), tfListener_(tfBuffer_) {
+PuckTracker::PuckTracker(ros::NodeHandle nh, double defendLine) : nh_(nh), tfBuffer_(), tfListener_(tfBuffer_)
+{
 	tfBuffer_.setUsingDedicatedThread(true);
 	defendingLine_ = defendLine;
 	loadParams();
 	provideServices();
 }
 
-PuckTracker::~PuckTracker() {
-	if (thread_.joinable()) {
+PuckTracker::~PuckTracker()
+{
+	if (thread_.joinable())
+	{
 		thread_.join();
 	}
 	delete rate_;
@@ -44,7 +47,8 @@ PuckTracker::~PuckTracker() {
 	delete visualizer_;
 }
 
-void PuckTracker::loadParams() {
+void PuckTracker::loadParams()
+{
 	ROS_INFO_STREAM("Read Air Hockey Parameters");
 	double malletRadius, puckRadius;
 	double tableLength_, tableWidth_, goalWidth_;
@@ -64,31 +68,39 @@ void PuckTracker::loadParams() {
 	nh_.param<int>("/air_hockey/puck_tracker/max_prediction_steps", maxPredictionSteps_, 20);
 	nh_.param<double>("/air_hockey/puck_tracker/frequency", frequency, 120.0);
 
-	if (nh_.getNamespace() == "/iiwa_back") {
+	if (nh_.getNamespace() == "/iiwa_back")
+	{
 		tableRefName_ = "TableAway";
 		opponentMalletName_ = "F_striker_mallet_tip";
-	} else if (nh_.getNamespace() == "/iiwa_front") {
+	}
+	else if (nh_.getNamespace() == "/iiwa_front")
+	{
 		tableRefName_ = "TableHome";
 		opponentMalletName_ = "B_striker_mallet_tip";
-	} else {
+	}
+	else
+	{
 		ROS_ERROR_STREAM("No namespace specified for the puck tracker, use /iiwa_front or /iiwa_back");
 		exit(-1);
 	}
 
 	ROS_INFO_STREAM("Wait for transform: /Table");
 	ros::Duration(1.0).sleep();
-	try {
+	try
+	{
 		tfBuffer_.lookupTransform("world", "Table", ros::Time(0), ros::Duration(1.0));
-	} catch (tf2::TransformException &exception) {
+	}
+	catch (tf2::TransformException& exception)
+	{
 		ROS_ERROR_STREAM("Could not transform world to Table: " << exception.what());
 		exit(-1);
 	}
 
 	rate_ = new ros::Rate(frequency);
 	observationModel_ = new ObservationModel;
-	systemModel_ = new SystemModel(frictionDrag, frictionSliding, tableLength_, tableWidth_, goalWidth_, puckRadius, malletRadius,
-		restitutionTable, restitutionMallet, rimFriction, rate_->expectedCycleTime().toSec());
-
+	systemModel_ =
+		new SystemModel(frictionDrag, frictionSliding, tableLength_, tableWidth_, goalWidth_, puckRadius, malletRadius,
+			restitutionTable, restitutionMallet, rimFriction, rate_->expectedCycleTime().toSec());
 
 	kalmanFilter_ = new EKF_Wrapper;
 	puckPredictor_ = new EKF_Wrapper;
@@ -104,19 +116,23 @@ void PuckTracker::loadParams() {
 	u_.dt() = rate_->expectedCycleTime().toSec();
 }
 
-void PuckTracker::provideServices() {
-	ros::ServiceServer dynamicsService = nh_.advertiseService("set_dynamics_parameter",&PuckTracker::setDynamicsParameter, this);
-	ros::ServiceServer resetService = nh_.advertiseService("reset_puck_tracker", &PuckTracker::resetService, this);
-	ros::ServiceServer kalmanFilter = nh_.advertiseService("kalman_filter_prediction", &PuckTracker::updateKalmanFilter,this);
-	ros::ServiceServer covarianceService = nh_.advertiseService("set_kf_noise_variance",&PuckTracker::updateNoiseCovarianceService, this);
+void PuckTracker::provideServices()
+{
+	setDynamicsService = nh_.advertiseService("set_dynamics_parameter", &PuckTracker::setDynamicsParameterCB, this);
+	resetService = nh_.advertiseService("reset_puck_tracker", &PuckTracker::resetCB, this);
+	updateKalmanFilterService =
+		nh_.advertiseService("kalman_filter_prediction", &PuckTracker::updateKalmanFilterCB, this);
+	updateCovarianceService = nh_.advertiseService("set_kf_noise_variance", &PuckTracker::updateCovarianceCB, this);
 	ROS_INFO_STREAM("Services ready to call");
 }
 
-void PuckTracker::start() {
+void PuckTracker::start()
+{
 	thread_ = boost::thread(&PuckTracker::startTracking, this);
 }
 
-void PuckTracker::setCovariance() {
+void PuckTracker::setCovariance()
+{
 	Kalman::Covariance<PuckState> covDyn;
 	Kalman::Covariance<Measurement> covObs;
 
@@ -152,37 +168,47 @@ void PuckTracker::setCovariance() {
 	kalmanFilter_->setCovariance(covDyn);
 }
 
-void PuckTracker::startTracking() {
+void PuckTracker::startTracking()
+{
 	rate_->sleep();
 	stamp_ = ros::Time::now();
-	while (nh_.ok()) {
+	while (nh_.ok())
+	{
 		rate_->sleep();
 
 		kalmanFilter_->isPuckOutsideBoundary(*systemModel_, measurement_);
-		if (kalmanFilter_->isStateInsideTable and kalmanFilter_->isMeasurementInsideTable) {
+		if (kalmanFilter_->isStateInsideTable and kalmanFilter_->isMeasurementInsideTable)
+		{
 			kalmanFilter_->predict(*systemModel_, u_);
 		}
 
-		if (getMeasurement() and kalmanFilter_->isMeasurementInsideTable) {
+		if (getMeasurement() and kalmanFilter_->isMeasurementInsideTable)
+		{
 			updateOpponentMallet();
-			if (!checkGating()){
+			if (!checkGating())
+			{
 				ROS_INFO_STREAM("[Puck Tracker] The innovation is too big, reset the puck tracker");
 				reset();
 				continue;
 			}
 			kalmanFilter_->update(*observationModel_, measurement_);
 		}
-        stamp_ += rate_->expectedCycleTime();
-    }
+		stamp_ += rate_->expectedCycleTime();
+	}
 }
 
-bool PuckTracker::getMeasurement() {
-	try {
+bool PuckTracker::getMeasurement()
+{
+	try
+	{
 		tfPuck_ = tfBuffer_.lookupTransform(tableRefName_, "Puck", ros::Time(0));
-		if ((tfPuck_.header.stamp - stamp_) > rate_->expectedCycleTime()) {
+		if ((tfPuck_.header.stamp - stamp_) > rate_->expectedCycleTime())
+		{
 			stamp_ = tfPuck_.header.stamp;
-		} else if (tfPuck_.header.stamp - stamp_ < -rate_->expectedCycleTime()) {
-		    ROS_WARN_STREAM("TF data is " << tfPuck_.header.stamp - stamp_<< "s behind, Ignored");
+		}
+		else if (tfPuck_.header.stamp - stamp_ < -rate_->expectedCycleTime())
+		{
+			ROS_WARN_STREAM("TF data is " << tfPuck_.header.stamp - stamp_ << "s behind, Ignored");
 			return false;
 		}
 		measurement_.x() = tfPuck_.transform.translation.x;
@@ -197,32 +223,41 @@ bool PuckTracker::getMeasurement() {
 		rotMat.getEulerYPR(yaw, pitch, roll);
 		measurement_.theta() = yaw;
 		return true;
-	} catch (tf2::TransformException &exception) {
+	}
+	catch (tf2::TransformException& exception)
+	{
 		return false;
 	}
 }
 
-bool PuckTracker::updateOpponentMallet() {
-	try {
+bool PuckTracker::updateOpponentMallet()
+{
+	try
+	{
 		tfOpponentMallet_ = tfBuffer_.lookupTransform(tableRefName_, opponentMalletName_, ros::Time(0));
 		systemModel_->updateMalletState(tfOpponentMallet_);
 		return true;
-	} catch (tf2::TransformException &exception) {
+	}
+	catch (tf2::TransformException& exception)
+	{
 		return false;
 	}
 }
 
-bool PuckTracker::checkGating() {
+bool PuckTracker::checkGating()
+{
 	auto InnoCov = kalmanFilter_->updateInnovationCovariance(*observationModel_);
 	kalmanFilter_->calculateInnovation(*observationModel_, measurement_);
 	double ellipsoidalDist = kalmanFilter_->getInnovation().block<2, 1>(0, 0).transpose() *
-	                         InnoCov.block<2, 2>(0, 0).inverse() *
-	                         kalmanFilter_->getInnovation().block<2, 1>(0, 0);
+		InnoCov.block<2, 2>(0, 0).inverse() *
+		kalmanFilter_->getInnovation().block<2, 1>(0, 0);
 	return ellipsoidalDist < resetThreshold;
 }
 
-const PuckState &PuckTracker::getEstimatedState(bool visualize) {
-	if (visualize) {
+const PuckState& PuckTracker::getEstimatedState(bool visualize)
+{
+	if (visualize)
+	{
 		kalmanFilter_->updateInnovationCovariance(*observationModel_);
 		visualizer_->update(kalmanFilter_->getState(),
 			kalmanFilter_->getInnovationCovariance(),
@@ -231,21 +266,27 @@ const PuckState &PuckTracker::getEstimatedState(bool visualize) {
 	return kalmanFilter_->getState();
 }
 
-const PuckPredictedState &PuckTracker::getPredictedState(bool visualize, bool delayed) {
+const PuckPredictedState& PuckTracker::getPredictedState(bool visualize, bool delayed)
+{
 	getPrediction(predictedState_.predictedTime, predictedState_.numOfCollisions);
 	predictedState_.state = puckPredictor_->getState();
 	predictedState_.stamp = ros::Time::now();
 
 	int bufferSize;
-	if (delayed) {
+	if (delayed)
+	{
 		bufferSize = maxPredictionSteps_;
-	} else {
+	}
+	else
+	{
 		bufferSize = 0;
 	}
 
 	stateBuffer_.push_back(predictedState_.state);
-	if (stateBuffer_.size() > bufferSize) {
-		if (visualize) {
+	if (stateBuffer_.size() > bufferSize)
+	{
+		if (visualize)
+		{
 			puckPredictor_->updateInnovationCovariance(*observationModel_);
 			visualizer_->update(stateBuffer_.front(),
 				puckPredictor_->getInnovationCovariance(),
@@ -256,33 +297,44 @@ const PuckPredictedState &PuckTracker::getPredictedState(bool visualize, bool de
 	return predictedState_;
 }
 
-void PuckTracker::getPrediction(double &predictedTime, int &nCollision) {
+void PuckTracker::getPrediction(double& predictedTime, int& nCollision)
+{
 	nCollision = 0;
 	predictedTime = 0;
-	if (kalmanFilter_->isStateInsideTable and kalmanFilter_->isMeasurementInsideTable) {
+	if (kalmanFilter_->isStateInsideTable and kalmanFilter_->isMeasurementInsideTable)
+	{
 		//! predict future steps
 		puckPredictor_->init(kalmanFilter_->getState());
 		puckPredictor_->setCovariance(kalmanFilter_->getCovariance());
-		if (defendingLine_ <= 0.0) {
+		if (defendingLine_ <= 0.0)
+		{
 			//! If not consider defending line, do maximum steps prediction
-			for (int i = 0; i < maxPredictionSteps_; ++i) {
-				if (systemModel_->isOutsideBoundary(puckPredictor_->getState())){ break; }
+			for (int i = 0; i < maxPredictionSteps_; ++i)
+			{
+				if (systemModel_->isOutsideBoundary(puckPredictor_->getState()))
+				{ break; }
 				puckPredictor_->moveOneStep(*systemModel_, u_);
 				predictedTime = (i + 1) * rate_->expectedCycleTime().toSec();
-				if (puckPredictor_->hasCollision){
+				if (puckPredictor_->hasCollision)
+				{
 					nCollision += 1;
 				}
 			}
-		} else {
+		}
+		else
+		{
 			//! If consider defending line
 			bool should_defend = (puckPredictor_->getState().x() > defendingLine_);
-			for (int i = 0; i < maxPredictionSteps_; ++i) {
-				if (should_defend and puckPredictor_->getState().x() < defendingLine_) {
+			for (int i = 0; i < maxPredictionSteps_; ++i)
+			{
+				if (should_defend and puckPredictor_->getState().x() < defendingLine_)
+				{
 					return;
 				}
 				puckPredictor_->predict(*systemModel_, u_);
 				predictedTime = (i + 1) * rate_->expectedCycleTime().toSec();
-				if (puckPredictor_->hasCollision){
+				if (puckPredictor_->hasCollision)
+				{
 					nCollision += 1;
 				}
 			}
@@ -290,8 +342,10 @@ void PuckTracker::getPrediction(double &predictedTime, int &nCollision) {
 	}
 }
 
-void PuckTracker::reset() {
-	try {
+void PuckTracker::reset()
+{
+	try
+	{
 		geometry_msgs::TransformStamped tf1, tf2;
 		//! Look up for the second frame
 		stamp_ = ros::Time::now();
@@ -335,16 +389,20 @@ void PuckTracker::reset() {
 		puckPredictor_->init(initState);
 		puckPredictor_->setCovariance(covInit);
 
-	} catch (tf2::TransformException &exception) {
+	}
+	catch (tf2::TransformException& exception)
+	{
 		ROS_INFO_STREAM("Reset Failed: " << exception.what() << " Kill Puck Tracker");
 		exit(-1);
 	}
 }
 
-bool PuckTracker::setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParameter::Request &req,
-                                       air_hockey_puck_tracker::SetDynamicsParameter::Response &res) {
-	ROS_INFO_STREAM("Setting dynamics parameter to Damping: " << req.frictionDrag << " mu: " << req.frictionSlide
-	                                                          << " restitution Table: " << req.restitutionTable);
+bool PuckTracker::setDynamicsParameterCB(air_hockey_puck_tracker::SetDynamicsParameter::Request& req,
+	air_hockey_puck_tracker::SetDynamicsParameter::Response& res)
+{
+	ROS_INFO_STREAM("Setting dynamics parameter to Damping: "
+		<< req.frictionDrag << " mu: " << req.frictionSlide << " restitution Table: " << req.restitutionTable
+		<< " rim friction: " << req.rimFriction);
 	systemModel_->setDamping(req.frictionDrag);
 	systemModel_->setTableFriction(req.frictionSlide);
 	systemModel_->setTableDynamicsParam(req.restitutionTable, req.rimFriction);
@@ -352,8 +410,9 @@ bool PuckTracker::setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParam
 	return true;
 }
 
-bool PuckTracker::resetService(air_hockey_puck_tracker::PuckTrackerResetService::Request &req,
-                               air_hockey_puck_tracker::PuckTrackerResetService::Response &res) {
+bool PuckTracker::resetCB(air_hockey_puck_tracker::PuckTrackerResetService::Request& req,
+	air_hockey_puck_tracker::PuckTrackerResetService::Response& res)
+{
 	ROS_INFO_STREAM("Setting initial Puck State via Service");
 	//! set Initial State
 	PuckState initState;
@@ -376,22 +435,23 @@ bool PuckTracker::resetService(air_hockey_puck_tracker::PuckTrackerResetService:
 	return true;
 }
 
-bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPrediction::Request &req,
-	air_hockey_puck_tracker::KalmanFilterPrediction::Response &res) {
+bool PuckTracker::updateKalmanFilterCB(air_hockey_puck_tracker::KalmanFilterPrediction::Request& req,
+	air_hockey_puck_tracker::KalmanFilterPrediction::Response& res)
+{
 	//! predict step
-	PuckState predictedState = kalmanFilter_->predict(*systemModel_, u_);
-
-	if(!isnan(req.state.x)) {
+	PuckState estimatedState = kalmanFilter_->predict(*systemModel_, u_);
+	if (not req.skipUpdate)
+	{
 		measurement_.x() = req.state.x;
 		measurement_.y() = req.state.y;
 		measurement_.theta() = req.state.theta;
 
 		kalmanFilter_->isPuckOutsideBoundary(*systemModel_, measurement_);
-		if (kalmanFilter_->isMeasurementInsideTable) {
+		if (kalmanFilter_->isMeasurementInsideTable)
+		{
 			kalmanFilter_->update(*observationModel_, measurement_);
 		}
 	}
-	PuckState estimatedState = getEstimatedState(false);
 	res.estimation.x = estimatedState.x();
 	res.estimation.dx = estimatedState.dx();
 	res.estimation.y = estimatedState.y();
@@ -404,7 +464,8 @@ bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPredic
 		kalmanFilter_->getInnovationCovariance().data() +
 			kalmanFilter_->getInnovationCovariance().size());
 
-	if (req.doPrediction) {
+	if (req.doPrediction)
+	{
 		//send predicted state (see config how many steps ahead)
 		PuckPredictedState predState = getPredictedState(false, false);
 		res.prediction.x = predState.state.x();
@@ -420,14 +481,16 @@ bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPredic
 				puckPredictor_->getCovariance().size());
 
 		res.prediction.predictionTime = predState.predictedTime;
-	} else {
+	}
+	else
+	{
 		//send one step prediction for noise estimation
-		res.prediction.x = predictedState.x();
-		res.prediction.dx = predictedState.dx();
-		res.prediction.y = predictedState.y();
-		res.prediction.dy = predictedState.dy();
-		res.prediction.theta = predictedState.theta();
-		res.prediction.dtheta = predictedState.dtheta();
+		res.prediction.x = estimatedState.x();
+		res.prediction.dx = estimatedState.dx();
+		res.prediction.y = estimatedState.y();
+		res.prediction.dy = estimatedState.dy();
+		res.prediction.theta = estimatedState.theta();
+		res.prediction.dtheta = estimatedState.dtheta();
 
 		res.prediction.innovation.resize(puckPredictor_->getInnovationCovariance().size());
 		res.prediction.innovation.assign(puckPredictor_->getInnovationCovariance().data(),
@@ -439,8 +502,9 @@ bool PuckTracker::updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPredic
 	return true;
 }
 
-bool PuckTracker::updateNoiseCovarianceService(air_hockey_puck_tracker::SetKalmanFilterJacobians::Request &req,
-	air_hockey_puck_tracker::SetKalmanFilterJacobians::Response &res) {
+bool PuckTracker::updateCovarianceCB(air_hockey_puck_tracker::SetKalmanFilterJacobians::Request& req,
+	air_hockey_puck_tracker::SetKalmanFilterJacobians::Response& res)
+{
 	ROS_INFO_STREAM("Update Noise Covariance");
 	Kalman::Jacobian<Measurement, Measurement> measurementNoise;
 	measurementNoise.setZero();
@@ -455,15 +519,18 @@ bool PuckTracker::updateNoiseCovarianceService(air_hockey_puck_tracker::SetKalma
 	return true;
 }
 
-void PuckTracker::updateNoiseCovariance(Kalman::Jacobian<Measurement, Measurement> &measurementNoise,
-	Kalman::Jacobian<PuckState, PuckState> &systemNoise) {
+void PuckTracker::updateNoiseCovariance(Kalman::Jacobian<Measurement, Measurement>& measurementNoise,
+	Kalman::Jacobian<PuckState, PuckState>& systemNoise)
+{
 	observationModel_->setCovariance(measurementNoise);
 	systemModel_->setCovariance(systemNoise);
-	if (systemNoise.hasNaN() or measurementNoise.hasNaN()) {
+	if (systemNoise.hasNaN() or measurementNoise.hasNaN())
+	{
 		ROS_ERROR_STREAM("System Noise has NaN! Innovation " << kalmanFilter_->getInnovationCovariance()
 															 << " and Covariance " << kalmanFilter_->getCovariance());
 	}
-	if (not systemNoise.allFinite() or not measurementNoise.allFinite()) {
+	if (not systemNoise.allFinite() or not measurementNoise.allFinite())
+	{
 		ROS_ERROR_STREAM("System Noise is infinite! Innovation " << kalmanFilter_->getInnovationCovariance()
 																 << " and Covariance "
 																 << kalmanFilter_->getCovariance());

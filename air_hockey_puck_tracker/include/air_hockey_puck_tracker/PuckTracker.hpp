@@ -39,96 +39,102 @@
 #include "VisualizationInterface.hpp"
 #include "ValidationInterface.hpp"
 
-namespace air_hockey_baseline_agent {
-    struct PuckPredictedState {
-        ros::Time stamp;
-        PuckState state;
-        int numOfCollisions;
-        double predictedTime;
-    };
+namespace air_hockey_baseline_agent
+{
+	struct PuckPredictedState
+	{
+		ros::Time stamp;
+		PuckState state;
+		int numOfCollisions;
+		double predictedTime;
+	};
 
-    class PuckTracker {
-    private:
-        friend class VisualizationInterface;
+	class PuckTracker
+	{
+	 private:
+		friend class VisualizationInterface;
 
-    public:
-        PuckTracker(ros::NodeHandle nh, double defendLine = 0.0);
+	 public:
+		PuckTracker(ros::NodeHandle nh, double defendLine = 0.0);
 
-        ~PuckTracker();
+		~PuckTracker();
 
-        void start();
+		void start();
 
-        const PuckPredictedState &getPredictedState(bool visualize = true, bool delayed = false);
+		const PuckPredictedState& getPredictedState(bool visualize = true, bool delayed = false);
 
-        const PuckState &getEstimatedState(bool visualize = false);
+		const PuckState& getEstimatedState(bool visualize = false);
 
-        void reset();
+		void reset();
 
-        inline double getMaxPredictionTime() {
-            return maxPredictionSteps_ * rate_->expectedCycleTime().toSec();
-        }
+		inline double getMaxPredictionTime()
+		{
+			return maxPredictionSteps_ * rate_->expectedCycleTime().toSec();
+		}
 
-        bool updateKalmanFilter(air_hockey_puck_tracker::KalmanFilterPrediction::Request &req,
-                                air_hockey_puck_tracker::KalmanFilterPrediction::Response &res);
+		bool updateKalmanFilterCB(air_hockey_puck_tracker::KalmanFilterPrediction::Request& req,
+			air_hockey_puck_tracker::KalmanFilterPrediction::Response& res);
 
-        bool setDynamicsParameter(air_hockey_puck_tracker::SetDynamicsParameter::Request &req,
-                                  air_hockey_puck_tracker::SetDynamicsParameter::Response &res);
+		bool setDynamicsParameterCB(air_hockey_puck_tracker::SetDynamicsParameter::Request& req,
+			air_hockey_puck_tracker::SetDynamicsParameter::Response& res);
 
-        bool resetService(air_hockey_puck_tracker::PuckTrackerResetService::Request &req,
-                          air_hockey_puck_tracker::PuckTrackerResetService::Response &res);
+		bool resetCB(air_hockey_puck_tracker::PuckTrackerResetService::Request& req,
+			air_hockey_puck_tracker::PuckTrackerResetService::Response& res);
 
-        bool updateNoiseCovarianceService(air_hockey_puck_tracker::SetKalmanFilterJacobians::Request &req,
-                                          air_hockey_puck_tracker::SetKalmanFilterJacobians::Response &res);
+		bool updateCovarianceCB(air_hockey_puck_tracker::SetKalmanFilterJacobians::Request& req,
+			air_hockey_puck_tracker::SetKalmanFilterJacobians::Response& res);
 
-        void provideServices();
+		void provideServices();
 
-    private:
-        void loadParams();
+	 private:
+		void loadParams();
 
-        void setCovariance();
+		void setCovariance();
 
-        void startTracking();
+		void startTracking();
 
-        void getPrediction(double &predictedTime, int &nCollision);
+		void getPrediction(double& predictedTime, int& nCollision);
 
-        bool getMeasurement();
+		bool getMeasurement();
 
-        bool updateOpponentMallet();
+		bool updateOpponentMallet();
 
-        bool checkGating();
+		bool checkGating();
 
-        void updateNoiseCovariance(Kalman::Jacobian<Measurement, Measurement> &measurementNoise,
-                                   Kalman::Jacobian<PuckState, PuckState> &systemNoise);
+		void updateNoiseCovariance(Kalman::Jacobian<Measurement, Measurement>& measurementNoise,
+			Kalman::Jacobian<PuckState, PuckState>& systemNoise);
 
-    private:
-        ros::NodeHandle nh_;
-        ros::Rate *rate_;
-        ros::Time stamp_;
+	 private:
+		ros::NodeHandle nh_;
+		ros::Rate* rate_;
+		ros::Time stamp_;
 
-        tf2_ros::TransformListener tfListener_;
-        tf2_ros::Buffer tfBuffer_;
-        std::string opponentMalletName_, tableRefName_;
-        geometry_msgs::TransformStamped tfPuck_, tfOpponentMallet_;
+		ros::ServiceServer setDynamicsService, resetService, updateKalmanFilterService, updateCovarianceService;
 
-        EKF_Wrapper *kalmanFilter_;
-        EKF_Wrapper *puckPredictor_;
-        SystemModel *systemModel_;
-        ObservationModel *observationModel_;
-        VisualizationInterface *visualizer_;
-        ValidationInterface *validation_;
+		tf2_ros::TransformListener tfListener_;
+		tf2_ros::Buffer tfBuffer_;
+		std::string opponentMalletName_, tableRefName_;
+		geometry_msgs::TransformStamped tfPuck_, tfOpponentMallet_;
 
-        Control u_;
-        int maxPredictionSteps_;
-        Measurement measurement_;
+		EKF_Wrapper* kalmanFilter_;
+		EKF_Wrapper* puckPredictor_;
+		SystemModel* systemModel_;
+		ObservationModel* observationModel_;
+		VisualizationInterface* visualizer_;
+		ValidationInterface* validation_;
 
-        PuckPredictedState predictedState_;
-        double resetThreshold;
-        double defendingLine_;
+		Control u_;
+		int maxPredictionSteps_;
+		Measurement measurement_;
 
-        boost::thread thread_;
+		PuckPredictedState predictedState_;
+		double resetThreshold;
+		double defendingLine_;
 
-        std::vector<PuckState> stateBuffer_;
-    };
+		boost::thread thread_;
+
+		std::vector<PuckState> stateBuffer_;
+	};
 }
 
 #endif //SRC_PUCK_TRACKER_HPP

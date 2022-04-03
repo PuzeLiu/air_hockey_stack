@@ -119,9 +119,9 @@ namespace air_hockey_baseline_agent {
     }
 
 	bool SystemModel::isOutsideBoundary(const PuckState &state) const {
-		if (abs(state.y()) > tableWidth / 2 - puckRadius + 0.01 ||
+		if (abs(state.y()) > tableWidth / 2 - puckRadius + 0.02 ||
 			state.x() < -0.01 ||
-			state.x() > tableLength - puckRadius + 0.01) {
+			state.x() > tableLength - puckRadius + 0.02) {
 			return true;
 		}
 		return false;
