@@ -12,10 +12,10 @@
 
     <xacro:arg name="parent" default="Table"/>
     <xacro:arg name="collide_bitmask" default="0x01"/>
-    <xacro:arg name="restitution_longitude" default="0.8468189914210034"/>
-    <xacro:arg name="restitution_latitude" default="0.9697840083850648"/>
-    <xacro:arg name="lateral_friction_rim" default="0.12931021481683416"/>
-    <xacro:arg name="lateral_friction_surface" default="0.0002959345937628299"/>
+    <xacro:arg name="restitution_longitude" default="0.742386791998004"/>
+    <xacro:arg name="restitution_latitude" default="0.742386791998004"/>
+    <xacro:arg name="lateral_friction_rim" default="0.14175473462785318"/>
+    <xacro:arg name="lateral_friction_surface" default="0.0001"/>
 
     <xacro:property name="M_PI" value="3.1415926535897931"/>
     <xacro:property name="table_base_length" value="2.136"/>

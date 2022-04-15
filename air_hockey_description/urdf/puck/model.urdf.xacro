@@ -18,7 +18,7 @@
     <xacro:arg name="restitution" default="1.0"/>
     <xacro:arg name="lateral_friction" default="1.0"/>
     <xacro:arg name="spinning_friction" default="0.002104678089464182"/>
-    <xacro:arg name="linear_vel_decay" default="0.00041985197458416224"/>
+    <xacro:arg name="linear_vel_decay" default="0.000075"/>
     <xacro:arg name="angular_vel_decay" default="0.0007291871439489361"/>
 
     <xacro:property name="puck_radius" value="0.03165"/>

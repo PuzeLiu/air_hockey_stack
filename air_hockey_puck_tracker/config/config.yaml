@@ -5,15 +5,15 @@ air_hockey:
     frequency:
       120
     friction_drag:
-      0.51433
+      0.001
     friction_sliding:
-      6.31e-6
+      0.001
     restitution_table:
-      0.92426
+      0.7424
     restitution_mallet:
       0.8
     rim_friction:
-      0.02
+      0.1418
     observation_variance_position:
       2.5e-7
     observation_variance_angular:
