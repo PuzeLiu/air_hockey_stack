@@ -7,6 +7,10 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy rosbag tf2_ros geometry_msg
 find_package(Eigen3 REQUIRED)
 find_package(Kalman REQUIRED)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif(NOT CMAKE_BUILD_TYPE)
+
 add_message_files(
         FILES
         InnovationMsg.msg

@@ -61,7 +61,8 @@ namespace air_hockey_baseline_agent
 
 		void start();
 
-		const PuckPredictedState& getPredictedState(bool visualize = true, bool delayed = false);
+		const PuckPredictedState& getPredictedState(bool visualize = true, bool delayed = false,
+			bool stopBeforeSecondCollision=false);
 
 		const PuckState& getEstimatedState(bool visualize = false);
 
@@ -93,7 +94,7 @@ namespace air_hockey_baseline_agent
 
 		void startTracking();
 
-		void getPrediction(double& predictedTime, int& nCollision);
+		void getPrediction(double& predictedTime, int& nCollision, bool stopBeforeSecondCollision=false);
 
 		bool getMeasurement();
 
@@ -126,6 +127,8 @@ namespace air_hockey_baseline_agent
 		Control u_;
 		int maxPredictionSteps_;
 		Measurement measurement_;
+		PuckState statePrev_;
+		Kalman::Covariance<PuckState> covPrev_;
 
 		PuckPredictedState predictedState_;
 		double resetThreshold;

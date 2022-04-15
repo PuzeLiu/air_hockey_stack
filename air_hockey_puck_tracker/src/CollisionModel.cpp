@@ -153,16 +153,44 @@ namespace air_hockey_baseline_agent {
 				double vtNextScalar;
 				double vnNextScalar;
 
-//				// Velocity on next time step without sliding
-//				vtNextScalar = (2. / 3.) * vtScalar - (m_puckRadius / 3) * dtheta;
-//				vnNextScalar = -m_e * vnScalar;
-//				// Angular Velocity next point
-//				state.dtheta() = 1. / 3. * dtheta - 2. / (3. * m_puckRadius) * vtScalar;
+				if (abs(vtScalar + m_puckRadius * dtheta) < 3 * m_rimFriction * (1 + m_e) * abs(vnScalar))
+				{
+					// Velocity on next time step without sliding
+					vtNextScalar = (2. / 3.) * vtScalar - (m_puckRadius / 3) * dtheta;
+					vnNextScalar = -m_e * vnScalar;
+					// Angular Velocity next point
+					state.dtheta() = 1. / 3. * dtheta - 2. / (3. * m_puckRadius) * vtScalar;
 
-				slideDir = copysign(1, vtScalar + dtheta * m_puckRadius);
-				vtNextScalar = vtScalar + m_rimFriction * slideDir * (1 + m_e) * vnScalar;
-				vnNextScalar = -m_e * vnScalar;
-				state.dtheta() = dtheta + 2. * m_rimFriction * slideDir * (1 + m_e) / (m_puckRadius) * vtScalar;
+					// Update jacobian
+					m_jacCollision.setIdentity();
+					m_jacCollision(0, 2) = m_dt;
+					m_jacCollision(1, 3) = m_dt;
+					m_jacCollision(2, 2) = 2. / 3.;
+					m_jacCollision(2, 5) = - m_puckRadius / 3.;
+					m_jacCollision(3, 3) = -m_e;
+					m_jacCollision(4, 5) = m_dt;
+					m_jacCollision(5, 2) = -2. / (3. * m_puckRadius);
+					m_jacCollision(5, 5) = 1. / 3.;
+					jacobian = m_rimGlobalTransformsInv[i] * m_jacCollision * m_rimGlobalTransforms[i];
+				}
+				else
+				{
+					// Velocity on next time step with sliding
+					slideDir = copysign(1, vtScalar + dtheta * m_puckRadius);
+					vtNextScalar = vtScalar + m_rimFriction * slideDir * (1 + m_e) * vnScalar;
+					vnNextScalar = -m_e * vnScalar;
+					state.dtheta() = dtheta + 2. * m_rimFriction * slideDir * (1 + m_e) / (m_puckRadius) * vnScalar;
+
+					// Update jacobian
+					m_jacCollision.setIdentity();
+					m_jacCollision(0, 2) = m_dt;
+					m_jacCollision(1, 3) = m_dt;
+					m_jacCollision(2, 3) = m_rimFriction * slideDir * (1 + m_e);
+					m_jacCollision(3, 3) = -m_e;
+					m_jacCollision(4, 5) = m_dt;
+					m_jacCollision(5, 3) = m_jacCollision(2, 3) * 2 / m_puckRadius;
+					jacobian = m_rimGlobalTransformsInv[i] * m_jacCollision * m_rimGlobalTransforms[i];
+				}
 
 				// Linear Velocity next point
 				state.block<2, 1>(2, 0) = vnNextScalar * vecN + vtNextScalar * vecT;
@@ -172,15 +200,6 @@ namespace air_hockey_baseline_agent {
 				// Angular Position of next point
 				state.theta() = theta + s * dtheta * m_dt + (1 - s) * state.dtheta() * m_dt;
 
-				// Update jacobian
-				m_jacCollision.setIdentity();
-				m_jacCollision(0, 2) = m_dt;
-				m_jacCollision(1, 3) = m_dt;
-				m_jacCollision(2, 3) = m_rimFriction * slideDir * (1 + m_e);
-				m_jacCollision(3, 3) = -m_e;
-				m_jacCollision(4, 5) = m_dt;
-				m_jacCollision(5, 3) = m_jacCollision(2, 3) * 2 / m_puckRadius;
-				jacobian = m_rimGlobalTransformsInv[i] * m_jacCollision * m_rimGlobalTransforms[i];
                 return true;
             }
         }

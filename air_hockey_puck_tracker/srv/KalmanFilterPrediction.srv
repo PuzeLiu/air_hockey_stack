@@ -1,6 +1,7 @@
 MeasurementMsg state
 bool skipUpdate
 bool doPrediction
+bool stopBeforeSecondCollision
 ---
 EstimationMsg estimation
 PredictionMsg prediction

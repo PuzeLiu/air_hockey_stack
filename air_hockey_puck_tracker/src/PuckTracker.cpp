@@ -148,8 +148,8 @@ void PuckTracker::setCovariance()
 	nh_.param<double>("/air_hockey/puck_tracker/dynamic_variance_angular_velocity", dynVarAngVel, 1e-2);
 	nh_.param<double>("/air_hockey/puck_tracker/reset_threshold", resetThreshold, 6.25);
 	ROS_INFO_STREAM("Observer Variance Linear: " << obsVarPos << " Angular: " << obsVarAng);
-	ROS_INFO_STREAM("Dynamics Variance Linear Position:" << dynVarPos << " Linear Velocity" << dynVarVel);
-	ROS_INFO_STREAM("Dynamics Variance Angular Position:" << dynVarAngPos << " Angular Velocity" << dynVarAngVel);
+	ROS_INFO_STREAM("Dynamics Variance Linear Position:" << dynVarPos << " Linear Velocity: " << dynVarVel);
+	ROS_INFO_STREAM("Dynamics Variance Angular Position:" << dynVarAngPos << " Angular Velocity: " << dynVarAngVel);
 	ROS_INFO_STREAM("Reset Threshold: " << resetThreshold);
 
 	covDyn(0, 0) = dynVarPos;
@@ -266,21 +266,15 @@ const PuckState& PuckTracker::getEstimatedState(bool visualize)
 	return kalmanFilter_->getState();
 }
 
-const PuckPredictedState& PuckTracker::getPredictedState(bool visualize, bool delayed)
+const PuckPredictedState& PuckTracker::getPredictedState(bool visualize, bool delayed, bool stopBeforeSecondCollision)
 {
-	getPrediction(predictedState_.predictedTime, predictedState_.numOfCollisions);
+	getPrediction(predictedState_.predictedTime, predictedState_.numOfCollisions, stopBeforeSecondCollision);
 	predictedState_.state = puckPredictor_->getState();
 	predictedState_.stamp = ros::Time::now();
 
 	int bufferSize;
-	if (delayed)
-	{
-		bufferSize = maxPredictionSteps_;
-	}
-	else
-	{
-		bufferSize = 0;
-	}
+	if (delayed) { bufferSize = maxPredictionSteps_; }
+	else { bufferSize = 0; }
 
 	stateBuffer_.push_back(predictedState_.state);
 	if (stateBuffer_.size() > bufferSize)
@@ -297,7 +291,7 @@ const PuckPredictedState& PuckTracker::getPredictedState(bool visualize, bool de
 	return predictedState_;
 }
 
-void PuckTracker::getPrediction(double& predictedTime, int& nCollision)
+void PuckTracker::getPrediction(double& predictedTime, int& nCollision, bool stopBeforeSecondCollision)
 {
 	nCollision = 0;
 	predictedTime = 0;
@@ -311,13 +305,21 @@ void PuckTracker::getPrediction(double& predictedTime, int& nCollision)
 			//! If not consider defending line, do maximum steps prediction
 			for (int i = 0; i < maxPredictionSteps_; ++i)
 			{
-				if (systemModel_->isOutsideBoundary(puckPredictor_->getState()))
-				{ break; }
-				puckPredictor_->moveOneStep(*systemModel_, u_);
+				if (systemModel_->isOutsideBoundary(puckPredictor_->getState())) { break; }
+				statePrev_ = puckPredictor_->getState();
+				covPrev_ = puckPredictor_->getCovariance();
+
+				puckPredictor_->predict(*systemModel_, u_);
+
 				predictedTime = (i + 1) * rate_->expectedCycleTime().toSec();
-				if (puckPredictor_->hasCollision)
+
+				if (puckPredictor_->hasCollision) {	nCollision += 1; }
+
+				if (nCollision >= 2 and stopBeforeSecondCollision)
 				{
-					nCollision += 1;
+					puckPredictor_->init(statePrev_);
+					puckPredictor_->setCovariance(covPrev_);
+					break;
 				}
 			}
 		}
@@ -327,15 +329,21 @@ void PuckTracker::getPrediction(double& predictedTime, int& nCollision)
 			bool should_defend = (puckPredictor_->getState().x() > defendingLine_);
 			for (int i = 0; i < maxPredictionSteps_; ++i)
 			{
-				if (should_defend and puckPredictor_->getState().x() < defendingLine_)
-				{
-					return;
-				}
+				if (should_defend and puckPredictor_->getState().x() < defendingLine_) { break; }
+				statePrev_ = puckPredictor_->getState();
+				covPrev_ = puckPredictor_->getCovariance();
+
 				puckPredictor_->predict(*systemModel_, u_);
+
 				predictedTime = (i + 1) * rate_->expectedCycleTime().toSec();
-				if (puckPredictor_->hasCollision)
+
+				if (puckPredictor_->hasCollision) { nCollision += 1; }
+
+				if (nCollision >= 2 and stopBeforeSecondCollision)
 				{
-					nCollision += 1;
+					puckPredictor_->init(statePrev_);
+					puckPredictor_->setCovariance(covPrev_);
+					break;
 				}
 			}
 		}
@@ -467,7 +475,7 @@ bool PuckTracker::updateKalmanFilterCB(air_hockey_puck_tracker::KalmanFilterPred
 	if (req.doPrediction)
 	{
 		//send predicted state (see config how many steps ahead)
-		PuckPredictedState predState = getPredictedState(false, false);
+		PuckPredictedState predState = getPredictedState(false, false, req.stopBeforeSecondCollision);
 		res.prediction.x = predState.state.x();
 		res.prediction.dx = predState.state.dx();
 		res.prediction.y = predState.state.y();
@@ -475,10 +483,10 @@ bool PuckTracker::updateKalmanFilterCB(air_hockey_puck_tracker::KalmanFilterPred
 		res.prediction.theta = predState.state.theta();
 		res.prediction.dtheta = predState.state.dtheta();
 
-		res.prediction.covariance.resize(puckPredictor_->getCovariance().size());
-		res.prediction.covariance.assign(puckPredictor_->getCovariance().data(),
-			puckPredictor_->getCovariance().data() +
-				puckPredictor_->getCovariance().size());
+		puckPredictor_->updateInnovationCovariance(*observationModel_);
+		res.prediction.innovation.resize(puckPredictor_->getInnovationCovariance().size());
+		res.prediction.innovation.assign(puckPredictor_->getInnovationCovariance().data(),
+			puckPredictor_->getInnovationCovariance().data() + puckPredictor_->getInnovationCovariance().size());
 
 		res.prediction.predictionTime = predState.predictedTime;
 	}
