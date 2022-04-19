@@ -37,7 +37,7 @@
             <limit effort="1" lower="-${PI/2}" upper="${PI/2}" velocity="3.1415926"/>
             <safety_controller k_position="100" k_velocity="10" soft_lower_limit="-2.094395102"
                                soft_upper_limit="2.094395102"/>
-            <dynamics damping="0.1"/>
+            <dynamics damping="0.05"/>
         </joint>
 
         <link name="${robot_name}_striker_joint_link">
@@ -57,7 +57,7 @@
             <limit effort="1" lower="-${PI/2}" upper="${PI/2}" velocity="3.1415926"/>
             <safety_controller k_position="100" k_velocity="10" soft_lower_limit="-2.094395102"
                                soft_upper_limit="2.094395102"/>
-            <dynamics damping="0.1"/>
+            <dynamics damping="0.05"/>
         </joint>
 
         <link name="${robot_name}_striker_mallet">

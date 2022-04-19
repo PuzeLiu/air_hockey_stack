@@ -81,7 +81,7 @@ void UniversalJointPlugin::OnUpdate() {
 
 		this->jointController_.reset(
 				new physics::JointController(this->model_));
-		gazebo::common::PID pid(10, 0, 0.01);
+		gazebo::common::PID pid(20, 0, 0.01);
 
 		this->jointController_->AddJoint(model_->GetJoint(jointName1_));
 		this->jointController_->SetPositionPID(jointName1_, pid);

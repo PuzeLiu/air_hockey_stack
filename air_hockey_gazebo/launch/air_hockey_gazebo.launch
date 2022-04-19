@@ -94,9 +94,9 @@
     </node>
 
     <!-- Start Air Hockey rqt -->
-<!--    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>-->
+    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
 
 <!--    &lt;!&ndash; Load Parameters of kalman filter &ndash;&gt;-->
-<!--    <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>-->
+    <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
 
 </launch>
