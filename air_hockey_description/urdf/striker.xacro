@@ -62,7 +62,7 @@
 
         <link name="${robot_name}_striker_mallet">
             <inertial>
-                <origin xyz="0 0.0 0.0505" rpy="0 0 0"/>
+                <origin xyz="0 0.0 0.0645" rpy="0 0 0"/>
                 <mass value="0.183"/>
                 <inertia
                         ixx="0.01" ixy="0.0" ixz="0.0"
@@ -71,14 +71,14 @@
             <visual>
                 <origin xyz="0 0.0 0.0" rpy="0.0 0.0 0"/>
                 <geometry>
-                    <mesh filename="package://air_hockey_description/meshes/striker/visual/EE_mallet_short.stl"/>
+                    <mesh filename="package://air_hockey_description/meshes/striker/visual/EE_mallet_foam.stl"/>
                 </geometry>
                 <material name="LightGrey"/>
             </visual>
             <collision>
-                <origin xyz="0 0.0 0.0" rpy="0.0 0.0 0"/>
+                <origin xyz="0 0.0 0.0455" rpy="0.0 0.0 0"/>
                 <geometry>
-                    <mesh filename="package://air_hockey_description/meshes/striker/collision/EE_mallet_short_collision.stl"/>
+                    <cylinder radius="0.04815" length="0.04"/>
                 </geometry>
             </collision>
         </link>
@@ -86,7 +86,7 @@
         <joint name="${robot_name}_striker_mallet_fix" type="fixed">
             <parent link="${robot_name}_striker_mallet"/>
             <child link="${robot_name}_striker_mallet_tip"/>
-            <origin xyz="0.0 0.0 0.0505" rpy="0 0 0"/>
+            <origin xyz="0.0 0.0 0.0645" rpy="0 0 0"/>
             <axis xyz="1 0 0"/>
         </joint>
         <!--  The striker frame is here defined -->
