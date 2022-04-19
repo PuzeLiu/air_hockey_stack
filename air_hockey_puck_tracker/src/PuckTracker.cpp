@@ -204,11 +204,12 @@ bool PuckTracker::getMeasurement()
 		tfPuck_ = tfBuffer_.lookupTransform(tableRefName_, "Puck", ros::Time(0));
 		if ((tfPuck_.header.stamp - stamp_) > rate_->expectedCycleTime())
 		{
+            ROS_DEBUG_STREAM("TF data is " << tfPuck_.header.stamp - stamp_ << "s ahead, Skipped");
 			stamp_ = tfPuck_.header.stamp;
 		}
 		else if (tfPuck_.header.stamp - stamp_ < -rate_->expectedCycleTime())
 		{
-			ROS_WARN_STREAM("TF data is " << tfPuck_.header.stamp - stamp_ << "s behind, Ignored");
+			ROS_DEBUG_STREAM("TF data is " << tfPuck_.header.stamp - stamp_ << "s behind, Ignored");
 			return false;
 		}
 		measurement_.x() = tfPuck_.transform.translation.x;

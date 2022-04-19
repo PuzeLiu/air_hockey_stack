@@ -8,8 +8,9 @@ Panels:
         - /Status1
         - /Marker1
         - /Marker1/Namespaces1
-        - /Axes1
         - /TF1/Frames1
+        - /RobotModel1
+        - /RobotModel2
       Splitter Ratio: 0.5
     Tree Height: 746
   - Class: rviz/Selection
@@ -58,35 +59,212 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /puck_tracker/marker
+      Marker Topic: /iiwa_front/marker
       Name: Marker
       Namespaces:
-        {}
+        Prediction: true
       Queue Size: 100
       Value: true
-    - Alpha: 1
-      Class: rviz/Axes
-      Enabled: false
-      Length: 0.5
-      Name: Axes
-      Radius: 0.009999999776482582
-      Reference Frame: <Fixed Frame>
-      Value: false
     - Class: rviz/TF
-      Enabled: false
+      Enabled: true
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        Puck:
+          Value: true
+        Puck_link:
+          Value: false
+        Puck_link_weight_1:
+          Value: false
+        Puck_link_weight_2:
+          Value: false
+        Puck_link_weight_3:
+          Value: false
+        Puck_link_weight_4:
+          Value: false
+        Table:
+          Value: true
+        TableAway:
+          Value: false
+        TableHome:
+          Value: false
+        t_base:
+          Value: false
+        t_down_rim_l:
+          Value: false
+        t_down_rim_r:
+          Value: false
+        t_down_rim_top:
+          Value: false
+        t_left_rim:
+          Value: false
+        t_right_rim:
+          Value: false
+        t_up_rim_l:
+          Value: false
+        t_up_rim_r:
+          Value: false
+        t_up_rim_top:
+          Value: false
+        world:
+          Value: false
       Marker Alpha: 1
-      Marker Scale: 1
+      Marker Scale: 0.30000001192092896
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        world:
+          Puck:
+            Puck_link:
+              {}
+            Puck_link_weight_1:
+              {}
+            Puck_link_weight_2:
+              {}
+            Puck_link_weight_3:
+              {}
+            Puck_link_weight_4:
+              {}
+          Table:
+            TableAway:
+              {}
+            TableHome:
+              {}
+            t_base:
+              t_down_rim_l:
+                {}
+              t_down_rim_r:
+                {}
+              t_down_rim_top:
+                {}
+              t_left_rim:
+                {}
+              t_right_rim:
+                {}
+              t_up_rim_l:
+                {}
+              t_up_rim_r:
+                {}
+              t_up_rim_top:
+                {}
       Update Interval: 0
-      Value: false
+      Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        Table:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        TableAway:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        TableHome:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        t_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        t_down_rim_l:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        t_down_rim_r:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        t_down_rim_top:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        t_left_rim:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        t_right_rim:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        t_up_rim_l:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        t_up_rim_r:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        t_up_rim_top:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+      Name: RobotModel
+      Robot Description: air_hockey_table/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        Puck:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Puck_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        Puck_link_weight_1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Puck_link_weight_2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Puck_link_weight_3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        Puck_link_weight_4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: puck/robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -115,7 +293,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.489095211029053
+      Distance: 1.9691319465637207
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -123,17 +301,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.3917505741119385
-        Y: 0.5240650177001953
-        Z: 0.17901888489723206
+        X: 1.713869333267212
+        Y: 0.5627159476280212
+        Z: 0.2145930975675583
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7953977584838867
+      Pitch: 1.0903974771499634
       Target Frame: <Fixed Frame>
-      Yaw: 4.71858549118042
+      Yaw: 4.69358491897583
     Saved: ~
 Window Geometry:
   Displays:
