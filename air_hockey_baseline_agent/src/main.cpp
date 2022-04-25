@@ -28,7 +28,7 @@
 using namespace air_hockey_baseline_agent;
 
 int main(int argc, char** argv){
-    ros::init(argc, argv, "tactical_agent");
+    ros::init(argc, argv, "baseline_agent");
     ros::NodeHandle nh("/");
     Agent agent(nh);
 

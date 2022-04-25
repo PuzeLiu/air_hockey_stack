@@ -63,8 +63,9 @@ private:
 	ros::Publisher jointTrajectoryPub;
 	ros::Publisher cartTrajectoryPub;
 	ros::Rate rate;
+    ros::ServiceServer tacticService;
 
-	// Params
+    // Params
 	EnvironmentParams envParams;
 	AgentParams agentParams;
 

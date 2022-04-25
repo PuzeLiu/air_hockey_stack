@@ -64,13 +64,16 @@ Agent::~Agent() {
 void Agent::start() {
     ros::Duration(2.).sleep();
     ROS_INFO_STREAM_NAMED(nh.getNamespace(), nh.getNamespace() + ": " + "Agent Started");
-    ros::ServiceServer tacticService = nh.advertiseService("set_tactic", &Agent::setTacticService, this);
     observer->start();
+
+    if (agentParams.debugTactics) {
+        ROS_INFO_STREAM_NAMED(nh.getNamespace(), nh.getNamespace() + ": " + "Debugging Mode");
+        tacticService = nh.advertiseService("set_tactic", &Agent::setTacticService, this);
+    }
 
     while (ros::ok()) {
         state.updateObservationAndState(observer->getObservation(), agentParams);
 
-        //change to initTactic for tactic test
 		tacticsProcessor[state.currentTactic]->updateTactic();
 
 		auto &activeTactic = *tacticsProcessor[state.currentTactic];
@@ -101,14 +104,33 @@ void Agent::loadEnvironmentParams() {
 void Agent::loadAgentParam() {
     agentParams.name = nh.getNamespace();
 
-    string parent_dir = ros::package::getPath("air_hockey_description");
-    string robot_description = parent_dir + "/urdf/iiwa_striker_extension_only.urdf";
-    pinocchio::urdf::buildModel(robot_description, agentParams.pinoModel);
+    string joint_prefix;
+    if (agentParams.name == "/iiwa_front") joint_prefix = "F";
+    else if (agentParams.name == "/iiwa_back") joint_prefix = "B";
+
+    string robot_description;
+    nh.getParam("iiwa_only_description", robot_description);
+    pinocchio::urdf::buildModelFromXML(robot_description, agentParams.pinoModel);
+
+    std::vector<double> tcp_position, tcp_quaternion;
+    nh.getParam("/air_hockey/agent/tcp_position", tcp_position);
+    nh.getParam("/air_hockey/agent/tcp_quaternion", tcp_quaternion);
+    Eigen::Vector3d tcp_pos_eig(tcp_position[0], tcp_position[1], tcp_position[2]);
+    Eigen::Quaterniond tcp_quat_eig(tcp_quaternion[0], tcp_quaternion[1], tcp_quaternion[2], tcp_quaternion[3]);
+    pinocchio::SE3 tip_frame(tcp_quat_eig, tcp_pos_eig);
+    pinocchio::Frame striker_tip_frame(joint_prefix +"_striker_tip",
+                                       agentParams.pinoModel.getJointId(joint_prefix +"_joint_7"),
+                                       agentParams.pinoModel.nframes - 1,
+                                       tip_frame, pinocchio::OP_FRAME);
+
+    agentParams.pinoModel.addFrame(striker_tip_frame, false);
+
     agentParams.pinoData = pinocchio::Data(agentParams.pinoModel);
-    agentParams.pinoFrameId = agentParams.pinoModel.getFrameId("F_striker_tip");
+    agentParams.pinoFrameId = agentParams.pinoModel.getFrameId(joint_prefix + "_striker_tip");
     agentParams.nq = agentParams.pinoModel.nq;
 
     std::vector<double> xTmp;
+    nh.param("/air_hockey/agent/debug_tactics", agentParams.debugTactics, false);
 
     if (!nh.getParam("/air_hockey/agent/q_ref", xTmp)) {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/q_ref");
@@ -271,18 +293,6 @@ bool Agent::setTacticService(SetTacticsService::Request &req, SetTacticsService:
     } else {
         return false;
     }
-
-    auto &activeTactic = *tacticsProcessor[state.currentTactic];
-    if (activeTactic.ready()) {
-        if (activeTactic.apply()) {
-            publishTrajectory();
-        } else {
-            res.success = false;
-        }
-    }
-
-    rate.sleep();
-    tacticsProcessor[state.currentTactic]->setTactic(Tactics::READY);
 
     res.success = true;
     return true;

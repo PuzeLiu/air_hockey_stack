@@ -5,8 +5,8 @@
     <arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
     <arg name="machine_name" default="realtime" />
     <arg name="machine_address" default="192.168.10.1" />
-    <arg name="front_controllers" default="joint_feedforward_trajectory_controller"/>
-    <arg name="back_controllers" default="joint_feedforward_trajectory_controller"/>
+    <arg name="front_controllers" default="adrc_trajectory_controller"/>
+    <arg name="back_controllers" default="adrc_trajectory_controller"/>
 
     <include file="$(find air_hockey_description)/launch/air_hockey_description.launch">
         <arg name="hardware_interface" value="$(arg hardware_interface)"/>
@@ -36,7 +36,7 @@
     <include file="$(find optitrack_bridge)/launch/optitrack.launch">
         <arg name="output" value="log"/>
         <arg name="use_2d" default="true"/>
-        <arg name="plane_height" default="0.110"/>
+        <arg name="plane_height" default="0.130"/>
     </include>
 
     <machine name="$(arg machine_name)" user="puze" address="$(arg machine_address)"
@@ -44,7 +44,7 @@
 
     <!-- Start Air Hockey Referee -->
     <node pkg="air_hockey_referee" type="air_hockey_referee" name="air_hockey_referee" output="screen">
-        <param name="gazebo" value="false"/>
+        <param name="physics" value="real"/>
     </node>
 
     <!-- Start Air Hockey rqt -->
@@ -58,10 +58,10 @@
         <arg name="back_controllers" value="$(arg back_controllers)" />
     </include>
 
-    <include file="$(find air_hockey_gazebo)/launch/universal_joint_publisher.launch">
-        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />
-        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />
-        <arg name="frequency" value="100"/>
-    </include>
+<!--    <include file="$(find air_hockey_gazebo)/launch/universal_joint_publisher.launch">-->
+<!--        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />-->
+<!--        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />-->
+<!--        <arg name="frequency" value="100"/>-->
+<!--    </include>-->
 
 </launch>

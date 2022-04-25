@@ -2,7 +2,7 @@
 <launch>
     <env name="ROSCONSOLE_CONFIG_FILE" value="$(find air_hockey_baseline_agent)/config/log.conf"/>
     <arg name="use_front_iiwa" default="true"/>
-    <arg name="use_back_iiwa" default="true"/>
+    <arg name="use_back_iiwa" default="false"/>
 
     <rosparam file="$(find air_hockey_baseline_agent)/config/config.yaml" command="load" subst_value="true"/>
 

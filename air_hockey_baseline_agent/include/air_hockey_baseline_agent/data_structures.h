@@ -65,6 +65,7 @@ namespace air_hockey_baseline_agent {
 
 	struct AgentParams {
 		std::string name;
+        bool debugTactics;
 
 		pinocchio::Model pinoModel;
 		pinocchio::Data pinoData;

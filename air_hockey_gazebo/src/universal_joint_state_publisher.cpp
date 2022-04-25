@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
 
             q1 = acos(quat.toRotationMatrix().col(2).dot(Eigen::Vector3d(0., 0., -1)));
             q2 = 0.;
-
+            q1 = boost::algorithm::clamp(q1, -M_PI_2, M_PI_2);
             universalJointState.position[0] = q1;
             universalJointState.position[1] = q2;
             universalJointState.header.stamp = ros::Time::now();
