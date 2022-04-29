@@ -50,6 +50,14 @@ Transformations::Transformations(std::string ns) {
 
 }
 
+Transformations::Transformations(geometry_msgs::TransformStamped& tfTable2Robot) {
+	tfTable2Robot_ = tfTable2Robot;
+	tfRobot2Table_.header = tfTable2Robot_.header;
+	tf2::Stamped<tf2::Transform> tmp;
+	tf2::fromMsg(tfTable2Robot_, tmp);
+	tfRobot2Table_.transform = tf2::toMsg(tmp.inverse());
+}
+
 void Transformations::transformTrajectory(
 		trajectory_msgs::MultiDOFJointTrajectory &cartesianTrajectory) {
 	geometry_msgs::Point tmp;

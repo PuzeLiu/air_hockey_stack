@@ -59,8 +59,6 @@ namespace air_hockey_baseline_agent {
 		double malletRadius;
 		double tableLength;
 		double tableWidth;
-		double universalJointHeight;
-		double prepareHeight;
 	};
 
 	struct AgentParams {
@@ -91,6 +89,7 @@ namespace air_hockey_baseline_agent {
 		double tTacticSwitchMin;
 		double hitVelocityScale;
 		double initHeight;
+		double universalJointHeight;
 	};
 
 	struct ObservationState {

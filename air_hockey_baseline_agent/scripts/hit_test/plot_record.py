@@ -26,7 +26,7 @@ def read_bag(bag, duration):
 
 
 root_dir = os.path.dirname(__file__)
-bag_file = rosbag.Bag(os.path.join(root_dir, "2022-04-25-19-22-29.bag"))
+bag_file = rosbag.Bag(os.path.join(root_dir, "2022-04-25-17-12-19.bag"))
 
 robot_file = os.path.join(root_dir, "iiwa_striker.urdf")
 pino_model = pino.buildModelFromUrdf(robot_file)

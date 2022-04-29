@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-    <xacro:macro name="striker" params="robot_name hardware_interface">
+    <xacro:macro name="striker" params="robot_name hardware_interface contain_universal_joint">
         <joint name="${robot_name}_striker" type="fixed">
             <parent link="${robot_name}_link_ee"/>
             <child link="${robot_name}_striker_tip"/>
@@ -28,6 +28,8 @@
                 </geometry>
             </collision>
         </link>
+
+        <xacro:if value="${contain_universal_joint}">
 
         <joint name="${robot_name}_striker_joint_1" type="revolute">
             <parent link="${robot_name}_striker_tip"/>
@@ -199,6 +201,7 @@
             </plugin>
         </gazebo>
 
+        </xacro:if>
     </xacro:macro>
 
 </robot> 

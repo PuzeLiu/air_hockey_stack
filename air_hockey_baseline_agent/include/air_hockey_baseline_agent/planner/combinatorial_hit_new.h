@@ -39,6 +39,11 @@ namespace air_hockey_baseline_agent {
 		          const Eigen::Vector2d &xEnd, const Eigen::Vector2d &vEnd,
 		          trajectory_msgs::MultiDOFJointTrajectory &cartTraj);
 
+		bool plan(const Eigen::Vector2d &xStart, const Eigen::Vector2d &vStart,
+			const Eigen::Vector2d &xHit, const Eigen::Vector2d &vHit,
+			const Eigen::Vector2d &xEnd, const Eigen::Vector2d &vEnd, double &hitting_time,
+			trajectory_msgs::MultiDOFJointTrajectory &cartTraj);
+
 	private:
 		bool getMiddlePoint();
 
@@ -51,8 +56,8 @@ namespace air_hockey_baseline_agent {
 	private:
 		Eigen::Vector2d boundLower, boundUpper;
 
-		Eigen::Vector2d xStart, xMiddle, xEnd;      //! Start point, middle point, final point, final velocity
-		Eigen::Vector2d vecDir1, vecDir2, vDir;     //! Unit vector of linear 1, 2 and velocity direction
+		Eigen::Vector2d xStart, xMiddle, xEnd;      //! Start point, middle point, final point
+		Eigen::Vector2d vecDir1, vecDir2, vDir, vEnd;     //! Unit vector of linear 1, 2 and velocity direction
 		Eigen::Vector2d xArcCenter, xVia1, xVia2;   //! Via point of arc
 		Eigen::Vector2d aAngularAcc;                   //! angular acceleration
 		double stepSize;

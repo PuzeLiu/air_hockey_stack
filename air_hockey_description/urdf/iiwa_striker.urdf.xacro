@@ -14,6 +14,7 @@
     <xacro:arg name="base_xyz" default="0 0 0"/>
     <xacro:arg name="base_rpy" default="0 0 0"/>
     <xacro:arg name="dynamics_parameter" default="identified"/>
+    <xacro:arg name="contain_universal_joint" default="true"/>
 
     <link name="$(arg parent)"/>
 
@@ -22,7 +23,8 @@
                   dynamics_parameter="$(arg dynamics_parameter)">
         <origin xyz="$(arg base_xyz)" rpy="$(arg base_rpy)" />
     </xacro:iiwa14>
-    <xacro:striker hardware_interface="hardware_interface/EffortJointInterface" robot_name="$(arg robot_name)"/>
+    <xacro:striker hardware_interface="hardware_interface/EffortJointInterface" robot_name="$(arg robot_name)"
+                   contain_universal_joint="$(arg contain_universal_joint)"/>
 
     <gazebo>
         <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">

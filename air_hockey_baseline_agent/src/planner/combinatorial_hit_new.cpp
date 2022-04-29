@@ -47,6 +47,7 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &x_start, const Eigen::Vect
                                trajectory_msgs::MultiDOFJointTrajectory &cartTraj) {
 	xStart = x_start;
 	xEnd = x_end;
+	vEnd = v_end;
 
 	//! check the velocity at start and end point
 	if ((v_start.norm() > 1e-3 && v_end.norm() > 1e-3) ||
@@ -95,6 +96,30 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &x_start, const Eigen::Vect
 		getPoint(t);
 		viaPoint.time_from_start = ros::Duration(t + t_prev);
 		cartTraj.points.push_back(viaPoint);
+	}
+
+	cartTraj.header.stamp = ros::Time::now();
+	return true;
+}
+
+bool CombinatorialHitNew::plan(const Eigen::Vector2d &xStart_, const Eigen::Vector2d &vStart_,
+	const Eigen::Vector2d &xHit_, const Eigen::Vector2d &vHit_,
+	const Eigen::Vector2d &xEnd_, const Eigen::Vector2d &vEnd_,
+	double &hitting_time, trajectory_msgs::MultiDOFJointTrajectory &cartTraj) {
+	cartTraj.points.clear();
+
+	if (not plan(xStart_, vStart_, xHit_, vHit_, cartTraj)) {
+		cerr << "Failed at hitting phase" << endl;
+		return false;
+	}
+
+	Vector2d xInter, vInter;
+	xInter << cartTraj.points.back().transforms[0].translation.x, cartTraj.points.back().transforms[0].translation.y;
+	vInter << cartTraj.points.back().velocities[0].linear.x, cartTraj.points.back().velocities[0].linear.y;
+	hitting_time = cartTraj.points.back().time_from_start.toSec();
+	if (not plan(xInter, vInter, xEnd_, vEnd_, cartTraj)) {
+		cerr << "Failed at stopping phase" << endl;
+		return false;
 	}
 
 	cartTraj.header.stamp = ros::Time::now();
@@ -201,7 +226,7 @@ void CombinatorialHitNew::fitPhase() {
 }
 
 void CombinatorialHitNew::getPoint(const double t) {
-	if (t <= tEnd) {
+	if (t < tEnd) {
 		z = phaseCoeff[1] * t + phaseCoeff[3] * pow(t, 3) + phaseCoeff[4] * pow(t, 4);
 		dz_dt = phaseCoeff[1] + 3 * phaseCoeff[3] * pow(t, 2) + 4 * phaseCoeff[4] * pow(t, 3);
         dz_ddt = 6 * phaseCoeff[3] * t + 12 * phaseCoeff[4] * pow(t, 2);
@@ -225,9 +250,12 @@ void CombinatorialHitNew::getPoint(const double t) {
 			dx_ddt = dz_ddt * vecDir2;
 		}
 	} else if (t <= tEnd + tDecelerateAngular){
-		auto psi = (t - tEnd) / tDecelerateAngular;
-		dx_dt += (1 - psi) * aAngularAcc * stepSize;
-		x += dx_dt * stepSize;
+//		auto psi = (t - tEnd) / tDecelerateAngular;
+//		dx_dt += (1 - psi) * aAngularAcc * stepSize;
+//		x += dx_dt * stepSize;
+
+		dx_dt = vEnd;
+		x = xEnd + dx_dt * (t - tEnd);
 	} else {
 		x += dx_dt * stepSize;
 	}

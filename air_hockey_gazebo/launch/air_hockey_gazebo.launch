@@ -17,7 +17,7 @@
 
     <arg name="table_surface_x" default="1.694"/>
     <arg name="table_surface_y" default="0.813"/>
-    <arg name="table_surface_z" default="0.1"/>
+    <arg name="table_surface_z" default="0.13"/>
 
 <!--    <arg name="puck_sdf" default="$(find air_hockey_description)/urdf/puck/model.sdf"/>-->
 

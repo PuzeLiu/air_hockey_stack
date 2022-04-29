@@ -97,8 +97,7 @@ void Agent::loadEnvironmentParams() {
     nh.getParam("/air_hockey/mallet_radius", envParams.malletRadius);
     nh.getParam("/air_hockey/puck_radius", envParams.puckRadius);
     nh.getParam("/air_hockey/puck_height", envParams.puckHeight);
-	nh.getParam("/air_hockey/agent/universal_joint_height", envParams.universalJointHeight);
-    nh.getParam("/air_hockey/agent/prepare_height", envParams.prepareHeight);
+//    nh.getParam("/air_hockey/agent/prepare_height", envParams.prepareHeight);
 }
 
 void Agent::loadAgentParam() {
@@ -150,7 +149,7 @@ void Agent::loadAgentParam() {
     if (!nh.getParam("/air_hockey/agent/prepare", xTmp)) {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/prepare");
     }
-    agentParams.xPrepare << xTmp[0], xTmp[1], envParams.universalJointHeight + envParams.puckHeight;
+    agentParams.xPrepare << xTmp[0], xTmp[1], agentParams.universalJointHeight + envParams.puckHeight;
 
     if (!nh.getParam("/air_hockey/agent/hit_range", xTmp)) {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/hit_range");
@@ -188,6 +187,10 @@ void Agent::loadAgentParam() {
     if (!nh.getParam("/air_hockey/agent/init_position_height", agentParams.initHeight)) {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/init_position_height");
     }
+
+	if (!nh.getParam("/air_hockey/agent/universal_joint_height", agentParams.universalJointHeight)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/universal_joint_height");
+	}
 }
 
 void Agent::computeBaseConfigurations() {
@@ -200,7 +203,7 @@ void Agent::computeBaseConfigurations() {
 
     pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, agentParams.qRef);
     pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
-    xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight;
+    xTmp << agentParams.xHome[0], agentParams.xHome[1], agentParams.universalJointHeight;
 	transformations->transformTable2Robot(xTmp);
 
     pinocchio::SE3 oMhome(agentParams.pinoData.oMf[agentParams.pinoFrameId].rotation(), xTmp);
@@ -212,7 +215,7 @@ void Agent::computeBaseConfigurations() {
     optimizer->solveJoint7(agentParams.qHome, dqTmp);
 
     // compute qinit
-    xTmp << agentParams.xHome[0], agentParams.xHome[1], envParams.universalJointHeight + agentParams.initHeight;
+    xTmp << agentParams.xHome[0], agentParams.xHome[1], agentParams.universalJointHeight + agentParams.initHeight;
 	transformations->transformTable2Robot(xTmp);
     pinocchio::SE3 oMinit(agentParams.pinoData.oMf[agentParams.pinoFrameId].rotation(), xTmp);
     if (!inverseKinematics(agentParams, oMinit, agentParams.qRef, agentParams.qInit)) {

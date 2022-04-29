@@ -85,6 +85,10 @@ add_executable(hitting_point_optimizer_example
 add_executable(null_space_optimizer_example
     src/utils.cpp
     src/null_space_optimizer.cpp
+    src/hitting_point_optimizer.cpp
+    src/planner/combinatorial_hit_new.cpp
+    src/planner/cubic_linear_motion.cpp
+    src/transformations.cpp
     examples/null_space_optimizer_example.cpp)
 
 add_executable(promp_test
@@ -110,6 +114,7 @@ target_link_libraries(null_space_optimizer_example
     ${catkin_LIBRARIES}
     osqp::osqp
     OsqpEigen
+    NLopt::nlopt
     Clp
     CoinUtils
     pinocchio::pinocchio

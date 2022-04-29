@@ -54,9 +54,9 @@ bool MovePuck::apply() {
 	xLiftUp.y() = boost::algorithm::clamp(xLiftUp.y(),
 			-envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
 			envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
-	xLiftUp.z() = envParams.prepareHeight;
+	xLiftUp.z() = agentParams.initHeight;
 	xSetDown = xLiftUp;
-	xSetDown.z() = envParams.universalJointHeight + envParams.puckHeight;
+	xSetDown.z() = agentParams.universalJointHeight + envParams.puckHeight;
 
 	double tStop = 2.0;
 	for (int i = 0; i < 10; ++i) {

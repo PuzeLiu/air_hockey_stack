@@ -33,16 +33,17 @@ using namespace air_hockey_baseline_agent;
 
 void loadAgentParams(AgentParams& agentParams){
 	agentParams.name = "/iiwa_front";
+	agentParams.debugTactics = false;
 
 	string parent_dir = ros::package::getPath("air_hockey_description");
-	string robot_description = parent_dir + "/urdf/iiwa_striker_extension_only.urdf";
+	string robot_description = parent_dir + "/urdf/iiwa_striker.urdf";
 	pinocchio::urdf::buildModel(robot_description, agentParams.pinoModel);
 	agentParams.pinoData = pinocchio::Data(agentParams.pinoModel);
 	agentParams.pinoFrameId = agentParams.pinoModel.getFrameId("F_striker_tip");
 	agentParams.nq = agentParams.pinoModel.nq;
 
 	agentParams.qRef.resize(agentParams.pinoModel.nq);
-	agentParams.qRef << 0., 0.15378149,  0., -1.3630843, 0.,  1.3767066, 0.;
+	agentParams.qRef << 0., 0.06580,  0., -1.45996, 0.,  1.22487, 0.;
 	agentParams.xGoal << 1.98, 0.0;
 	agentParams.xHome << 0.08, 0.0, 0.0;
 	agentParams.xPrepare << 0.4, 0.0, 0.0;

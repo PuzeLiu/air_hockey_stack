@@ -35,6 +35,7 @@ namespace air_hockey_baseline_agent {
 class Transformations {
 public:
 	Transformations(std::string ns);
+	Transformations(geometry_msgs::TransformStamped &tfTable2Robot);
 
 	void transformTrajectory(trajectory_msgs::MultiDOFJointTrajectory &cartesianTrajectory);
 	void transformTable2Robot(Eigen::Vector3d &v_in_out);

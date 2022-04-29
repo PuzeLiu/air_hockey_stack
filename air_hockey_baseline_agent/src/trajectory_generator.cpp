@@ -42,10 +42,10 @@ TrajectoryGenerator::TrajectoryGenerator(const ros::NodeHandle &nh, AgentParams 
 	                     envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
 
 	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, optData.rate,
-	                                        envParams.universalJointHeight);
+		agentParams.universalJointHeight);
 	combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, optData.rate,
-	                                              envParams.universalJointHeight);
-	cubicLinearMotion = new CubicLinearMotion(optData.rate, envParams.universalJointHeight);
+		agentParams.universalJointHeight);
+	cubicLinearMotion = new CubicLinearMotion(optData.rate, agentParams.universalJointHeight);
 }
 
 void TrajectoryGenerator::getCartesianPosAndVel(Vector3d &x, Vector3d &dx,

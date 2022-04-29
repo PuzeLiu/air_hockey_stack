@@ -1,20 +1,26 @@
 <sdf version='1.7'>
   <model name='iiwa_striker'>
-    <link name='front_base'>
+    <joint name='world_F_base_joint' type='fixed'>
+      <pose relative_to='__model__'>0 0 0 0 -0 0</pose>
+      <parent>world</parent>
+      <child>F_link_0</child>
+    </joint>
+    <link name='F_link_0'>
+      <pose relative_to='world_F_base_joint'>0 0 0 0 -0 0</pose>
       <inertial>
-        <pose>-0.1 0 0.085 0 -0 0</pose>
+        <pose>0 0 0 0 -0 0</pose>
         <mass>5</mass>
         <inertia>
           <ixx>0.05</ixx>
           <ixy>0</ixy>
-          <ixz>-6.93889e-18</ixz>
+          <ixz>0</ixz>
           <iyy>0.06</iyy>
           <iyz>0</iyz>
           <izz>0.03</izz>
         </inertia>
       </inertial>
-      <collision name='front_base_fixed_joint_lump__F_link_0_collision'>
-        <pose>0 0 0.015 0 -0 0</pose>
+      <collision name='F_link_0_collision'>
+        <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
@@ -33,8 +39,8 @@
           </friction>
         </surface>
       </collision>
-      <visual name='front_base_fixed_joint_lump__F_link_0_visual'>
-        <pose>0 0 0.015 0 -0 0</pose>
+      <visual name='F_link_0_visual'>
+        <pose>0 0 0 0 -0 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
@@ -48,15 +54,11 @@
           </script>
         </material>
       </visual>
-      <velocity_decay/>
-      <kinematic>1</kinematic>
-      <gravity>1</gravity>
-      <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
     <joint name='F_joint_1' type='revolute'>
-      <pose relative_to='front_base'>0 0 0.1725 0 -0 0</pose>
-      <parent>front_base</parent>
+      <pose relative_to='F_link_0'>0 0 0.1575 0 -0 0</pose>
+      <parent>F_link_0</parent>
       <child>F_link_1</child>
       <axis>
         <xyz>0 0 1</xyz>
@@ -67,25 +69,35 @@
           <velocity>1.48353</velocity>
         </limit>
         <dynamics>
-          <damping>0.5</damping>
-          <friction>0</friction>
+          <damping>0.290458</damping>
+          <friction>0.378214</friction>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
         </dynamics>
       </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
     </joint>
     <link name='F_link_1'>
       <pose relative_to='F_joint_1'>0 0 0 0 -0 0</pose>
       <inertial>
-        <pose>0 -0.03 0.12 0 -0 0</pose>
-        <mass>3.94781</mass>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>3.85482</mass>
         <inertia>
-          <ixx>0.1</ixx>
+          <ixx>0.055704</ixx>
           <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.09</iyy>
+          <ixz>0.000356</ixz>
+          <iyy>0.056488</iyy>
           <iyz>0</iyz>
-          <izz>0.02</izz>
+          <izz>0.001462</izz>
         </inertia>
       </inertial>
       <collision name='F_link_1_collision'>
@@ -123,8 +135,6 @@
           </script>
         </material>
       </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
     <joint name='F_joint_2' type='revolute'>
@@ -140,25 +150,35 @@
           <velocity>1.48353</velocity>
         </limit>
         <dynamics>
-          <damping>0.5</damping>
-          <friction>0</friction>
+          <damping>0.465142</damping>
+          <friction>0.372973</friction>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
         </dynamics>
       </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
     </joint>
     <link name='F_link_2'>
       <pose relative_to='F_joint_2'>0 0 0 0 -0 0</pose>
       <inertial>
-        <pose>0.0003 0.059 0.042 0 -0 0</pose>
-        <mass>4.50275</mass>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>5.7738</mass>
         <inertia>
-          <ixx>0.05</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.018</iyy>
-          <iyz>0</iyz>
-          <izz>0.044</izz>
+          <ixx>0.025239</ixx>
+          <ixy>0.003213</ixy>
+          <ixz>-0.000263</ixz>
+          <iyy>0.003716</iyy>
+          <iyz>0.001421</iyz>
+          <izz>0.023538</izz>
         </inertia>
       </inertial>
       <collision name='F_link_2_collision'>
@@ -196,8 +216,6 @@
           </script>
         </material>
       </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
     <joint name='F_joint_3' type='revolute'>
@@ -213,25 +231,35 @@
           <velocity>1.74533</velocity>
         </limit>
         <dynamics>
-          <damping>0.5</damping>
-          <friction>0</friction>
+          <damping>0.1</damping>
+          <friction>0.213255</friction>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
         </dynamics>
       </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
     </joint>
     <link name='F_link_3'>
       <pose relative_to='F_joint_3'>0 0 0 0 -0 0</pose>
       <inertial>
-        <pose>0 0.03 0.13 0 -0 0</pose>
-        <mass>2.4552</mass>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>5.95319</mass>
         <inertia>
-          <ixx>0.08</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.075</iyy>
-          <iyz>0</iyz>
-          <izz>0.01</izz>
+          <ixx>0.016829</ixx>
+          <ixy>0.000286</ixy>
+          <ixz>0.000417</ixz>
+          <iyy>0.011761</iyy>
+          <iyz>-0.005257</iyz>
+          <izz>0.006149</izz>
         </inertia>
       </inertial>
       <collision name='F_link_3_collision'>
@@ -269,8 +297,6 @@
           </script>
         </material>
       </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
     <joint name='F_joint_4' type='revolute'>
@@ -286,25 +312,35 @@
           <velocity>1.309</velocity>
         </limit>
         <dynamics>
-          <damping>0.5</damping>
-          <friction>0</friction>
+          <damping>0.170443</damping>
+          <friction>0.327965</friction>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
         </dynamics>
       </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
     </joint>
     <link name='F_link_4'>
       <pose relative_to='F_joint_4'>0 0 0 0 -0 0</pose>
       <inertial>
-        <pose>0 0.067 0.034 0 -0 0</pose>
-        <mass>2.61155</mass>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>3.44872</mass>
         <inertia>
-          <ixx>0.03</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.01</iyy>
-          <iyz>0</iyz>
-          <izz>0.029</izz>
+          <ixx>0.019103</ixx>
+          <ixy>8.1e-05</ixy>
+          <ixz>-0.000175</ixz>
+          <iyy>0.016046</iyy>
+          <iyz>0.001274</iyz>
+          <izz>0.003551</izz>
         </inertia>
       </inertial>
       <collision name='F_link_4_collision'>
@@ -342,8 +378,6 @@
           </script>
         </material>
       </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
     <joint name='F_joint_5' type='revolute'>
@@ -359,25 +393,35 @@
           <velocity>2.26893</velocity>
         </limit>
         <dynamics>
-          <damping>0.5</damping>
-          <friction>0</friction>
+          <damping>0.1</damping>
+          <friction>0.53612</friction>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
         </dynamics>
       </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
     </joint>
     <link name='F_link_5'>
       <pose relative_to='F_joint_5'>0 0 0 0 -0 0</pose>
       <inertial>
-        <pose>0.0001 0.021 0.076 0 -0 0</pose>
-        <mass>3.41001</mass>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>4.00717</mass>
         <inertia>
-          <ixx>0.02</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.018</iyy>
-          <iyz>0</iyz>
-          <izz>0.005</izz>
+          <ixx>0.009814</ixx>
+          <ixy>-6.6e-05</ixy>
+          <ixz>-0.000189</ixz>
+          <iyy>0.008728</iyy>
+          <iyz>-0.001553</iyz>
+          <izz>0.001388</izz>
         </inertia>
       </inertial>
       <collision name='F_link_5_collision'>
@@ -415,8 +459,6 @@
           </script>
         </material>
       </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
     <joint name='F_joint_6' type='revolute'>
@@ -432,25 +474,35 @@
           <velocity>2.35619</velocity>
         </limit>
         <dynamics>
-          <damping>0.5</damping>
-          <friction>0</friction>
+          <damping>0.1</damping>
+          <friction>0.212718</friction>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
         </dynamics>
       </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
     </joint>
     <link name='F_link_6'>
       <pose relative_to='F_joint_6'>0 0 0 0 -0 0</pose>
       <inertial>
-        <pose>0 0.0006 0.0004 0 -0 0</pose>
-        <mass>3.38795</mass>
+        <pose>0 0 0 0 -0 0</pose>
+        <mass>2.41584</mass>
         <inertia>
-          <ixx>0.005</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.0036</iyy>
-          <iyz>0</iyz>
-          <izz>0.0047</izz>
+          <ixx>0.002321</ixx>
+          <ixy>0.000637</ixy>
+          <ixz>4.5e-05</ixz>
+          <iyy>0.00098</iyy>
+          <iyz>-0.000262</iyz>
+          <izz>0.0022</izz>
         </inertia>
       </inertial>
       <collision name='F_link_6_collision'>
@@ -488,8 +540,6 @@
           </script>
         </material>
       </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
     <joint name='F_joint_7' type='revolute'>
@@ -505,25 +555,35 @@
           <velocity>2.35619</velocity>
         </limit>
         <dynamics>
-          <damping>0.5</damping>
-          <friction>0</friction>
+          <damping>0.1</damping>
+          <friction>0.337016</friction>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
         </dynamics>
       </axis>
+      <physics>
+        <ode>
+          <implicit_spring_damper>1</implicit_spring_damper>
+          <cfm_damping>1</cfm_damping>
+          <limit>
+            <cfm>0</cfm>
+            <erp>0.2</erp>
+          </limit>
+        </ode>
+      </physics>
     </joint>
     <link name='F_link_7'>
       <pose relative_to='F_joint_7'>0 0 0 0 -0 0</pose>
       <inertial>
-        <pose>0 0 0.02 0 -0 0</pose>
-        <mass>0.354321</mass>
+        <pose>0 0 0.054277 0 -0 0</pose>
+        <mass>1.45734</mass>
         <inertia>
-          <ixx>0.001</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.001</iyy>
-          <iyz>0</iyz>
-          <izz>0.001</izz>
+          <ixx>0.0163483</ixx>
+          <ixy>0.000276</ixy>
+          <ixz>-0.000333</ixz>
+          <iyy>0.0166253</iyy>
+          <iyz>0.000211</iyz>
+          <izz>0.002818</izz>
         </inertia>
       </inertial>
       <collision name='F_link_7_collision'>
@@ -546,6 +606,34 @@
           </friction>
         </surface>
       </collision>
+      <collision name='F_link_7_fixed_joint_lump__F_striker_tip_collision_1'>
+        <pose>0 0 0.07 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>model://air_hockey_description/meshes/striker/collision/EE_arm_collision.stl</uri>
+          </mesh>
+        </geometry>
+        <surface>
+          <bounce>
+            <restitution_coefficient>1</restitution_coefficient>
+            <threshold>0</threshold>
+          </bounce>
+          <contact>
+            <collide_bitmask>2</collide_bitmask>
+            <ode>
+              <kp>1e+09</kp>
+              <max_vel>10</max_vel>
+            </ode>
+          </contact>
+          <friction>
+            <ode>
+              <mu>1</mu>
+              <mu2>1</mu2>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
       <visual name='F_link_7_visual'>
         <pose>0 0 0 0 -0 0</pose>
         <geometry>
@@ -561,70 +649,8 @@
           </script>
         </material>
       </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
-      <self_collide>0</self_collide>
-    </link>
-    <joint name='F_joint_ee' type='fixed'>
-      <pose relative_to='F_link_7'>0 0 0.07 0 -0 0</pose>
-      <parent>F_link_7</parent>
-      <child>F_link_ee</child>
-      <axis>
-        <dynamics>
-          <spring_reference>0</spring_reference>
-          <spring_stiffness>0</spring_stiffness>
-        </dynamics>
-        <xyz>0 0 1</xyz>
-        <limit>
-          <lower>-1e+16</lower>
-          <upper>1e+16</upper>
-        </limit>
-      </axis>
-      <physics>
-        <ode>
-          <limit>
-            <cfm>0</cfm>
-            <erp>0.2</erp>
-          </limit>
-        </ode>
-      </physics>
-    </joint>
-    <link name='F_link_ee'>
-      <pose relative_to='F_joint_ee'>0 0 0 0 -0 0</pose>
-      <inertial>
-        <pose>0 0 0.156 0 -0 0</pose>
-        <mass>0.35</mass>
-        <inertia>
-          <ixx>0.005</ixx>
-          <ixy>0</ixy>
-          <ixz>0</ixz>
-          <iyy>0.005</iyy>
-          <iyz>0</iyz>
-          <izz>0.001</izz>
-        </inertia>
-      </inertial>
-      <collision name='F_link_ee_fixed_joint_lump__F_striker_base_collision'>
-        <pose>0 0 0 0 -0 0</pose>
-        <geometry>
-          <mesh>
-            <scale>1 1 1</scale>
-            <uri>model://air_hockey_description/meshes/striker/collision/EE_arm_collision.stl</uri>
-          </mesh>
-        </geometry>
-        <surface>
-          <contact>
-            <ode/>
-          </contact>
-          <friction>
-            <ode>
-              <mu>0.2</mu>
-              <mu2>0.2</mu2>
-            </ode>
-          </friction>
-        </surface>
-      </collision>
-      <visual name='F_link_ee_fixed_joint_lump__F_striker_base_visual'>
-        <pose>0 0 0 0 -0 0</pose>
+      <visual name='F_link_7_fixed_joint_lump__F_striker_tip_visual_1'>
+        <pose>0 0 0.07 0 -0 0</pose>
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
@@ -638,13 +664,11 @@
           </script>
         </material>
       </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
     <joint name='F_striker_joint_1' type='revolute'>
-      <pose relative_to='F_link_ee'>0 0 0.515 0 -0 0</pose>
-      <parent>F_link_ee</parent>
+      <pose relative_to='F_link_7'>0 0 0.585 0 -0 0</pose>
+      <parent>F_link_7</parent>
       <child>F_striker_joint_link</child>
       <axis>
         <xyz>0 1 0</xyz>
@@ -652,10 +676,10 @@
           <lower>-1.5708</lower>
           <upper>1.5708</upper>
           <effort>1</effort>
-          <velocity>100</velocity>
+          <velocity>3.14159</velocity>
         </limit>
         <dynamics>
-          <damping>0.3</damping>
+          <damping>0.05</damping>
           <friction>0</friction>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
@@ -666,18 +690,16 @@
       <pose relative_to='F_striker_joint_1'>0 0 0 0 -0 0</pose>
       <inertial>
         <pose>0 0 0 0 -0 0</pose>
-        <mass>0.01</mass>
+        <mass>0.05</mass>
         <inertia>
-          <ixx>0.01</ixx>
+          <ixx>0.001</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.01</iyy>
+          <iyy>0.001</iyy>
           <iyz>0</iyz>
-          <izz>0.01</izz>
+          <izz>0.001</izz>
         </inertia>
       </inertial>
-      <gravity>1</gravity>
-      <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
     <joint name='F_striker_joint_2' type='revolute'>
@@ -690,10 +712,10 @@
           <lower>-1.5708</lower>
           <upper>1.5708</upper>
           <effort>1</effort>
-          <velocity>100</velocity>
+          <velocity>3.14159</velocity>
         </limit>
         <dynamics>
-          <damping>0.3</damping>
+          <damping>0.05</damping>
           <friction>0</friction>
           <spring_reference>0</spring_reference>
           <spring_stiffness>0</spring_stiffness>
@@ -703,24 +725,24 @@
     <link name='F_striker_mallet'>
       <pose relative_to='F_striker_joint_2'>0 0 0 0 -0 0</pose>
       <inertial>
-        <pose>0 0 0.078 0 -0 0</pose>
+        <pose>0 0 0.0645 0 -0 0</pose>
         <mass>0.183</mass>
         <inertia>
-          <ixx>0.0001</ixx>
+          <ixx>0.01</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.0001</iyy>
+          <iyy>0.01</iyy>
           <iyz>0</iyz>
-          <izz>0.0001</izz>
+          <izz>0.01</izz>
         </inertia>
       </inertial>
       <collision name='F_striker_mallet_collision'>
-        <pose>0 0 0 0 -0 0</pose>
+        <pose>0 0 0.0455 0 -0 0</pose>
         <geometry>
-          <mesh>
-            <scale>1 1 1</scale>
-            <uri>model://air_hockey_description/meshes/striker/collision/EE_mallet_collision.stl</uri>
-          </mesh>
+          <cylinder>
+            <length>0.04</length>
+            <radius>0.04815</radius>
+          </cylinder>
         </geometry>
         <surface>
           <bounce>
@@ -728,8 +750,10 @@
             <threshold>0</threshold>
           </bounce>
           <contact>
+            <collide_bitmask>2</collide_bitmask>
             <ode>
-              <max_vel>100</max_vel>
+              <kp>1e+09</kp>
+              <max_vel>10</max_vel>
             </ode>
           </contact>
           <friction>
@@ -745,7 +769,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>model://air_hockey_description/meshes/striker/visual/EE_mallet.stl</uri>
+            <uri>model://air_hockey_description/meshes/striker/visual/EE_mallet_foam.stl</uri>
           </mesh>
         </geometry>
         <material>
@@ -755,12 +779,10 @@
           </script>
         </material>
       </visual>
-      <gravity>1</gravity>
-      <velocity_decay/>
       <self_collide>0</self_collide>
     </link>
     <joint name='F_striker_mallet_fix' type='fixed'>
-      <pose relative_to='F_striker_mallet'>0 0 0.095 0 -0 0</pose>
+      <pose relative_to='F_striker_mallet'>0 0 0.0645 0 -0 0</pose>
       <parent>F_striker_mallet</parent>
       <child>F_striker_mallet_tip</child>
       <axis>
@@ -787,18 +809,21 @@
       <pose relative_to='F_striker_mallet_fix'>0 0 0 0 -0 0</pose>
       <inertial>
         <pose>0 0 0 0 -0 0</pose>
-        <mass>0.1</mass>
+        <mass>0.05</mass>
         <inertia>
-          <ixx>0.0001</ixx>
+          <ixx>0.001</ixx>
           <ixy>0</ixy>
           <ixz>0</ixz>
-          <iyy>0.0001</iyy>
+          <iyy>0.001</iyy>
           <iyz>0</iyz>
-          <izz>0.0001</izz>
+          <izz>0.001</izz>
         </inertia>
       </inertial>
     </link>
+    <plugin name='univsersal_joint_plugin' filename='libuniversal_joint_plugin.so'/>
     <static>0</static>
-    <plugin name='gazebo_ros_control' filename='libgazebo_ros_control.so'/>
+    <plugin name='gazebo_ros_control' filename='libgazebo_ros_control.so'>
+      <robotSimType>iiwas_gazebo/GravityCompensationHWSim</robotSimType>
+    </plugin>
   </model>
 </sdf>
