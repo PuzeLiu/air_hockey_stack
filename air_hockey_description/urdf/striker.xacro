@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:property name="collide_bitmask" value="0x02"/>
+
     <xacro:macro name="striker" params="robot_name hardware_interface contain_universal_joint">
         <joint name="${robot_name}_striker" type="fixed">
             <parent link="${robot_name}_link_ee"/>
@@ -110,7 +112,7 @@
                         <threshold>0.0</threshold>
                     </bounce>
                     <contact>
-                        <collide_bitmask>0x02</collide_bitmask>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <kp>1e9</kp>
                             <max_vel>10</max_vel>
@@ -132,7 +134,7 @@
                         <threshold>0.0</threshold>
                     </bounce>
                     <contact>
-                        <collide_bitmask>0x02</collide_bitmask>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <kp>1e9</kp>
                             <max_vel>10</max_vel>
@@ -154,7 +156,7 @@
                         <threshold>0.0</threshold>
                     </bounce>
                     <contact>
-                        <collide_bitmask>0x02</collide_bitmask>
+                        <collide_bitmask>${collide_bitmask}</collide_bitmask>
                         <ode>
                             <kp>1e9</kp>
                             <max_vel>10</max_vel>

@@ -56,7 +56,7 @@ bool Ready::apply() {
 	xCur2d = xCur.block<2, 1>(0, 0);
 	vCur2d = vCur.block<2, 1>(0, 0);
 
-	double tStop = std::max((agentParams.xHome.block<2, 1>(0, 0) - xCur2d).norm() / 0.5, 2.0);
+	double tStop = std::max((agentParams.xHome.block<2, 1>(0, 0) - xCur2d).norm() / 1.0, 2.0);
 	for (int i = 0; i < 1; ++i) {
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
