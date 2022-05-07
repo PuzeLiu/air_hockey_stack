@@ -39,16 +39,15 @@ bool Prepare::ready() {
 }
 
 bool Prepare::apply() {
-	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
-	ros::Time tStart;
-	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
+	state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
+	generator.getPlannedJointState(state, state.tStart);
 
-	if (dqStart.norm() > 0.05) {
+	if (state.dqPlan.norm() > 0.05) {
 		generateStopTrajectory();
 		return true;
 	} else {
 		state.isNewTactics = false;
-		return generatePrepareTrajectory(qStart, dqStart, tStart);
+		return generatePrepareTrajectory(state.qPlan, state.dqPlan, state.tPlan);
 	}
 }
 
@@ -71,11 +70,6 @@ bool Prepare::generatePrepareTrajectory(JointArrayType &qStart,
                                         ros::Time tStart) {
 	Vector3d xStart, vStart;
 	Vector2d xStart2d, vStart2d, xPuck, xPrepare, vPrepare;
-
-	generator.getCartesianPosAndVel(xStart, vStart, qStart, dqStart);
-
-	generator.transformations->transformRobot2Table(xStart);
-	generator.transformations->rotationRobot2Table(vStart);
 
 	xStart2d = xStart.block<2, 1>(0, 0);
 

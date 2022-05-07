@@ -29,7 +29,7 @@ using namespace Eigen;
 
 
 Agent::Agent(ros::NodeHandle nh) :
-        nh(nh), state(nh.getNamespace()), rate(100) {
+        nh(nh), rate(100) {
     double r;
     if (nh.getParam("/air_hockey/agent/rate", r)) {
         rate = ros::Rate(r);
@@ -37,6 +37,7 @@ Agent::Agent(ros::NodeHandle nh) :
 
     loadEnvironmentParams();
     loadAgentParam();
+	state.init(agentParams);
 
     std::string controllerName = getControllerName();
     observer = new Observer(nh, controllerName, agentParams.defendLine, agentParams.nq);
@@ -118,6 +119,10 @@ void Agent::loadAgentParam() {
     std::vector<double> xTmp;
     nh.param("/air_hockey/agent/debug_tactics", agentParams.debugTactics, false);
 
+	if (!nh.getParam("/air_hockey/agent/rate", agentParams.rate)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/rate");
+	}
+
     if (!nh.getParam("/air_hockey/agent/q_ref", xTmp)) {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/q_ref");
     }
@@ -128,27 +133,31 @@ void Agent::loadAgentParam() {
     }
     agentParams.xGoal << xTmp[0], xTmp[1];
 
+	if (!nh.getParam("/air_hockey/agent/universal_joint_height", agentParams.universalJointHeight)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/universal_joint_height");
+	}
+
+	if (!nh.getParam("/air_hockey/agent/init_position_height", agentParams.initHeight)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/init_position_height");
+	}
+
     if (!nh.getParam("/air_hockey/agent/home", xTmp)) {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/home");
     }
-    agentParams.xHome << xTmp[0], xTmp[1], 0.0;
-
-    if (!nh.getParam("/air_hockey/agent/prepare", xTmp)) {
-        ROS_ERROR_STREAM("Unable to find /air_hockey/agent/prepare");
-    }
-    agentParams.xPrepare << xTmp[0], xTmp[1], agentParams.universalJointHeight + envParams.puckHeight;
+    agentParams.xHome << xTmp[0], xTmp[1], agentParams.universalJointHeight;
+    agentParams.xInit << xTmp[0], xTmp[1], agentParams.universalJointHeight + agentParams.initHeight;
 
     if (!nh.getParam("/air_hockey/agent/hit_range", xTmp)) {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/hit_range");
     }
     agentParams.hitRange << xTmp[0], xTmp[1];
 
-    if (!nh.getParam("/air_hockey/agent/min_defend_velocity", agentParams.vDefendMin)) {
-        ROS_ERROR_STREAM("Unable to find /air_hockey/agent/min_defend_velocity");
+    if (!nh.getParam("/air_hockey/agent/defend_min_velocity", agentParams.defendMinVel)) {
+        ROS_ERROR_STREAM("Unable to find /air_hockey/agent/defend_min_velocity");
     }
 
-    if (!nh.getParam("/air_hockey/agent/min_defend_time", agentParams.tDefendMin)) {
-        ROS_ERROR_STREAM("Unable to find /air_hockey/agent/min_defend_time");
+    if (!nh.getParam("/air_hockey/agent/defend_min_time", agentParams.defendMinTime)) {
+        ROS_ERROR_STREAM("Unable to find /air_hockey/agent/defend_min_time");
     }
 
     if (!nh.getParam("/air_hockey/agent/defend_zone_width", agentParams.defendZoneWidth)) {
@@ -159,6 +168,18 @@ void Agent::loadAgentParam() {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/defend_line");
     }
 
+	if (!nh.getParam("/air_hockey/agent/defend_max_ee_velocity", agentParams.defendMaxEEVelocity)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/defend_max_ee_velocity");
+	}
+
+	if (!nh.getParam("/air_hockey/agent/defend_plan_steps", agentParams.defendPlanSteps)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/defend_plan_steps");
+	}
+
+	if (!nh.getParam("/air_hockey/agent/defend_target_update_ratio", agentParams.defendTargetUpdateRatio)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/defend_target_update_ratio");
+	}
+
     if (!nh.getParam("/air_hockey/agent/plan_time_offset", agentParams.planTimeOffset)) {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/plan_time_offset");
     }
@@ -167,17 +188,13 @@ void Agent::loadAgentParam() {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/min_tactic_switch_time");
     }
 
+	if (!nh.getParam("/air_hockey/agent/pause_reset_time", agentParams.tPauseReset)) {
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/pause_reset_time");
+	}
+
     if (!nh.getParam("/air_hockey/agent/hit_velocity_scale", agentParams.hitVelocityScale)) {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/hit_velocity_scale");
     }
-
-    if (!nh.getParam("/air_hockey/agent/init_position_height", agentParams.initHeight)) {
-        ROS_ERROR_STREAM("Unable to find /air_hockey/agent/init_position_height");
-    }
-
-	if (!nh.getParam("/air_hockey/agent/universal_joint_height", agentParams.universalJointHeight)) {
-		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/universal_joint_height");
-	}
 }
 
 void Agent::computeBaseConfigurations() {
@@ -190,7 +207,7 @@ void Agent::computeBaseConfigurations() {
 
     pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, agentParams.qRef);
     pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
-    xTmp << agentParams.xHome[0], agentParams.xHome[1], agentParams.universalJointHeight;
+    xTmp = agentParams.xHome;
 	transformations->transformTable2Robot(xTmp);
     pinocchio::SE3 oMhome(agentParams.pinoData.oMf[agentParams.pinoFrameId].rotation(), xTmp);
     if (!inverseKinematics(agentParams, oMhome, agentParams.qRef, agentParams.qHome)) {
@@ -201,7 +218,7 @@ void Agent::computeBaseConfigurations() {
     optimizer->solveJoint7(agentParams.qHome, dqTmp);
 
     // compute qinit
-    xTmp << agentParams.xHome[0], agentParams.xHome[1], agentParams.universalJointHeight + agentParams.initHeight;
+    xTmp = agentParams.xInit;
 	transformations->transformTable2Robot(xTmp);
     pinocchio::SE3 oMinit(agentParams.pinoData.oMf[agentParams.pinoFrameId].rotation(), xTmp);
     if (!inverseKinematics(agentParams, oMinit, agentParams.qRef, agentParams.qInit)) {
@@ -255,34 +272,43 @@ std::string Agent::getControllerName() {
 bool Agent::setTacticService(SetTacticsService::Request &req, SetTacticsService::Response &res) {
     if (req.tactic == "SMASH") {
         agentParams.smashStrategy = req.smashStrategy;
-        ROS_INFO_STREAM("Set Tactic Service with smash Strategy: " << req.smashStrategy);
+        ROS_INFO_STREAM("Set Tactic: SMASH, Strategy: " << req.smashStrategy);
         tacticsProcessor[state.currentTactic]->setTactic(Tactics::SMASH);
     } else if (req.tactic == "CUT") {
+		ROS_INFO_STREAM("Set Tactic: CUT");
         int count = 0;
-        while (count < 120) {
-            if (tacticsProcessor[state.currentTactic]->shouldCut()) {
+        while (count < 300) {
+			state.updateObservationAndState(observer->getObservation(), agentParams);
+            if (state.isPuckApproaching() && tacticsProcessor[state.currentTactic]->shouldCut()) {
                 tacticsProcessor[state.currentTactic]->setTactic(Tactics::CUT);
-                break;
+                goto success_return;
             }
             count++;
             rate.sleep();
         }
+		ROS_INFO_STREAM("Time Out of Tactics: CUT");
     } else if (req.tactic == "REPEL") {
+		ROS_INFO_STREAM("Set Tactic: REPEL");
         int count = 0;
-        while (count < 120) {
-            if (tacticsProcessor[state.currentTactic]->shouldRepel()) {
+        while (count < 300) {
+			state.updateObservationAndState(observer->getObservation(), agentParams);
+            if (state.isPuckApproaching() && tacticsProcessor[state.currentTactic]->shouldRepel()) {
                 tacticsProcessor[state.currentTactic]->setTactic(Tactics::REPEL);
-                break;
+				goto success_return;
             }
             count++;
             rate.sleep();
         }
+		ROS_INFO_STREAM("Time Out of Tactics: CUT");
     } else if (req.tactic == "PREPARE") {
+		ROS_INFO_STREAM("Set Tactic: PREPARE");
         tacticsProcessor[state.currentTactic]->setTactic(Tactics::PREPARE);
+		goto success_return;
     } else {
         return false;
     }
 
-    res.success = true;
-    return true;
+	success_return:
+		res.success = true;
+		return true;
 }

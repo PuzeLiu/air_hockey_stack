@@ -35,51 +35,57 @@ Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Ready::ready() {
-	return !state.hasActiveTrajectory();
+	//! New cut implementation
+	if (state.isNewTactics) {
+		// Get planned position and velocity at now + timeoffset
+		state.tPlan = ros::Time::now();
+		double last_point_time;
+		if (!state.jointTrajectory.points.empty()){
+			last_point_time = state.jointTrajectory.points.back().time_from_start.toSec();
+		}
+		state.tStart = state.tPlan + ros::Duration(std::min(agentParams.planTimeOffset, last_point_time));
+	} else {
+		state.tStart = state.tPlan + ros::Duration(2.0);
+	}
+	generator.getPlannedJointState(state, state.tStart);
+	return true;
 }
 
 bool Ready::apply() {
 	state.isNewTactics = false;
-
-	Vector3d xCur, vCur;
-	Vector2d xCur2d, vCur2d;
-	ros::Time tStart;
-	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
-
-	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
-
-	generator.getCartesianPosAndVel(xCur, vCur, qStart, dqStart);
-
-	generator.transformations->transformRobot2Table(xCur);
-	generator.transformations->rotationRobot2Table(vCur);
-
-	xCur2d = xCur.block<2, 1>(0, 0);
-	vCur2d = vCur.block<2, 1>(0, 0);
-
-	double tStop = std::max((agentParams.xHome.block<2, 1>(0, 0) - xCur2d).norm() / 1.0, 2.0);
-	for (int i = 0; i < 1; ++i) {
+	if (ros::Time::now() >= state.tPlan)
+	{
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
-		generator.cubicLinearMotion->plan(xCur2d, vCur2d, agentParams.xHome.block<2, 1>(0, 0),
-		                                  Vector2d(0., 0.), tStop, state.cartTrajectory);
+
+		double tStop = std::max((agentParams.xHome - state.xPlan).norm() / 1.0, 2.0);
+
+		generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, agentParams.xHome, Vector3d(0., 0., 0.),
+			tStop, state.cartTrajectory);
+
 		generator.transformations->transformTrajectory(state.cartTrajectory);
 
-		if (!generator.optimizer->optimizeJointTrajectoryAnchor(
-				state.cartTrajectory, qStart, agentParams.qHome, state.jointTrajectory, true)) {
-			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
-									"Optimization Failed [READY]. Increase the motion time: " << tStop);
-			tStop += 0.5;
-		} else {
-			failed = false;
-			state.jointTrajectory.header.stamp = tStart;
-			state.cartTrajectory.header.stamp = tStart;
+		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, state.qPlan,
+			agentParams.qHome, state.cartTrajectory.points.back().time_from_start.toSec() / 2, state.jointTrajectory)) {
+			if (state.jointTrajectory.points.front().time_from_start.toSec() == 0) {
+				for (int j = 0; j < agentParams.nq; ++j)
+				{
+					state.jointTrajectory.points.front().positions[j] = state.qPlan[j];
+					state.jointTrajectory.points.front().velocities[j] = state.dqPlan[j];
+				}
+			}
+			generator.cubicSplineInterpolation(state.jointTrajectory);
+			state.tPlan = state.tStart;
+			state.jointTrajectory.header.stamp = state.tStart;
+			state.cartTrajectory.header.stamp = state.tStart;
 			return true;
 		}
+		else
+		{
+			ROS_INFO_STREAM("Plan Failed");
+			return false;
+		}
 	}
-	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
-							"Optimization Failed [READY]. Unable to find trajectory for Ready");
-	state.jointTrajectory.points.clear();
-	state.cartTrajectory.points.clear();
 	return false;
 }
 

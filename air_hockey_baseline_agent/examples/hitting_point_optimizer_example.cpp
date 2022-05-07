@@ -46,12 +46,12 @@ void loadAgentParams(AgentParams& agentParams){
 	agentParams.qRef << 0., 0.06580,  0., -1.45996, 0.,  1.22487, 0.;
 	agentParams.xGoal << 1.98, 0.0;
 	agentParams.xHome << 0.08, 0.0, 0.0;
-	agentParams.xPrepare << 0.4, 0.0, 0.0;
+	agentParams.xInit << 0.4, 0.0, 0.0;
 
 	agentParams.hitRange << 0.2, 0.9;
 
-	agentParams.vDefendMin = 0.08;
-	agentParams.tDefendMin = 0.3;
+	agentParams.defendMinVel = 0.08;
+	agentParams.defendMinTime = 0.3;
 	agentParams.defendZoneWidth = 0.4;
 	agentParams.defendLine = 0.2;
 	agentParams.planTimeOffset = 0.1;

@@ -35,68 +35,61 @@ Cut::Cut(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Cut::ready() {
-	calculateCutPosition();
-	if (collisionNumPrev != state.observation.puckPredictedState.numOfCollisions){
-		collisionNumPrev = state.observation.puckPredictedState.numOfCollisions;
-		waitForSteps = 5;
-	} else if (state.observation.puckPredictedState.predictedTime > 0.3 &&
-	     (xCut - xCutPrev).norm() > (envParams.puckRadius + envParams.malletRadius)) {
-		if (differenceCount > 5){
-			state.isNewTactics = true;
-		} else {
-			++differenceCount;
+	if (state.isNewTactics) {
+		// Get planned position and velocity at now + timeoffset
+		state.tPlan = ros::Time::now();
+		double last_point_time;
+		if (!state.jointTrajectory.points.empty()){
+			last_point_time = state.jointTrajectory.points.back().time_from_start.toSec();
 		}
+		state.tStart = state.tPlan + ros::Duration(std::min(agentParams.planTimeOffset, last_point_time));
 	} else {
-		differenceCount = 0;
+		state.tStart = state.tPlan + ros::Duration(agentParams.defendPlanSteps / agentParams.rate);
 	}
-
-	return state.isNewTactics;
+	generator.getPlannedJointState(state, state.tStart);
+	calculateCutPosition();
+	return true;
 }
 
 bool Cut::apply() {
+	double tStop;
 	state.isNewTactics = false;
+	if (ros::Time::now() > state.tPlan)
+	{
+		state.cartTrajectory.points.clear();
+		state.jointTrajectory.points.clear();
 
-	xCutPrev = xCut;
+		tStop = std::max(agentParams.defendPlanSteps / agentParams.rate,
+			(xCut - state.xPlan).norm() / agentParams.defendMaxEEVelocity);
 
-	Vector3d xCur, vCur;
-	Vector2d xCur2d, vCur2d;
-	ros::Time tStart;
-	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
+		tStop = std::max(tStop, state.observation.puckPredictedState.predictedTime - 0.5);
 
-	state.getPlannedJointState(qStart, dqStart, tStart,
-	                           agentParams.planTimeOffset);
+		generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, xCut, Vector3d(0., 0., 0.),
+				tStop, agentParams.defendPlanSteps, state.cartTrajectory);
 
-	generator.getCartesianPosAndVel(xCur, vCur, qStart, dqStart);
+		generator.transformations->transformTrajectory(state.cartTrajectory);
 
-	generator.transformations->transformRobot2Table(xCur);
-	generator.transformations->rotationRobot2Table(vCur);
-
-	xCur2d = xCur.block<2, 1>(0, 0);
-	vCur2d = vCur.block<2, 1>(0, 0);
-	double tStop = boost::algorithm::clamp(
-			state.observation.puckPredictedState.predictedTime - 0.3,
-			agentParams.tDefendMin, agentParams.tPredictionMax);
-
-	xCut.x() = boost::algorithm::clamp(xCut.x(), envParams.malletRadius + 0.01, envParams.tableLength);
-	xCut.y() = boost::algorithm::clamp(xCut.y(),
-	                                   -envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
-	                                   envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
-
-	state.cartTrajectory.points.clear();
-	state.jointTrajectory.points.clear();
-	generator.cubicLinearMotion->plan(xCur2d, vCur2d, xCut,
-	                                  Vector2d(0., 0.), tStop, state.cartTrajectory);
-	generator.transformations->transformTrajectory(state.cartTrajectory);
-
-	if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, qStart,	state.jointTrajectory)) {
-		state.jointTrajectory.header.stamp = tStart;
-		state.cartTrajectory.header.stamp = tStart;
-		return true;
+		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, state.qPlan, state.jointTrajectory))
+		{
+			if (state.jointTrajectory.points.front().time_from_start.toSec() == 0) {
+				for (int j = 0; j < agentParams.nq; ++j)
+				{
+					state.jointTrajectory.points.front().positions[j] = state.qPlan[j];
+					state.jointTrajectory.points.front().velocities[j] = state.dqPlan[j];
+				}
+			}
+			generator.cubicSplineInterpolation(state.jointTrajectory);
+			state.tPlan = state.tStart;
+			state.jointTrajectory.header.stamp = state.tStart;
+			state.cartTrajectory.header.stamp = state.tStart;
+			return true;
+		}
+		else
+		{
+			ROS_INFO_STREAM("Plan Failed");
+			return false;
+		}
 	}
-
-	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Optimization Failed [Cut].");
-	state.jointTrajectory.points.clear();
-	state.cartTrajectory.points.clear();
 	return false;
 }
 
@@ -105,10 +98,7 @@ Cut::~Cut() {
 }
 
 void Cut::setNextState() {
-	if (state.isPuckApproaching() && state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax &&
-	    abs(state.observation.puckPredictedState.state.y()) > agentParams.defendZoneWidth / 2) {
-		setTactic(CUT);
-	} else {
+	if (not state.isPuckStatic() and (not state.isPuckApproaching() or not shouldCut())) {
 		setTactic(READY);
 		//! reset the cut record
 		xCutPrev << 0., 0.;
@@ -120,18 +110,27 @@ void Cut::calculateCutPosition() {
 		--waitForSteps;
 		return;
 	}
+	Vector2d cutTmp;
 	if (state.observation.puckPredictedState.state.y() > 0) {
 		Vector2d vIn = state.observation.puckPredictedState.state.block<2, 1>(2, 0).normalized();
 		Vector2d vOut(0., 1.);
 		Vector2d offsetDir = (vIn - vOut).normalized();
-		xCut = state.observation.puckPredictedState.state.block<2, 1>(0, 0) +
+		cutTmp = state.observation.puckPredictedState.state.block<2, 1>(0, 0) +
 		       offsetDir * (envParams.puckRadius + envParams.malletRadius);
 	} else {
 		Vector2d vIn = state.observation.puckPredictedState.state.block<2, 1>(2, 0).normalized();
 		Vector2d vOut(0., -1.);
 		Vector2d offsetDir = (vIn - vOut).normalized();
-		xCut = state.observation.puckPredictedState.state.block<2, 1>(0, 0) +
+		cutTmp = state.observation.puckPredictedState.state.block<2, 1>(0, 0) +
 		       offsetDir * (envParams.puckRadius + envParams.malletRadius);
 	}
+
+	if (state.isNewTactics) {
+		xCut.topRows(2) = cutTmp;
+	} else {
+		xCut.topRows(2) = (1 - agentParams.defendTargetUpdateRatio) * xCut.topRows(2) +
+			agentParams.defendTargetUpdateRatio * cutTmp;
+	}
+	xCut[2] = agentParams.universalJointHeight;
 }
 

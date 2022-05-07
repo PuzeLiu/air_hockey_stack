@@ -63,6 +63,7 @@ namespace air_hockey_baseline_agent {
 
 	struct AgentParams {
 		std::string name;
+		double rate;
         bool debugTactics;
 
 		pinocchio::Model pinoModel;
@@ -76,17 +77,22 @@ namespace air_hockey_baseline_agent {
 		JointArrayType qInit;
 		Eigen::Vector2d xGoal;
 		Eigen::Vector3d xHome;
-		Eigen::Vector3d xPrepare;
+		Eigen::Vector3d xInit;
 
 		Eigen::Vector2d hitRange;
 
-		double vDefendMin;
-		double tDefendMin;
+		int defendPlanSteps;
+		double defendMinVel;
+		double defendMinTime;
 		double defendZoneWidth;
 		double defendLine;
+		double defendMaxEEVelocity;
+		double defendTargetUpdateRatio;
+
 		double planTimeOffset;
 		double tPredictionMax;
 		double tTacticSwitchMin;
+		double tPauseReset;
 		double hitVelocityScale;
 		double initHeight;
 		double universalJointHeight;
@@ -113,7 +119,6 @@ namespace air_hockey_baseline_agent {
 		int dimNullSpace;
 
 		// Variable for QP Solver
-		double rate;
 		Eigen::SparseMatrix<double>P;
 		Eigen::VectorXd q;
 		Eigen::SparseMatrix<double> A;

@@ -45,6 +45,8 @@ namespace air_hockey_baseline_agent {
 
 		~TrajectoryGenerator();
 
+		void getPlannedJointState(SystemState &state, ros::Time plannedTime);
+
 		void getCartesianPosAndVel(Eigen::Vector3d &x,
 		                           Eigen::Vector3d &dx,
 		                           JointArrayType &q,

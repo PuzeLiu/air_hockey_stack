@@ -41,11 +41,11 @@ TrajectoryGenerator::TrajectoryGenerator(const ros::NodeHandle &nh, AgentParams 
 	Vector2d bound_upper(envParams.tableLength / 2 - envParams.malletRadius,
 	                     envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
 
-	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, optData.rate,
+	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, agentParams.rate,
 		agentParams.universalJointHeight);
-	combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, optData.rate,
+	combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, agentParams.rate,
 		agentParams.universalJointHeight);
-	cubicLinearMotion = new CubicLinearMotion(optData.rate, agentParams.universalJointHeight);
+	cubicLinearMotion = new CubicLinearMotion(agentParams.rate, agentParams.universalJointHeight);
 }
 
 void TrajectoryGenerator::getCartesianPosAndVel(Vector3d &x, Vector3d &dx,
@@ -55,10 +55,6 @@ void TrajectoryGenerator::getCartesianPosAndVel(Vector3d &x, Vector3d &dx,
 	x = agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
 	dx = pinocchio::getFrameVelocity(agentParams.pinoModel, agentParams.pinoData,
 	                                 agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED).linear();
-//	kinematics->forwardKinematics(q, x);
-//	Kinematics::JacobianPosType jacobian;
-//	kinematics->jacobianPos(q, jacobian);
-//	dx = jacobian * dq;
 }
 
 TrajectoryGenerator::~TrajectoryGenerator() {
@@ -114,8 +110,8 @@ void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTraject
 			jointTraj.points[j].accelerations.clear();
 		}
 		tk::spline spline(x, y, tk::spline::cspline, false,
-		                  tk::spline::first_deriv, 0.0,
-		                  tk::spline::first_deriv, 0.0);
+		                  tk::spline::first_deriv, jointTraj.points.front().velocities[i],
+		                  tk::spline::first_deriv, jointTraj.points.back().velocities[i]);
 
 		for (int j = 0; j < n; ++j) {
 			jointTraj.points[j].velocities[i] = spline.deriv(1, x[j]);
@@ -124,9 +120,45 @@ void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTraject
 }
 
 void TrajectoryGenerator::initOptimizerData(const ros::NodeHandle &nh) {
-	nh.getParam("/air_hockey/agent/rate", optData.rate);
-	optData.K.setConstant(optData.rate);
+	optData.K.setConstant(agentParams.rate);
 	optData.weights << 10., 10., 5., 10., 1., 1., 0.01;
 	optData.weightsAnchor << 1., 1., 5., 1, 10., 10., 0.01;
+}
+
+void TrajectoryGenerator::getPlannedJointState(SystemState &state, ros::Time tPlan)
+{
+	if (!state.jointTrajectory.points.empty()) {
+		int idx = state.jointTrajectory.points.size() - 1;
+		for (int i = 0; i < state.jointTrajectory.points.size(); ++i) {
+			if (tPlan < state.jointTrajectory.header.stamp + state.jointTrajectory.points[i].time_from_start) {
+				idx = i;
+				break;
+			}
+		}
+
+		for (int j = 0; j < 7; ++j) {
+			state.qPlan[j] = state.jointTrajectory.points[idx].positions[j];
+			state.dqPlan[j] = state.jointTrajectory.points[idx].velocities[j];
+		}
+
+		if (state.cartTrajectory.points.size() == state.jointTrajectory.points.size()){
+			state.xPlan[0] = state.cartTrajectory.points[idx].transforms[0].translation.x;
+			state.xPlan[1] = state.cartTrajectory.points[idx].transforms[0].translation.y;
+			state.xPlan[2] = state.cartTrajectory.points[idx].transforms[0].translation.z;
+			state.vPlan[0] = state.cartTrajectory.points[idx].velocities[0].linear.x;
+			state.vPlan[1] = state.cartTrajectory.points[idx].velocities[0].linear.y;
+			state.vPlan[2] = state.cartTrajectory.points[idx].velocities[0].linear.z;
+		} else {
+			getCartesianPosAndVel(state.xPlan, state.vPlan, state.qPlan, state.dqPlan);
+		}
+	}
+	else {
+		state.qPlan = state.observation.jointDesiredPosition;
+		state.dqPlan = state.observation.jointDesiredVelocity;
+		getCartesianPosAndVel(state.xPlan, state.vPlan, state.qPlan, state.dqPlan);
+	}
+
+	transformations->transformRobot2Table(state.xPlan);
+	transformations->rotationRobot2Table(state.vPlan);
 }
 

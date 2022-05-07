@@ -109,7 +109,7 @@ protected:
 	bool generateCutTrajectory(JointArrayType &qStart,
 	                           JointArrayType &dqStart,
 	                           ros::Time tStart);
-	Eigen::Vector2d xCut, xCutPrev;
+	Eigen::Vector3d xCut, xCutPrev;
 	int collisionNumPrev, waitForSteps, differenceCount;
 };
 

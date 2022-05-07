@@ -27,37 +27,42 @@
 #include <Eigen/Dense>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 
+namespace air_hockey_baseline_agent
+{
+	class CubicLinearMotion
+	{
+	 public:
+		CubicLinearMotion(double rate, double height);
+		~CubicLinearMotion();
+		bool plan(const Eigen::Vector2d& pStart,
+			const Eigen::Vector2d& vStart,
+			const Eigen::Vector2d& pStop,
+			const Eigen::Vector2d& vStop,
+			double tStop,
+			trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
 
-namespace air_hockey_baseline_agent{
-class CubicLinearMotion {
-public:
-    CubicLinearMotion(double rate, double height);
-    ~CubicLinearMotion();
-    bool plan(const Eigen::Vector2d& pStart,
-              const Eigen::Vector2d& vStart,
-              const Eigen::Vector2d& pStop,
-              const Eigen::Vector2d& vStop,
-              double tStop,
-              trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
+		bool plan(const Eigen::Vector3d& pStart,
+			const Eigen::Vector3d& vStart,
+			const Eigen::Vector3d& pStop,
+			const Eigen::Vector3d& vStop,
+			double tStop,
+			trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
 
-    bool plan(const Eigen::Vector3d& pStart,
-              const Eigen::Vector3d& vStart,
-              const Eigen::Vector3d& pStop,
-              const Eigen::Vector3d& vStop,
-              double tStop,
-              trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
+		bool plan(const Eigen::Vector3d& pStart,
+			const Eigen::Vector3d& vStart,
+			const Eigen::Vector3d& pStop,
+			const Eigen::Vector3d& vStop,
+			double tStop,
+			int steps,
+			trajectory_msgs::MultiDOFJointTrajectory& cartTraj);
 
-private:
-    double stepSize_;
-    double height_;
+	 private:
+		double stepSize_;
+		double height_;
 
+		trajectory_msgs::MultiDOFJointTrajectoryPoint viaPoint_;
 
-    trajectory_msgs::MultiDOFJointTrajectoryPoint viaPoint_;
-
-
-
-};
+	};
 }
-
 
 #endif //SRC_CUBIC_LINEAR_MOTION_H

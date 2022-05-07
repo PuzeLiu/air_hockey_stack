@@ -54,8 +54,7 @@ bool Tactic::planReturnTraj(const double &vMax,
 		cartTrajReturn.points.push_back(lastPoint);
 
 		Vector3d xStop;
-		xStop
-				<< lastPoint.transforms[0].translation.x, lastPoint.transforms[0].translation.y, lastPoint.transforms[0].translation.z;
+		xStop << lastPoint.transforms[0].translation.x, lastPoint.transforms[0].translation.y, lastPoint.transforms[0].translation.z;
 		generator.transformations->transformRobot2Table(xStop);
 		Vector2d xStop2d = xStop.block<2, 1>(0, 0);
 		Vector2d xHome2d = agentParams.xHome.block<2, 1>(0, 0);
@@ -86,15 +85,14 @@ bool Tactic::planReturnTraj(const double &vMax,
 }
 
 void Tactic::generateStopTrajectory() {
-	JointArrayType q(agentParams.nq), dq(agentParams.nq);
-	ros::Time tTmp;
-	state.getPlannedJointState(q, dq, tTmp, agentParams.planTimeOffset / 2);
+	state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset / 2);
+	generator.getPlannedJointState(state, state.tStart);
 
 	trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 	jointViaPoint_.positions.resize(7);
 	jointViaPoint_.velocities.resize(7);
 	for (int i = 0; i < 7; ++i) {
-		jointViaPoint_.positions[i] = q[i];
+		jointViaPoint_.positions[i] = state.qPlan[i];
 		jointViaPoint_.velocities[i] = 0.;
 	}
 	jointViaPoint_.time_from_start = ros::Duration(agentParams.planTimeOffset);
@@ -180,8 +178,8 @@ bool Tactic::canSmash() {
 bool Tactic::shouldCut() {
 	if (state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax &&
 	    (state.observation.puckPredictedState.numOfCollisions > 0 ||
-	     (abs(state.observation.puckPredictedState.state.y()) <
-	      (envParams.tableWidth / 2 - envParams.malletRadius)))) {
+	     (abs(state.observation.puckPredictedState.state.y()) < (envParams.tableWidth / 2 - envParams.malletRadius))
+		 )) {
 		return true;
 	}
 	return false;

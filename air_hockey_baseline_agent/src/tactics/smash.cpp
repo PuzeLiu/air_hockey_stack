@@ -39,17 +39,18 @@ bool Smash::ready() {
 }
 
 bool Smash::apply() {
-	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
-	ros::Time tStart;
-	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
-
-	if (dqStart.norm() > 0.05) {
+	state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
+	generator.getPlannedJointState(state, state.tStart);
+	if (state.dqPlan.norm() > 0.05) {
 		generateStopTrajectory();
 		return true;
 	} else {
 		state.isNewTactics = false;
-		bool success = generateHitTrajectory(qStart, tStart);
-		return success;
+		if (not generateHitTrajectory(state.qPlan, state.tPlan)){
+			state.cartTrajectory.points.clear();
+			state.jointTrajectory.points.clear();
+		}
+		return true;
 	}
 }
 
@@ -148,89 +149,9 @@ bool Smash::generateHitTrajectory(const JointArrayType &qCur, ros::Time &tStart)
 	xStop2d = getStopPoint(xHit2d);
 	double hitting_time;
 
-//	trajectory_msgs::MultiDOFJointTrajectory cartTrajStop;
-//	trajectory_msgs::JointTrajectory jointTrajStop;
-//	cartTrajStop.joint_names = state.cartTrajectory.joint_names;
-//	jointTrajStop.joint_names = state.jointTrajectory.joint_names;
-
 	for (size_t i = 0; i < 10; ++i) {
 		state.cartTrajectory.points.clear();
 		state.jointTrajectory.points.clear();
-//		cartTrajStop.points.clear();
-//		jointTrajStop.points.clear();
-
-//		//! ############ Phase 1 ############
-//		Vector2d vZero;
-//		vZero.setZero();
-//		if (!generator.combinatorialHitNew->plan(xCur2d, vZero, xHit2d, vHit2d, state.cartTrajectory)) {
-//			return false;
-//		}
-//
-//		Vector2d xPhase2Start(state.cartTrajectory.points.back().transforms[0].translation.x,
-//		                      state.cartTrajectory.points.back().transforms[0].translation.y);
-//		Vector2d vPhase2Start(state.cartTrajectory.points.back().velocities[0].linear.x,
-//		                      state.cartTrajectory.points.back().velocities[0].linear.y);
-//		Vector2d xStop2d = getStopPoint(xHit2d);
-//		cartTrajStop.points.push_back(state.cartTrajectory.points.back());
-//
-//		generator.transformations->transformTrajectory(state.cartTrajectory);
-//
-////		bool success = generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, qCur, state.jointTrajectory);
-//		bool success = generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, qCur,
-//		                                                                  qHitRef, state.jointTrajectory,
-//		                                                                  true);
-//		if (!success) {
-//			vHit2d *= .9;
-//			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
-//					"Optimization Failed [HITTING Phase 1]. Reduce the velocity: " << vHit2d.transpose());
-//			continue;
-//		}
-//
-//		//! ############ Phase 2 ############
-//		if (!generator.combinatorialHitNew->plan(xPhase2Start, vPhase2Start, xStop2d, vZero, cartTrajStop)) {
-//			return false;
-//		}
-//		generator.transformations->transformTrajectory(cartTrajStop);
-//		cartTrajStop.points.erase(cartTrajStop.points.begin());
-//
-//		//! Trajectory Optimization for second part
-//		JointArrayType qHitOpt = JointArrayType::Map(state.jointTrajectory.points.back().positions.data(),
-//		                                             state.jointTrajectory.points.back().positions.size());
-//		success = success && generator.optimizer->optimizeJointTrajectoryAnchor(cartTrajStop, qHitOpt, qHitRef,
-//		                                                                        jointTrajStop, false);
-//		if (!success) {
-//			vHit2d *= .9;
-//			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
-//					"Optimization Failed [HITTING Phase 2]. Reduce the velocity: " << vHit2d.transpose());
-//			continue;
-//		} else {
-//			//! Concatenate trajectory
-//			state.cartTrajectory.points.insert(state.cartTrajectory.points.end(),
-//			                                   cartTrajStop.points.begin(),
-//			                                   cartTrajStop.points.end());
-//			state.jointTrajectory.points.insert(state.jointTrajectory.points.end(),
-//			                                    jointTrajStop.points.begin(),
-//			                                    jointTrajStop.points.end());
-////			generator.interpolateAcceleration(state.jointTrajectory);
-////			generator.interpolateVelocity(state.jointTrajectory);
-////			generator.cubicSplineInterpolation(state.jointTrajectory);
-//
-//			if (ros::Time::now() > tStart) {
-//				tStart = ros::Time::now();
-//			}
-//
-//			auto tHitStart = state.observation.stamp +
-//			                 ros::Duration(agentParams.tPredictionMax) -
-//			                 state.jointTrajectory.points.back().time_from_start;
-//
-//			if (tStart < tHitStart) {
-//				tStart = tHitStart;
-//			}
-//
-//			state.jointTrajectory.header.stamp = tStart;
-//			state.cartTrajectory.header.stamp = tStart;
-//			return true;
-//		}
 
 		if (not generator.combinatorialHitNew->plan(xCur2d, vZero2d, xHit2d, vHit2d,
 			xStop2d, vZero2d, hitting_time, state.cartTrajectory))	{

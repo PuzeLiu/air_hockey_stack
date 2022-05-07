@@ -68,7 +68,7 @@ bool MovePuck::apply() {
 		generator.cubicLinearMotion->plan(xLiftUp, Vector3d(0., 0., 0.),
 				xSetDown, Vector3d(0., 0., 0.), tStop, state.cartTrajectory);
 		generator.cubicLinearMotion->plan(xSetDown, Vector3d(0., 0., 0.),
-				agentParams.xPrepare, Vector3d(0., 0., 0.), tStop,
+				agentParams.xInit, Vector3d(0., 0., 0.), tStop,
 				state.cartTrajectory);
 
 		generator.transformations->transformTrajectory(state.cartTrajectory);

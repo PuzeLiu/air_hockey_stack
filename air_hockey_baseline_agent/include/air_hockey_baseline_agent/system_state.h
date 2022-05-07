@@ -34,9 +34,9 @@
 namespace air_hockey_baseline_agent {
 	class SystemState {
 	public:
-		SystemState(const std::string &ns);
+		SystemState();
 
-		void getPlannedJointState(JointArrayType &q, JointArrayType &dq, ros::Time &tStart, double offset_t);
+		void init(const AgentParams &agentParams);
 
 		bool hasActiveTrajectory();
 
@@ -59,6 +59,9 @@ namespace air_hockey_baseline_agent {
 		int staticCount;
 		int approachingCount;
 
+		JointArrayType qPlan, dqPlan;
+		Eigen::Vector3d xPlan, vPlan;
+		ros::Time tPlan, tStart;
 	};
 }
 

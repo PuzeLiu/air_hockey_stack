@@ -26,7 +26,8 @@
 using namespace Eigen;
 using namespace air_hockey_baseline_agent;
 
-CubicLinearMotion::CubicLinearMotion(double rate, double height) {
+CubicLinearMotion::CubicLinearMotion(double rate, double height)
+{
 	stepSize_ = 1 / rate;
 	height_ = height;
 
@@ -34,36 +35,42 @@ CubicLinearMotion::CubicLinearMotion(double rate, double height) {
 	viaPoint_.velocities.resize(1);
 }
 
-CubicLinearMotion::~CubicLinearMotion() {
+CubicLinearMotion::~CubicLinearMotion()
+{
 
 }
 
-bool CubicLinearMotion::plan(const Vector2d &pStart, const Vector2d &vStart,
-		const Vector2d &pStop, const Vector2d &vStop, double tStop,
-		trajectory_msgs::MultiDOFJointTrajectory &cartTraj) {
+bool CubicLinearMotion::plan(const Vector2d& pStart, const Vector2d& vStart,
+	const Vector2d& pStop, const Vector2d& vStop, double tStop,
+	trajectory_msgs::MultiDOFJointTrajectory& cartTraj)
+{
 	Matrix<double, 2, 4> coefficients;
 	coefficients.col(0) = pStart;
 	coefficients.col(1) = vStart;
 	coefficients.col(2) = (-3.0 * pStart + 3.0 * pStop - 2.0 * vStart * tStop
-			- vStop * tStop) / pow(tStop, 2);
+		- vStop * tStop) / pow(tStop, 2);
 	coefficients.col(3) = (2.0 * pStart - 2.0 * pStop + vStart * tStop
-			+ vStop * tStop) / pow(tStop, 3);
+		+ vStop * tStop) / pow(tStop, 3);
 
 	double t_prev;
-	if (cartTraj.points.size() == 0) {
+	if (cartTraj.points.size() == 0)
+	{
 		t_prev = 0.;
-	} else {
+	}
+	else
+	{
 		t_prev = cartTraj.points.back().time_from_start.toSec();
 	}
 	double t = 0.;
 	Vector2d xTmp_, vTmp_;
-	while (t <= tStop) {
+	while (t <= tStop)
+	{
 		t += stepSize_;
 		xTmp_ = coefficients.col(0) + coefficients.col(1) * t
-				+ coefficients.col(2) * pow(t, 2)
-				+ coefficients.col(3) * pow(t, 3);
+			+ coefficients.col(2) * pow(t, 2)
+			+ coefficients.col(3) * pow(t, 3);
 		vTmp_ = coefficients.col(1) + 2 * coefficients.col(2) * t
-				+ 3 * coefficients.col(3) * pow(t, 2);
+			+ 3 * coefficients.col(3) * pow(t, 2);
 
 		viaPoint_.transforms[0].translation.x = xTmp_[0];
 		viaPoint_.transforms[0].translation.y = xTmp_[1];
@@ -78,32 +85,52 @@ bool CubicLinearMotion::plan(const Vector2d &pStart, const Vector2d &vStart,
 	return true;
 }
 
-bool CubicLinearMotion::plan(const Vector3d &pStart, const Vector3d &vStart,
-		const Vector3d &pStop, const Vector3d &vStop, double tStop,
-		trajectory_msgs::MultiDOFJointTrajectory &cartTraj) {
+bool CubicLinearMotion::plan(const Vector3d& pStart, const Vector3d& vStart,
+	const Vector3d& pStop, const Vector3d& vStop, double tStop,
+	trajectory_msgs::MultiDOFJointTrajectory& cartTraj)
+{
+	return plan(pStart, vStart, pStop, vStop, tStop, int(std::ceil(tStop / stepSize_)), cartTraj);
+}
+
+bool CubicLinearMotion::plan(const Vector3d& pStart,
+	const Vector3d& vStart,
+	const Vector3d& pStop,
+	const Vector3d& vStop,
+	double tStop,
+	int steps,
+	trajectory_msgs::MultiDOFJointTrajectory& cartTraj)
+{
 	Matrix<double, 3, 4> coefficients;
 	coefficients.col(0) = pStart;
 	coefficients.col(1) = vStart;
-	coefficients.col(2) = (-3.0 * pStart + 3.0 * pStop - 2.0 * vStart * tStop
-			- vStop * tStop) / pow(tStop, 2);
-	coefficients.col(3) = (2.0 * pStart - 2.0 * pStop + vStart * tStop
-			+ vStop * tStop) / pow(tStop, 3);
+	coefficients.col(2) = (-3.0 * pStart + 3.0 * pStop - 2.0 * vStart * tStop - vStop * tStop) / pow(tStop, 2);
+	coefficients.col(3) = (2.0 * pStart - 2.0 * pStop + vStart * tStop + vStop * tStop) / pow(tStop, 3);
 
 	double t_prev;
-	if (cartTraj.points.size() == 0) {
+	if (cartTraj.points.size() == 0)
+	{
 		t_prev = 0.;
-	} else {
+	}
+	else
+	{
 		t_prev = cartTraj.points.back().time_from_start.toSec();
 	}
 	double t = 0.;
 	Vector3d xTmp_, vTmp_;
-	while (t <= tStop) {
-		t += stepSize_;
-		xTmp_ = coefficients.col(0) + coefficients.col(1) * t
+
+	steps = std::max(steps, int(std::ceil(tStop / stepSize_)));
+	for (int i = 0; i <= steps; ++i)
+	{
+		if (t <= tStop) {
+			xTmp_ = coefficients.col(0) + coefficients.col(1) * t
 				+ coefficients.col(2) * pow(t, 2)
 				+ coefficients.col(3) * pow(t, 3);
-		vTmp_ = coefficients.col(1) + 2 * coefficients.col(2) * t
+			vTmp_ = coefficients.col(1) + 2 * coefficients.col(2) * t
 				+ 3 * coefficients.col(3) * pow(t, 2);
+		} else {
+			xTmp_ = pStop + vStop * (t - tStop);
+			vTmp_ = vStop;
+		}
 
 		viaPoint_.transforms[0].translation.x = xTmp_[0];
 		viaPoint_.transforms[0].translation.y = xTmp_[1];
@@ -113,17 +140,8 @@ bool CubicLinearMotion::plan(const Vector3d &pStart, const Vector3d &vStart,
 		viaPoint_.velocities[0].linear.z = vTmp_[2];
 		viaPoint_.time_from_start = ros::Duration(t + t_prev);
 		cartTraj.points.push_back(viaPoint_);
-
+		t += stepSize_;
 	}
-
-	viaPoint_.transforms[0].translation.x = pStop[0];
-	viaPoint_.transforms[0].translation.y = pStop[1];
-	viaPoint_.transforms[0].translation.z = pStop[2];
-	viaPoint_.velocities[0].linear.x = vStop[0];
-	viaPoint_.velocities[0].linear.y = vStop[1];
-	viaPoint_.velocities[0].linear.z = vStop[2];
-	viaPoint_.time_from_start = ros::Duration(t + t_prev + stepSize_);
-	cartTraj.points.push_back(viaPoint_);
 
 	cartTraj.header.stamp = ros::Time::now();
 	return true;

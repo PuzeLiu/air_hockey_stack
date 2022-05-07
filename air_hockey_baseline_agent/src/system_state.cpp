@@ -26,25 +26,17 @@
 using namespace std;
 using namespace air_hockey_baseline_agent;
 
-SystemState::SystemState(const string& ns) {
-	string ns_prefix;
+SystemState::SystemState() {
+}
 
-	if (ns == "/iiwa_front") {
-		ns_prefix = 'F';
-	} else if (ns == "/iiwa_back") {
-		ns_prefix = 'B';
-	} else {
-		exit(-1);
-	}
-
+void SystemState::init(const AgentParams &agentParams)
+{
 	cartTrajectory.joint_names.push_back("x");
 	cartTrajectory.joint_names.push_back("y");
 	cartTrajectory.joint_names.push_back("z");
 
-	for (int i = 1; i < 8; i++) {
-		jointTrajectory.joint_names.push_back(
-				ns_prefix + "_joint_" + to_string(i));
-
+	for (int i = 0; i < agentParams.nq; i++) {
+		jointTrajectory.joint_names.push_back(agentParams.pinoModel.names[i + 1]);
 	}
 
 	currentTactic = Tactics::INIT;
@@ -53,36 +45,9 @@ SystemState::SystemState(const string& ns) {
 
 	staticCount = 0;
 	approachingCount = 0;
-}
 
-void SystemState::getPlannedJointState(JointArrayType &q,
-                                       JointArrayType &dq, ros::Time &tStart, double offset_t) {
-	q = observation.jointPosition;
-	dq = observation.jointVelocity;
-
-	if (!jointTrajectory.points.empty()) {
-		tStart = ros::Time::now() + ros::Duration(offset_t);
-		ros::Time tLast = jointTrajectory.header.stamp
-		                  + jointTrajectory.points.back().time_from_start;
-
-		if (tStart <= tLast) {
-			for (int i = 0; i < jointTrajectory.points.size(); ++i) {
-				if (tStart < jointTrajectory.header.stamp + jointTrajectory.points[i].time_from_start) {
-					for (int j = 0; j < 7; ++j) {
-						q[j] = jointTrajectory.points[i].positions[j];
-						dq[j] = jointTrajectory.points[i].velocities[j];
-						tStart = jointTrajectory.header.stamp + jointTrajectory.points[i].time_from_start;
-					}
-					break;
-				}
-			}
-		} else {
-			for (int j = 0; j < 7; ++j) {
-				q[j] = jointTrajectory.points.back().positions[j];
-				dq[j] = jointTrajectory.points.back().velocities[j];
-			}
-		}
-	}
+	qPlan.resize(agentParams.nq);
+	dqPlan.resize(agentParams.nq);
 }
 
 bool SystemState::hasActiveTrajectory() {
@@ -105,7 +70,7 @@ void SystemState::updateObservationAndState(ObservationState observationState,
 											const AgentParams& agentParams){
 	observation = observationState;
 
-	if (observation.puckPredictedState.state.block<2, 1>(2, 0).norm() < agentParams.vDefendMin){
+	if (observation.puckPredictedState.state.block<2, 1>(2, 0).norm() < agentParams.defendMinVel){
 		++staticCount;
 	} else {
 		staticCount = 0;

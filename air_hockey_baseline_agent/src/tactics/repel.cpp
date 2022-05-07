@@ -42,16 +42,15 @@ bool Repel::ready() {
 }
 
 bool Repel::apply() {
-	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
-	ros::Time tStart;
-	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
+	state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
+	generator.getPlannedJointState(state, state.tStart);
 
-	if (dqStart.norm() > 0.05){
+	if (state.dqPlan.norm() > 0.05){
 		generateStopTrajectory();
 		return true;
 	} else {
 		state.isNewTactics = false;
-		return generateRepelTrajectory(qStart, tStart);
+		return generateRepelTrajectory(state.qPlan, state.tPlan);
 	}
 }
 
