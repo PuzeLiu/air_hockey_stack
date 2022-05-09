@@ -3,7 +3,7 @@ air_hockey:
     debug_tactics: True
     rate: 100
     init_position_height: 0.2
-    universal_joint_height:   0.0545 # 0.06
+    universal_joint_height:   0.055 # 0.0545
     home: [0.08, 0.0]
     goal: [0.98, 0.0]
     q_ref: [0., 0.06580,  0., -1.45996, 0.,  1.22487, 0.]
@@ -13,7 +13,7 @@ air_hockey:
     pause_reset_time: 5.0
 
     hit_range: [0.2, 0.9]
-    hit_velocity_scale: 0.75
+    hit_velocity_scale: 0.8
 
     prepare_height:  0.2395    # height of iiwa second joint - universal joint height: 0.29 - 0.0505 = 0.2395
 
@@ -21,6 +21,6 @@ air_hockey:
     defend_min_time: 0.3
     defend_line: 0.2
     defend_zone_width: 0.4
-    defend_max_ee_velocity: 0.2
+    defend_max_ee_velocity: 0.6
     defend_plan_steps: 10
     defend_target_update_ratio: 0.05

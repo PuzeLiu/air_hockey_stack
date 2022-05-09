@@ -100,6 +100,7 @@ bool CubicLinearMotion::plan(const Vector3d& pStart,
 	int steps,
 	trajectory_msgs::MultiDOFJointTrajectory& cartTraj)
 {
+	tStop = std::max(tStop, stepSize_ * steps);
 	Matrix<double, 3, 4> coefficients;
 	coefficients.col(0) = pStart;
 	coefficients.col(1) = vStart;
@@ -118,7 +119,6 @@ bool CubicLinearMotion::plan(const Vector3d& pStart,
 	double t = 0.;
 	Vector3d xTmp_, vTmp_;
 
-	steps = std::max(steps, int(std::ceil(tStop / stepSize_)));
 	for (int i = 0; i <= steps; ++i)
 	{
 		if (t <= tStop) {
