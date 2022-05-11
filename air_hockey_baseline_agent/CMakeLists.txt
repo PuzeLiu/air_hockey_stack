@@ -56,6 +56,7 @@ set(SOURCES
    src/hitting_point_optimizer.cpp
    src/observer.cpp
    src/trajectory_generator.cpp
+   src/trajectory_buffer.cpp
    src/transformations.cpp
    src/planner/bezier_hit.cpp
    src/planner/combinatorial_hit.cpp
@@ -63,7 +64,6 @@ set(SOURCES
    src/planner/stable_dynamics_motion.cpp
    src/planner/cubic_linear_motion.cpp
    src/tactics/cut.cpp
-   src/tactics/home.cpp
    src/tactics/init.cpp
    src/tactics/move_puck.cpp
    src/tactics/prepare.cpp

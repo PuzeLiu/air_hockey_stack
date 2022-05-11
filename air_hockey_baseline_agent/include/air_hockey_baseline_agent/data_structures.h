@@ -44,7 +44,6 @@ namespace air_hockey_baseline_agent {
 
 	enum Tactics {
 		INIT = 0,      //!< go to init position
-		HOME,      //!< go to home position from init
 		READY,     //!< go to home position
 		PREPARE,   //!< adjust the puck's position when smash fails
 		CUT,       //!< defend the incoming puck and control it in our court
@@ -155,6 +154,29 @@ namespace air_hockey_baseline_agent {
 			alphaLast.setZero();
 		}
 	};
+
+    struct Trajectory {
+        trajectory_msgs::MultiDOFJointTrajectory  cartTrajectory;
+        trajectory_msgs::JointTrajectory jointTrajectory;
+    };
+
+
+    class TrajectoryBuffer {
+     public:
+        TrajectoryBuffer();
+
+        TrajectoryBuffer(const AgentParams& agentParams);
+
+        inline void moveNext(){execIdx = 1 - execIdx;};
+
+        inline Trajectory& getExec() {return trajectoryBuffer[execIdx];};
+
+        inline Trajectory& getFree() {return trajectoryBuffer[1 - execIdx];};
+
+     private:
+        std::vector<Trajectory> trajectoryBuffer;
+        int execIdx;
+    };
 }
 
 

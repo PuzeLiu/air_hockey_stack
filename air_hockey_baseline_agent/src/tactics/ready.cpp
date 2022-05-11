@@ -39,15 +39,13 @@ bool Ready::ready() {
 	if (state.isNewTactics) {
 		// Get planned position and velocity at now + timeoffset
 		state.tPlan = ros::Time::now();
-		double last_point_time;
-		if (!state.jointTrajectory.points.empty()){
-			last_point_time = state.jointTrajectory.points.back().time_from_start.toSec();
-		}
-		state.tStart = state.tPlan + ros::Duration(std::min(agentParams.planTimeOffset, last_point_time));
+		state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset);
 	} else {
-		state.tStart = state.tPlan + ros::Duration(2.0);
+        state.tStart = state.tPlan + ros::Duration(2.0);
+        if (state.tStart <= ros::Time::now() + ros::Duration(agentParams.planTimeOffset)){
+            state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
+        }
 	}
-	generator.getPlannedJointState(state, state.tStart);
 	return true;
 }
 
@@ -55,29 +53,24 @@ bool Ready::apply() {
 	state.isNewTactics = false;
 	if (ros::Time::now() >= state.tPlan)
 	{
-		state.cartTrajectory.points.clear();
-		state.jointTrajectory.points.clear();
+        generator.getPlannedJointState(state, state.tStart);
+        state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
+        state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
 		double tStop = std::max((agentParams.xHome - state.xPlan).norm() / 1.0, 2.0);
 
 		generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, agentParams.xHome, Vector3d(0., 0., 0.),
-			tStop, state.cartTrajectory);
+			tStop, state.trajectoryBuffer.getFree().cartTrajectory);
 
-		generator.transformations->transformTrajectory(state.cartTrajectory);
+		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
+		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.trajectoryBuffer.getFree().cartTrajectory, state.qPlan, state.dqPlan,
+			agentParams.qHome, state.trajectoryBuffer.getFree().cartTrajectory.points.back().time_from_start.toSec() / 2,
+            state.trajectoryBuffer.getFree().jointTrajectory)) {
+            generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
 
-		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, state.qPlan,
-			agentParams.qHome, state.cartTrajectory.points.back().time_from_start.toSec() / 2, state.jointTrajectory)) {
-			if (state.jointTrajectory.points.front().time_from_start.toSec() == 0) {
-				for (int j = 0; j < agentParams.nq; ++j)
-				{
-					state.jointTrajectory.points.front().positions[j] = state.qPlan[j];
-					state.jointTrajectory.points.front().velocities[j] = state.dqPlan[j];
-				}
-			}
-			generator.cubicSplineInterpolation(state.jointTrajectory);
 			state.tPlan = state.tStart;
-			state.jointTrajectory.header.stamp = state.tStart;
-			state.cartTrajectory.header.stamp = state.tStart;
+            state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;
+            state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.tStart;
 			return true;
 		}
 		else

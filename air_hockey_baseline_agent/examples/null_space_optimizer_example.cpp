@@ -188,6 +188,7 @@ int main(int argc, char* argv[])
 	//! Get Maximum Hitting Velocity
 	double velMag, hitting_time;
 	VectorXd qAnchor(agentParams.nq);
+    VectorXd dqStart(agentParams.nq);
 	qAnchor.setZero();
 	Vector3d hitPoint3d, hitDir3d;
 	hitPoint3d.topRows(2) = xHit2d;
@@ -250,7 +251,8 @@ int main(int argc, char* argv[])
 		}
 		transformations.transformTrajectory(cartTraj);
 
-		if (nullOptimizer.optimizeJointTrajectoryAnchor(cartTraj, agentParams.qHome, qAnchor, hitting_time, jointTraj)) {
+        dqStart.setZero();
+		if (nullOptimizer.optimizeJointTrajectoryAnchor(cartTraj, agentParams.qHome, dqStart, qAnchor, hitting_time, jointTraj)) {
 			success = true;
 			break;
 		} else {

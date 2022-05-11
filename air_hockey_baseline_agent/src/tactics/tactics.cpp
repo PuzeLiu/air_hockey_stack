@@ -37,72 +37,51 @@ Tactic::Tactic(EnvironmentParams &envParams, AgentParams &agentParams,
 
 }
 
-bool Tactic::planReturnTraj(const double &vMax,
-                            trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
-                            trajectory_msgs::JointTrajectory &jointTrajReturn) {
-	double vReadyMax = vMax;
-	cartTrajReturn.joint_names.push_back("x");
-	cartTrajReturn.joint_names.push_back("y");
-	cartTrajReturn.joint_names.push_back("z");
+bool Tactic::generateStopTrajectory() {
+    // Detect the stop point
+    state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset * 1.5);
+    generator.getPlannedJointState(state, state.tStart);
+    Vector3d xStop = state.xPlan;
 
-	trajectory_msgs::MultiDOFJointTrajectoryPoint lastPoint =
-			state.cartTrajectory.points.back();
+    // Detect the start point
+    state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
+    generator.getPlannedJointState(state, state.tStart);
 
-	for (size_t i = 0; i < 10; ++i) {
-		cartTrajReturn.points.clear();
-		jointTrajReturn.points.clear();
-		cartTrajReturn.points.push_back(lastPoint);
+    state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
+    state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
-		Vector3d xStop;
-		xStop << lastPoint.transforms[0].translation.x, lastPoint.transforms[0].translation.y, lastPoint.transforms[0].translation.z;
-		generator.transformations->transformRobot2Table(xStop);
-		Vector2d xStop2d = xStop.block<2, 1>(0, 0);
-		Vector2d xHome2d = agentParams.xHome.block<2, 1>(0, 0);
-		double tStop = (xHome2d - xStop2d).norm() / vReadyMax;
-		generator.cubicLinearMotion->plan(xStop2d, Vector2d(0., 0.),
-		                                  xHome2d, Vector2d(0., 0.), tStop, cartTrajReturn);
-		cartTrajReturn.points.erase(cartTrajReturn.points.begin());
-		generator.transformations->transformTrajectory(cartTrajReturn);
+    generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, xStop,
+        Vector3d(0., 0., 0.), agentParams.planTimeOffset * 2, state.trajectoryBuffer.getFree().cartTrajectory);
+    generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
-		JointArrayType qStart(agentParams.nq);
-		for (int j = 0; j < generator.agentParams.nq; ++j) {
-			qStart[j] = state.jointTrajectory.points.back().positions[j];
-		}
+    if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory, state.qPlan, state.trajectoryBuffer.getFree().jointTrajectory)) {
+        generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
+        state.tPlan = state.tStart;
+        state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;
+        state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.tStart;
 
-		bool ok = generator.optimizer->optimizeJointTrajectoryAnchor(
-				cartTrajReturn, qStart, agentParams.qHome, jointTrajReturn);
+        //! Set start time stamp for next tactics
+        state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset * 2);
+        return true;
+    }
+    state.tPlan = ros::Time::now();
+    return false;
 
-		if (ok) {
-			return true;
-		} else {
-			vReadyMax *= 0.8;
-			ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
-					"Optimization Failed [RETURN]. Reduce the velocity for Ready: " << vReadyMax);
-		}
-	}
-
-	return false;
-}
-
-void Tactic::generateStopTrajectory() {
-	state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset / 2);
-	generator.getPlannedJointState(state, state.tStart);
-
-	trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
-	jointViaPoint_.positions.resize(7);
-	jointViaPoint_.velocities.resize(7);
-	for (int i = 0; i < 7; ++i) {
-		jointViaPoint_.positions[i] = state.qPlan[i];
-		jointViaPoint_.velocities[i] = 0.;
-	}
-	jointViaPoint_.time_from_start = ros::Duration(agentParams.planTimeOffset);
-
-	state.jointTrajectory.points.clear();
-	state.cartTrajectory.points.clear();
-	state.jointTrajectory.points.push_back(jointViaPoint_);
-
-	state.jointTrajectory.header.stamp = ros::Time::now();
-	state.cartTrajectory.header.stamp = ros::Time::now();
+//	trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
+//	jointViaPoint_.positions.resize(agentParams.nq);
+//	jointViaPoint_.velocities.resize(agentParams.nq);
+//	for (int i = 0; i < agentParams.nq; ++i) {
+//		jointViaPoint_.positions[i] = state.qPlan[i];
+//		jointViaPoint_.velocities[i] = 0.;
+//	}
+//	jointViaPoint_.time_from_start = ros::Duration(agentParams.planTimeOffset);
+//
+//	state.jointTrajectory.points.clear();
+//	state.cartTrajectory.points.clear();
+//	state.jointTrajectory.points.push_back(jointViaPoint_);
+//
+//	state.jointTrajectory.header.stamp = state.tStart + ros::Duration(agentParams.planTimeOffset);
+//	state.cartTrajectory.header.stamp = state.tStart + ros::Duration(agentParams.planTimeOffset);
 }
 
 Tactic::~Tactic() {
@@ -115,18 +94,8 @@ void Tactic::updateTactic() {
 	} else if (state.observation.gameStatus.status == STOP) {
 		setTactic(INIT);
 	} else if (state.observation.gameStatus.status == PAUSE) {
-		setTactic(HOME);
+		setTactic(INIT);
 	}
-}
-
-void Tactic::initTactic() {
-    if (state.observation.gameStatus.status == STOP) {
-        setTactic(INIT);
-    } else if (state.observation.gameStatus.status == PAUSE) {
-        setTactic(HOME);
-    } else if (state.observation.gameStatus.status == START && state.currentTactic == HOME){
-        setTactic(READY);
-    }
 }
 
 void Tactic::setTactic(Tactics tactic) {
@@ -143,8 +112,6 @@ std::string Tactic::tactic2String(Tactics tactic) {
 	switch (tactic) {
 		case Tactics::INIT:
 			return "INIT   ";
-		case Tactics::HOME:
-			return "HOME   ";
 		case Tactics::SMASH:
 			return "SMASH  ";
 		case Tactics::CUT:

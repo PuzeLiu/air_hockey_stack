@@ -84,25 +84,25 @@ bool Repel::generateRepelTrajectory(const JointArrayType &qCur, ros::Time &tStar
 	vHit2d = -vHit2d * 1.2;
 
 	for (size_t i = 0; i < 10; ++i) {
-		state.cartTrajectory.points.clear();
-		state.jointTrajectory.points.clear();
+        state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
+        state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
-		generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.cartTrajectory);
-		generator.transformations->transformTrajectory(state.cartTrajectory);
+		generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.trajectoryBuffer.getFree().cartTrajectory);
+		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
-		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory,
-			state.observation.jointPosition, state.jointTrajectory)) {
+		if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory,
+			state.observation.jointPosition, state.trajectoryBuffer.getFree().jointTrajectory)) {
 			auto tHitStart = state.observation.stamp +
 						     ros::Duration(state.observation.puckPredictedState.predictedTime) -
-			                 state.jointTrajectory.points.back().time_from_start;
+                state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
 			if (ros::Time::now() <= tHitStart){
 				tStart = tHitStart;
-				state.jointTrajectory.header.stamp = tStart;
-				state.cartTrajectory.header.stamp = tStart;
+                state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = tStart;
+                state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = tStart;
 				return true;
 			} else {
-				state.jointTrajectory.points.clear();
-				state.cartTrajectory.points.clear();
+                state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
+                state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
 				return false;
 			}
 		} else {

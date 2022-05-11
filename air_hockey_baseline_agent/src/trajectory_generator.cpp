@@ -26,139 +26,160 @@
 using namespace Eigen;
 using namespace air_hockey_baseline_agent;
 
-
-TrajectoryGenerator::TrajectoryGenerator(const ros::NodeHandle &nh, AgentParams &agentParams,
-                                         EnvironmentParams &envParams) : agentParams(agentParams),
-                                                                         envParams(envParams),
-                                                                         optData(agentParams) {
-	initOptimizerData(nh);
-	optimizer = new NullSpaceOptimizer(agentParams, optData);
-	transformations = new Transformations(nh.getNamespace());
-	hittingPointOptimizer = new HittingPointOptimizer(agentParams, optData);
-
-	Vector2d bound_lower(envParams.malletRadius + 0.02,
-	                     -envParams.tableWidth / 2 + envParams.malletRadius + 0.02);
-	Vector2d bound_upper(envParams.tableLength / 2 - envParams.malletRadius,
-	                     envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
-
-	combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, agentParams.rate,
-		agentParams.universalJointHeight);
-	combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, agentParams.rate,
-		agentParams.universalJointHeight);
-	cubicLinearMotion = new CubicLinearMotion(agentParams.rate, agentParams.universalJointHeight);
-}
-
-void TrajectoryGenerator::getCartesianPosAndVel(Vector3d &x, Vector3d &dx,
-                                                JointArrayType &q, JointArrayType &dq) {
-	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, q, dq);
-	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
-	x = agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
-	dx = pinocchio::getFrameVelocity(agentParams.pinoModel, agentParams.pinoData,
-	                                 agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED).linear();
-}
-
-TrajectoryGenerator::~TrajectoryGenerator() {
-	delete optimizer;
-	delete transformations;
-	delete hittingPointOptimizer;
-	delete combinatorialHit;
-	delete combinatorialHitNew;
-	delete cubicLinearMotion;
-}
-
-void TrajectoryGenerator::interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj) {
-	for (int i = 1; i < jointTraj.points.size() - 1; ++i) {
-		auto dt = jointTraj.points[i + 1].time_from_start - jointTraj.points[i - 1].time_from_start;
-		jointTraj.points[i].accelerations.resize(7);
-		for (int j = 0; j < agentParams.pinoModel.nq; ++j) {
-			auto d1 = jointTraj.points[i].velocities[j] - jointTraj.points[i - 1].velocities[j];
-			auto d2 = jointTraj.points[i + 1].velocities[j] - jointTraj.points[i].velocities[j];
-			if (d1 * d2 < 0) {
-				jointTraj.points[i].accelerations[j] = 0;
-			} else {
-				jointTraj.points[i].accelerations[j] = (d1 + d2) / dt.toSec();
-			}
-		}
-	}
-}
-
-void TrajectoryGenerator::interpolateVelocity(trajectory_msgs::JointTrajectory &jointTraj) {
-	for (int i = 1; i < jointTraj.points.size() - 1; ++i) {
-		auto dt = jointTraj.points[i + 1].time_from_start - jointTraj.points[i - 1].time_from_start;
-		for (int j = 0; j < agentParams.pinoModel.nq; ++j) {
-			auto d1 = jointTraj.points[i].positions[j] - jointTraj.points[i - 1].positions[j];
-			auto d2 = jointTraj.points[i + 1].positions[j] - jointTraj.points[i].positions[j];
-			if (d1 * d2 < 0) {
-				jointTraj.points[i].velocities[j] = 0;
-			} else {
-				jointTraj.points[i].velocities[j] = (d1 + d2) / dt.toSec();
-			}
-		}
-	}
-}
-
-void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTrajectory &jointTraj) {
-	int n = jointTraj.points.size();
-	std::vector<double> x(n);
-	std::vector<double> y(n);
-
-	for (int i = 0; i < agentParams.pinoModel.nq; ++i) {
-		for (int j = 0; j < n; ++j) {
-			x[j] = jointTraj.points[j].time_from_start.toSec();
-			y[j] = jointTraj.points[j].positions[i];
-			jointTraj.points[j].velocities.resize(agentParams.pinoModel.nq);
-			jointTraj.points[j].accelerations.clear();
-		}
-		tk::spline spline(x, y, tk::spline::cspline, false,
-		                  tk::spline::first_deriv, jointTraj.points.front().velocities[i],
-		                  tk::spline::first_deriv, jointTraj.points.back().velocities[i]);
-
-		for (int j = 0; j < n; ++j) {
-			jointTraj.points[j].velocities[i] = spline.deriv(1, x[j]);
-		}
-	}
-}
-
-void TrajectoryGenerator::initOptimizerData(const ros::NodeHandle &nh) {
-	optData.K.setConstant(agentParams.rate);
-	optData.weights << 10., 10., 5., 10., 1., 1., 0.01;
-	optData.weightsAnchor << 1., 1., 5., 1, 10., 10., 0.01;
-}
-
-void TrajectoryGenerator::getPlannedJointState(SystemState &state, ros::Time tPlan)
+TrajectoryGenerator::TrajectoryGenerator(const ros::NodeHandle& nh, AgentParams& agentParams,
+    EnvironmentParams& envParams) : agentParams(agentParams),
+                                    envParams(envParams),
+                                    optData(agentParams)
 {
-	if (!state.jointTrajectory.points.empty()) {
-		int idx = state.jointTrajectory.points.size() - 1;
-		for (int i = 0; i < state.jointTrajectory.points.size(); ++i) {
-			if (tPlan < state.jointTrajectory.header.stamp + state.jointTrajectory.points[i].time_from_start) {
-				idx = i;
-				break;
-			}
-		}
+    initOptimizerData(nh);
+    optimizer = new NullSpaceOptimizer(agentParams, optData);
+    transformations = new Transformations(nh.getNamespace());
+    hittingPointOptimizer = new HittingPointOptimizer(agentParams, optData);
 
-		for (int j = 0; j < 7; ++j) {
-			state.qPlan[j] = state.jointTrajectory.points[idx].positions[j];
-			state.dqPlan[j] = state.jointTrajectory.points[idx].velocities[j];
-		}
+    Vector2d bound_lower(envParams.malletRadius + 0.02,
+        -envParams.tableWidth / 2 + envParams.malletRadius + 0.02);
+    Vector2d bound_upper(envParams.tableLength / 2 - envParams.malletRadius,
+        envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
 
-		if (state.cartTrajectory.points.size() == state.jointTrajectory.points.size()){
-			state.xPlan[0] = state.cartTrajectory.points[idx].transforms[0].translation.x;
-			state.xPlan[1] = state.cartTrajectory.points[idx].transforms[0].translation.y;
-			state.xPlan[2] = state.cartTrajectory.points[idx].transforms[0].translation.z;
-			state.vPlan[0] = state.cartTrajectory.points[idx].velocities[0].linear.x;
-			state.vPlan[1] = state.cartTrajectory.points[idx].velocities[0].linear.y;
-			state.vPlan[2] = state.cartTrajectory.points[idx].velocities[0].linear.z;
-		} else {
-			getCartesianPosAndVel(state.xPlan, state.vPlan, state.qPlan, state.dqPlan);
-		}
-	}
-	else {
-		state.qPlan = state.observation.jointDesiredPosition;
-		state.dqPlan = state.observation.jointDesiredVelocity;
-		getCartesianPosAndVel(state.xPlan, state.vPlan, state.qPlan, state.dqPlan);
-	}
+    combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, agentParams.rate,
+        agentParams.universalJointHeight);
+    combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, agentParams.rate,
+        agentParams.universalJointHeight);
+    cubicLinearMotion = new CubicLinearMotion(agentParams.rate, agentParams.universalJointHeight);
+}
 
-	transformations->transformRobot2Table(state.xPlan);
-	transformations->rotationRobot2Table(state.vPlan);
+void TrajectoryGenerator::getCartesianPosAndVel(Vector3d& x, Vector3d& dx,
+    JointArrayType& q, JointArrayType& dq)
+{
+    pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, q, dq);
+    pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
+    x = agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
+    dx = pinocchio::getFrameVelocity(agentParams.pinoModel, agentParams.pinoData,
+        agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED).linear();
+}
+
+TrajectoryGenerator::~TrajectoryGenerator()
+{
+    delete optimizer;
+    delete transformations;
+    delete hittingPointOptimizer;
+    delete combinatorialHit;
+    delete combinatorialHitNew;
+    delete cubicLinearMotion;
+}
+
+void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTrajectory& jointTraj, trajectory_msgs::JointTrajectoryPoint &planPrevPoint)
+{
+    //! Add one point before planning to smooth the connection
+    planPrevPoint.time_from_start = ros::Duration(-1.);
+    jointTraj.points.insert(jointTraj.points.begin(), planPrevPoint);
+
+    int n = jointTraj.points.size();
+    std::vector<double> x(n);
+    std::vector<double> y(n);
+
+    for (int i = 0; i < agentParams.pinoModel.nq; ++i)
+    {
+        for (int j = 0; j < n; ++j)
+        {
+            x[j] = jointTraj.points[j].time_from_start.toSec();
+            y[j] = jointTraj.points[j].positions[i];
+            jointTraj.points[j].velocities.resize(agentParams.pinoModel.nq);
+            jointTraj.points[j].accelerations.clear();
+        }
+        tk::spline spline(x, y, tk::spline::cspline_hermite, false,
+            tk::spline::first_deriv, jointTraj.points.front().velocities[i],
+            tk::spline::first_deriv, jointTraj.points.back().velocities[i]);
+
+
+        for (int j = 0; j < n; ++j)
+        {
+            jointTraj.points[j].velocities[i] = spline.deriv(1, x[j]);
+        }
+    }
+
+    //! Remove the assistant point
+    jointTraj.points.erase(jointTraj.points.begin());
+}
+
+void TrajectoryGenerator::initOptimizerData(const ros::NodeHandle& nh)
+{
+    optData.K.setConstant(agentParams.rate);
+    optData.weights << 10., 10., 5., 10., 1., 1., 0.01;
+    optData.weightsAnchor << 1., 1., 5., 1, 10., 10., 0.01;
+}
+
+void TrajectoryGenerator::getPlannedJointState(SystemState& state, ros::Time &tPlan)
+{
+    int idx = -1;
+
+    //! Check if tPlan is in the executing trajectory
+    if (tPlan >= state.trajectoryBuffer.getExec().jointTrajectory.header.stamp)
+    {
+        idx = state.trajectoryBuffer.getExec().jointTrajectory.points.size() - 1;
+        for (int j = 0; j < state.trajectoryBuffer.getExec().jointTrajectory.points.size(); ++j) {
+            if (tPlan <= state.trajectoryBuffer.getExec().jointTrajectory.header.stamp +
+                         state.trajectoryBuffer.getExec().jointTrajectory.points[j].time_from_start) {
+                tPlan = state.trajectoryBuffer.getExec().jointTrajectory.header.stamp +
+                        state.trajectoryBuffer.getExec().jointTrajectory.points[j].time_from_start;
+                idx = j;
+                break;
+            }
+        }
+        for (int j = 0; j < agentParams.nq; ++j) {
+            state.qPlan[j] = state.trajectoryBuffer.getExec().jointTrajectory.points[idx].positions[j];
+            state.dqPlan[j] = state.trajectoryBuffer.getExec().jointTrajectory.points[idx].velocities[j];
+        }
+        state.planPrevPoint = state.trajectoryBuffer.getExec().jointTrajectory.points[std::max(idx - 1, 0)];
+        state.xPlan.x() = state.trajectoryBuffer.getExec().cartTrajectory.points[idx].transforms[0].translation.x;
+        state.xPlan.y() = state.trajectoryBuffer.getExec().cartTrajectory.points[idx].transforms[0].translation.y;
+        state.xPlan.z() = state.trajectoryBuffer.getExec().cartTrajectory.points[idx].transforms[0].translation.z;
+        state.vPlan.x() = state.trajectoryBuffer.getExec().cartTrajectory.points[idx].velocities[0].linear.x;
+        state.vPlan.y() = state.trajectoryBuffer.getExec().cartTrajectory.points[idx].velocities[0].linear.y;
+        state.vPlan.z() = state.trajectoryBuffer.getExec().cartTrajectory.points[idx].velocities[0].linear.z;
+    }
+
+    //! Check if tPlan is in the future trajectory
+    if (tPlan >= state.trajectoryBuffer.getFree().jointTrajectory.header.stamp and
+        state.trajectoryBuffer.getFree().jointTrajectory.header.stamp >
+        state.trajectoryBuffer.getExec().jointTrajectory.header.stamp) {
+        idx = state.trajectoryBuffer.getFree().jointTrajectory.points.size() - 1;
+        for (int j = 0; j < state.trajectoryBuffer.getFree().jointTrajectory.points.size(); ++j) {
+            if (tPlan <= state.trajectoryBuffer.getFree().jointTrajectory.header.stamp +
+                state.trajectoryBuffer.getFree().jointTrajectory.points[j].time_from_start) {
+                tPlan = state.trajectoryBuffer.getFree().jointTrajectory.header.stamp +
+                    state.trajectoryBuffer.getFree().jointTrajectory.points[j].time_from_start;
+                idx = j;
+                break;
+            }
+        }
+
+        for (int j = 0; j < agentParams.nq; ++j) {
+            state.qPlan[j] = state.trajectoryBuffer.getFree().jointTrajectory.points[idx].positions[j];
+            state.dqPlan[j] = state.trajectoryBuffer.getFree().jointTrajectory.points[idx].velocities[j];
+        }
+        state.planPrevPoint = state.trajectoryBuffer.getFree().jointTrajectory.points[std::max(idx - 1, 0)];
+        state.xPlan.x() = state.trajectoryBuffer.getFree().cartTrajectory.points[idx].transforms[0].translation.x;
+        state.xPlan.y() = state.trajectoryBuffer.getFree().cartTrajectory.points[idx].transforms[0].translation.y;
+        state.xPlan.z() = state.trajectoryBuffer.getFree().cartTrajectory.points[idx].transforms[0].translation.z;
+        state.vPlan.x() = state.trajectoryBuffer.getFree().cartTrajectory.points[idx].velocities[0].linear.x;
+        state.vPlan.y() = state.trajectoryBuffer.getFree().cartTrajectory.points[idx].velocities[0].linear.y;
+        state.vPlan.z() = state.trajectoryBuffer.getFree().cartTrajectory.points[idx].velocities[0].linear.z;
+    }
+
+    //! No trajectory
+    if (idx < 0) {
+        ROS_ERROR_STREAM("No buffer");
+        state.qPlan = state.observation.jointDesiredPosition;
+        state.dqPlan = state.observation.jointDesiredVelocity;
+        getCartesianPosAndVel(state.xPlan, state.vPlan, state.qPlan, state.dqPlan);
+        for (int j = 0; j < agentParams.nq; ++j) {
+            state.planPrevPoint.positions[j] = state.qPlan[j];
+            state.planPrevPoint.velocities[j] = 0.;
+        }
+    }
+
+    transformations->transformRobot2Table(state.xPlan);
+    transformations->rotationRobot2Table(state.vPlan);
 }
 

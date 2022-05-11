@@ -165,14 +165,15 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 }
 
 bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-	const JointArrayType &qStart, const JointArrayType &qAnchor,
+	const JointArrayType &qStart, const JointArrayType &dqStart, const JointArrayType &qAnchor,
 	double hitting_time, trajectory_msgs::JointTrajectory &jointTraj) {
 	if (!cartTraj.points.empty()) {
 		Vector3d xDes, dxDes;
 		JointArrayType qCur, qNext, dqNext, dqAnchorTmp;
-		double scale;
+		double scale, scaleVel;
 
 		qCur = qStart;
+        dqNext = dqStart;
 
 		trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 		jointViaPoint_.positions.resize(agentParams.nq);
@@ -196,11 +197,13 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 			if (cartTraj.points[i].time_from_start.toSec() <= hitting_time) {
 				//! Multiply the phase variable
 				scale = (cartTraj.points[i].time_from_start - cartTraj.points.front().time_from_start).toSec() / hitting_time;
+                scaleVel = std::min(std::max(1 - cartTraj.points[i].time_from_start.toSec(), 0.), 1.);
 			} else {
 				scale = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec() /
 						(cartTraj.points.back().time_from_start.toSec() - hitting_time);
+                scaleVel = 0.;
 			}
-			dqAnchorTmp = dqAnchorTmp * scale;
+			dqAnchorTmp = dqAnchorTmp * scale  + dqStart * scaleVel;
 
 			if (!solveQPAnchor(xDes, dxDes, qCur, dqAnchorTmp, qNext, dqNext)) {
 				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "qAchor : " << qAnchor.transpose());
@@ -299,7 +302,6 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 			optData.K.asDiagonal() * (xDes - optData.xCurPos) + dxDes);
 	MatrixXd I(7, 7);
 	I.setIdentity();
-//	auto dqAnchorProjected = (I - jacInv * jacobian_) * dqAnchor;
 	VectorXd omega = b - dqAnchor;
 
 	if (optData.N_J.cols() != optData.dimNullSpace) {
@@ -334,7 +336,7 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 	{
 		optData.alphaLast = solver.getSolution();
 		dqNext = b + optData.N_J * solver.getSolution();
-		qNext = qCur + dqNext / agentParams.rate;
+        qNext = qCur + dqNext / agentParams.rate;
 		return true;
 	}
 	return false;
@@ -351,7 +353,7 @@ void NullSpaceOptimizer::solveJoint7(JointArrayType &q, JointArrayType &dq) {
 	Matrix3d mat = agentParams.pinoData.oMf[agentParams.pinoFrameId].rotation();
 	Vector3d zAxis(0., 0., -1.);
 	auto yDes = zAxis.cross(mat.col(2)).normalized();
-	double target = acos(mat.col(1).dot(yDes));
+	double target = acos(boost::algorithm::clamp(mat.col(1).dot(yDes), -1., 1.));
 	Vector3d axis = mat.col(1).cross(yDes).normalized();
 	target = target * axis.dot(mat.col(2));
 

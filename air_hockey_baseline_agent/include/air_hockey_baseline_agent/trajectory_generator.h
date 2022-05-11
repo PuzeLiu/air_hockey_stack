@@ -45,18 +45,14 @@ namespace air_hockey_baseline_agent {
 
 		~TrajectoryGenerator();
 
-		void getPlannedJointState(SystemState &state, ros::Time plannedTime);
+		void getPlannedJointState(SystemState &state, ros::Time &plannedTime);
 
 		void getCartesianPosAndVel(Eigen::Vector3d &x,
 		                           Eigen::Vector3d &dx,
 		                           JointArrayType &q,
 		                           JointArrayType &dq);
 
-		void interpolateAcceleration(trajectory_msgs::JointTrajectory &jointTraj);
-
-		void interpolateVelocity(trajectory_msgs::JointTrajectory &jointTraj);
-
-		void cubicSplineInterpolation(trajectory_msgs::JointTrajectory &jointTraj);
+		void cubicSplineInterpolation(trajectory_msgs::JointTrajectory &jointTraj, trajectory_msgs::JointTrajectoryPoint &planPrevPoint);
 
 		void initOptimizerData(const ros::NodeHandle &nh);
 

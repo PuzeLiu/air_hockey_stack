@@ -31,27 +31,47 @@ using namespace air_hockey_baseline_agent;
 Smash::Smash(EnvironmentParams &envParams, AgentParams &agentParams,
              SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator), gen(rd()), dist(0, 2) {
-
+    hittingFailed = false;
+    hasStopSegment = false;
 }
 
 bool Smash::ready() {
-	return state.isNewTactics;
+    if (state.isNewTactics) {
+        hittingFailed = false;
+        hasStopSegment = false;
+        state.tPlan = ros::Time::now();
+        state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset);
+    }
+	return true;
 }
 
 bool Smash::apply() {
-	state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
-	generator.getPlannedJointState(state, state.tStart);
-	if (state.dqPlan.norm() > 0.05) {
-		generateStopTrajectory();
-		return true;
+    if (state.isNewTactics) {
+        state.isNewTactics = false;
+        generator.getPlannedJointState(state, state.tStart);
+        if (state.dqPlan.norm() > 0.2) {
+            hasStopSegment = true;
+            return generateStopTrajectory();
+        }
+    }
+    if (ros::Time::now() >= state.tPlan) {
+        generator.getPlannedJointState(state, state.tStart);
+        return generateHitTrajectory(state.tStart);
+    }
+    return false;
+
+	if (state.isNewTactics and state.dqPlan.norm() > 0.2) {
+        state.isNewTactics = false;
+        ROS_INFO_STREAM("STOP TRAJ");
+
 	} else {
-		state.isNewTactics = false;
-		if (not generateHitTrajectory(state.qPlan, state.tPlan)){
-			state.cartTrajectory.points.clear();
-			state.jointTrajectory.points.clear();
-		}
-		return true;
+        state.isNewTactics = false;
+        if (ros::Time::now() > state.tPlan) {
+            ROS_INFO_STREAM("HIT TRAJ");
+            return generateHitTrajectory(state.tStart);
+        }
 	}
+    return false;
 }
 
 Vector3d Smash::computeTarget(Vector3d puckPosition, int strategy) {
@@ -121,59 +141,55 @@ Smash::~Smash() {
 }
 
 void Smash::setNextState() {
-	if (ros::Time::now().toSec() > state.tNewTactics) {
-		if (state.hasActiveTrajectory()) {
-			setTactic(SMASH);
-		} else {
-			setTactic(READY);
-		}
-	}
+    if (not state.isNewTactics) {
+        if (ros::Time::now() > state.trajectoryBuffer.getExec().jointTrajectory.header.stamp +
+            state.trajectoryBuffer.getExec().jointTrajectory.points.back().time_from_start
+            or hittingFailed) {
+        setTactic(READY);
+    }
+    }
 }
 
 
-bool Smash::generateHitTrajectory(const JointArrayType &qCur, ros::Time &tStart) {
-	JointArrayType qHitRef(agentParams.nq);
-
-	Vector3d xCur;
-	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, qCur);
-	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
-	xCur = generator.agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
-
-	generator.transformations->transformRobot2Table(xCur);
-	xCur2d = xCur.block<2, 1>(0, 0);
-
-	getHitPointVelocity(xHit2d, vHit2d, qHitRef);
-
+bool Smash::generateHitTrajectory(ros::Time &tStart) {
 	Vector2d vZero2d, xStop2d;
 	vZero2d.setZero();
-	xStop2d = getStopPoint(xHit2d);
 	double hitting_time;
+    JointArrayType qHitRef(agentParams.nq);
+
+    xCur2d = state.xPlan.block<2, 1>(0, 0);
+    getHitPointVelocity(xHit2d, vHit2d, qHitRef);
+    xStop2d = getStopPoint(xHit2d);
 
 	for (size_t i = 0; i < 10; ++i) {
-		state.cartTrajectory.points.clear();
-		state.jointTrajectory.points.clear();
+        state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
+        state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
 		if (not generator.combinatorialHitNew->plan(xCur2d, vZero2d, xHit2d, vHit2d,
-			xStop2d, vZero2d, hitting_time, state.cartTrajectory))	{
-			return false;
+			xStop2d, vZero2d, hitting_time, state.trajectoryBuffer.getFree().cartTrajectory))	{
+            tStart = tStart + ros::Duration(agentParams.planTimeOffset);
+			break;
 		}
 
-		generator.transformations->transformTrajectory(state.cartTrajectory);
-		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory,
-			qCur, qHitRef, hitting_time, state.jointTrajectory)) {
+		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
+		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.trajectoryBuffer.getFree().cartTrajectory,
+			state.qPlan, state.dqPlan, qHitRef, hitting_time, state.trajectoryBuffer.getFree().jointTrajectory)) {
+
+            generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
+
 			if (ros::Time::now() > tStart) {
 				tStart = ros::Time::now();
-
 			}
-			auto tHitStart = state.observation.stamp + ros::Duration(agentParams.tPredictionMax) -
-				state.jointTrajectory.points.back().time_from_start;
-
+			auto tHitStart = state.observation.puckPredictedState.stamp +
+                ros::Duration(state.observation.puckPredictedState.predictedTime) -
+                state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
 			if (tStart < tHitStart) {
 				tStart = tHitStart;
 			}
-
-			state.jointTrajectory.header.stamp = tStart;
-			state.cartTrajectory.header.stamp = tStart;
+            state.tPlan = tStart + state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
+            state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = tStart;
+            state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = tStart;
+            hittingFailed = false;
 			return true;
 		}
 		else {
@@ -182,10 +198,9 @@ bool Smash::generateHitTrajectory(const JointArrayType &qCur, ros::Time &tStart)
 	}
 
 	vHit2d = vHit2d * 0.;
-	state.jointTrajectory.points.clear();
-	state.cartTrajectory.points.clear();
-	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
-			"Failed to find a feasible movement [HITTING]");
+    state.tPlan = state.trajectoryBuffer.getExec().jointTrajectory.header.stamp + state.trajectoryBuffer.getExec().jointTrajectory.points.back().time_from_start;
+	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +	"Failed to find a feasible movement [HITTING]");
+    hittingFailed = true;
 	return false;
 }
 

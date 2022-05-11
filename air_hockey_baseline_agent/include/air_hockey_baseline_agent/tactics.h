@@ -38,7 +38,6 @@ public:
 	virtual bool apply() = 0;
 	virtual void updateTactic();
     void setTactic(Tactics tactic);
-    void initTactic();
     bool canSmash();
     bool shouldCut();
     bool shouldRepel();
@@ -46,11 +45,8 @@ public:
 
 protected:
 	virtual void setNextState() = 0;
-	bool planReturnTraj(const double &vMax,
-			trajectory_msgs::MultiDOFJointTrajectory &cartTrajReturn,
-			trajectory_msgs::JointTrajectory &jointTrajReturn);
 	std::string tactic2String(Tactics tactic);
-	void generateStopTrajectory();
+    bool generateStopTrajectory();
 
 
 protected:
@@ -172,13 +168,14 @@ protected:
 	Eigen::Vector2d getStopPoint(Eigen::Vector2d hitPoint);
     void getHitPointVelocity(Eigen::Vector2d &xHit2d, Eigen::Vector2d &vHit2d,
                              JointArrayType &qHitRef);
-    bool generateHitTrajectory(const JointArrayType &qCur, ros::Time &tStart);
+    bool generateHitTrajectory(ros::Time &tStart);
 
 protected:
 	std::random_device rd;
 	std::mt19937 gen;
 	std::uniform_int_distribution<int> dist;
 	Eigen::Vector2d xCur2d, xHit2d, vHit2d;
+    bool hittingFailed, hasStopSegment;
 
     Eigen::Vector3d computeTarget(Eigen::Vector3d puckPosition, int strategy);
 };

@@ -48,8 +48,7 @@ namespace air_hockey_baseline_agent {
 		                               const air_hockey_baseline_agent::AgentParams &agentParams);
 
 	public:
-		trajectory_msgs::MultiDOFJointTrajectory cartTrajectory;
-		trajectory_msgs::JointTrajectory jointTrajectory;
+        TrajectoryBuffer trajectoryBuffer;
 
 		air_hockey_baseline_agent::ObservationState observation;
 		air_hockey_baseline_agent::Tactics currentTactic;
@@ -60,6 +59,7 @@ namespace air_hockey_baseline_agent {
 		int approachingCount;
 
 		JointArrayType qPlan, dqPlan;
+        trajectory_msgs::JointTrajectoryPoint planPrevPoint;
 		Eigen::Vector3d xPlan, vPlan;
 		ros::Time tPlan, tStart;
 	};

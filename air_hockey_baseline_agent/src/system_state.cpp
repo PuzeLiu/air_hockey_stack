@@ -31,31 +31,24 @@ SystemState::SystemState() {
 
 void SystemState::init(const AgentParams &agentParams)
 {
-	cartTrajectory.joint_names.push_back("x");
-	cartTrajectory.joint_names.push_back("y");
-	cartTrajectory.joint_names.push_back("z");
-
-	for (int i = 0; i < agentParams.nq; i++) {
-		jointTrajectory.joint_names.push_back(agentParams.pinoModel.names[i + 1]);
-	}
+    trajectoryBuffer = TrajectoryBuffer(agentParams);
 
 	currentTactic = Tactics::INIT;
 
-	isNewTactics = true;
+	isNewTactics = false;
 
 	staticCount = 0;
 	approachingCount = 0;
 
 	qPlan.resize(agentParams.nq);
 	dqPlan.resize(agentParams.nq);
+    planPrevPoint.positions.resize(agentParams.nq);
+    planPrevPoint.velocities.resize(agentParams.nq);
 }
 
 bool SystemState::hasActiveTrajectory() {
-	if (!jointTrajectory.points.empty()){
-		return ros::Time::now() < jointTrajectory.header.stamp + jointTrajectory.points.back().time_from_start;
-	} else {
-		return false;
-	}
+    return ros::Time::now() <= trajectoryBuffer.getExec().jointTrajectory.header.stamp +
+    trajectoryBuffer.getExec().jointTrajectory.points.back().time_from_start;
 }
 
 bool SystemState::isPuckStatic() {
@@ -85,4 +78,8 @@ void SystemState::updateObservationAndState(ObservationState observationState,
 	staticCount = min(staticCount, 20);
 	approachingCount = min(approachingCount, 20);
 
+    if (ros::Time::now() >= trajectoryBuffer.getFree().jointTrajectory.header.stamp and
+    trajectoryBuffer.getFree().jointTrajectory.header.stamp > trajectoryBuffer.getExec().jointTrajectory.header.stamp) {
+        trajectoryBuffer.moveNext();
+    }
 }

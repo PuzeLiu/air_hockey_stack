@@ -49,16 +49,12 @@ namespace air_hockey_baseline_agent {
 		                             trajectory_msgs::JointTrajectory &jointTraj);
 
 		bool optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-		                                   const JointArrayType &qStart,
-		                                   const JointArrayType &qAnchor,
-		                                   trajectory_msgs::JointTrajectory &jointTraj,
-		                                   bool increasing = true);
+		                                   const JointArrayType &qStart, const JointArrayType &qAnchor,
+		                                   trajectory_msgs::JointTrajectory &jointTraj, bool increasing = true);
 
 		bool optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-			const JointArrayType &qStart,
-			const JointArrayType &qAnchor,
-			double hitting_time,
-			trajectory_msgs::JointTrajectory &jointTraj);
+			const JointArrayType &qStart, const JointArrayType &dqStart, const JointArrayType &qAnchor,
+            double hitting_time, trajectory_msgs::JointTrajectory &jointTraj);
 
 		void solveJoint7(JointArrayType &q, JointArrayType &dq);
 
