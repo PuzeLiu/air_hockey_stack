@@ -117,10 +117,10 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &xStart_, const Eigen::Vect
 	xInter << cartTraj.points.back().transforms[0].translation.x, cartTraj.points.back().transforms[0].translation.y;
 	vInter << cartTraj.points.back().velocities[0].linear.x, cartTraj.points.back().velocities[0].linear.y;
 	hitting_time = cartTraj.points.back().time_from_start.toSec();
-	if (not plan(xInter, vInter, xEnd_, vEnd_, cartTraj)) {
-		cerr << "Failed at stopping phase" << endl;
-		return false;
-	}
+	//if (not plan(xInter, vInter, xEnd_, vEnd_, cartTraj)) {
+	//	cerr << "Failed at stopping phase" << endl;
+	//	return false;
+	//}
 
 	cartTraj.header.stamp = ros::Time::now();
 	return true;

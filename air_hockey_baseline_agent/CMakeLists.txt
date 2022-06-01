@@ -91,6 +91,15 @@ add_executable(null_space_optimizer_example
     src/transformations.cpp
     examples/null_space_optimizer_example.cpp)
 
+add_executable(null_space_optimizer_generate_data
+        src/utils.cpp
+        src/null_space_optimizer.cpp
+        src/hitting_point_optimizer.cpp
+        src/planner/combinatorial_hit_new.cpp
+        src/planner/cubic_linear_motion.cpp
+        src/transformations.cpp
+        examples/null_space_optimizer_generate_data.cpp)
+
 add_executable(promp_test
    src/test/ProMP_test.cpp)
 
@@ -119,6 +128,15 @@ target_link_libraries(null_space_optimizer_example
     CoinUtils
     pinocchio::pinocchio
     )
+target_link_libraries(null_space_optimizer_generate_data
+        ${catkin_LIBRARIES}
+        osqp::osqp
+        OsqpEigen
+        NLopt::nlopt
+        Clp
+        CoinUtils
+        pinocchio::pinocchio
+        )
 
 target_link_libraries(promp_test
    ${catkin_LIBRARIES}

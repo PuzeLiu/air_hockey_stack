@@ -1,15 +1,16 @@
+#!/usr/bin/env python3
 import os
 from copy import deepcopy
 import rosbag
-import rospkg
+#import rospkg
 import numpy as np
 import matplotlib.pyplot as plt
 from trajectory_msgs.msg import MultiDOFJointTrajectory
 from trajectory_msgs.msg import JointTrajectory
 import pinocchio as pino
 
-description_path = rospkg.RosPack().get_path("air_hockey_description")
-urdf_file = os.path.join(description_path, "urdf/iiwa_striker.urdf")
+#description_path = rospkg.RosPack().get_path("air_hockey_description")
+urdf_file = os.path.join("/home/piotr/b8/ah_ws/src/air_hockey_stack/air_hockey_description", "urdf/iiwa_striker.urdf")
 pino_model = pino.buildModelFromUrdf(urdf_file)
 pino_data = pino_model.createData()
 pino_frame_id = pino_model.getFrameId("F_striker_tip")
@@ -47,6 +48,7 @@ for topic, msg, t in qp_bag.read_messages():
         qp_joint_velocities = np.array(qp_joint_velocities)
         qp_cart_fk_positions = np.array(qp_cart_fk_positions)
 
+print("XD")
 aqp_bag = rosbag.Bag("aqp_opt.bag")
 aqp_cart_positions = []
 aqp_cart_velocities = []
@@ -78,6 +80,7 @@ for topic, msg, t in aqp_bag.read_messages():
         aqp_joint_velocities = np.array(aqp_joint_velocities)
         aqp_cart_fk_positions = np.array(aqp_cart_fk_positions)
 
+print("XD")
 
 fig, ax = plt.subplots(1)
 ax.scatter(qp_cart_positions[:, 0], qp_cart_positions[:, 1], s=3, label='qp_plan')

@@ -31,7 +31,7 @@ include_directories(
         include
         ${catkin_INCLUDE_DIRS}
         ${GAZEBO_INCLUDE_DIRS}
-        ${EIGEN3_INCLUDE_DIRS}
+        #${EIGEN3_INCLUDE_DIRS}
         ${pinocchio_INCLUDE_DIRS}
 )
 
