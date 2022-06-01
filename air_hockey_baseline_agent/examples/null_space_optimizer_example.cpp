@@ -62,6 +62,7 @@ void loadAgentParams(AgentParams& agentParams, Transformations transformations)
 {
 	agentParams.name = "/iiwa_front";
 	agentParams.debugTactics = false;
+	agentParams.rate = 100.;
 
 	string parent_dir = ros::package::getPath("air_hockey_description");
 	string robot_description = parent_dir + "/urdf/iiwa_striker.urdf";
@@ -74,12 +75,12 @@ void loadAgentParams(AgentParams& agentParams, Transformations transformations)
 	agentParams.qRef.block<7, 1>(0, 0) << 0., 0.06580, 0., -1.45996, 0., 1.22487, 0.;
 	agentParams.xGoal << 1.98, 0.0;
 	agentParams.xHome << 0.08, 0.0, 0.0;
-	agentParams.xPrepare << 0.4, 0.0, 0.0;
+	agentParams.xInit << 0.4, 0.0, 0.0;
 
 	agentParams.hitRange << 0.2, 0.8;
 
-	agentParams.vDefendMin = 0.08;
-	agentParams.tDefendMin = 0.3;
+	agentParams.defendMinVel = 0.08;
+	agentParams.defendMinTime = 0.3;
 	agentParams.defendZoneWidth = 0.4;
 	agentParams.defendLine = 0.2;
 	agentParams.planTimeOffset = 0.1;
@@ -106,8 +107,7 @@ void loadAgentParams(AgentParams& agentParams, Transformations transformations)
 
 void initOptimizerData(OptimizerData& optData)
 {
-	optData.rate = 100.;
-	optData.K.setConstant(optData.rate);
+	optData.K.setConstant(100);
 	optData.weights << 10., 10., 5., 10., 1., 1., 0.;
 	optData.weightsAnchor << 1., 1., 5., 1, 10., 10., 0.;
 }
@@ -152,9 +152,9 @@ int main(int argc, char* argv[])
 		-envParams.tableWidth / 2 + envParams.malletRadius + 0.02);
 	Vector2d bound_upper(envParams.tableLength / 2 - envParams.malletRadius,
 		envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
-	CombinatorialHitNew combPlanner(bound_lower, bound_upper, optData.rate,
+	CombinatorialHitNew combPlanner(bound_lower, bound_upper, agentParams.rate,
 		agentParams.universalJointHeight);
-	CubicLinearMotion cubPlanner(optData.rate, agentParams.universalJointHeight);
+	CubicLinearMotion cubPlanner(agentParams.rate, agentParams.universalJointHeight);
 
 	trajectory_msgs::MultiDOFJointTrajectory cartTraj;
 	cartTraj.joint_names.push_back("x");
@@ -188,6 +188,7 @@ int main(int argc, char* argv[])
 	//! Get Maximum Hitting Velocity
 	double velMag, hitting_time;
 	VectorXd qAnchor(agentParams.nq);
+    VectorXd dqStart(agentParams.nq);
 	qAnchor.setZero();
 	Vector3d hitPoint3d, hitDir3d;
 	hitPoint3d.topRows(2) = xHit2d;
@@ -250,7 +251,8 @@ int main(int argc, char* argv[])
 		}
 		transformations.transformTrajectory(cartTraj);
 
-		if (nullOptimizer.optimizeJointTrajectoryAnchor(cartTraj, agentParams.qHome, qAnchor, hitting_time, jointTraj)) {
+        dqStart.setZero();
+		if (nullOptimizer.optimizeJointTrajectoryAnchor(cartTraj, agentParams.qHome, dqStart, qAnchor, hitting_time, jointTraj)) {
 			success = true;
 			break;
 		} else {

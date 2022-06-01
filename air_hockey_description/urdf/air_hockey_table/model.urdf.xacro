@@ -18,14 +18,14 @@
     <xacro:arg name="lateral_friction_surface" default="0.0001"/>
 
     <xacro:property name="M_PI" value="3.1415926535897931"/>
-    <xacro:property name="table_base_length" value="2.136"/>
-    <xacro:property name="table_base_width" value="1.222"/>
+    <xacro:property name="table_base_length" value="2.128"/>
+    <xacro:property name="table_base_width" value="1.218"/>
     <xacro:property name="table_base_height" value="0.11"/>
     <xacro:property name="table_rim_horizon_length" value="0.09"/>
     <xacro:property name="table_rim_horizon_width" value="0.396"/>
     <xacro:property name="table_rim_horizon_height" value="0.01"/>
     <xacro:property name="table_rim_horizon_top_height" value="0.02"/>
-    <xacro:property name="table_rim_vertical_length" value="2.136"/>
+    <xacro:property name="table_rim_vertical_length" value="2.128"/>
     <xacro:property name="table_rim_vertical_width" value="0.09"/>
     <xacro:property name="table_rim_vertical_height" value="0.03"/>
 

@@ -125,7 +125,6 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 			dxDes[1] = cartTraj.points[i].velocities[0].linear.y;
 			dxDes[2] = cartTraj.points[i].velocities[0].linear.z;
 
-//            tTogo = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec() + 0.1;
 			dqAnchorTmp = (qAnchor - qCur) / 0.5;
 
 			if (increasing) {
@@ -166,14 +165,15 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 }
 
 bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-	const JointArrayType &qStart, const JointArrayType &qAnchor,
+	const JointArrayType &qStart, const JointArrayType &dqStart, const JointArrayType &qAnchor,
 	double hitting_time, trajectory_msgs::JointTrajectory &jointTraj) {
 	if (!cartTraj.points.empty()) {
 		Vector3d xDes, dxDes;
 		JointArrayType qCur, qNext, dqNext, dqAnchorTmp;
-		double scale;
+		double scale, scaleVel;
 
 		qCur = qStart;
+        dqNext = dqStart;
 
 		trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 		jointViaPoint_.positions.resize(agentParams.nq);
@@ -197,11 +197,13 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 			if (cartTraj.points[i].time_from_start.toSec() <= hitting_time) {
 				//! Multiply the phase variable
 				scale = (cartTraj.points[i].time_from_start - cartTraj.points.front().time_from_start).toSec() / hitting_time;
+                scaleVel = std::min(std::max(1 - cartTraj.points[i].time_from_start.toSec(), 0.), 1.);
 			} else {
 				scale = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec() /
 						(cartTraj.points.back().time_from_start.toSec() - hitting_time);
+                scaleVel = 0.;
 			}
-			dqAnchorTmp = dqAnchorTmp * scale;
+			dqAnchorTmp = dqAnchorTmp * scale  + dqStart * scaleVel;
 
 			if (!solveQPAnchor(xDes, dxDes, qCur, dqAnchorTmp, qNext, dqNext)) {
 				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "qAchor : " << qAnchor.transpose());
@@ -254,9 +256,9 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
 	optData.A = optData.N_J.sparseView();
 
 	optData.upperBound = agentParams.pinoModel.velocityLimit.cwiseMin(
-			(agentParams.pinoModel.upperPositionLimit * 0.95 - qCur) * optData.rate) - b;
+			(agentParams.pinoModel.upperPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
 	optData.lowerBound = (-agentParams.pinoModel.velocityLimit).cwiseMax(
-			(agentParams.pinoModel.lowerPositionLimit * 0.95 - qCur) * optData.rate) - b;
+			(agentParams.pinoModel.lowerPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
 
 	if (!constructQPSolver()){
 		ROS_DEBUG_STREAM("Unable to construct the QR solver");
@@ -274,34 +276,10 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
 	{
 		optData.alphaLast = solver.getSolution();
 		dqNext = b + optData.N_J * solver.getSolution();
-		qNext = qCur + dqNext / optData.rate;
+		qNext = qCur + dqNext / agentParams.rate;
 		return true;
 	}
 	return false;
-//	else
-//	{
-//		VectorXd feasiblePoint;
-//		if (checkFeasibility(optData.A.toDense(), optData.lowerBound, optData.upperBound, feasiblePoint)) {
-//			constructQPSolver(true);
-//			solver.setPrimalVariable(feasiblePoint);
-//			ROS_DEBUG_STREAM("Feasible point with Infeasibility solutions: ");
-//			ROS_DEBUG_STREAM("ConstraintLower: " << (optData.A * feasiblePoint - optData.lowerBound).transpose());
-//			ROS_DEBUG_STREAM("ConstraintUpper: " << (optData.upperBound - optData.A * feasiblePoint).transpose());
-//			ROS_DEBUG_STREAM("Feasible Point:" << feasiblePoint.transpose());
-//			ROS_DEBUG_STREAM("Set Solution: " << Eigen::VectorXd::Map(solver.workspace()->solution->x, 4));
-//			ROS_DEBUG_STREAM("obj: " << feasiblePoint.transpose() * optData.P * feasiblePoint / 2 +
-//										optData.q.transpose() * feasiblePoint);
-//			ROS_DEBUG_STREAM((optData.A * feasiblePoint - (optData.lowerBound - b)).transpose());
-//			ROS_DEBUG_STREAM(((optData.upperBound - b) - optData.A * feasiblePoint).transpose());
-//			solver.solveProblem();
-//			ROS_DEBUG_STREAM("After initialization: " << solver.workspace()->info->status);
-//			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "xDes: " << xDes.transpose());
-//			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "xCur: "
-//					<< agentParams.pinoData.oMf[agentParams.pinoFrameId].translation().transpose());
-//			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "qCur: " << qCur.transpose());
-//		}
-//		return false;
-//	}
 }
 
 bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
@@ -324,7 +302,6 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 			optData.K.asDiagonal() * (xDes - optData.xCurPos) + dxDes);
 	MatrixXd I(7, 7);
 	I.setIdentity();
-//	auto dqAnchorProjected = (I - jacInv * jacobian_) * dqAnchor;
 	VectorXd omega = b - dqAnchor;
 
 	if (optData.N_J.cols() != optData.dimNullSpace) {
@@ -338,9 +315,9 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 	optData.A = optData.N_J.sparseView();
 
 	optData.upperBound = agentParams.pinoModel.velocityLimit.cwiseMin(
-			(agentParams.pinoModel.upperPositionLimit * 0.95 - qCur) * optData.rate) - b;
+			(agentParams.pinoModel.upperPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
 	optData.lowerBound = (-agentParams.pinoModel.velocityLimit).cwiseMax(
-			(agentParams.pinoModel.lowerPositionLimit * 0.95 - qCur) * optData.rate) - b;
+			(agentParams.pinoModel.lowerPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
 
 
 	if (!constructQPSolver()){
@@ -359,33 +336,10 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 	{
 		optData.alphaLast = solver.getSolution();
 		dqNext = b + optData.N_J * solver.getSolution();
-		qNext = qCur + dqNext / optData.rate;
+        qNext = qCur + dqNext / agentParams.rate;
 		return true;
 	}
 	return false;
-//	else
-//	{
-//		if (checkFeasibility(optData.A.toDense(), optData.lowerBound, optData.upperBound, feasiblePoint)) {
-//			constructQPSolver(true);
-//			solver.setPrimalVariable(feasiblePoint);
-//			ROS_DEBUG_STREAM("Feasible point with Infeasibility solutions: ");
-//			ROS_DEBUG_STREAM("ConstraintLower: " << (optData.A * feasiblePoint - optData.lowerBound).transpose());
-//			ROS_DEBUG_STREAM("ConstraintUpper: " << (optData.upperBound - optData.A * feasiblePoint).transpose());
-//			ROS_DEBUG_STREAM("Feasible Point:" << feasiblePoint.transpose());
-//			ROS_DEBUG_STREAM("Set Solution: " << Eigen::VectorXd::Map(solver.workspace()->solution->x, 4));
-//			ROS_DEBUG_STREAM("obj: " << feasiblePoint.transpose() * optData.P * feasiblePoint / 2 +
-//										optData.q.transpose() * feasiblePoint);
-//			ROS_DEBUG_STREAM((optData.A * feasiblePoint - (optData.lowerBound - b)).transpose());
-//			ROS_DEBUG_STREAM(((optData.upperBound - b) - optData.A * feasiblePoint).transpose());
-//			solver.solveProblem();
-//			ROS_DEBUG_STREAM("After initialization: " << solver.workspace()->info->status);
-//			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "xDes: " << xDes.transpose());
-//			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "xCur: "
-//					<< agentParams.pinoData.oMf[agentParams.pinoFrameId].translation().transpose());
-//			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "qCur: " << qCur.transpose());
-//		}
-//		return false;
-//	}
 }
 
 void NullSpaceOptimizer::solveJoint7(JointArrayType &q, JointArrayType &dq) {
@@ -399,7 +353,7 @@ void NullSpaceOptimizer::solveJoint7(JointArrayType &q, JointArrayType &dq) {
 	Matrix3d mat = agentParams.pinoData.oMf[agentParams.pinoFrameId].rotation();
 	Vector3d zAxis(0., 0., -1.);
 	auto yDes = zAxis.cross(mat.col(2)).normalized();
-	double target = acos(mat.col(1).dot(yDes));
+	double target = acos(boost::algorithm::clamp(mat.col(1).dot(yDes), -1., 1.));
 	Vector3d axis = mat.col(1).cross(yDes).normalized();
 	target = target * axis.dot(mat.col(2));
 
@@ -409,10 +363,10 @@ void NullSpaceOptimizer::solveJoint7(JointArrayType &q, JointArrayType &dq) {
 		target += M_PI;
 	}
 
-	dq[6] = boost::algorithm::clamp((target - qCur7) * optData.rate,
+	dq[6] = boost::algorithm::clamp((target - qCur7) * agentParams.rate,
 	                                -agentParams.pinoModel.velocityLimit[6],
 	                                agentParams.pinoModel.velocityLimit[6]);
-	q[6] = boost::algorithm::clamp(qCur7 + dq[6] / optData.rate,
+	q[6] = boost::algorithm::clamp(qCur7 + dq[6] / agentParams.rate,
 	                               agentParams.pinoModel.lowerPositionLimit[6],
 	                               agentParams.pinoModel.upperPositionLimit[6]);
 }

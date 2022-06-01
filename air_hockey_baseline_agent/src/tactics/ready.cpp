@@ -35,51 +35,50 @@ Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Ready::ready() {
-	return !state.hasActiveTrajectory();
+	//! New cut implementation
+	if (state.isNewTactics) {
+		// Get planned position and velocity at now + timeoffset
+		state.tPlan = ros::Time::now();
+		state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset);
+	} else {
+        state.tStart = state.tPlan + ros::Duration(2.0);
+        if (state.tStart <= ros::Time::now() + ros::Duration(agentParams.planTimeOffset)){
+            state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
+        }
+	}
+	return true;
 }
 
 bool Ready::apply() {
 	state.isNewTactics = false;
+	if (ros::Time::now() >= state.tPlan)
+	{
+        generator.getPlannedJointState(state, state.tStart);
+        state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
+        state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
-	Vector3d xCur, vCur;
-	Vector2d xCur2d, vCur2d;
-	ros::Time tStart;
-	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
+		double tStop = std::max((agentParams.xHome - state.xPlan).norm() / 1.0, 2.0);
 
-	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
+		generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, agentParams.xHome, Vector3d(0., 0., 0.),
+			tStop, state.trajectoryBuffer.getFree().cartTrajectory);
 
-	generator.getCartesianPosAndVel(xCur, vCur, qStart, dqStart);
+		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
+		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.trajectoryBuffer.getFree().cartTrajectory, state.qPlan, state.dqPlan,
+			agentParams.qHome, state.trajectoryBuffer.getFree().cartTrajectory.points.back().time_from_start.toSec() / 2,
+            state.trajectoryBuffer.getFree().jointTrajectory)) {
+            generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
 
-	generator.transformations->transformRobot2Table(xCur);
-	generator.transformations->rotationRobot2Table(vCur);
-
-	xCur2d = xCur.block<2, 1>(0, 0);
-	vCur2d = vCur.block<2, 1>(0, 0);
-
-	double tStop = std::max((agentParams.xHome.block<2, 1>(0, 0) - xCur2d).norm() / 0.5, 2.0);
-	for (int i = 0; i < 1; ++i) {
-		state.cartTrajectory.points.clear();
-		state.jointTrajectory.points.clear();
-		generator.cubicLinearMotion->plan(xCur2d, vCur2d, agentParams.xHome.block<2, 1>(0, 0),
-		                                  Vector2d(0., 0.), tStop, state.cartTrajectory);
-		generator.transformations->transformTrajectory(state.cartTrajectory);
-
-		if (!generator.optimizer->optimizeJointTrajectoryAnchor(
-				state.cartTrajectory, qStart, agentParams.qHome, state.jointTrajectory, true)) {
-			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
-									"Optimization Failed [READY]. Increase the motion time: " << tStop);
-			tStop += 0.5;
-		} else {
-			failed = false;
-			state.jointTrajectory.header.stamp = tStart;
-			state.cartTrajectory.header.stamp = tStart;
+			state.tPlan = state.tStart;
+            state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;
+            state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.tStart;
 			return true;
 		}
+		else
+		{
+			ROS_INFO_STREAM("Plan Failed");
+			return false;
+		}
 	}
-	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
-							"Optimization Failed [READY]. Unable to find trajectory for Ready");
-	state.jointTrajectory.points.clear();
-	state.cartTrajectory.points.clear();
 	return false;
 }
 

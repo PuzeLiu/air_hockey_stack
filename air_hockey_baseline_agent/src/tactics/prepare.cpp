@@ -39,16 +39,15 @@ bool Prepare::ready() {
 }
 
 bool Prepare::apply() {
-	JointArrayType qStart(agentParams.nq), dqStart(agentParams.nq);
-	ros::Time tStart;
-	state.getPlannedJointState(qStart, dqStart, tStart, agentParams.planTimeOffset);
+	state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
+	generator.getPlannedJointState(state, state.tStart);
 
-	if (dqStart.norm() > 0.05) {
+	if (state.dqPlan.norm() > 0.05) {
 		generateStopTrajectory();
 		return true;
 	} else {
 		state.isNewTactics = false;
-		return generatePrepareTrajectory(qStart, dqStart, tStart);
+		return generatePrepareTrajectory(state.qPlan, state.dqPlan, state.tPlan);
 	}
 }
 
@@ -72,11 +71,6 @@ bool Prepare::generatePrepareTrajectory(JointArrayType &qStart,
 	Vector3d xStart, vStart;
 	Vector2d xStart2d, vStart2d, xPuck, xPrepare, vPrepare;
 
-	generator.getCartesianPosAndVel(xStart, vStart, qStart, dqStart);
-
-	generator.transformations->transformRobot2Table(xStart);
-	generator.transformations->rotationRobot2Table(vStart);
-
 	xStart2d = xStart.block<2, 1>(0, 0);
 
 	getPreparePosAndVel(xStart2d, xPuck, xPrepare, vPrepare);
@@ -84,16 +78,16 @@ bool Prepare::generatePrepareTrajectory(JointArrayType &qStart,
 	double tStop = 0.1;
 
 	for (int i = 0; i < 10; ++i) {
-		state.cartTrajectory.points.clear();
-		state.jointTrajectory.points.clear();
+        state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
+        state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 		generator.combinatorialHit->plan(xStart2d, xPrepare, vPrepare,
-		                                 state.cartTrajectory, tStop);
-		generator.transformations->transformTrajectory(state.cartTrajectory);
+            state.trajectoryBuffer.getFree().cartTrajectory, tStop);
+		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
-		if (generator.optimizer->optimizeJointTrajectory(state.cartTrajectory, state.observation.jointPosition,
-		                                                 state.jointTrajectory)) {
-			state.cartTrajectory.header.stamp = tStart;
-			state.jointTrajectory.header.stamp = tStart;
+		if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory, state.observation.jointPosition,
+            state.trajectoryBuffer.getFree().jointTrajectory)) {
+            state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = tStart;
+            state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = tStart;
 			return true;
 		} else {
 			vPrepare *= .8;
@@ -103,8 +97,6 @@ bool Prepare::generatePrepareTrajectory(JointArrayType &qStart,
 	}
 	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
 							"Optimization Failed [PREPARE]. Failed to find a feasible hitting movement");
-	state.jointTrajectory.points.clear();
-	state.cartTrajectory.points.clear();
 	return false;
 
 }

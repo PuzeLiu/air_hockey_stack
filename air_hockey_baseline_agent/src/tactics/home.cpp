@@ -35,30 +35,36 @@ Home::Home(EnvironmentParams &envParams, AgentParams &agentParams,
 }
 
 bool Home::ready() {
-	return state.isNewTactics;
+    if (state.isNewTactics) {
+        state.tPlan = ros::Time::now();
+        state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset);
+    }
+	return true;
 }
 
 bool Home::apply() {
 	state.isNewTactics = false;
 
-	JointTrajectoryPoint jointViaPoint_;
-	jointViaPoint_.positions.resize(7);
-	jointViaPoint_.velocities.resize(7);
+    if (ros::Time::now() >= state.tPlan) {
+        generator.getPlannedJointState(state, state.tStart);
+        state.jointTrajectory.points.clear();
+        state.cartTrajectory.points.clear();
 
-	state.jointTrajectory.points.clear();
-	for (int i = 0; i < 7; ++i) {
-		jointViaPoint_.positions[i] = agentParams.qHome[i];
-		jointViaPoint_.velocities[i] = 0.;
-	}
+        generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, agentParams.xHome, Vector3d(0., 0., 0.),
+            2.0, state.cartTrajectory);
+        generator.transformations->transformTrajectory(state.cartTrajectory);
 
-	jointViaPoint_.time_from_start = ros::Duration(2.0);
-	state.jointTrajectory.points.push_back(jointViaPoint_);
-
-	state.jointTrajectory.header.stamp = ros::Time::now();
-
-	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Go to home position");
-
-	return true;
+        if (!generator.optimizer->optimizeJointTrajectoryAnchor(state.cartTrajectory, state.qPlan, agentParams.qHome, 1.0, state.jointTrajectory)){
+            state.jointTrajectory.header.stamp = state.tStart;
+            state.cartTrajectory.header.stamp = state.tStart;
+            state.tPlan = state.tStart;
+            return true;
+        } else {
+            state.tPlan = ros::Time::now();
+            return false;
+        }
+    }
+    return false;
 }
 
 Home::~Home() {

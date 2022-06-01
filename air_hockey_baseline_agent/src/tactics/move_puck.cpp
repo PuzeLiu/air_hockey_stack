@@ -60,28 +60,28 @@ bool MovePuck::apply() {
 
 	double tStop = 2.0;
 	for (int i = 0; i < 10; ++i) {
-		state.cartTrajectory.points.clear();
-		state.jointTrajectory.points.clear();
+        state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
+        state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
 		generator.cubicLinearMotion->plan(xCur, Vector3d(0., 0., 0.), xLiftUp,
-				Vector3d(0., 0., 0.), tStop, state.cartTrajectory);
+				Vector3d(0., 0., 0.), tStop, state.trajectoryBuffer.getFree().cartTrajectory);
 		generator.cubicLinearMotion->plan(xLiftUp, Vector3d(0., 0., 0.),
-				xSetDown, Vector3d(0., 0., 0.), tStop, state.cartTrajectory);
+				xSetDown, Vector3d(0., 0., 0.), tStop, state.trajectoryBuffer.getFree().cartTrajectory);
 		generator.cubicLinearMotion->plan(xSetDown, Vector3d(0., 0., 0.),
-				agentParams.xPrepare, Vector3d(0., 0., 0.), tStop,
-				state.cartTrajectory);
+				agentParams.xInit, Vector3d(0., 0., 0.), tStop,
+            state.trajectoryBuffer.getFree().cartTrajectory);
 
-		generator.transformations->transformTrajectory(state.cartTrajectory);
+		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
 		bool ok = generator.optimizer->optimizeJointTrajectory(
-				state.cartTrajectory, state.observation.jointPosition,
-				state.jointTrajectory);
+            state.trajectoryBuffer.getFree().cartTrajectory, state.observation.jointPosition,
+            state.trajectoryBuffer.getFree().jointTrajectory);
 		if (!ok) {
 			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
 					"Optimization Failed [PREPARE]. Increase the motion time: " << tStop);
 			tStop += 0.2;
 		} else {
-			state.jointTrajectory.header.stamp = ros::Time::now();
+            state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = ros::Time::now();
 			return true;
 		}
 	}

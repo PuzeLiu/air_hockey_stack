@@ -55,6 +55,7 @@ private:
 	void computeBaseConfigurations();
 	void loadTactics();
 	void publishTrajectory();
+	void gotoInit();
 
 
 private:

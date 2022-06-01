@@ -357,8 +357,8 @@ void PuckTracker::reset()
 	{
 		geometry_msgs::TransformStamped tf1, tf2;
 		//! Look up for the second frame
-		stamp_ = ros::Time::now();
-		tf1 = tfBuffer_.lookupTransform(tableRefName_, "Puck", stamp_, ros::Duration(0.02));
+		tf1 = tfBuffer_.lookupTransform(tableRefName_, "Puck", ros::Time(0));
+		stamp_ = tf1.header.stamp;
 		tf2::Quaternion quat;
 		quat.setX(tf1.transform.rotation.x);
 		quat.setY(tf1.transform.rotation.y);
@@ -401,8 +401,7 @@ void PuckTracker::reset()
 	}
 	catch (tf2::TransformException& exception)
 	{
-		ROS_INFO_STREAM("Reset Failed: " << exception.what() << " Kill Puck Tracker");
-		exit(-1);
+		ROS_WARN_STREAM("Reset Failed: " << exception.what() << " Kill Puck Tracker");
 	}
 }
 

@@ -251,16 +251,16 @@ if __name__ == "__main__":
     testStrategy = TestStrategy()
 
     #Set strategy string for file and call test function
-    strategy = 'PREPARE'
-    testStrategy.testPrepare(iterations)
+    strategy = 'CUT'
+    testStrategy.testDefend(iterations)
     print("END")
 
-    logdir = os.path.join('logs/tests/', strategy, str(smashStrategy) + datetime.datetime.now().strftime("%d-%m-%Y-%H-%M"))
-    if not os.path.exists(logdir):
-        os.makedirs(logdir)
-
-    np.save(logdir +"/log_trajectory", testStrategy.trajectory, allow_pickle=True)
-    np.save(logdir +"/log_malletTrajectory", testStrategy.malletStates, allow_pickle=True)
+    # logdir = os.path.join('logs/tests/', strategy, str(smashStrategy) + datetime.datetime.now().strftime("%d-%m-%Y-%H-%M"))
+    # if not os.path.exists(logdir):
+    #     os.makedirs(logdir)
+    #
+    # np.save(logdir +"/log_trajectory", testStrategy.trajectory, allow_pickle=True)
+    # np.save(logdir +"/log_malletTrajectory", testStrategy.malletStates, allow_pickle=True)
 
 
 
