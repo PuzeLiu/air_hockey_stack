@@ -63,6 +63,7 @@ void loadAgentParams(AgentParams& agentParams, Transformations transformations)
 {
 	agentParams.name = "/iiwa_front";
 	agentParams.debugTactics = false;
+	agentParams.rate = 100.;
 
 	string parent_dir = ros::package::getPath("air_hockey_description");
 	string robot_description = parent_dir + "/urdf/iiwa_striker.urdf";
@@ -75,12 +76,12 @@ void loadAgentParams(AgentParams& agentParams, Transformations transformations)
 	agentParams.qRef.block<7, 1>(0, 0) << 0., 0.06580, 0., -1.45996, 0., 1.22487, 0.;
 	agentParams.xGoal << 1.98, 0.0;
 	agentParams.xHome << 0.08, 0.0, 0.0;
-	agentParams.xPrepare << 0.4, 0.0, 0.0;
+	agentParams.xInit << 0.4, 0.0, 0.0;
 
 	agentParams.hitRange << 0.2, 0.8;
 
-	agentParams.vDefendMin = 0.08;
-	agentParams.tDefendMin = 0.3;
+	agentParams.defendMinVel = 0.08;
+	agentParams.defendMinTime = 0.3;
 	agentParams.defendZoneWidth = 0.4;
 	agentParams.defendLine = 0.2;
 	agentParams.planTimeOffset = 0.1;
@@ -88,7 +89,7 @@ void loadAgentParams(AgentParams& agentParams, Transformations transformations)
 	agentParams.tTacticSwitchMin = 1.5;
 	agentParams.hitVelocityScale = 1.0;
 	agentParams.initHeight = 0.2;
-	agentParams.universalJointHeight = 0.0505;  // Table Height: 0.0505 + 0.1, TODO change to 0.0645 + 0.1
+	agentParams.universalJointHeight = 0.06;  // Table Height: 0.0645 + 0.1 but 0.0045 will be handled by compliance
 	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, agentParams.qRef);
 	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
 
@@ -108,8 +109,7 @@ void loadAgentParams(AgentParams& agentParams, Transformations transformations)
 
 void initOptimizerData(OptimizerData& optData)
 {
-	optData.rate = 100.;
-	optData.K.setConstant(optData.rate);
+	optData.K.setConstant(100);
 	optData.weights << 10., 10., 5., 10., 1., 1., 0.;
 	optData.weightsAnchor << 1., 1., 5., 1, 10., 10., 0.;
 }
@@ -163,9 +163,9 @@ int main(int argc, char* argv[])
 		-envParams.tableWidth / 2 + envParams.malletRadius + 0.02);
 	Vector2d bound_upper(envParams.tableLength / 2 - envParams.malletRadius,
 		envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
-	CombinatorialHitNew combPlanner(bound_lower, bound_upper, optData.rate,
+	CombinatorialHitNew combPlanner(bound_lower, bound_upper, agentParams.rate,
 		agentParams.universalJointHeight);
-	CubicLinearMotion cubPlanner(optData.rate, agentParams.universalJointHeight);
+	CubicLinearMotion cubPlanner(agentParams.rate, agentParams.universalJointHeight);
 
 	trajectory_msgs::MultiDOFJointTrajectory cartTraj;
 	cartTraj.joint_names.push_back("x");
@@ -183,8 +183,11 @@ int main(int argc, char* argv[])
 	bool success;
 
 	vector<vector<float>> data;
+	vector<int> successes = {};
+	vector<float> times = {};
     string parent_dir = ros::package::getPath("air_hockey_baseline_agent");
-    string data_file = parent_dir + "/data/maximal_velocity_hitting/train/data_striker.tsv";
+    string ds = "test";
+    string data_file = parent_dir + "/data/airhockey_maximal_velocity_hitting/" + ds + "/data.tsv";
     ifstream fin(data_file);
     string line;
     while (getline(fin, line)) {
@@ -225,7 +228,7 @@ int main(int argc, char* argv[])
 
         // dataset settings
         vector<float> record = data[k];
-        xStart2d << record[37] - 0.526, record[38];
+        xStart2d << record[38] - 0.526, record[39];
         agentParams.qInit.block<7, 1>(0, 0) << record[0], record[1], record[2], record[3], record[4], record[5], record[6];
         agentParams.qHome.block<7, 1>(0, 0) << record[0], record[1], record[2], record[3], record[4], record[5], record[6];
         //v0 = record[40];
@@ -241,6 +244,7 @@ int main(int argc, char* argv[])
         //! Get Maximum Hitting Velocity
         double velMag, hitting_time;
         VectorXd qAnchor(agentParams.nq);
+        VectorXd dqStart(agentParams.nq);
         qAnchor.setZero();
         Vector3d hitPoint3d, hitDir3d;
         hitPoint3d.topRows(2) = xHit2d;
@@ -270,8 +274,8 @@ int main(int argc, char* argv[])
             }
             transformations.transformTrajectory(cartTraj);
 
-            if (nullOptimizer.optimizeJointTrajectoryAnchor(cartTraj, agentParams.qHome, qAnchor, hitting_time,
-                                                            jointTraj)) {
+            dqStart.setZero();
+            if (nullOptimizer.optimizeJointTrajectoryAnchor(cartTraj, agentParams.qHome, dqStart, qAnchor, hitting_time, jointTraj)) {
                 success = true;
                 break;
             } else {
@@ -283,6 +287,9 @@ int main(int argc, char* argv[])
         cout << "Number of Points: " << cartTraj.points.size() << ", Success: " << success << ", Optimization Time: "
              << chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / 1.e6 << "ms\n";
 
+        successes.push_back((int)success);
+        times.push_back(chrono::duration_cast<std::chrono::nanoseconds>(finish - start).count() / 1.e6);
+
         //for (auto p: jointTraj.points) {
         //    for (auto x: p.positions)
         //        cout << x << "\t";
@@ -290,7 +297,7 @@ int main(int argc, char* argv[])
         //        cout << v << "\t";
         //    cout << endl;
         //}
-        auto fileName = "./data/" + leading_zeros(k, 5) + ".path";
+        auto fileName = "./data/" + ds + "/" + leading_zeros(k, 5) + ".path";
         FILE* fout = fopen(fileName.c_str(), "w");
         for (int j = 0; j < jointTraj.points.size(); j++)
         {
@@ -298,8 +305,7 @@ int main(int argc, char* argv[])
                 fprintf(fout, "%.5f\t", jointTraj.points[j].positions[i]);
             for (int i = 0; i < 6; i++)
                 fprintf(fout, "%.5f\t", jointTraj.points[j].velocities[i]);
-            fprintf(fout, "%.5f", jointTraj.points[j].velocities[6]);
-            fprintf(fout, "\n");
+            fprintf(fout, "%.5f\n", jointTraj.points[j].velocities[6]);
         }
         fclose(fout);
 
@@ -308,5 +314,14 @@ int main(int argc, char* argv[])
         //bag.write("joint_trajectory", ros::Time::now(), jointTraj);
         //bag.close();
     }
+    auto fileName = "./data/" + ds + "/opt_stats.tsv";
+    FILE* fout = fopen(fileName.c_str(), "w");
+    for (int j = 0; j < data.size(); j++)
+    {
+        fprintf(fout, "%d\t", successes[j]);
+        fprintf(fout, "%.5f\n", times[j]);
+    }
+    fclose(fout);
+
 	return 0;
 }

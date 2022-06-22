@@ -6,7 +6,8 @@ air_hockey:
     universal_joint_height:   0.055 # 0.0545
     home: [0.08, 0.0]
     goal: [0.98, 0.0]
-    q_ref: [0., 0.06580,  0., -1.45996, 0.,  1.22487, 0.]
+    #q_ref: [0., 0.06580,  0., -1.45996, 0.,  1.22487, 0.]
+    q_ref: [0, 0.697, 0, -0.505, 0., 1.92, 0.]
 
     plan_time_offset: 0.1
     min_tactic_switch_time: 1.5

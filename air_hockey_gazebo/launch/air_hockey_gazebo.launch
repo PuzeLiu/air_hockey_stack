@@ -96,7 +96,19 @@
     <!-- Start Air Hockey rqt -->
     <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
 
+    <node pkg="air_hockey_neural_planner" type="robot_initializer_node.py" name="robot_initializer_node" output="screen">
+        <param name="front_controllers" value="$(arg front_controllers)" />
+        <param name="back_controllers" value="$(arg back_controllers)" />
+    </node>
+
+    <node pkg="air_hockey_neural_planner" type="neural_planner_node.py" name="neural_planner_node" output="screen">
+        <param name="front_controllers" value="$(arg front_controllers)" />
+        <param name="back_controllers" value="$(arg back_controllers)" />
+    </node>
+
 <!--    &lt;!&ndash; Load Parameters of kalman filter &ndash;&gt;-->
     <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
+    <rosparam file="$(find air_hockey_baseline_agent)/config/config.yaml" command="load" subst_value="true"/>
+    <rosparam file="$(find air_hockey_neural_planner)/config/config.yaml" command="load" subst_value="true"/>
 
 </launch>
