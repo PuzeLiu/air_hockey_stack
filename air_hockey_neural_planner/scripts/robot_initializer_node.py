@@ -41,7 +41,7 @@ class RobotInitializerNode:
             traj_point_goal.accelerations = np.zeros(7)
 
             traj_point_goal.positions = self.reference_configuration
-            traj_point_goal.time_from_start = rospy.Time(2.0)
+            traj_point_goal.time_from_start = rospy.Time(3.0)
             self.iiwa_front_trajectory.points = [traj_point_goal]
             self.iiwa_front_trajectory.header.stamp = rospy.Time.now()
             self.iiwa_back_trajectory.points = [traj_point_goal]
