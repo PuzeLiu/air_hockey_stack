@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+import os.path
 import numpy as np
 import time
 from copy import deepcopy
@@ -12,11 +14,14 @@ if __name__ == '__main__':
     topic_name = '/iiwa_front/' if use_front else '/iiwa_back/'
     joint_prefix = 'F' if use_front else 'B'
 
-    rospy.init_node("publish_traj_command", anonymous=True)
-    cmdPub = rospy.Publisher(topic_name + type_name + "_trajectory_controller/command", JointTrajectory, queue_size=1)
-    rospy.sleep(2.0)
+    print("pre init node")
 
-    traj_record = np.load("trajectory.npy", allow_pickle=True)[()]
+    rospy.init_node("publish_traj_command", anonymous=True)
+    print("post init node")
+    cmdPub = rospy.Publisher(topic_name + type_name + "_trajectory_controller/command", JointTrajectory, queue_size=1)
+    rospy.sleep(3.0)
+
+    traj_record = np.load(os.path.join(os.path.dirname(__file__), "trajectory2.npy"), allow_pickle=True)[()]
 
     traj = JointTrajectory()
 
@@ -32,14 +37,21 @@ if __name__ == '__main__':
     traj_point_goal.positions = np.zeros(7)
     traj_point_goal.velocities = np.zeros(7)
     traj_point_goal.accelerations = np.zeros(7)
+    traj.points.append(deepcopy(traj_point_goal))
 
     traj_point_goal.positions[:6] = traj_record['q'][0]
-    traj_point_goal.time_from_start = rospy.Time(3.0)
-    traj.points.append(traj_point_goal)
+    print(traj_point_goal.positions)
+    traj_point_goal.time_from_start = rospy.Time(2.0)
+    traj.points.append(deepcopy(traj_point_goal))
+    print(traj.points)
     traj.header.stamp = rospy.Time.now()
+    #traj.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
     cmdPub.publish(traj)
 
-    time.sleep(3.0)
+    print("move to base command sent")
+
+    time.sleep(2.0)
+    #assert False
 
     traj.points.clear()
     for i in range(traj_record['t'].shape[0]):
@@ -58,3 +70,5 @@ if __name__ == '__main__':
 
     traj.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
     cmdPub.publish(traj)
+
+    print("hitting move command sent")
