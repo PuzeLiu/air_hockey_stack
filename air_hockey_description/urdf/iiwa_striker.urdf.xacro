@@ -19,12 +19,11 @@
     <link name="$(arg parent)"/>
 
     <!--iiwa-->
-    <xacro:iiwa14 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)" parent="$(arg parent)"
-                  dynamics_parameter="$(arg dynamics_parameter)">
+    <xacro:iiwa14 hardware_interface="$(arg hardware_interface)" robot_name="$(arg robot_name)" parent="$(arg parent)" dynamics_parameter="$(arg dynamics_parameter)">
         <origin xyz="$(arg base_xyz)" rpy="$(arg base_rpy)" />
     </xacro:iiwa14>
     <xacro:striker hardware_interface="hardware_interface/EffortJointInterface" robot_name="$(arg robot_name)"
-                   contain_universal_joint="$(arg contain_universal_joint)"/>
+        contain_universal_joint="$(arg contain_universal_joint)"/>
 
     <gazebo>
         <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">

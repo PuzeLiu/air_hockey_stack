@@ -1,0 +1,3 @@
+neural_planner:
+  planner_path: "./trained_models/striker/v08a08huberalpha/best-183"
+  ik_hitting_path: "./trained_models/ik_hitting/pos_lossabs/best-77"
