@@ -58,6 +58,19 @@
         <arg name="back_controllers" value="$(arg back_controllers)" />
     </include>
 
+    <node pkg="air_hockey_neural_planner" type="robot_initializer_node.py" name="robot_initializer_node" output="screen">
+        <param name="front_controllers" value="$(arg front_controllers)" />
+        <param name="back_controllers" value="$(arg back_controllers)" />
+    </node>
+
+    <node pkg="air_hockey_neural_planner" type="neural_planner_node.py" name="neural_planner_node" output="screen">
+        <param name="front_controllers" value="$(arg front_controllers)" />
+        <param name="back_controllers" value="$(arg back_controllers)" />
+    </node>
+
+    <rosparam file="$(find air_hockey_baseline_agent)/config/config.yaml" command="load" subst_value="true"/>
+    <rosparam file="$(find air_hockey_neural_planner)/config/config.yaml" command="load" subst_value="true"/>
+
 <!--    <include file="$(find air_hockey_gazebo)/launch/universal_joint_publisher.launch">-->
 <!--        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />-->
 <!--        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />-->
