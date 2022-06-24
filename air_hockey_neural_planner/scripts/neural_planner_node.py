@@ -71,13 +71,13 @@ class NeuralPlannerNode:
 
         d = q_0.tolist() + q_d.tolist() + [x_d, y_d, th_d] + q_dot_0.tolist() + q_ddot_0.tolist() + q_dot_d.tolist()
         d = np.array(d)[np.newaxis]
-        q, dq, ddq, t = model_inference(self.planner_model, d, self.bsp, self.bspt)
+        q, dq, ddq, t = model_inference(self.planner_model, d, self.bsp, self.bspt, uniform=True)
         print_(q.shape)
 
         d_ret = q_d.tolist() + Base.configuration + [0.] + [0.65, 0.0, 0.0] + dq[-1].tolist() + [0.] + ddq[-1].tolist() + [
             0.] * 8
         d_ret = np.array(d_ret)[np.newaxis]
-        q_r, dq_r, ddq_r, t_r = model_inference(self.planner_model, d_ret, self.bsp, self.bspt)
+        q_r, dq_r, ddq_r, t_r = model_inference(self.planner_model, d_ret, self.bsp, self.bspt, uniform=True)
         print_(q_r.shape)
 
         z = np.zeros_like(q)[:, :1]
