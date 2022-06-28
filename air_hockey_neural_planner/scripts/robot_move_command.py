@@ -10,7 +10,7 @@ import numpy as np
 class RobotMoveCommand:
     def __init__(self):
         rospy.init_node("robot_move_command", anonymous=True)
-        self.iiwa_front_publisher = rospy.Publisher("/iiwa_front/bspline_joint_trajectory_controller/command", JointTrajectory,
+        self.iiwa_front_publisher = rospy.Publisher("/iiwa_front/bspline_ff_joint_trajectory_controller/command", JointTrajectory,
                                                     queue_size=5)
         #self.iiwa_back_publisher = rospy.Publisher(f"/iiwa_back/{back_controller_type}/command", JointTrajectory,
         #                                           queue_size=5)
