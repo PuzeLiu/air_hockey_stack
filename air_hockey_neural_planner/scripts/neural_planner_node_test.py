@@ -32,7 +32,7 @@ class NeuralPlannerTestNode:
         rospy.sleep(2.)
         trans, _ = self.tf_listener.lookupTransform('/F_link_0', '/TableAway', rospy.Time(0))
         self.goal = trans
-        self.gazebo = False
+        self.gazebo = True if rospy.get_param("/gazebo/time_step", "") else False
 
     def set_robot_state(self, msg):
         self.robot_joint_pose = msg.position[:7]
@@ -54,8 +54,8 @@ class NeuralPlannerTestNode:
         if self.gazebo:
             state_msg = ModelState()
             state_msg.model_name = 'puck'
-            state_msg.pose.position.x = -0.5
-            state_msg.pose.position.y = -0.2
+            state_msg.pose.position.x = -0.5 + 0.2 * np.random.rand()
+            state_msg.pose.position.y = -0.4 + 0.8 * np.random.rand()
             state_msg.pose.position.z = 0.0
             state_msg.pose.orientation.x = 0
             state_msg.pose.orientation.y = 0

@@ -9,8 +9,12 @@
     <arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
     <arg name="dynamics_parameter" default="epfl"/>
 
-    <arg name="front_controllers" default="joint_feedforward_trajectory_controller"/>
-    <arg name="back_controllers" default="joint_feedforward_trajectory_controller"/>
+<!--     <arg name="front_controllers" default="adrc_trajectory_controller"/> -->
+<!--     <arg name="back_controllers" default="adrc_trajectory_controller"/> -->
+<!--     <arg name="front_controllers" default="joint_feedforward_trajectory_controller"/> -->
+<!--     <arg name="back_controllers" default="joint_feedforward_trajectory_controller"/> -->
+    <arg name="front_controllers" default="bspline_joint_trajectory_controller"/>
+    <arg name="back_controllers" default="bspline_joint_feedforward_trajectory_controller"/>
 
     <arg name="use_front_iiwa" default="true"/>
     <arg name="use_back_iiwa" default="true"/>
@@ -101,14 +105,20 @@
         <param name="back_controllers" value="$(arg back_controllers)" />
     </node>
 
-    <node pkg="air_hockey_neural_planner" type="neural_planner_node.py" name="neural_planner_node" output="screen">
+    <node pkg="air_hockey_neural_planner" type="neural_bspline_planner_node.py" name="neural_bspline_planner_node" output="screen">
         <param name="front_controllers" value="$(arg front_controllers)" />
         <param name="back_controllers" value="$(arg back_controllers)" />
     </node>
 
-<!--    &lt;!&ndash; Load Parameters of kalman filter &ndash;&gt;-->
     <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
     <rosparam file="$(find air_hockey_baseline_agent)/config/config.yaml" command="load" subst_value="true"/>
     <rosparam file="$(find air_hockey_neural_planner)/config/config.yaml" command="load" subst_value="true"/>
+
+    <node name="plotjuggler_with_layout"
+          pkg="plotjuggler"
+          type="plotjuggler"
+          args="--layout $(find air_hockey_neural_planner)/config/layout_bspline.xml"/>
+
+<!--    &lt;!&ndash; Load Parameters of kalman filter &ndash;&gt;-->
 
 </launch>
