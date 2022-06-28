@@ -17,7 +17,7 @@ PLANNING_MODULE_DIR = os.path.join(SCRIPT_DIR, "manifold_planning")
 sys.path.append(PLANNING_MODULE_DIR)
 
 from air_hockey_neural_planner.msg import PlannerRequest
-from air_hockey_neural_planner.msg import BsplineTrajectoryMsg, BsplineSegmentMsg
+from iiwas_control.msg import BsplineTrajectoryMsg, BsplineSegmentMsg
 from planner_request_utils import unpack_planner_request
 from manifold_planning.utils.bspline import BSpline
 from manifold_planning.utils.constants import UrdfModels, Limits, Base

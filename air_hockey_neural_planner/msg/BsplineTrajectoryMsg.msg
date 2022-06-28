@@ -1,2 +1,0 @@
-std_msgs/Header header
-air_hockey_neural_planner/BsplineSegmentMsg[] segments
