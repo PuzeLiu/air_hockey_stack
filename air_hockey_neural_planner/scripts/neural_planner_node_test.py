@@ -54,8 +54,8 @@ class NeuralPlannerTestNode:
         if self.gazebo:
             state_msg = ModelState()
             state_msg.model_name = 'puck'
-            state_msg.pose.position.x = -0.5
-            state_msg.pose.position.y = -0.2
+            state_msg.pose.position.x = -0.5 + 0.2 * np.random.rand()
+            state_msg.pose.position.y = -0.4 + 0.8 * np.random.rand()
             state_msg.pose.position.z = 0.0
             state_msg.pose.orientation.x = 0
             state_msg.pose.orientation.y = 0

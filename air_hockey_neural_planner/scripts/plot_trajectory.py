@@ -15,13 +15,14 @@ def read_bag(bag, duration):
     puck_pose = []
 
     for topic, msg, t_bag in bag.read_messages():
-        if topic == "/iiwa_front/adrc_trajectory_controller/state":
+        if topic in ["/iiwa_front/adrc_trajectory_controller/state",
+                     "/iiwa_front/joint_feedforward_trajectory_controller/state"]:
             n_joints = len(msg.joint_names)
             for i in range(n_joints):
                 time.append(msg.header.stamp.to_sec())
                 joint_state_desired.append(np.concatenate([msg.desired.positions, msg.desired.velocities, msg.desired.accelerations]))
-                joint_state_actual.append(np.concatenate([msg.actual.positions, msg.actual.velocities, msg.actual.accelerations]))
-                joint_state_error.append(np.concatenate([msg.error.positions, msg.error.velocities, msg.error.accelerations]))
+                joint_state_actual.append(np.concatenate([msg.actual.positions, msg.actual.velocities, msg.actual.accelerations, msg.actual.effort]))
+                joint_state_error.append(np.concatenate([msg.error.positions, msg.error.velocities, msg.error.accelerations, msg.error.effort]))
         elif topic == "/tf":
             data = msg.transforms[0]
             frame_id = data.child_frame_id
@@ -70,6 +71,18 @@ plt.plot(ee_pos_des[:, 0], ee_pos_des[:, 1], 'b')
 plt.plot(ee_pos_actual[:, 0], ee_pos_actual[:, 1], 'r')
 plt.plot(puck[:, 0], puck[:, 1], 'g')
 plt.show()
+
+
+for i in range(6):
+    plt.plot(t, actual[:, 21+i:22+i], label=f"act_effort_{i}")
+    #plt.plot(error[:, 21+i:22+i], label=f"err_effort_{i}")
+plt.legend()
+plt.show()
+
+for i in range(6):
+    plt.plot(t, desired[:, 14+i:15+i], label=f"desired_acc_{i}")
+    #plt.plot(error[:, 21+i:22+i], label=f"err_effort_{i}")
+plt.legend()
 
 
 fig, axes = plt.subplots(4, 2)

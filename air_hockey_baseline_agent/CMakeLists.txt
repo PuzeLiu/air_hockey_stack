@@ -48,6 +48,10 @@ include_directories(
    ${catkin_INCLUDE_DIRS}
 )
 
+link_directories(
+    ${}
+)
+
 set(SOURCES
    src/agent.cpp
    src/system_state.cpp
@@ -106,7 +110,7 @@ add_executable(promp_test
 target_link_libraries(${PROJECT_NAME}
    ${catkin_LIBRARIES}
    osqp::osqp
-   OsqpEigen
+   OsqpEigen::OsqpEigen
    NLopt::nlopt
    Clp
    CoinUtils
@@ -122,7 +126,7 @@ target_link_libraries(hitting_point_optimizer_example
 target_link_libraries(null_space_optimizer_example
     ${catkin_LIBRARIES}
     osqp::osqp
-    OsqpEigen
+    OsqpEigen::OsqpEigen
     NLopt::nlopt
     Clp
     CoinUtils
