@@ -35,8 +35,8 @@ def print_(x, N=5):
 class NeuralPlannerNode:
     def __init__(self):
         rospy.init_node("neural_planner_node", anonymous=True)
-        front_controller_type = rospy.get_param("~front_controllers", "bspline_joint_trajectory_controller")
-        back_controller_type = rospy.get_param("~back_controllers", "bspline_joint_trajectory_controller")
+        front_controller_type = rospy.get_param("~front_controllers", "bspline_adrc_joint_trajectory_controller")
+        back_controller_type = rospy.get_param("~back_controllers", "bspline_adrc_joint_trajectory_controller")
         planner_path = os.path.join(PACKAGE_DIR, rospy.get_param("/neural_planner/planner_path"))
         ik_hitting_path = os.path.join(PACKAGE_DIR, rospy.get_param("/neural_planner/ik_hitting_path"))
         self.planning_request_subscriber = rospy.Subscriber("/neural_planner/plan_trajectory", PlannerRequest,
@@ -58,6 +58,8 @@ class NeuralPlannerNode:
         self.pino_model = pino.buildModelFromUrdf(self.urdf_path)
         self.pino_data = self.pino_model.createData()
         print("pino model loaded")
+        rospy.sleep(2.)
+        print("node loaded")
 
     def compute_trajectory(self, msg):
         x_d, y_d, th_d, q_0, q_dot_0, q_ddot_0 = unpack_planner_request(msg)
