@@ -41,7 +41,7 @@ def read_bag(bag, duration):
 
 root_dir = os.path.dirname(__file__)
 package_dir = os.path.dirname(root_dir)
-bag_path = os.path.join(package_dir, "test2.bag")
+bag_path = os.path.join(package_dir, "test_100hz.bag")
 bag_file = rosbag.Bag(bag_path)
 
 robot_file = os.path.join(root_dir, "manifold_planning", "iiwa_striker_new.urdf")
@@ -87,7 +87,7 @@ plt.legend()
 
 fig, axes = plt.subplots(4, 2)
 for i in range(7):
-    # axes[int(i/2), i%2].plot(desired[:, i])
+    #axes[int(i/2), i%2].plot(desired[:, i])
     # axes[int(i/2), i%2].plot(actual[:, i])
     axes[int(i/2), i % 2].plot(t, error[:, i])
 
