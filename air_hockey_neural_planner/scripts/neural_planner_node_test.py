@@ -32,7 +32,7 @@ class NeuralPlannerTestNode:
         rospy.sleep(2.)
         trans, _ = self.tf_listener.lookupTransform('/F_link_0', '/TableAway', rospy.Time(0))
         self.goal = trans
-        self.gazebo = False
+        self.gazebo = rospy.get_param("/gazebo/time_step", "") != ""
 
     def set_robot_state(self, msg):
         self.robot_joint_pose = msg.position[:7]
@@ -72,12 +72,14 @@ class NeuralPlannerTestNode:
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
                 continue
             print_(trans)
-            if trans[0] < 0.9 or trans[0] > 1.3:
-                print("Puck not in x range")
-                break
-            if trans[1] < -0.4 or trans[1] > 0.4:
-                print("Puck not in y range")
-                break
+            if not self.gazebo:
+                if trans[0] < 0.9 or trans[0] > 1.3:
+                    print("Puck not in x range")
+                    break
+                if trans[1] < -0.4 or trans[1] > 0.4:
+                    print("Puck not in y range")
+                    break
+            #trans = [0.9585, -0.39, 0.16]
             x, y, th = get_desired_xyth(trans, self.goal)
             pr = PlannerRequest()
             pr.q_0 = self.robot_joint_pose
@@ -85,6 +87,7 @@ class NeuralPlannerTestNode:
             print(type(pr.q_0))
             pr.q_dot_0 = self.robot_joint_velocity
             pr.q_ddot_0 = np.zeros(7)
+            #end_point = Point(0.9, -0.4, 0.16)
             end_point = Point(x, y, 0.16)
             pr.end_point = end_point
             pr.hitting_angle = th
