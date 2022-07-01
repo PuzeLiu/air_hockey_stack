@@ -59,6 +59,20 @@
         <arg name="back_controllers" value="$(arg back_controllers)" />
     </include>
 
+    <group ns="iiwa_front" if="$(arg use_front_iiwa)">
+        <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
+            <param name="update_frequency" value="50.0"/>
+            <param name="buffer_size" value="500"/>
+        </node>
+    </group>
+
+    <group ns="iiwa_back" if="$(arg use_back_iiwa)">
+        <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
+            <param name="update_frequency" value="50.0"/>
+            <param name="buffer_size" value="500"/>
+        </node>
+    </group>
+
 <!--    <include file="$(find air_hockey_gazebo)/launch/universal_joint_publisher.launch">-->
 <!--        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />-->
 <!--        <arg name="use_back_iiwa" value="$(arg use_back_iiwa)" />-->

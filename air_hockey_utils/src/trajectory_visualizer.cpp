@@ -115,7 +115,7 @@ void TrajectoryVisualizer::publishActualPath()
         actualCartesianPathPublisher.publish(actualPath);
     }
     catch (tf2::TransformException &ex) {
-        ROS_WARN_STREAM(ex.what());
+        ROS_WARN_STREAM_ONCE(ex.what());
         ros::Duration(1.0).sleep();
     }
 
