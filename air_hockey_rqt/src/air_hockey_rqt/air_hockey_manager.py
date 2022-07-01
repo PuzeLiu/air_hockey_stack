@@ -52,10 +52,10 @@ class AirHockeyManager(Plugin):
         pass
 
     def _set_services(self):
-        start_srv_name = 'start_game'
-        pause_srv_name = 'pause_game'
-        stop_srv_name = 'stop_game'
-        cancel_srv_name = 'reset_robot'
+        start_srv_name = 'air_hockey_referee/start_game'
+        pause_srv_name = 'air_hockey_referee/pause_game'
+        stop_srv_name = 'air_hockey_referee/stop_game'
+        cancel_srv_name = 'air_hockey_referee/reset_robot'
 
         self._start_srv = rospy.ServiceProxy(start_srv_name, StartGame, persistent=True)
         self._pause_srv = rospy.ServiceProxy(pause_srv_name, PauseGame, persistent=True)

@@ -50,7 +50,7 @@ void loadAgentParams(AgentParams& agentParams){
 
 	agentParams.hitRange << 0.2, 0.9;
 
-	agentParams.defendMinVel = 0.08;
+	agentParams.staticVelocityThreshold = 0.08;
 	agentParams.defendMinTime = 0.3;
 	agentParams.defendZoneWidth = 0.4;
 	agentParams.defendLine = 0.2;

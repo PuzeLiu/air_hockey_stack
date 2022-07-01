@@ -25,13 +25,15 @@
 #define SRC_COMBINATORIAL_HIT_NEW_H
 
 #include <Eigen/Dense>
+#include <ros/ros.h>
 #include "trajectory_msgs/MultiDOFJointTrajectory.h"
 #include "trajectory_msgs/MultiDOFJointTrajectoryPoint.h"
 
 namespace air_hockey_baseline_agent {
 	class CombinatorialHitNew {
 	public:
-		CombinatorialHitNew(Eigen::Vector2d bound_lower, Eigen::Vector2d bound_upper, double rate, double height);
+		CombinatorialHitNew(Eigen::Vector2d bound_lower, Eigen::Vector2d bound_upper, double rate, double height,
+							double acc_max);
 
 		~CombinatorialHitNew();
 
@@ -40,8 +42,8 @@ namespace air_hockey_baseline_agent {
 		          trajectory_msgs::MultiDOFJointTrajectory &cartTraj);
 
 		bool plan(const Eigen::Vector2d &xStart, const Eigen::Vector2d &vStart,
-			const Eigen::Vector2d &xHit, const Eigen::Vector2d &vHit,
-			const Eigen::Vector2d &xEnd, const Eigen::Vector2d &vEnd, double &hitting_time,
+			Eigen::Vector2d &xHit, Eigen::Vector2d &vHit, double &hitting_time,
+			const Eigen::Vector2d &xEnd, const Eigen::Vector2d &vEnd,
 			trajectory_msgs::MultiDOFJointTrajectory &cartTraj);
 
 	private:
@@ -64,6 +66,7 @@ namespace air_hockey_baseline_agent {
 		double height;
 		double vMag;                  				//! Magnitude of hitting velocity
 		double tEnd;
+		double accMax;								//! Maximum linear acceleration
 		double arcAngle, arcRadius, arcLength;
 		double counterClockWise;         			//! Indicator of arc direction 1: clockwise, -1: counterclockwise
 		double l1, l2, lHit;                        //! Length of different segments

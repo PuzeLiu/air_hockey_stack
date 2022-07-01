@@ -32,13 +32,11 @@ Smash::Smash(EnvironmentParams &envParams, AgentParams &agentParams,
              SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator), gen(rd()), dist(0, 2) {
     hittingFailed = false;
-    hasStopSegment = false;
 }
 
 bool Smash::ready() {
     if (state.isNewTactics) {
         hittingFailed = false;
-        hasStopSegment = false;
         state.tPlan = ros::Time::now();
         state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset);
     }
@@ -50,7 +48,6 @@ bool Smash::apply() {
         state.isNewTactics = false;
         generator.getPlannedJointState(state, state.tStart);
         if (state.dqPlan.norm() > 0.2) {
-            hasStopSegment = true;
             return generateStopTrajectory();
         }
     }
@@ -58,19 +55,6 @@ bool Smash::apply() {
         generator.getPlannedJointState(state, state.tStart);
         return generateHitTrajectory(state.tStart);
     }
-    return false;
-
-	if (state.isNewTactics and state.dqPlan.norm() > 0.2) {
-        state.isNewTactics = false;
-        ROS_INFO_STREAM("STOP TRAJ");
-
-	} else {
-        state.isNewTactics = false;
-        if (ros::Time::now() > state.tPlan) {
-            ROS_INFO_STREAM("HIT TRAJ");
-            return generateHitTrajectory(state.tStart);
-        }
-	}
     return false;
 }
 
@@ -127,6 +111,7 @@ void Smash::getHitPointVelocity(Vector2d &xHit2d, Vector2d &vHit2d,
 	generator.transformations->transformTable2Robot(xHit);
 	generator.transformations->rotationTable2Robot(vHit);
 	generator.hittingPointOptimizer->solve(xHit, vHit, qHitRef, velMag);
+	velMag = std::max(std::min(velMag, agentParams.hitMaxVelocity), 0.);
 
 	// prepare output
 	generator.transformations->transformRobot2Table(xHit);
@@ -141,12 +126,16 @@ Smash::~Smash() {
 }
 
 void Smash::setNextState() {
-    if (not state.isNewTactics) {
-        if (ros::Time::now() > state.trajectoryBuffer.getExec().jointTrajectory.header.stamp +
-            state.trajectoryBuffer.getExec().jointTrajectory.points.back().time_from_start
-            or hittingFailed) {
-        setTactic(READY);
-    }
+    if (ros::Time::now().toSec() > state.tNewTactics) {
+		// Check if the optimized trajectory is in execution
+		if (ros::Time::now() > state.trajectoryBuffer.getFree().jointTrajectory.header.stamp) {
+			// Check if the hitting trajectory is finished
+			if (ros::Time::now() > state.trajectoryBuffer.getExec().jointTrajectory.header.stamp +
+								   state.trajectoryBuffer.getExec().jointTrajectory.points.back().time_from_start
+				or hittingFailed) {
+				setTactic(READY);
+			}
+		}
     }
 }
 
@@ -165,27 +154,32 @@ bool Smash::generateHitTrajectory(ros::Time &tStart) {
         state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
         state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
-		if (not generator.combinatorialHitNew->plan(xCur2d, vZero2d, xHit2d, vHit2d,
-			xStop2d, vZero2d, hitting_time, state.trajectoryBuffer.getFree().cartTrajectory))	{
-            tStart = tStart + ros::Duration(agentParams.planTimeOffset);
+		if (not generator.combinatorialHitNew->plan(xCur2d, vZero2d, xHit2d, vHit2d, hitting_time,
+													xStop2d, vZero2d, state.trajectoryBuffer.getFree().cartTrajectory))	{
 			break;
 		}
 
 		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.trajectoryBuffer.getFree().cartTrajectory,
 			state.qPlan, state.dqPlan, qHitRef, hitting_time, state.trajectoryBuffer.getFree().jointTrajectory)) {
+//		if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory,
+//															   state.qPlan, state.dqPlan,
+//															   state.trajectoryBuffer.getFree().jointTrajectory)) {
 
             generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
 
 			if (ros::Time::now() > tStart) {
 				tStart = ros::Time::now();
 			}
+
+			// Check if the hitting trajectory is starting too early
 			auto tHitStart = state.observation.puckPredictedState.stamp +
                 ros::Duration(state.observation.puckPredictedState.predictedTime) -
                 state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
 			if (tStart < tHitStart) {
 				tStart = tHitStart;
 			}
+
             state.tPlan = tStart + state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
             state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = tStart;
             state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = tStart;
@@ -198,7 +192,9 @@ bool Smash::generateHitTrajectory(ros::Time &tStart) {
 	}
 
 	vHit2d = vHit2d * 0.;
-    state.tPlan = state.trajectoryBuffer.getExec().jointTrajectory.header.stamp + state.trajectoryBuffer.getExec().jointTrajectory.points.back().time_from_start;
+    state.tPlan = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
+	state.trajectoryBuffer.getFree() = state.trajectoryBuffer.getExec();
+	state.trajectoryBuffer.getFree() = state.trajectoryBuffer.getExec();
 	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +	"Failed to find a feasible movement [HITTING]");
     hittingFailed = true;
 	return false;
@@ -207,9 +203,9 @@ bool Smash::generateHitTrajectory(ros::Time &tStart) {
 Vector2d Smash::getStopPoint(Eigen::Vector2d hitPoint) {
 	Vector2d stopPoint;
 	if (hitPoint.y() > 0) {
-		stopPoint = hitPoint + Vector2d(0.2, -0.25);
+		stopPoint = hitPoint + Vector2d(0.2, -0.15);
 	} else {
-		stopPoint = hitPoint + Vector2d(0.2, 0.25);
+		stopPoint = hitPoint + Vector2d(0.2, 0.15);
 	}
 
 	stopPoint.x() = fmin(stopPoint.x(), agentParams.hitRange[1]);

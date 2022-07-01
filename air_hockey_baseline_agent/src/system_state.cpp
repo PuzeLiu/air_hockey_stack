@@ -63,7 +63,7 @@ void SystemState::updateObservationAndState(ObservationState observationState,
 											const AgentParams& agentParams){
 	observation = observationState;
 
-	if (observation.puckPredictedState.state.block<2, 1>(2, 0).norm() < agentParams.defendMinVel){
+	if (observation.puckPredictedState.state.block<2, 1>(2, 0).norm() < agentParams.staticVelocityThreshold){
 		++staticCount;
 	} else {
 		staticCount = 0;

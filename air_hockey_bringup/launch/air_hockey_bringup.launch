@@ -12,8 +12,8 @@
         <arg name="hardware_interface" value="$(arg hardware_interface)"/>
     </include>
 
-    <node name="rviz" pkg="rviz" type="rviz"
-          args="-d $(find air_hockey_description)/rviz/air_hockey.rviz"/>
+<!--    <node name="rviz" pkg="rviz" type="rviz"-->
+<!--          args="-d $(find air_hockey_description)/rviz/air_hockey.rviz"/>-->
 
     <group ns="iiwas_frame">
         <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
@@ -47,8 +47,9 @@
         <param name="physics" value="real"/>
     </node>
 
-    <!-- Start Air Hockey rqt -->
-    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
+<!--     Start Air Hockey rqt -->
+<!--    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>-->
+    <node pkg="rqt_gui" type="rqt_gui" name="air_hockey_dashboard" args="--perspective-file $(find air_hockey_description)/rviz/air_hockey_dashboard.perspective"/>
 
     <include file="$(find iiwas_bringup)/launch/iiwas_barebone.launch">
         <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />

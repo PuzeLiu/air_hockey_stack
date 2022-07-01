@@ -57,7 +57,7 @@ namespace air_hockey_baseline_agent {
 		void initOptimizerData(const ros::NodeHandle &nh);
 
 
-		CombinatorialHit *combinatorialHit;
+//		CombinatorialHit *combinatorialHit;
 		CombinatorialHitNew *combinatorialHitNew;
 		CubicLinearMotion *cubicLinearMotion;
 		Transformations *transformations;

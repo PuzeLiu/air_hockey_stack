@@ -41,7 +41,7 @@ bool Ready::ready() {
 		state.tPlan = ros::Time::now();
 		state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset);
 	} else {
-        state.tStart = state.tPlan + ros::Duration(2.0);
+        state.tStart = state.tPlan + ros::Duration(1.0);
         if (state.tStart <= ros::Time::now() + ros::Duration(agentParams.planTimeOffset)){
             state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
         }
@@ -57,7 +57,7 @@ bool Ready::apply() {
         state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
         state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
-		double tStop = std::max((agentParams.xHome - state.xPlan).norm() / 1.0, 2.0);
+		double tStop = std::max((agentParams.xHome - state.xPlan).norm() / 1.0, 1.0);
 
 		generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, agentParams.xHome, Vector3d(0., 0., 0.),
 			tStop, state.trajectoryBuffer.getFree().cartTrajectory);
@@ -88,23 +88,42 @@ Ready::~Ready() {
 
 void Ready::setNextState() {
 	if (ros::Time::now().toSec() > state.tNewTactics) {
-        if (!agentParams.debugTactics) {
-            if(state.isPuckStatic()){
-                if (canSmash()) {
-                    setTactic(SMASH);
-                } else if (puckStuck()) {
-                    setTactic(PREPARE);
-                }
-            } else if(state.isPuckApproaching()){
-                if(shouldRepel()){
-                    setTactic(REPEL);
-                }else if (shouldCut()){
-                    setTactic(CUT);
-                }
-            }else {
-                setTactic(READY);
-            }
-        }
+		if (!agentParams.debugTactics) {
+			if (state.isPuckStatic()) {
+				if (canSmash()) {
+					setTactic(SMASH);
+				} else if (puckStuck()) {
+					setTactic(PREPARE);
+				}
+			} else if (state.isPuckApproaching()) {
+				if (shouldRepel()) {
+					setTactic(REPEL);
+				} else if (shouldCut()) {
+					setTactic(CUT);
+				}
+			} else {
+				setTactic(READY);
+			}
+		}
+		else {
+			if (agentParams.debuggingTactic == SMASH) {
+				setTactic(Tactics::SMASH);
+				agentParams.debuggingTactic = READY;
+			} else if (agentParams.debuggingTactic == CUT) {
+				if (state.isPuckApproaching() && shouldCut()) {
+					setTactic(Tactics::CUT);
+				}
+			} else if (agentParams.debuggingTactic == REPEL) {
+				if (state.isPuckApproaching() && shouldRepel()) {
+					setTactic(Tactics::REPEL);
+					agentParams.debuggingTactic = READY;
+				}
+			} else if (agentParams.debuggingTactic == PREPARE) {
+				setTactic(Tactics::PREPARE);
+				agentParams.debuggingTactic = READY;
+			} else if (agentParams.debugTactics == READY) {
+			}
+		}
 	}
 }
 
