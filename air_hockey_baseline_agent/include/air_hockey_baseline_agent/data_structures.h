@@ -64,6 +64,7 @@ namespace air_hockey_baseline_agent {
 		std::string name;
 		double rate;
         bool debugTactics;
+		Tactics debuggingTactic;
 
 		pinocchio::Model pinoModel;
 		pinocchio::Data pinoData;
@@ -79,14 +80,18 @@ namespace air_hockey_baseline_agent {
 		Eigen::Vector3d xInit;
 
 		Eigen::Vector2d hitRange;
+		double hitMaxVelocity;
+		double eeMaxAcceleration;
 
 		int defendPlanSteps;
-		double defendMinVel;
+		double staticVelocityThreshold;
 		double defendMinTime;
 		double defendZoneWidth;
 		double defendLine;
 		double defendMaxEEVelocity;
 		double defendTargetUpdateRatio;
+
+		double prepareVelocity;
 
 		double planTimeOffset;
 		double tPredictionMax;

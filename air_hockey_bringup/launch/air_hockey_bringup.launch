@@ -12,8 +12,8 @@
         <arg name="hardware_interface" value="$(arg hardware_interface)"/>
     </include>
 
-    <node name="rviz" pkg="rviz" type="rviz"
-          args="-d $(find air_hockey_description)/rviz/air_hockey.rviz"/>
+<!--    <node name="rviz" pkg="rviz" type="rviz"-->
+<!--          args="-d $(find air_hockey_description)/rviz/air_hockey.rviz"/>-->
 
     <group ns="iiwas_frame">
         <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
@@ -47,8 +47,9 @@
         <param name="physics" value="real"/>
     </node>
 
-    <!-- Start Air Hockey rqt -->
-    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
+<!--     Start Air Hockey rqt -->
+<!--    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>-->
+    <node pkg="rqt_gui" type="rqt_gui" name="air_hockey_dashboard" args="--perspective-file $(find air_hockey_description)/rviz/air_hockey_dashboard.perspective"/>
 
     <include file="$(find iiwas_bringup)/launch/iiwas_barebone.launch">
         <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />
@@ -58,18 +59,26 @@
         <arg name="back_controllers" value="$(arg back_controllers)" />
     </include>
 
+    <group ns="iiwa_front" if="$(arg use_front_iiwa)">
+        <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
+            <param name="update_frequency" value="50.0"/>
+            <param name="buffer_size" value="500"/>
+        </node>
+    </group>
+
+    <group ns="iiwa_back" if="$(arg use_back_iiwa)">
+        <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
+            <param name="update_frequency" value="50.0"/>
+            <param name="buffer_size" value="500"/>
+        </node>
+    </group>
+
     <node pkg="air_hockey_neural_planner" type="robot_initializer_node.py" name="robot_initializer_node" output="screen">
         <param name="front_controllers" value="$(arg front_controllers)" />
         <param name="back_controllers" value="$(arg back_controllers)" />
     </node>
 
-    <node pkg="air_hockey_neural_planner" type="neural_planner_node.py" name="neural_planner_node" output="screen">
-        <param name="front_controllers" value="$(arg front_controllers)" />
-        <param name="back_controllers" value="$(arg back_controllers)" />
-    </node>
-
     <rosparam file="$(find air_hockey_baseline_agent)/config/config.yaml" command="load" subst_value="true"/>
-    <rosparam file="$(find air_hockey_neural_planner)/config/config.yaml" command="load" subst_value="true"/>
 
 <!--    <include file="$(find air_hockey_gazebo)/launch/universal_joint_publisher.launch">-->
 <!--        <arg name="use_front_iiwa" value="$(arg use_front_iiwa)" />-->

@@ -51,7 +51,7 @@ NullSpaceOptimizer::NullSpaceOptimizer(AgentParams &agentParams_, OptimizerData 
 NullSpaceOptimizer::~NullSpaceOptimizer() = default;
 
 bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-                                                 const JointArrayType &qStart,
+                                                 const JointArrayType &qStart, const JointArrayType &dqStart,
                                                  trajectory_msgs::JointTrajectory &jointTraj) {
 	if (!cartTraj.points.empty()) {
 		Vector3d xDes, dxDes;
@@ -62,11 +62,13 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
 		jointViaPoint_.positions.resize(agentParams.nq);
 		jointViaPoint_.velocities.resize(agentParams.nq);
 		for (int i = 0; i < agentParams.nq; ++i) {
-			jointViaPoint_.positions[i] = 0;
-			jointViaPoint_.velocities[i] = 0;
+			jointViaPoint_.positions[i] = qStart[i];
+			jointViaPoint_.velocities[i] = dqStart[i];
 		}
+		jointViaPoint_.time_from_start = ros::Duration(0.);
+		jointTraj.points.push_back(jointViaPoint_);
 
-		for (size_t i = 0; i < cartTraj.points.size(); ++i) {
+		for (size_t i = 1; i < cartTraj.points.size(); ++i) {
 			xDes[0] = cartTraj.points[i].transforms[0].translation.x;
 			xDes[1] = cartTraj.points[i].transforms[0].translation.y;
 			xDes[2] = cartTraj.points[i].transforms[0].translation.z;
@@ -179,11 +181,14 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 		jointViaPoint_.positions.resize(agentParams.nq);
 		jointViaPoint_.velocities.resize(agentParams.nq);
 		for (int i = 0; i < agentParams.nq; ++i) {
-			jointViaPoint_.positions[i] = 0;
-			jointViaPoint_.velocities[i] = 0;
+			jointViaPoint_.positions[i] = qStart[i];
+			jointViaPoint_.velocities[i] = dqStart[i];
 		}
 
-		for (size_t i = 0; i < cartTraj.points.size(); ++i) {
+		jointViaPoint_.time_from_start = ros::Duration(0.);
+		jointTraj.points.push_back(jointViaPoint_);
+
+		for (size_t i = 1; i < cartTraj.points.size(); ++i) {
 			xDes[0] = cartTraj.points[i].transforms[0].translation.x;
 			xDes[1] = cartTraj.points[i].transforms[0].translation.y;
 			xDes[2] = cartTraj.points[i].transforms[0].translation.z;
@@ -196,7 +201,7 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 
 			if (cartTraj.points[i].time_from_start.toSec() <= hitting_time) {
 				//! Multiply the phase variable
-				scale = (cartTraj.points[i].time_from_start - cartTraj.points.front().time_from_start).toSec() / hitting_time;
+				scale = (cartTraj.points[i].time_from_start - cartTraj.points[1].time_from_start).toSec() / hitting_time;
                 scaleVel = std::min(std::max(1 - cartTraj.points[i].time_from_start.toSec(), 0.), 1.);
 			} else {
 				scale = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec() /
@@ -214,7 +219,6 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 
 			jointViaPoint_.time_from_start = cartTraj.points[i].time_from_start;
 			for (size_t row = 0; row < agentParams.nq; row++) {
-//				jointViaPoint_.accelerations[row] = 0.;
 				jointViaPoint_.velocities[row] = dqNext[row];
 				jointViaPoint_.positions[row] = qNext[row];
 			}

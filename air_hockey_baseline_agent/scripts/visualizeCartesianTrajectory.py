@@ -4,8 +4,8 @@ import os
 import rosbag
 from trajectory_msgs.msg import MultiDOFJointTrajectory
 
-input_dir = os.path.abspath("/home/default/bag_logs/real_trajectory/")
-file_name = "2021-12-16-15-19-41.bag"
+input_dir = os.path.abspath("/home/puze/record_cart/")
+file_name = "2022-06-28-20-45-22.bag"
 
 positions = []
 velocities = []
@@ -36,7 +36,7 @@ for topic, msg, t in bag.read_messages():
         time.append(time_i)
 
 
-idx = 0
+idx = 1
 fig, axes = plt.subplots(3, 1)
 axes[0].scatter(time[idx], positions[idx][:, 0], label="X", s=5)
 axes[0].set_title("X")

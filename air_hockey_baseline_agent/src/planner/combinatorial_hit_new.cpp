@@ -29,11 +29,12 @@ using namespace Eigen;
 using namespace air_hockey_baseline_agent;
 
 CombinatorialHitNew::CombinatorialHitNew(Eigen::Vector2d bound_lower, Eigen::Vector2d bound_upper, double rate,
-                                         double table_height) {
+                                         double table_height, double acc_max) {
 	boundLower = bound_lower;
 	boundUpper = bound_upper;
 	stepSize = 1 / rate;
 	height = table_height;
+	accMax = acc_max;
 
 	viaPoint.transforms.resize(1);
 	viaPoint.velocities.resize(1);
@@ -73,12 +74,9 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &x_start, const Eigen::Vect
 		return false;
 	}
 
-	if (!getMiddlePoint()) {
-		return false;
-	}
-	if (!getArcCenter()) {
-		return false;
-	}
+	getMiddlePoint();
+
+	getArcCenter();
 
 	fitPhase();
 
@@ -103,24 +101,22 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &x_start, const Eigen::Vect
 }
 
 bool CombinatorialHitNew::plan(const Eigen::Vector2d &xStart_, const Eigen::Vector2d &vStart_,
-	const Eigen::Vector2d &xHit_, const Eigen::Vector2d &vHit_,
+	Eigen::Vector2d &xHit_, Eigen::Vector2d &vHit_, double &hitting_time,
 	const Eigen::Vector2d &xEnd_, const Eigen::Vector2d &vEnd_,
-	double &hitting_time, trajectory_msgs::MultiDOFJointTrajectory &cartTraj) {
-	cartTraj.points.clear();
-
+	trajectory_msgs::MultiDOFJointTrajectory &cartTraj) {
 	if (not plan(xStart_, vStart_, xHit_, vHit_, cartTraj)) {
 		cerr << "Failed at hitting phase" << endl;
 		return false;
 	}
 
-	Vector2d xInter, vInter;
-	xInter << cartTraj.points.back().transforms[0].translation.x, cartTraj.points.back().transforms[0].translation.y;
-	vInter << cartTraj.points.back().velocities[0].linear.x, cartTraj.points.back().velocities[0].linear.y;
+	xHit_ << cartTraj.points.back().transforms[0].translation.x, cartTraj.points.back().transforms[0].translation.y;
+	vHit_ << cartTraj.points.back().velocities[0].linear.x, cartTraj.points.back().velocities[0].linear.y;
+
 	hitting_time = cartTraj.points.back().time_from_start.toSec();
-	//if (not plan(xInter, vInter, xEnd_, vEnd_, cartTraj)) {
-	//	cerr << "Failed at stopping phase" << endl;
-	//	return false;
-	//}
+	if (not plan(xHit_, vHit_, xEnd_, vEnd_, cartTraj)) {
+		cerr << "Failed at stopping phase" << endl;
+		return false;
+	}
 
 	cartTraj.header.stamp = ros::Time::now();
 	return true;
@@ -191,7 +187,6 @@ bool CombinatorialHitNew::getArcCenter() {
 	}
 	xArcCenter = xVia1 + arcRadius * vecNorm1;
 
-
 	//! find arcAngle, positive if counterclockwise
 	arcAngle = acos(vecNorm1.dot(vecNorm2));
 
@@ -208,28 +203,44 @@ bool CombinatorialHitNew::getArcCenter() {
 
 void CombinatorialHitNew::fitPhase() {
 	if (isStartPart) {
-		tEnd = 2 * lHit / vMag;
+//		tEnd = 2 * lHit / vMag;
+//		phaseCoeff[0] = 0.;
+//		phaseCoeff[1] = 0.;
+//		phaseCoeff[2] = 0.;
+//		phaseCoeff[3] = pow(vMag, 3) / 4 / pow(l1 + arcLength + l2, 2);
+//		phaseCoeff[4] = -pow(vMag, 4) / 16 / pow(l1 + arcLength + l2, 3);
+
+		tEnd = std::max(2 * lHit / vMag, sqrt(2 * lHit / accMax));
+		vMag = std::min(vMag, accMax * tEnd);
 		phaseCoeff[0] = 0.;
 		phaseCoeff[1] = 0.;
-		phaseCoeff[2] = 0.;
-		phaseCoeff[3] = pow(vMag, 3) / 4 / pow(l1 + arcLength + l2, 2);
-		phaseCoeff[4] = -pow(vMag, 4) / 16 / pow(l1 + arcLength + l2, 3);
+		phaseCoeff[2] = vMag / tEnd / 2;
+		phaseCoeff[3] = 0.;
+		phaseCoeff[4] = 0.;
 	} else {
-		tEnd = 2 * lHit / vMag;
+//		tEnd = 2 * lHit / vMag;
+//		phaseCoeff[0] = 0.;
+//		phaseCoeff[1] = vMag;
+//		phaseCoeff[2] = 0.;
+//		phaseCoeff[3] = -vMag / pow(tEnd, 2);
+//		phaseCoeff[4] = - phaseCoeff[3] / 2 / tEnd;
+
+		tEnd = std::max(2 * lHit / vMag, sqrt(2 * lHit / accMax));
+		vMag = std::min(vMag, accMax * tEnd);
 		phaseCoeff[0] = 0.;
 		phaseCoeff[1] = vMag;
-		phaseCoeff[2] = 0.;
-		phaseCoeff[3] = -vMag / pow(tEnd, 2);
-		phaseCoeff[4] = - phaseCoeff[3] / 2 / tEnd;
+		phaseCoeff[2] = -vMag / tEnd / 2;
+		phaseCoeff[3] = 0.;
+		phaseCoeff[4] = 0.;
 	}
 
 }
 
 void CombinatorialHitNew::getPoint(const double t) {
 	if (t < tEnd) {
-		z = phaseCoeff[1] * t + phaseCoeff[3] * pow(t, 3) + phaseCoeff[4] * pow(t, 4);
-		dz_dt = phaseCoeff[1] + 3 * phaseCoeff[3] * pow(t, 2) + 4 * phaseCoeff[4] * pow(t, 3);
-        dz_ddt = 6 * phaseCoeff[3] * t + 12 * phaseCoeff[4] * pow(t, 2);
+		z = phaseCoeff[0] + phaseCoeff[1] * t + phaseCoeff[2] * pow(t, 2) + phaseCoeff[3] * pow(t, 3) + phaseCoeff[4] * pow(t, 4);
+		dz_dt = phaseCoeff[1] + 2 * phaseCoeff[2] * t + 3 * phaseCoeff[3] * pow(t, 2) + 4 * phaseCoeff[4] * pow(t, 3);
+        dz_ddt = 2 * phaseCoeff[2] + 6 * phaseCoeff[3] * t + 12 * phaseCoeff[4] * pow(t, 2);
 
 		if (z <= l1) {
 			x = xStart + z * vecDir1;
@@ -254,7 +265,7 @@ void CombinatorialHitNew::getPoint(const double t) {
 //		dx_dt += (1 - psi) * aAngularAcc * stepSize;
 //		x += dx_dt * stepSize;
 
-		dx_dt = vEnd;
+		dx_dt = vMag * vEnd.normalized();
 		x = xEnd + dx_dt * (t - tEnd);
 	} else {
 		x += dx_dt * stepSize;

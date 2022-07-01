@@ -39,6 +39,8 @@ bool MovePuck::ready() {
 bool MovePuck::apply() {
 	state.isNewTactics = false;
 
+	generator.getPlannedJointState(state, state.tStart);
+
 	Vector3d xCur;
 	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, state.observation.jointPosition);
 	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
@@ -74,7 +76,8 @@ bool MovePuck::apply() {
 		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
 		bool ok = generator.optimizer->optimizeJointTrajectory(
-            state.trajectoryBuffer.getFree().cartTrajectory, state.observation.jointPosition,
+            state.trajectoryBuffer.getFree().cartTrajectory,
+			state.qPlan, state.dqPlan,
             state.trajectoryBuffer.getFree().jointTrajectory);
 		if (!ok) {
 			ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " +

@@ -159,32 +159,45 @@ bool CombinatorialHit::getArcCenter() {
 }
 
 void CombinatorialHit::fitPhase(double stopTime) {
-	tHit_ = 2 * lHit_ / vHitMag_;
+//	tHit_ = 2 * lHit_ / vHitMag_;
+//	tStop_ = tHit_ + stopTime;
+//	phaseCoeff_[0] = 0.;
+//	phaseCoeff_[1] = 0.;
+//	phaseCoeff_[2] = 0.;
+//	phaseCoeff_[3] = pow(vHitMag_, 3) / 4 / pow(lHit_, 2);
+//	phaseCoeff_[4] = -pow(vHitMag_, 4) / 16 / pow(lHit_, 3);
+//
+//	stopPhaseCoeff_[0] = 0.;
+//	stopPhaseCoeff_[1] = vHitMag_;
+//	stopPhaseCoeff_[2] = 0.;
+//	stopPhaseCoeff_[3] = -vHitMag_ / pow(tStop_ - tHit_, 2);
+//	stopPhaseCoeff_[4] = vHitMag_ / 2 / pow(tStop_ - tHit_, 3);
+
+	tHit_ = lHit_ / vHitMag_;
 	tStop_ = tHit_ + stopTime;
 	phaseCoeff_[0] = 0.;
 	phaseCoeff_[1] = 0.;
-	phaseCoeff_[2] = 0.;
-	phaseCoeff_[3] = pow(vHitMag_, 3) / 4 / pow(lHit_, 2);
-	phaseCoeff_[4] = -pow(vHitMag_, 4) / 16 / pow(lHit_, 3);
+	phaseCoeff_[2] = vHitMag_ / tHit_;
+	phaseCoeff_[3] = 0.;
+	phaseCoeff_[4] = 0.;
 
 	stopPhaseCoeff_[0] = 0.;
 	stopPhaseCoeff_[1] = vHitMag_;
-	stopPhaseCoeff_[2] = 0.;
-	stopPhaseCoeff_[3] = -vHitMag_ / pow(tStop_ - tHit_, 2);
-	stopPhaseCoeff_[4] = vHitMag_ / 2 / pow(tStop_ - tHit_, 3);
+	stopPhaseCoeff_[2] = - vHitMag_ / stopTime;
+	stopPhaseCoeff_[3] = 0.;
+	stopPhaseCoeff_[4] = 0.;
 }
 
 void CombinatorialHit::getPoint(const double t) {
 	if (t <= tHit_) {
-		z_ = phaseCoeff_[3] * pow(t, 3) + phaseCoeff_[4] * pow(t, 4);
-		dz_dt_ = 3 * phaseCoeff_[3] * pow(t, 2)
+		z_ = phaseCoeff_[0] + phaseCoeff_[1] * t + phaseCoeff_[2] * pow(t, 2)
+				+ phaseCoeff_[3] * pow(t, 3) + phaseCoeff_[4] * pow(t, 4);
+		dz_dt_ = phaseCoeff_[1] + 2 * phaseCoeff_[2] * t + 3 * phaseCoeff_[3] * pow(t, 2)
 				+ 4 * phaseCoeff_[4] * pow(t, 3);
-//        dz_ddt_ = 6 * phaseCoeff_[3] * t + 12 * phaseCoeff_[4] * pow(t, 2);
 
 		if (z_ <= l1_) {
 			x_ = xStart_ + z_ * vecDir1_;
 			dx_dt_ = dz_dt_ * vecDir1_;
-//            dx_ddt_ = dz_ddt_ * vecDir1_;
 		} else if (z_ <= l1_ + arcLength_) {
 			double angleCur = (z_ - l1_) / abs(arcRadius_) * clockWise_;
 			Rotation2Dd rot(angleCur);
@@ -193,25 +206,19 @@ void CombinatorialHit::getPoint(const double t) {
 		} else if (z_ <= lHit_) {
 			x_ = xVia2_ + (z_ - l1_ - arcLength_) * vecDir2_;
 			dx_dt_ = dz_dt_ * vecDir2_;
-//            dx_ddt_ = dz_ddt_ * vecDir2_;
 		}
 	} else if (t <= tStop_) {
-		z_ = stopPhaseCoeff_[1] * (t - tHit_)
-				+ stopPhaseCoeff_[3] * pow(t - tHit_, 3)
-				+ stopPhaseCoeff_[4] * pow(t - tHit_, 4);
-		dz_dt_ = stopPhaseCoeff_[1] + 3 * stopPhaseCoeff_[3] * pow(t - tHit_, 2)
+		z_ = stopPhaseCoeff_[0] + stopPhaseCoeff_[1] * (t - tHit_) + stopPhaseCoeff_[2] * pow(t - tHit_, 2) +
+				+ stopPhaseCoeff_[3] * pow(t - tHit_, 3) + stopPhaseCoeff_[4] * pow(t - tHit_, 4);
+		dz_dt_ = stopPhaseCoeff_[1] + 2 * stopPhaseCoeff_[2] * (t - tHit_) + 3 * stopPhaseCoeff_[3] * pow(t - tHit_, 2)
 				+ 4 * stopPhaseCoeff_[4] * pow(t - tHit_, 3);
-//        dz_ddt_ = 6 * stopPhaseCoeff_[3] * (t - tHit_) + 12 * stopPhaseCoeff_[4] * pow(t - tHit_, 2);
 
 		x_ = xHit_ + z_ * vecDir2_;
 		dx_dt_ = dz_dt_ * vecDir2_;
 	} else {
-		z_ = stopPhaseCoeff_[1] * (tStop_ - tHit_)
-				+ stopPhaseCoeff_[3] * pow(tStop_ - tHit_, 3)
-				+ stopPhaseCoeff_[4] * pow(tStop_ - tHit_, 4);
-		dz_dt_ = stopPhaseCoeff_[1]
-				+ 3 * stopPhaseCoeff_[3] * pow(tStop_ - tHit_, 2)
-				+ 4 * stopPhaseCoeff_[4] * pow(tStop_ - tHit_, 3);
+		z_ = stopPhaseCoeff_[0] + stopPhaseCoeff_[1] * (tStop_ - tHit_) + stopPhaseCoeff_[2] * pow(t - tHit_, 2) +
+				+ stopPhaseCoeff_[3] * pow(tStop_ - tHit_, 3) + stopPhaseCoeff_[4] * pow(tStop_ - tHit_, 4);
+		dz_dt_ = 0.;
 
 		x_ = xHit_ + z_ * vecDir2_;
 		dx_dt_ = dz_dt_ * vecDir2_;
