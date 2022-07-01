@@ -31,8 +31,10 @@ class NeuralPlannerTestNode:
         self.robot_joint_velocity = None
         rospy.sleep(2.)
         trans, _ = self.tf_listener.lookupTransform('/F_link_0', '/TableAway', rospy.Time(0))
+        #trans = [2.4, 0., 0.1]
         self.goal = trans
         self.gazebo = rospy.get_param("/gazebo/time_step", "") != ""
+        #self.gazebo = False
 
     def set_robot_state(self, msg):
         self.robot_joint_pose = msg.position[:7]
