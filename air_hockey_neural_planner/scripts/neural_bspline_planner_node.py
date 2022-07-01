@@ -67,7 +67,7 @@ class NeuralPlannerNode:
 
         d = q_0.tolist() + q_d.tolist() + [x_d, y_d, th_d] + q_dot_0.tolist() + q_ddot_0.tolist() + q_dot_d.tolist()
         d = np.array(d)[np.newaxis]
-        q, dq, ddq, t = model_inference(self.planner_model, d, self.bsp, self.bspt, uniform=True, freq=2000)
+        q, dq, ddq, t = model_inference(self.planner_model, d, self.bsp, self.bspt)
         q_cps, t_cps = self.planner_model(d)
 
         d_ret = q_d.tolist() + Base.configuration + [0.] + [0.65, 0.0, 0.0] + dq[-1].tolist() + [0.] + ddq[-1].tolist() + [
