@@ -624,7 +624,7 @@
                   "type": "repr"
                 },
                 "rviz_config_file": {
-                  "repr": "'/home/puze/ias_ros/src/air_hockey_stack/air_hockey_description/rviz/air_hockey.rviz'",
+                  "repr": "os.environ['ROS_PACKAGE_PATH'].replace(':' + os.environ['ROS_ROOT'][:-4], '') + '/air_hockey_stack/air_hockey_description/rviz/air_hockey.rviz'",
                   "type": "repr"
                 }
               },
