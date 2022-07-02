@@ -10,7 +10,7 @@
 class TrajectoryVisualizer
 {
  public:
-    TrajectoryVisualizer(ros::NodeHandle nh, int bufferSize);
+    TrajectoryVisualizer(ros::NodeHandle nh, int desiredBufferSize, int actualBufferSize);
 
     void update();
 
@@ -23,7 +23,7 @@ class TrajectoryVisualizer
     void publishActualPath();
 
     ros::NodeHandle nh;
-    int bufferSize;
+    int desiredBufferSize, actualBufferSizze;
     std::string sourceFrame, targetFrame;
     ros::Subscriber cartesianTrajectorySubscriber, jointTrajectorySubscriber;
     ros::Publisher desiredCartesianPathPublisher, actualCartesianPathPublisher;
