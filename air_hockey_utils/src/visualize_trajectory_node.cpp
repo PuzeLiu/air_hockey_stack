@@ -9,12 +9,13 @@ int main(int argc, char **argv) {
     ros::NodeHandle nhl("~");
     double update_frequency = 10;
     nhl.getParam("update_frequency", update_frequency);
-    int buffer_size;
-    nhl.getParam("buffer_size", buffer_size);
-    TrajectoryVisualizer trajectoryVisualizer(nh, buffer_size);
+    int des_buffer_size, act_buffer_size;
+    nhl.getParam("desired_buffer_size", des_buffer_size);
+	nhl.getParam("actual_buffer_size", act_buffer_size);
+    TrajectoryVisualizer trajectoryVisualizer(nh, des_buffer_size, act_buffer_size);
 
     ros::Rate rate(update_frequency);
-    ros::Duration(1.0).sleep();
+    ros::Duration(2.0).sleep();
     while (ros::ok()){
         ros::spinOnce();
         trajectoryVisualizer.update();

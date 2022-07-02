@@ -88,7 +88,8 @@
               args="-urdf -model iiwa_front -param robot_description -wait iiwas_frame"/>
         <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
             <param name="update_frequency" value="50.0"/>
-            <param name="buffer_size" value="500"/>
+            <param name="desired_buffer_size" value="300"/>
+            <param name="actual_buffer_size" value="300"/>
         </node>
     </group>
 
@@ -97,7 +98,8 @@
               args="-urdf -model iiwa_back -param robot_description -wait iiwas_frame"/>
         <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
             <param name="update_frequency" value="50.0"/>
-            <param name="buffer_size" value="500"/>
+            <param name="desired_buffer_size" value="300"/>
+            <param name="actual_buffer_size" value="300"/>
         </node>
     </group>
 

@@ -8,14 +8,14 @@ project(air_hockey_utils)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  nav_msgs
-  roscpp
-  rospy
-  std_msgs
-  trajectory_msgs
-  control_msgs
-  tf2_ros
-)
+        nav_msgs
+        roscpp
+        rospy
+        std_msgs
+        trajectory_msgs
+        control_msgs
+        tf2_ros
+        )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -107,10 +107,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES air_hockey_utils
-  CATKIN_DEPENDS nav_msgs roscpp rospy std_msgs trajectory_msgs
-#  DEPENDS system_lib
+        INCLUDE_DIRS include
+        #  LIBRARIES air_hockey_utils
+        CATKIN_DEPENDS nav_msgs roscpp rospy std_msgs trajectory_msgs
+        #  DEPENDS system_lib
 )
 
 ###########
@@ -120,8 +120,8 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
- include
-  ${catkin_INCLUDE_DIRS}
+        include
+        ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -138,8 +138,8 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(visualize_trajectory_node
-    src/visualize_trajectory_node.cpp
-    src/trajectory_visualizer.cpp)
+        src/visualize_trajectory_node.cpp
+        src/trajectory_visualizer.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -153,8 +153,8 @@ add_executable(visualize_trajectory_node
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(visualize_trajectory_node
-    ${catkin_LIBRARIES}
-)
+        ${catkin_LIBRARIES}
+        )
 
 #############
 ## Install ##

@@ -1,15 +1,16 @@
 #include "air_hockey_utils/trajectory_visualizer.h"
 
-TrajectoryVisualizer::TrajectoryVisualizer(ros::NodeHandle nh_, int buffer_size) : nh(nh_.getNamespace()),
-                                                                                   tfListener(tfBuffer)
+TrajectoryVisualizer::TrajectoryVisualizer(ros::NodeHandle nh_, int des_buffer_size, int act_buffer_size) :
+nh(nh_.getNamespace()), tfListener(tfBuffer)
 {
-    bufferSize = buffer_size;
+    desiredBufferSize = des_buffer_size;
+	actualBufferSizze = act_buffer_size;
     cartesianTrajectorySubscriber = nh.subscribe("cartesian_trajectory", 1,
         &TrajectoryVisualizer::cartesianTrajecotoryCB, this);
     desiredCartesianPathPublisher = nh.advertise<nav_msgs::Path>("desired_path", 2);
     actualCartesianPathPublisher = nh.advertise<nav_msgs::Path>("actual_path", 2);
 
-    cartesianTrajecotoryMsg.points.push_back(trajectory_msgs::MultiDOFJointTrajectoryPoint());
+    cartesianTrajectoryMsg.points.push_back(trajectory_msgs::MultiDOFJointTrajectoryPoint());
     newCartesianTrajMsg = false;
 
     if (nh.getNamespace() == "/iiwa_front")
@@ -30,13 +31,13 @@ TrajectoryVisualizer::TrajectoryVisualizer(ros::NodeHandle nh_, int buffer_size)
 
 void TrajectoryVisualizer::update()
 {
-    if (ros::Time::now() > cartesianTrajecotoryMsg.header.stamp and newCartesianTrajMsg)
+    if (ros::Time::now() > cartesianTrajectoryMsg.header.stamp and newCartesianTrajMsg)
     {
         newCartesianTrajMsg = false;
-        if (desiredPath.poses.size() + cartesianTrajecotoryMsg.points.size() > bufferSize)
+        if (desiredPath.poses.size() + cartesianTrajectoryMsg.points.size() > desiredBufferSize)
         {
             desiredPath.poses.erase(desiredPath.poses.begin(),desiredPath.poses.begin() +
-                    int(std::min(desiredPath.poses.size() + cartesianTrajecotoryMsg.points.size() - bufferSize,
+                    int(std::min(desiredPath.poses.size() + cartesianTrajectoryMsg.points.size() - desiredBufferSize,
                         desiredPath.poses.size())));
         }
         publishDesiredPath();
@@ -49,7 +50,7 @@ void TrajectoryVisualizer::update()
 void TrajectoryVisualizer::cartesianTrajecotoryCB(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg)
 {
     newCartesianTrajMsg = true;
-    cartesianTrajecotoryMsg = *msg.get();
+	cartesianTrajectoryMsg = *msg.get();
 }
 
 void TrajectoryVisualizer::jointTrajecotoryCB(const control_msgs::JointTrajectoryControllerState& msg)
@@ -81,15 +82,15 @@ std::string TrajectoryVisualizer::getControllerName()
 void TrajectoryVisualizer::publishDesiredPath()
 {
     geometry_msgs::PoseStamped poseTmp;
-    desiredPath.header.stamp = cartesianTrajecotoryMsg.header.stamp;
+    desiredPath.header.stamp = cartesianTrajectoryMsg.header.stamp;
     desiredPath.header.frame_id = sourceFrame;
-    for (int i = 0; i < cartesianTrajecotoryMsg.points.size(); ++i)
+    for (int i = 0; i < cartesianTrajectoryMsg.points.size(); ++i)
     {
         poseTmp.header.stamp =
-            cartesianTrajecotoryMsg.header.stamp + cartesianTrajecotoryMsg.points[i].time_from_start;
-        poseTmp.pose.position.x = cartesianTrajecotoryMsg.points[i].transforms[0].translation.x;
-        poseTmp.pose.position.y = cartesianTrajecotoryMsg.points[i].transforms[0].translation.y;
-        poseTmp.pose.position.z = cartesianTrajecotoryMsg.points[i].transforms[0].translation.z;
+				cartesianTrajectoryMsg.header.stamp + cartesianTrajectoryMsg.points[i].time_from_start;
+        poseTmp.pose.position.x = cartesianTrajectoryMsg.points[i].transforms[0].translation.x;
+        poseTmp.pose.position.y = cartesianTrajectoryMsg.points[i].transforms[0].translation.y;
+        poseTmp.pose.position.z = cartesianTrajectoryMsg.points[i].transforms[0].translation.z;
         desiredPath.poses.push_back(poseTmp);
     }
     desiredCartesianPathPublisher.publish(desiredPath);
@@ -109,7 +110,7 @@ void TrajectoryVisualizer::publishActualPath()
         poseTmp.pose.position.y = transformStamped.transform.translation.y;
         poseTmp.pose.position.z = transformStamped.transform.translation.z;
         actualPath.poses.push_back(poseTmp);
-        if (actualPath.poses.size() > 100) {
+        if (actualPath.poses.size() > desiredBufferSize) {
             actualPath.poses.erase(actualPath.poses.begin());
         }
         actualCartesianPathPublisher.publish(actualPath);
