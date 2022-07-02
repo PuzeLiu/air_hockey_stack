@@ -16,6 +16,7 @@ def read_bag(bag, duration):
 
     for topic, msg, t_bag in bag.read_messages():
         if topic in ["/iiwa_front/adrc_trajectory_controller/state",
+                    "/iiwa_front/bspline_adrc_joint_trajectory_controller/state",
                      "/iiwa_front/joint_feedforward_trajectory_controller/state"]:
             n_joints = len(msg.joint_names)
             for i in range(n_joints):
@@ -41,7 +42,7 @@ def read_bag(bag, duration):
 
 root_dir = os.path.dirname(__file__)
 package_dir = os.path.dirname(root_dir)
-bag_path = os.path.join(package_dir, "test_100hz.bag")
+bag_path = os.path.join(package_dir, "test_bspline.bag")
 bag_file = rosbag.Bag(bag_path)
 
 robot_file = os.path.join(root_dir, "manifold_planning", "iiwa_striker_new.urdf")

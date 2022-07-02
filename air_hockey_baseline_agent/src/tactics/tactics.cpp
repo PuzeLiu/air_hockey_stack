@@ -54,7 +54,9 @@ bool Tactic::generateStopTrajectory() {
         Vector3d(0., 0., 0.), agentParams.planTimeOffset * 2, state.trajectoryBuffer.getFree().cartTrajectory);
     generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
-    if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory, state.qPlan, state.trajectoryBuffer.getFree().jointTrajectory)) {
+    if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory,
+													 state.qPlan, state.dqPlan,
+													 state.trajectoryBuffer.getFree().jointTrajectory)) {
         generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
         state.tPlan = state.tStart;
         state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;

@@ -106,7 +106,7 @@ protected:
 	                           JointArrayType &dqStart,
 	                           ros::Time tStart);
 	Eigen::Vector3d xCut, xCutPrev;
-	int collisionNumPrev, waitForSteps, differenceCount;
+	int collisionNumPrev, differenceCount;
 };
 
 class Repel: public Tactic {
@@ -133,14 +133,13 @@ public:
 	~Prepare() override;
 
 protected:
-	bool generatePrepareTrajectory(JointArrayType &qStart,
-	                               JointArrayType &dqStart,
-	                               ros::Time tStart);
+	bool generatePrepareTrajectory(JointArrayType &qStart, JointArrayType &dqStart);
 
-	void getPreparePosAndVel(const Eigen::Vector2d &xStart,
+	void getPreparePosAndVel(Eigen::Vector2d &xStart,
 						     Eigen::Vector2d &xPuck,
 						     Eigen::Vector2d &xPrepare,
-						     Eigen::Vector2d &vPrepare);
+						     Eigen::Vector2d &vPrepare,
+							 Eigen::Vector2d &xStop);
 };
 
 class MovePuck: public Tactic {
@@ -175,7 +174,7 @@ protected:
 	std::mt19937 gen;
 	std::uniform_int_distribution<int> dist;
 	Eigen::Vector2d xCur2d, xHit2d, vHit2d;
-    bool hittingFailed, hasStopSegment;
+    bool hittingFailed;
 
     Eigen::Vector3d computeTarget(Eigen::Vector3d puckPosition, int strategy);
 };

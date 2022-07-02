@@ -31,7 +31,6 @@ Cut::Cut(EnvironmentParams &envParams, AgentParams &agentParams,
          SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
 	collisionNumPrev = 0;
-	waitForSteps = 0;
 }
 
 bool Cut::ready() {
@@ -64,15 +63,16 @@ bool Cut::apply() {
 
 		tStop = std::max(agentParams.defendPlanSteps / agentParams.rate,
 			(xCut - state.xPlan).norm() / agentParams.defendMaxEEVelocity);
-
-		tStop = std::max(tStop, state.observation.puckPredictedState.predictedTime - 0.5);
+		tStop = std::max(tStop, state.observation.puckPredictedState.predictedTime - 0.4);
 
 		generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, xCut, Vector3d(0., 0., 0.),
 				tStop, agentParams.defendPlanSteps, state.trajectoryBuffer.getFree().cartTrajectory);
 
 		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
-		if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory, state.qPlan, state.trajectoryBuffer.getFree().jointTrajectory))
+		if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory,
+														 state.qPlan, state.dqPlan,
+														 state.trajectoryBuffer.getFree().jointTrajectory))
 		{
             generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
 
@@ -98,36 +98,33 @@ void Cut::setNextState() {
 	if (not state.isPuckStatic() and (not state.isPuckApproaching() or not shouldCut())) {
 		setTactic(READY);
 		//! reset the cut record
-		xCutPrev << 0., 0.;
+		xCutPrev << 0., 0., 0.;
 	}
 }
 
 void Cut::calculateCutPosition() {
-	if (waitForSteps > 0){
-		--waitForSteps;
-		return;
-	}
 	Vector2d cutTmp, vOut;
-    Vector2d vIn = state.observation.puckPredictedState.state.block<2, 1>(2, 0).normalized();
-    if (std::abs(state.observation.puckPredictedState.state.dy()) < 0.1) {
-        vOut << 0., state.observation.puckPredictedState.state.cwiseSign()[1];
-    } else if (state.observation.puckPredictedState.state.dy() < 0.1 and
-        state.observation.puckPredictedState.state.y() > -(envParams.tableWidth / 2 - 2 * (envParams.malletRadius + envParams.puckRadius))) {
-		vOut << 0., 1.;
-	} else if (state.observation.puckPredictedState.state.dy() > 0.1 and
-               state.observation.puckPredictedState.state.y() < (envParams.tableWidth / 2 - 2 * (envParams.malletRadius + envParams.puckRadius))){
+	Vector2d pos = state.observation.puckPredictedState.state.block<2, 1>(0, 0).transpose();
+    Vector2d vIn = state.observation.puckPredictedState.state.block<2, 1>(2, 0);
 
-		vOut << 0., -1.;
+	if (vIn[1] > 0.1 and pos[1] > 0.2) {
+		ROS_INFO_STREAM("CUT2 LEFT");
+		vOut << 0.1, 1.;
+	} else if (vIn[1] < -0.1 and pos[1] < -0.2){
+		ROS_INFO_STREAM("CUT2 RIGHT");
+		vOut << 0.1, -1.;
 	} else {
-        vOut << 1., 0.;
+        vOut = - vIn;
+		ROS_INFO_STREAM("BLOCK");
     }
 
     Vector2d offsetDir = (vIn - vOut).normalized();
+
     cutTmp = state.observation.puckPredictedState.state.block<2, 1>(0, 0) +
         offsetDir * (envParams.puckRadius + envParams.malletRadius);
-    cutTmp.x() = boost::algorithm::clamp(cutTmp.x(), envParams.malletRadius + 0.01, envParams.tableLength / 2);
-    cutTmp.y() = boost::algorithm::clamp(cutTmp.y(), -envParams.tableWidth / 2 + envParams.malletRadius + 0.02,
-        envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
+    cutTmp.x() = boost::algorithm::clamp(cutTmp.x(), envParams.malletRadius + 0.02, envParams.tableLength / 2);
+    cutTmp.y() = boost::algorithm::clamp(cutTmp.y(), -envParams.tableWidth / 2 + envParams.malletRadius + envParams.puckRadius,
+        envParams.tableWidth / 2 - envParams.malletRadius - envParams.puckRadius);
 
 	if (state.isNewTactics) {
 		xCut.topRows(2) = cutTmp;
@@ -136,5 +133,6 @@ void Cut::calculateCutPosition() {
 			agentParams.defendTargetUpdateRatio * cutTmp;
 	}
 	xCut[2] = agentParams.universalJointHeight;
+	ROS_INFO_STREAM("Predict pos: " << pos.transpose() << " InDir: " << vIn.transpose() << " OurDir: " << vOut.transpose() << " offSetDir: " << offsetDir.transpose() << " cutTmp:" <<cutTmp << " cutTrue:" <<xCut);
 }
 

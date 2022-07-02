@@ -210,9 +210,19 @@ void Agent::loadAgentParam()
     }
     agentParams.hitRange << xTmp[0], xTmp[1];
 
-    if (!nh.getParam("/air_hockey/agent/defend_min_velocity", agentParams.defendMinVel))
+	if (!nh.getParam("/air_hockey/agent/hit_max_vel", agentParams.hitMaxVelocity))
+	{
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/hit_max_vel");
+	}
+
+	if (!nh.getParam("/air_hockey/agent/ee_max_acc", agentParams.eeMaxAcceleration))
+	{
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/ee_max_acc");
+	}
+
+    if (!nh.getParam("/air_hockey/agent/static_vel_threshold", agentParams.staticVelocityThreshold))
     {
-        ROS_ERROR_STREAM("Unable to find /air_hockey/agent/defend_min_velocity");
+        ROS_ERROR_STREAM("Unable to find /air_hockey/agent/static_vel_threshold");
     }
 
     if (!nh.getParam("/air_hockey/agent/defend_min_time", agentParams.defendMinTime))
@@ -244,6 +254,11 @@ void Agent::loadAgentParam()
     {
         ROS_ERROR_STREAM("Unable to find /air_hockey/agent/defend_target_update_ratio");
     }
+
+	if (!nh.getParam("/air_hockey/agent/prepare_velocity", agentParams.prepareVelocity))
+	{
+		ROS_ERROR_STREAM("Unable to find /air_hockey/agent/prepare_velocity");
+	}
 
     if (!nh.getParam("/air_hockey/agent/plan_time_offset", agentParams.planTimeOffset))
     {
@@ -354,58 +369,29 @@ std::string Agent::getControllerName()
 
 bool Agent::setTacticService(SetTacticsService::Request& req, SetTacticsService::Response& res)
 {
-    if (req.tactic == "SMASH")
-    {
-        agentParams.smashStrategy = req.smashStrategy;
-        ROS_INFO_STREAM("Set Tactic: SMASH, Strategy: " << req.smashStrategy);
-        tacticsProcessor[state.currentTactic]->setTactic(Tactics::SMASH);
-    }
-    else if (req.tactic == "CUT")
-    {
-        ROS_INFO_STREAM("Set Tactic: CUT");
-        int count = 0;
-        while (count < 300)
-        {
-            state.updateObservationAndState(observer->getObservation(), agentParams);
-            if (state.isPuckApproaching() && tacticsProcessor[state.currentTactic]->shouldCut())
-            {
-                tacticsProcessor[state.currentTactic]->setTactic(Tactics::CUT);
-                goto success_return;
-            }
-            count++;
-            rate.sleep();
-        }
-        ROS_INFO_STREAM("Time Out of Tactics: CUT");
-    }
-    else if (req.tactic == "REPEL")
-    {
-        ROS_INFO_STREAM("Set Tactic: REPEL");
-        int count = 0;
-        while (count < 300)
-        {
-            state.updateObservationAndState(observer->getObservation(), agentParams);
-            if (state.isPuckApproaching() && tacticsProcessor[state.currentTactic]->shouldRepel())
-            {
-                tacticsProcessor[state.currentTactic]->setTactic(Tactics::REPEL);
-                goto success_return;
-            }
-            count++;
-            rate.sleep();
-        }
-        ROS_INFO_STREAM("Time Out of Tactics: CUT");
-    }
-    else if (req.tactic == "PREPARE")
-    {
-        ROS_INFO_STREAM("Set Tactic: PREPARE");
-        tacticsProcessor[state.currentTactic]->setTactic(Tactics::PREPARE);
-        goto success_return;
-    }
-    else
-    {
-        return false;
-    }
+	if (req.tactic == "SMASH") {
+		agentParams.debuggingTactic = Tactics::SMASH;
+		agentParams.smashStrategy = req.smashStrategy;
+		ROS_INFO_STREAM("Set Tactic: SMASH, Strategy: " << req.smashStrategy);
+	} else if (req.tactic == "CUT") {
+		agentParams.debuggingTactic = Tactics::CUT;
+		ROS_INFO_STREAM("Set Tactic: CUT");
+	}
+	else if (req.tactic == "REPEL") {
+		agentParams.debuggingTactic = Tactics::REPEL;
+		ROS_INFO_STREAM("Set Tactic: REPEL");
+	}
+	else if (req.tactic == "PREPARE") {
+		agentParams.debuggingTactic = Tactics::PREPARE;
+		ROS_INFO_STREAM("Set Tactic: PREPARE");
+	}
+	else if (req.tactic == "READY")	{
+		agentParams.debuggingTactic = Tactics::READY;
+		ROS_INFO_STREAM("Set Tactic: READY");
+	}
 
-success_return:
+	else return false;
+
     res.success = true;
     return true;
 }

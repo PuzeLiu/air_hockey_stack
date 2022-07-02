@@ -32,8 +32,8 @@
         <arg name="dynamics_parameter" value="$(arg dynamics_parameter)"/>
     </include>
 
-    <node name="rviz" pkg="rviz" type="rviz"
-          args="-d $(find air_hockey_description)/rviz/air_hockey.rviz"/>
+<!--    <node name="rviz" pkg="rviz" type="rviz"-->
+<!--          args="-d $(find air_hockey_description)/rviz/air_hockey.rviz"/>-->
 
     <!-- Simulation -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -86,11 +86,19 @@
     <group ns="iiwa_front" if="$(arg use_front_iiwa)">
         <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
               args="-urdf -model iiwa_front -param robot_description -wait iiwas_frame"/>
+        <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
+            <param name="update_frequency" value="50.0"/>
+            <param name="buffer_size" value="500"/>
+        </node>
     </group>
 
     <group ns="iiwa_back" if="$(arg use_back_iiwa)">
         <node name="iiwa_model_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
               args="-urdf -model iiwa_back -param robot_description -wait iiwas_frame"/>
+        <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
+            <param name="update_frequency" value="50.0"/>
+            <param name="buffer_size" value="500"/>
+        </node>
     </group>
 
     <!-- Start Air Hockey Referee -->
@@ -99,7 +107,8 @@
     </node>
 
     <!-- Start Air Hockey rqt -->
-    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>
+<!--    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>-->
+    <node pkg="rqt_gui" type="rqt_gui" name="air_hockey_dashboard" args="--perspective-file $(find air_hockey_description)/rviz/air_hockey_dashboard.perspective"/>
 
     <node pkg="air_hockey_neural_planner" type="robot_initializer_node.py" name="robot_initializer_node" output="screen">
         <param name="front_controllers" value="$(arg front_controllers)" />

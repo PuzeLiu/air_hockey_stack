@@ -45,7 +45,7 @@ namespace air_hockey_baseline_agent {
 		~NullSpaceOptimizer();
 
 		bool optimizeJointTrajectory(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-		                             const JointArrayType &qStart,
+		                             const JointArrayType &qStart, const JointArrayType &dqStart,
 		                             trajectory_msgs::JointTrajectory &jointTraj);
 
 		bool optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,

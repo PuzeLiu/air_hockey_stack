@@ -41,10 +41,10 @@ TrajectoryGenerator::TrajectoryGenerator(const ros::NodeHandle& nh, AgentParams&
     Vector2d bound_upper(envParams.tableLength / 2 - envParams.malletRadius,
         envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
 
-    combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, agentParams.rate,
-        agentParams.universalJointHeight);
+//    combinatorialHit = new CombinatorialHit(bound_lower, bound_upper, agentParams.rate,
+//        agentParams.universalJointHeight);
     combinatorialHitNew = new CombinatorialHitNew(bound_lower, bound_upper, agentParams.rate,
-        agentParams.universalJointHeight);
+        agentParams.universalJointHeight, agentParams.eeMaxAcceleration);
     cubicLinearMotion = new CubicLinearMotion(agentParams.rate, agentParams.universalJointHeight);
 }
 
@@ -63,7 +63,7 @@ TrajectoryGenerator::~TrajectoryGenerator()
     delete optimizer;
     delete transformations;
     delete hittingPointOptimizer;
-    delete combinatorialHit;
+//    delete combinatorialHit;
     delete combinatorialHitNew;
     delete cubicLinearMotion;
 }
@@ -71,7 +71,7 @@ TrajectoryGenerator::~TrajectoryGenerator()
 void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTrajectory& jointTraj, trajectory_msgs::JointTrajectoryPoint &planPrevPoint)
 {
     //! Add one point before planning to smooth the connection
-    planPrevPoint.time_from_start = ros::Duration(-1.);
+    planPrevPoint.time_from_start = ros::Duration(-0.01);
     jointTraj.points.insert(jointTraj.points.begin(), planPrevPoint);
 
     int n = jointTraj.points.size();
@@ -87,7 +87,7 @@ void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTraject
             jointTraj.points[j].velocities.resize(agentParams.pinoModel.nq);
             jointTraj.points[j].accelerations.clear();
         }
-        tk::spline spline(x, y, tk::spline::cspline_hermite, false,
+        tk::spline spline(x, y, tk::spline::cspline, true,
             tk::spline::first_deriv, jointTraj.points.front().velocities[i],
             tk::spline::first_deriv, jointTraj.points.back().velocities[i]);
 
@@ -105,7 +105,7 @@ void TrajectoryGenerator::cubicSplineInterpolation(trajectory_msgs::JointTraject
 void TrajectoryGenerator::initOptimizerData(const ros::NodeHandle& nh)
 {
     optData.K.setConstant(agentParams.rate);
-    optData.weights << 10., 10., 5., 10., 1., 1., 0.01;
+    optData.weights << 100., 100., 5., 50., 1., 1., 0.01;
     optData.weightsAnchor << 1., 1., 5., 1, 10., 10., 0.01;
 }
 

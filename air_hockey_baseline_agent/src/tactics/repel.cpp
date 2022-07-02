@@ -70,7 +70,8 @@ void Repel::setNextState() {
 }
 
 bool Repel::generateRepelTrajectory(const JointArrayType &qCur, ros::Time &tStart) {
-	Vector2d xCur2d, xHit2d, vHit2d;
+	Vector2d xCur2d, vCur2d, xHit2d, vHit2d;
+	vCur2d.setZero();
 	Vector3d xCur;
 
 	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, qCur);
@@ -83,15 +84,19 @@ bool Repel::generateRepelTrajectory(const JointArrayType &qCur, ros::Time &tStar
 	vHit2d = state.observation.puckPredictedState.state.block<2, 1>(2, 0).normalized();
 	vHit2d = -vHit2d * 1.2;
 
+	generator.getPlannedJointState(state, state.tStart);
+
 	for (size_t i = 0; i < 10; ++i) {
         state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
         state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
-		generator.combinatorialHit->plan(xCur2d, xHit2d, vHit2d,state.trajectoryBuffer.getFree().cartTrajectory);
+		generator.combinatorialHitNew->plan(xCur2d, vCur2d, xHit2d, vHit2d,
+											state.trajectoryBuffer.getFree().cartTrajectory);
 		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
 		if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory,
-			state.observation.jointPosition, state.trajectoryBuffer.getFree().jointTrajectory)) {
+														 state.qPlan, state.dqPlan,
+														 state.trajectoryBuffer.getFree().jointTrajectory)) {
 			auto tHitStart = state.observation.stamp +
 						     ros::Duration(state.observation.puckPredictedState.predictedTime) -
                 state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
