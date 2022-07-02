@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+    <arg name="user" default="$(env USER)"/>
     <arg name="use_front_iiwa" default="true"/>
     <arg name="use_back_iiwa" default="false"/>
     <arg name="hardware_interface" default="hardware_interface/EffortJointInterface"/>
@@ -39,7 +40,7 @@
         <arg name="plane_height" default="0.130"/>
     </include>
 
-    <machine name="$(arg machine_name)" user="puze" address="$(arg machine_address)"
+    <machine name="$(arg machine_name)" user="$(arg user)" address="$(arg machine_address)"
              env-loader="~/catkin_ws/src/iiwas_core/iiwas_bringup/env.sh" timeout="10.0" default="false"/>
 
     <!-- Start Air Hockey Referee -->
