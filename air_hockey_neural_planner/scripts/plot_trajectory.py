@@ -21,6 +21,8 @@ def read_bag(bag, duration):
             n_joints = len(msg.joint_names)
             for i in range(n_joints):
                 time.append(msg.header.stamp.to_sec())
+                if len(msg.desired.positions) != 7:
+                    msg.desired.positions += (0.,)
                 joint_state_desired.append(np.concatenate([msg.desired.positions, msg.desired.velocities, msg.desired.accelerations]))
                 joint_state_actual.append(np.concatenate([msg.actual.positions, msg.actual.velocities, msg.actual.accelerations, msg.actual.effort]))
                 joint_state_error.append(np.concatenate([msg.error.positions, msg.error.velocities, msg.error.accelerations, msg.error.effort]))
@@ -42,7 +44,7 @@ def read_bag(bag, duration):
 
 root_dir = os.path.dirname(__file__)
 package_dir = os.path.dirname(root_dir)
-bag_path = os.path.join(package_dir, "test_bspline.bag")
+bag_path = os.path.join(package_dir, "test_bspline_adrc_ff.bag")
 bag_file = rosbag.Bag(bag_path)
 
 robot_file = os.path.join(root_dir, "manifold_planning", "iiwa_striker_new.urdf")
