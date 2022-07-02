@@ -89,10 +89,10 @@ class NeuralPlannerHittingTestNode:
             print(type(pr.q_0))
             pr.q_dot_0 = self.robot_joint_velocity
             pr.q_ddot_0 = np.zeros(7)
-            #end_point = Point(0.9, -0.4, 0.16)
-            end_point = Point(x, y, 0.16)
+            hit_point = Point(x, y, 0.16)
             pr.hit_point = hit_point
-            pr.hitting_angle = th
+            pr.hit_angle = th
+            pr.tactic = 0
             print("Run trajectory")
             self.planner_request_publisher.publish(pr)
             break

@@ -43,12 +43,13 @@ class NeuralPlannerMoveTestNode:
 
             x = 0.6 * np.random.rand() + 0.6
             y = 0.8 * np.random.rand() - 0.4
-            end_point = Point(x, y, Base.position[-1])
+            end_point = Point(x, y, 0.16)
             pr.end_point = end_point
+            pr.tactic = 1
             print("Run trajectory")
             self.planner_request_publisher.publish(pr)
 
 
 if __name__ == '__main__':
     node = NeuralPlannerMoveTestNode()
-    node.request_plan()
+    node.request_random_plan()

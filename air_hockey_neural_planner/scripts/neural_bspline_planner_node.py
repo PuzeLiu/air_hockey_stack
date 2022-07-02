@@ -81,7 +81,7 @@ class NeuralPlannerNode:
             list_t.append(t)
             list_q_cps.append(q_cps)
             list_t_cps.append(t_cps)
-            d_ret = np.concatenate([q_d, q_end, [...], dq[-1], [0.], ddq[-1], [0.]*8], axis=-1)[np.newaxis]
+            d_ret = np.concatenate([q_d, Base.configuration, [0.], Base.position, dq[-1], [0.], ddq[-1], [0.]*8], axis=-1)[np.newaxis]
             qr, dqr, ddqr, tr, qr_cps, tr_cps = model_inference(self.planner_model, d_ret, self.bsp, self.bspt)
             list_q.append(qr)
             list_t.append(tr)
@@ -89,7 +89,7 @@ class NeuralPlannerNode:
             list_t_cps.append(tr_cps)
         elif tactic == 1: # MOVE
             p_d = np.array([x_end, y_end, Base.position[-1]])
-            q_d = self.spo(p_d)
+            q_d = self.spo.solve(p_d)
             q_dot_d = np.zeros((7,))
             d = np.concatenate([q_0, q_d, p_d, q_dot_0, q_ddot_0, q_dot_d], axis=-1)[np.newaxis]
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
