@@ -9,7 +9,7 @@ TrajectoryVisualizer::TrajectoryVisualizer(ros::NodeHandle nh_, int buffer_size)
     desiredCartesianPathPublisher = nh.advertise<nav_msgs::Path>("desired_path", 2);
     actualCartesianPathPublisher = nh.advertise<nav_msgs::Path>("actual_path", 2);
 
-    cartesianTrajecotoryMsg.points.push_back(trajectory_msgs::MultiDOFJointTrajectoryPoint());
+    cartesianTrajectoryMsg.points.push_back(trajectory_msgs::MultiDOFJointTrajectoryPoint());
     newCartesianTrajMsg = false;
 
     if (nh.getNamespace() == "/iiwa_front")
@@ -30,13 +30,13 @@ TrajectoryVisualizer::TrajectoryVisualizer(ros::NodeHandle nh_, int buffer_size)
 
 void TrajectoryVisualizer::update()
 {
-    if (ros::Time::now() > cartesianTrajecotoryMsg.header.stamp and newCartesianTrajMsg)
+    if (ros::Time::now() > cartesianTrajectoryMsg.header.stamp and newCartesianTrajMsg)
     {
         newCartesianTrajMsg = false;
-        if (desiredPath.poses.size() + cartesianTrajecotoryMsg.points.size() > bufferSize)
+        if (desiredPath.poses.size() + cartesianTrajectoryMsg.points.size() > bufferSize)
         {
             desiredPath.poses.erase(desiredPath.poses.begin(),desiredPath.poses.begin() +
-                    int(std::min(desiredPath.poses.size() + cartesianTrajecotoryMsg.points.size() - bufferSize,
+                    int(std::min(desiredPath.poses.size() + cartesianTrajectoryMsg.points.size() - bufferSize,
                         desiredPath.poses.size())));
         }
         publishDesiredPath();
@@ -49,7 +49,7 @@ void TrajectoryVisualizer::update()
 void TrajectoryVisualizer::cartesianTrajecotoryCB(const trajectory_msgs::MultiDOFJointTrajectoryConstPtr& msg)
 {
     newCartesianTrajMsg = true;
-    cartesianTrajecotoryMsg = *msg.get();
+	cartesianTrajectoryMsg = *msg.get();
 }
 
 void TrajectoryVisualizer::jointTrajecotoryCB(const control_msgs::JointTrajectoryControllerState& msg)
@@ -81,15 +81,15 @@ std::string TrajectoryVisualizer::getControllerName()
 void TrajectoryVisualizer::publishDesiredPath()
 {
     geometry_msgs::PoseStamped poseTmp;
-    desiredPath.header.stamp = cartesianTrajecotoryMsg.header.stamp;
+    desiredPath.header.stamp = cartesianTrajectoryMsg.header.stamp;
     desiredPath.header.frame_id = sourceFrame;
-    for (int i = 0; i < cartesianTrajecotoryMsg.points.size(); ++i)
+    for (int i = 0; i < cartesianTrajectoryMsg.points.size(); ++i)
     {
         poseTmp.header.stamp =
-            cartesianTrajecotoryMsg.header.stamp + cartesianTrajecotoryMsg.points[i].time_from_start;
-        poseTmp.pose.position.x = cartesianTrajecotoryMsg.points[i].transforms[0].translation.x;
-        poseTmp.pose.position.y = cartesianTrajecotoryMsg.points[i].transforms[0].translation.y;
-        poseTmp.pose.position.z = cartesianTrajecotoryMsg.points[i].transforms[0].translation.z;
+				cartesianTrajectoryMsg.header.stamp + cartesianTrajectoryMsg.points[i].time_from_start;
+        poseTmp.pose.position.x = cartesianTrajectoryMsg.points[i].transforms[0].translation.x;
+        poseTmp.pose.position.y = cartesianTrajectoryMsg.points[i].transforms[0].translation.y;
+        poseTmp.pose.position.z = cartesianTrajectoryMsg.points[i].transforms[0].translation.z;
         desiredPath.poses.push_back(poseTmp);
     }
     desiredCartesianPathPublisher.publish(desiredPath);

@@ -29,7 +29,7 @@ class TrajectoryVisualizer
     ros::Publisher desiredCartesianPathPublisher, actualCartesianPathPublisher;
     nav_msgs::Path desiredPath, actualPath;
 
-    trajectory_msgs::MultiDOFJointTrajectory cartesianTrajecotoryMsg;
+    trajectory_msgs::MultiDOFJointTrajectory cartesianTrajectoryMsg;
     tf2_ros::Buffer tfBuffer;
     tf2_ros::TransformListener tfListener;
     bool newCartesianTrajMsg;
