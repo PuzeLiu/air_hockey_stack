@@ -80,7 +80,8 @@ void loadAgentParams(AgentParams& agentParams, Transformations transformations)
 
 	agentParams.hitRange << 0.2, 0.8;
 
-	agentParams.defendMinVel = 0.08;
+	agentParams.staticVelocityThreshold = 0.08;
+	agentParams.eeMaxAcceleration = 6.;
 	agentParams.defendMinTime = 0.3;
 	agentParams.defendZoneWidth = 0.4;
 	agentParams.defendLine = 0.2;
@@ -164,7 +165,7 @@ int main(int argc, char* argv[])
 	Vector2d bound_upper(envParams.tableLength / 2 - envParams.malletRadius,
 		envParams.tableWidth / 2 - envParams.malletRadius - 0.02);
 	CombinatorialHitNew combPlanner(bound_lower, bound_upper, agentParams.rate,
-		agentParams.universalJointHeight);
+		agentParams.universalJointHeight, agentParams.eeMaxAcceleration);
 	CubicLinearMotion cubPlanner(agentParams.rate, agentParams.universalJointHeight);
 
 	trajectory_msgs::MultiDOFJointTrajectory cartTraj;
@@ -269,7 +270,7 @@ int main(int argc, char* argv[])
             cartTraj.points.clear();
             jointTraj.points.clear();
 
-            if (not combPlanner.plan(xStart2d, vStart2d, xHit2d, vHit2d, xStop2d, vStop2d, hitting_time, cartTraj)) {
+            if (not combPlanner.plan(xStart2d, vStart2d, xHit2d, vHit2d, hitting_time, xStop2d, vStop2d, cartTraj)) {
                 break;
             }
             transformations.transformTrajectory(cartTraj);
