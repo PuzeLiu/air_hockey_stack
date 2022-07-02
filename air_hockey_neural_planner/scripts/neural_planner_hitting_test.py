@@ -20,9 +20,9 @@ def print_(x, N=5):
         print()
 
 
-class NeuralPlannerTestNode:
+class NeuralPlannerHittingTestNode:
     def __init__(self):
-        rospy.init_node("neural_planner_node_test", anonymous=True)
+        rospy.init_node("neural_planner_hitting_test", anonymous=True)
         self.tf_listener = tf.TransformListener()
         self.planner_request_publisher = rospy.Publisher("/neural_planner/plan_trajectory", PlannerRequest,
                                                          queue_size=5)
@@ -91,7 +91,7 @@ class NeuralPlannerTestNode:
             pr.q_ddot_0 = np.zeros(7)
             #end_point = Point(0.9, -0.4, 0.16)
             end_point = Point(x, y, 0.16)
-            pr.end_point = end_point
+            pr.hit_point = hit_point
             pr.hitting_angle = th
             print("Run trajectory")
             self.planner_request_publisher.publish(pr)
@@ -99,5 +99,5 @@ class NeuralPlannerTestNode:
 
 
 if __name__ == '__main__':
-    node = NeuralPlannerTestNode()
+    node = NeuralPlannerHittingTestNode()
     node.request_plan()

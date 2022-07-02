@@ -2,5 +2,8 @@ std_msgs/Header header
 float32[] q_0
 float32[] q_dot_0
 float32[] q_ddot_0
+float32[] q_end
+geometry_msgs/Point hit_point
 geometry_msgs/Point end_point
-float32 hitting_angle
+float32 hit_angle
+int8 tactic

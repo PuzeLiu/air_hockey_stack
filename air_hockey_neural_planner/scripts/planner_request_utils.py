@@ -6,8 +6,12 @@ def unpack_planner_request(msg):
     q_0 = np.array(msg.q_0)
     q_dot_0 = np.array(msg.q_dot_0)
     q_ddot_0 = np.array(msg.q_ddot_0)
+    hit_point = msg.hit_point
+    x_hit = hit_point.x
+    y_hit = hit_point.y
     end_point = msg.end_point
-    x_d = end_point.x
-    y_d = end_point.y
-    th_d = msg.hitting_angle
-    return x_d, y_d, th_d, q_0, q_dot_0, q_ddot_0
+    x_end = end_point.x
+    y_end = end_point.y
+    th_hit = msg.hit_angle
+    tactic = msg.tactic
+    return tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end
