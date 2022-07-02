@@ -63,7 +63,7 @@ bool Cut::apply() {
 
 		tStop = std::max(agentParams.defendPlanSteps / agentParams.rate,
 			(xCut - state.xPlan).norm() / agentParams.defendMaxEEVelocity);
-		tStop = std::max(tStop, state.observation.puckPredictedState.predictedTime - 0.4);
+		tStop = std::max(tStop, state.observation.puckPredictedState.predictedTime - 0.2);
 
 		generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, xCut, Vector3d(0., 0., 0.),
 				tStop, agentParams.defendPlanSteps, state.trajectoryBuffer.getFree().cartTrajectory);
@@ -108,14 +108,14 @@ void Cut::calculateCutPosition() {
     Vector2d vIn = state.observation.puckPredictedState.state.block<2, 1>(2, 0);
 
 	if (vIn[1] > 0.1 and pos[1] > 0.2) {
-		ROS_INFO_STREAM("CUT2 LEFT");
+		ROS_DEBUG_STREAM("CUT2 LEFT");
 		vOut << 0.1, 1.;
 	} else if (vIn[1] < -0.1 and pos[1] < -0.2){
-		ROS_INFO_STREAM("CUT2 RIGHT");
+		ROS_DEBUG_STREAM("CUT2 RIGHT");
 		vOut << 0.1, -1.;
 	} else {
         vOut = - vIn;
-		ROS_INFO_STREAM("BLOCK");
+		ROS_DEBUG_STREAM("BLOCK");
     }
 
     Vector2d offsetDir = (vIn - vOut).normalized();
@@ -133,6 +133,8 @@ void Cut::calculateCutPosition() {
 			agentParams.defendTargetUpdateRatio * cutTmp;
 	}
 	xCut[2] = agentParams.universalJointHeight;
-	ROS_INFO_STREAM("Predict pos: " << pos.transpose() << " InDir: " << vIn.transpose() << " OurDir: " << vOut.transpose() << " offSetDir: " << offsetDir.transpose() << " cutTmp:" <<cutTmp << " cutTrue:" <<xCut);
+	ROS_DEBUG_STREAM("Predict pos: " << pos.transpose() << " InDir: " << vIn.transpose() <<
+	" OurDir: " << vOut.transpose() << " offSetDir: " << offsetDir.transpose() <<
+	" cutTmp:" <<cutTmp.transpose() << " cutTrue:" <<xCut.transpose());
 }
 
