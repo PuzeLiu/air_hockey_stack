@@ -75,7 +75,7 @@ class NeuralPlannerTestNode:
                 continue
             print_(trans)
             if not self.gazebo:
-                if trans[0] < 0.9 or trans[0] > 1.3:
+                if trans[0] < 0.7 or trans[0] > 1.3:
                     print("Puck not in x range")
                     break
                 if trans[1] < -0.4 or trans[1] > 0.4:
