@@ -35,6 +35,13 @@ class NeuralPlannerMoveTestNode:
         self.robot_joint_pose = msg.position[:7]
         self.robot_joint_velocity = msg.velocity[:7]
 
+    def move(self):
+        while not rospy.is_shutdown():
+            inp = input("Press enter to move or insert anything to leave")
+            if inp:
+                break
+            self.request_random_plan()
+
     def request_random_plan(self):
             pr = PlannerRequest()
             pr.q_0 = self.robot_joint_pose
@@ -46,10 +53,9 @@ class NeuralPlannerMoveTestNode:
             end_point = Point(x, y, 0.16)
             pr.end_point = end_point
             pr.tactic = 1
-            print("Run trajectory")
             self.planner_request_publisher.publish(pr)
 
 
 if __name__ == '__main__':
     node = NeuralPlannerMoveTestNode()
-    node.request_random_plan()
+    node.move()
