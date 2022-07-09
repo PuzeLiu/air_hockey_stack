@@ -63,14 +63,16 @@
     <group ns="iiwa_front" if="$(arg use_front_iiwa)">
         <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
             <param name="update_frequency" value="50.0"/>
-            <param name="buffer_size" value="500"/>
+            <param name="desired_buffer_size" value="300"/>
+            <param name="actual_buffer_size" value="300"/>
         </node>
     </group>
 
     <group ns="iiwa_back" if="$(arg use_back_iiwa)">
         <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
             <param name="update_frequency" value="50.0"/>
-            <param name="buffer_size" value="500"/>
+            <param name="desired_buffer_size" value="300"/>
+            <param name="actual_buffer_size" value="300"/>
         </node>
     </group>
 
