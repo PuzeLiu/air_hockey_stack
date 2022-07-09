@@ -26,6 +26,8 @@ class NeuralPlannerHittingTestNode:
         self.tf_listener = tf.TransformListener()
         self.planner_request_publisher = rospy.Publisher("/neural_planner/plan_trajectory", PlannerRequest,
                                                          queue_size=5)
+        self.replanner_request_publisher = rospy.Publisher("/neural_planner/replan_trajectory", PlannerRequest,
+                                                           queue_size=5)
         self.robot_state_subscriber = rospy.Subscriber("/iiwa_front/joint_states", JointState, self.set_robot_state)
         self.robot_joint_pose = None
         self.robot_joint_velocity = None
@@ -45,10 +47,16 @@ class NeuralPlannerHittingTestNode:
             inp = input("Press enter to hit or insert anything to leave")
             if inp:
                 break
-            if not self.request_plan():
-                break
+            if self.request_plan():
+                self.gazebo = False
+                #for i in range(10):
+                rospy.sleep(0.2)
+                print("ROS TIME:", rospy.Time.now().to_sec())
+                self.request_replan()
+                self.gazebo = True
+                pass
 
-    def request_plan(self):
+    def prepare_planner_request(self):
         def get_desired_xyth(puck_pos, goal_pose):
             puck_goal_x = goal_pose[0] - puck_pos[0]
             puck_goal_y = goal_pose[1] - puck_pos[1]
@@ -66,6 +74,9 @@ class NeuralPlannerHittingTestNode:
             state_msg.model_name = 'puck'
             state_msg.pose.position.x = -0.5 + 0.2 * np.random.rand()
             state_msg.pose.position.y = -0.4 + 0.8 * np.random.rand()
+            v = 0.1
+            state_msg.twist.linear.x = v * (2 * np.random.rand() - 1.)
+            state_msg.twist.linear.y = v * (2 * np.random.rand() - 1.)
             state_msg.pose.position.z = 0.0
             state_msg.pose.orientation.x = 0
             state_msg.pose.orientation.y = 0
@@ -79,15 +90,15 @@ class NeuralPlannerHittingTestNode:
         try:
             trans, rot = self.tf_listener.lookupTransform('/F_link_0', '/Puck', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-            return True
+            return None
         print_(trans)
         if not self.gazebo:
             if trans[0] < 0.7 or trans[0] > 1.3:
                 print("Puck not in x range")
-                return False
+                return None
             if trans[1] < -0.4 or trans[1] > 0.4:
                 print("Puck not in y range")
-                return False
+                return None
         # trans = [0.9585, -0.39, 0.16]
         x, y, th = get_desired_xyth(trans, self.goal)
         pr = PlannerRequest()
@@ -100,8 +111,20 @@ class NeuralPlannerHittingTestNode:
         pr.hit_point = hit_point
         pr.hit_angle = th
         pr.tactic = 0
-        print("Run trajectory")
+        return pr
+
+    def request_plan(self):
+        pr = self.prepare_planner_request()
+        if pr is None:
+            return False
         self.planner_request_publisher.publish(pr)
+        return True
+
+    def request_replan(self):
+        pr = self.prepare_planner_request()
+        if pr is None:
+            return False
+        self.replanner_request_publisher.publish(pr)
         return True
 
 
