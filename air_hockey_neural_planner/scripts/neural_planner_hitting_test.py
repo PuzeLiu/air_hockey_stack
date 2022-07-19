@@ -57,12 +57,25 @@ class NeuralPlannerHittingTestNode:
                 pass
 
     def prepare_planner_request(self):
-        def get_desired_xyth(puck_pos, goal_pose):
+        def get_desired_xyth(puck_pos, goal_pose, mallet_pose):
+            abs_puck_y = np.abs(puck_pos[1])
+            d = np.abs(puck_pos[0] - 0.9)
+            if abs_puck_y > 0.125:
+                goal_pose[1] = (1 + 3.0*np.exp(-100*d**2)) * 0.125 * (abs_puck_y - 0.125) / (0.4 - 0.125) * np.sign(puck_pos[1])
+            print("GOAL POSE Y: ", goal_pose[1])
             puck_goal_x = goal_pose[0] - puck_pos[0]
             puck_goal_y = goal_pose[1] - puck_pos[1]
             print(puck_goal_y, puck_goal_x)
             th = np.arctan2(puck_goal_y, puck_goal_x)
-            print(th)
+            mallet_puck_x = puck_pos[0] - mallet_pose[0]
+            mallet_puck_y = puck_pos[1] - mallet_pose[1]
+            print(mallet_puck_y, mallet_puck_x)
+            beta = np.arctan2(mallet_puck_y, mallet_puck_x)
+            print("BETA", beta)
+            alpha = np.abs(th - beta)
+            print("ALPHA", alpha)
+            #th *= (1 - (alpha / (np.pi / 2.))**(1.))
+            print("TH", th)
             r = 0.07
             # r = 0.1
             x = puck_pos[0] - r * np.cos(th)
@@ -100,7 +113,9 @@ class NeuralPlannerHittingTestNode:
                 print("Puck not in y range")
                 return None
         # trans = [0.9585, -0.39, 0.16]
-        x, y, th = get_desired_xyth(trans, self.goal)
+        mallet_pose, _ = self.tf_listener.lookupTransform('/F_link_0', '/F_striker_tip', rospy.Time(0))
+        x, y, th = get_desired_xyth(trans, self.goal, mallet_pose)
+        #y *= 0.93 + 0.07 * (x - 0.7) / (1.3 - 0.7)
         pr = PlannerRequest()
         pr.q_0 = self.robot_joint_pose
         print(pr.q_0)

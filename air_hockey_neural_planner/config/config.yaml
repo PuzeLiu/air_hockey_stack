@@ -1,4 +1,10 @@
 neural_planner:
-  planner_path: "./trained_models/striker/v08a10v_jerk/best-161"
+  planner_path: "./trained_models/striker/v08a10v_torqueint/last_n-77"
+#  planner_path: "./trained_models/striker/v08a7v_beyond/best-123"
+  #planner_path: "./trained_models/striker/v08a10v_qddotend/best-144"
+  #  planner_path: "./trained_models/striker/v08a10v_qddotend/best-156"
+  #planner_path: "./trained_models/striker/v08a10v_qddotend/best-115"
+#  planner_path: "./trained_models/striker/v08a10v_beyond/best-271"
+  #planner_path: "./trained_models/striker/v08a10v_jerk/best-161"
 #  planner_path: "./trained_models/striker/v08a08huberalphaint/best-60"
   ik_hitting_path: "./trained_models/ik_hitting/pos_lossabs/best-77"
