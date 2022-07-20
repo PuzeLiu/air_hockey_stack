@@ -10,6 +10,7 @@ import numpy as np
 from copy import copy
 import pinocchio as pino
 from time import perf_counter
+from scipy.interpolate import interp1d
 
 SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
@@ -41,12 +42,20 @@ class Trajectory:
         self.ddq = ddq
         self.t = t
         self.init_time = 0
+        self.update_samplers()
+
+
+    def update_samplers(self):
+        self.qs = interp1d(self.t, self.q, axis=0)
+        self.dqs = interp1d(self.t, self.dq, axis=0)
+        self.ddqs = interp1d(self.t, self.ddq, axis=0)
 
     def append(self, q, dq, ddq, t):
         self.q = np.concatenate([self.q, q], axis=0)
         self.dq = np.concatenate([self.dq, dq], axis=0)
         self.ddq = np.concatenate([self.ddq, ddq], axis=0)
         self.t = np.concatenate([self.t, t + self.t[-1]], axis=0)
+        self.update_samplers()
 
     def set_init_time(self, t):
         self.init_time = t
@@ -54,7 +63,12 @@ class Trajectory:
     def sample(self, t):
         t -= self.init_time
         idx = np.searchsorted(self.t, t, side="left")
-        return self.q[idx], self.dq[idx], self.ddq[idx]
+        print("TIME QUERY: ", t)
+        print("TIME IDX: ", self.t[idx])
+        print("Q IDX:", self.q[idx])
+        print("Q INTERP:", self.qs(t))
+        return self.qs(t), self.dqs(t), self.dqs(t)
+        #return self.q[idx], self.dq[idx], self.ddq[idx]
 
 
 class NeuralPlannerNode:
@@ -104,23 +118,26 @@ class NeuralPlannerNode:
         elif msg.tactic == 1:
             plannig_time = 0.040
         communication_delays = 0.006
-        traj_time = rospy.Time.now().to_sec() + plannig_time + communication_delays
+        time_offset = plannig_time + communication_delays
+        traj_time = self.actual_trajectory.init_time + time_offset
+        # traj_time = rospy.Time.now().to_sec() + time_offset
         # traj_time = msg.header.stamp.to_sec() + plannig_time + communication_delays
-        #print("REPLAN!!!")
+        # print("REPLAN!!!")
         q_0, q_dot_0, q_ddot_0 = self.actual_trajectory.sample(traj_time)
         q_0 = np.concatenate([q_0, np.zeros(1)])
         q_dot_0 = np.concatenate([q_dot_0, np.zeros(1)])
         q_ddot_0 = np.concatenate([q_ddot_0, np.zeros(1)])
-        #print(msg.q_0)
-        #print(q_0)
+        # print(msg.q_0)
+        print("REPLANNING Q0", q_0)
         msg.q_0 = q_0
         msg.q_dot_0 = q_dot_0
         msg.q_ddot_0 = q_ddot_0
         t1 = perf_counter()
         print("REPLANNING TIME:", t1 - t0)
-        self.compute_trajectory(msg)
+        print("TIME OFFSET:", time_offset)
+        self.compute_trajectory(msg, traj_time)
 
-    def compute_trajectory(self, msg):
+    def compute_trajectory(self, msg, traj_time=None):
         t0 = perf_counter()
         tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end = unpack_planner_request(msg)
 
@@ -161,7 +178,7 @@ class NeuralPlannerNode:
             list_t_cps.append(t_cps)
 
         tros = rospy.Time.now().to_sec()
-        self.publish_joint_trajectory(list_q_cps, list_t_cps)
+        self.publish_joint_trajectory(list_q_cps, list_t_cps, traj_time)
         t1 = perf_counter()
         print("PLANNING TIME: ", t1 - t0)
         print("ROS TIME", tros)
@@ -172,16 +189,17 @@ class NeuralPlannerNode:
         q = np.concatenate([qk.numpy()[0], np.zeros(3)], axis=-1)
         pino.forwardKinematics(self.pino_model, self.pino_data, q)
         xyz_pino = copy(self.pino_data.oMi[-1].translation)
-        #J = pino.computeJointJacobians(self.pino_model, self.pino_data, q)
-        J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
+        # J = pino.computeJointJacobians(self.pino_model, self.pino_data, q)
+        J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3,
+            :6]
         pinvJ = np.linalg.pinv(J)
-        #pinv63J = pinvJ[:6, :3]
+        # pinv63J = pinvJ[:6, :3]
         q_dot = (pinvJ @ np.array([np.cos(thk), np.sin(thk), 0])[:, np.newaxis])[:, 0]
         max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
         qdotk = q_dot / max_mul
         return q[:7], qdotk, xyz_pino
 
-    def publish_joint_trajectory(self, qs, ts):
+    def publish_joint_trajectory(self, qs, ts, traj_time=None):
         assert len(qs) == len(ts)
 
         # print("SIZE:", qs[0].shape)
@@ -192,7 +210,10 @@ class NeuralPlannerNode:
             iiwa_front_bspline_hitting.q_control_points = qs[i].flatten()
             iiwa_front_bspline_hitting.t_control_points = ts[i].flatten()
             iiwa_front_bspline.segments.append(iiwa_front_bspline_hitting)
-        iiwa_front_bspline.header.stamp = rospy.Time.now()  # + rospy.Duration(0.01)
+        if traj_time is None:
+            iiwa_front_bspline.header.stamp = rospy.Time.now()  # + rospy.Duration(time_offset)
+        else:
+            iiwa_front_bspline.header.stamp = rospy.Time(traj_time)
         self.actual_trajectory.set_init_time(iiwa_front_bspline.header.stamp.to_sec())
         self.iiwa_front_publisher.publish(iiwa_front_bspline)
 
