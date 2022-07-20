@@ -117,10 +117,10 @@
         <param name="back_controllers" value="$(arg back_controllers)" />
     </node>
 
-    <node pkg="air_hockey_neural_planner" type="neural_bspline_planner_node.py" name="neural_bspline_planner_node" output="screen">
-        <param name="front_controllers" value="$(arg front_controllers)" />
-        <param name="back_controllers" value="$(arg back_controllers)" />
-    </node>
+<!--     <node pkg="air_hockey_neural_planner" type="neural_bspline_planner_node.py" name="neural_bspline_planner_node" output="screen"> -->
+<!--         <param name="front_controllers" value="$(arg front_controllers)" /> -->
+<!--         <param name="back_controllers" value="$(arg back_controllers)" /> -->
+<!--     </node> -->
 
     <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
     <rosparam file="$(find air_hockey_baseline_agent)/config/config.yaml" command="load" subst_value="true"/>
@@ -129,7 +129,7 @@
     <node name="plotjuggler_with_layout"
           pkg="plotjuggler"
           type="plotjuggler"
-          args="--layout $(find air_hockey_neural_planner)/config/layout_bspline.xml"/>
+          args="--layout $(find air_hockey_neural_planner)/config/layout_bspline_adrc.xml"/>
 
 <!--    &lt;!&ndash; Load Parameters of kalman filter &ndash;&gt;-->
 

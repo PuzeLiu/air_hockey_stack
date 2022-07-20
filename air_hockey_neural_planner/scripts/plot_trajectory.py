@@ -23,7 +23,7 @@ def read_bag(bag, duration):
                 time.append(msg.header.stamp.to_sec())
                 if len(msg.desired.positions) != 7:
                     msg.desired.positions += (0.,)
-                joint_state_desired.append(np.concatenate([msg.desired.positions, msg.desired.velocities, msg.desired.accelerations]))
+                joint_state_desired.append(np.concatenate([msg.desired.positions, msg.desired.velocities, msg.desired.accelerations, msg.desired.effort]))
                 joint_state_actual.append(np.concatenate([msg.actual.positions, msg.actual.velocities, msg.actual.accelerations, msg.actual.effort]))
                 joint_state_error.append(np.concatenate([msg.error.positions, msg.error.velocities, msg.error.accelerations, msg.error.effort]))
         elif topic == "/tf":
@@ -44,31 +44,47 @@ def read_bag(bag, duration):
 
 root_dir = os.path.dirname(__file__)
 package_dir = os.path.dirname(root_dir)
-bag_path = os.path.join(package_dir, "test_bspline_adrc_ff.bag")
+#bag_path = os.path.join(package_dir, "test_bspline_adrc_ff.bag")
+bag_path = os.path.join(package_dir, "bags/qddotend.bag")
 bag_file = rosbag.Bag(bag_path)
 
-robot_file = os.path.join(root_dir, "manifold_planning", "iiwa_striker_new.urdf")
+#robot_file = os.path.join(root_dir, "manifold_planning", "iiwa_striker_new.urdf")
+robot_file = os.path.join(root_dir, "manifold_planning", "iiwa.urdf")
 pino_model = pino.buildModelFromUrdf(robot_file)
 pino_data = pino_model.createData()
 pino_positions = np.zeros(pino_model.nq)
+pino_velocities = np.zeros(pino_model.nq)
 
 t, desired, actual, error, puck = read_bag(bag_file, 10000)
 
+applied_torque_estimate = []
 ee_pos_des = np.zeros((t.shape[0], 3))
 ee_pos_actual = np.zeros((t.shape[0], 3))
-frame_id = pino_model.getFrameId("F_striker_joint_link")
+frame_id = 18#pino_model.getFrameId("F_striker_joint_link")
 for i, _ in enumerate(t):
     pino_positions[:7] = desired[i, :7]
     pino.forwardKinematics(pino_model, pino_data, pino_positions)
     pino.updateFramePlacement(pino_model, pino_data, frame_id)
-    ee_pos_des[i] = pino_data.oMf[24].translation.copy()
+    ee_pos_des[i] = pino_data.oMf[-1].translation.copy()
 
     pino_positions[:7] = actual[i, :7]
     pino.forwardKinematics(pino_model, pino_data, pino_positions)
     pino.updateFramePlacement(pino_model, pino_data, frame_id)
-    ee_pos_actual[i] = pino_data.oMf[24].translation.copy()
+    ee_pos_actual[i] = pino_data.oMf[-1].translation.copy()
 
-    J = pino.computeFrameJacobian(pino_model, pino_data, actual[i, :9], frame_id, pino.LOCAL_WORLD_ALIGNED)
+    pino_velocities[:7] = error[i, 7:14]
+    g_and_c = pino.nonLinearEffects(pino_model, pino_data, pino_positions, pino_velocities)
+    a = 0
+    applied_torque_estimate.append(desired[i, 21:28] + g_and_c)
+
+    #J = pino.computeFrameJacobian(pino_model, pino_data, actual[i, :9], frame_id, pino.LOCAL_WORLD_ALIGNED)
+applied_torque_estimate = np.stack(applied_torque_estimate, axis=0)
+for i in range(6):
+    plt.subplot(231+i)
+    plt.plot(t, applied_torque_estimate[:, i], label=f"estimated_effort_{i}")
+    plt.plot(t, actual[:, 21+i], label=f"measured_effort_{i}")
+    plt.legend()
+plt.show()
 
 plt.plot(ee_pos_des[:, 0], ee_pos_des[:, 1], 'b')
 plt.plot(ee_pos_actual[:, 0], ee_pos_actual[:, 1], 'r')

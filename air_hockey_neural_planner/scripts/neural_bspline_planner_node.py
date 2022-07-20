@@ -113,8 +113,9 @@ class NeuralPlannerNode:
             print("CANNOT REPLAN, THERE IS NO ACTUAL TRAJECTORY")
             return False
         if msg.tactic == 0:
-            #plannig_time = 0.038
-            plannig_time = 0.055
+            # plannig_time = 0.038
+            # plannig_time = 0.032
+            plannig_time = 0.06
         elif msg.tactic == 1:
             plannig_time = 0.040
         communication_delays = 0.006

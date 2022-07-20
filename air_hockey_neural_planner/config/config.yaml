@@ -1,4 +1,5 @@
 neural_planner:
-  planner_path: "./trained_models/striker/v08a10v_jerk/best-161"
+  planner_path: "./trained_models/striker/v08a10v_beyond/best-271"
+#  planner_path: "./trained_models/striker/v08a10v_jerk/best-161"
 #  planner_path: "./trained_models/striker/v08a08huberalphaint/best-60"
   ik_hitting_path: "./trained_models/ik_hitting/pos_lossabs/best-77"
