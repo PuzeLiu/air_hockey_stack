@@ -75,10 +75,14 @@ bool Cut::apply() {
 														 state.trajectoryBuffer.getFree().jointTrajectory))
 		{
             generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
+			generator.synchronizeCartesianTrajectory(state.trajectoryBuffer.getFree().jointTrajectory,
+													 state.trajectoryBuffer.getFree().cartTrajectory);
+
 
 			state.tPlan = state.tStart;
             state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;
             state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.tStart;
+			ROS_INFO_STREAM(state.trajectoryBuffer.getFree().jointTrajectory);
 			return true;
 		}
 		else

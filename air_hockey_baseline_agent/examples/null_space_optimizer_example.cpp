@@ -108,7 +108,7 @@ void loadAgentParams(AgentParams& agentParams, Transformations transformations)
 
 void initOptimizerData(OptimizerData& optData)
 {
-	optData.K.setConstant(100);
+	optData.K = 100.;
 	optData.weights << 10., 10., 5., 10., 1., 1., 0.;
 	optData.weightsAnchor << 1., 1., 5., 1, 10., 10., 0.;
 }

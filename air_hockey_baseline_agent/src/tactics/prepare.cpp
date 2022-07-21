@@ -100,6 +100,8 @@ bool Prepare::generatePrepareTrajectory(JointArrayType &qStart, JointArrayType &
 													 state.qPlan, state.dqPlan,
 													 state.trajectoryBuffer.getFree().jointTrajectory)) {
 		generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
+		generator.synchronizeCartesianTrajectory(state.trajectoryBuffer.getFree().jointTrajectory,
+												 state.trajectoryBuffer.getFree().cartTrajectory);
 
 		if (ros::Time::now() > state.tStart) {
 			state.tStart = ros::Time::now();

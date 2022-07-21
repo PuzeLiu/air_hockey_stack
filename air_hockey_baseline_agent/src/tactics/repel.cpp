@@ -27,31 +27,37 @@ using namespace Eigen;
 using namespace air_hockey_baseline_agent;
 
 Repel::Repel(EnvironmentParams &envParams, AgentParams &agentParams,
-         SystemState &state, TrajectoryGenerator *generator) :
+			 SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
-	counter = 0;
+	hittingFailed = false;
 }
 
 bool Repel::ready() {
-	if (state.isNewTactics && counter < 15){
-		++counter;
-		return false;
-	} else if (state.isNewTactics && counter >= 15){
-		return true;
-	} else return state.isNewTactics;
+	if (state.isNewTactics) {
+		// Get planned position and velocity at now + timeoffset
+		state.tPlan = ros::Time::now();
+		state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset);
+		hittingFailed = false;
+	}
+	return true;
 }
 
 bool Repel::apply() {
-	state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
-	generator.getPlannedJointState(state, state.tStart);
-
-	if (state.dqPlan.norm() > 0.05){
-		generateStopTrajectory();
-		return true;
-	} else {
+	if (state.isNewTactics) {
 		state.isNewTactics = false;
-		return generateRepelTrajectory(state.qPlan, state.tPlan);
+		generator.getPlannedJointState(state, state.tStart);
+		if (state.dqPlan.norm() > 0.2) {
+			return generateStopTrajectory();
+		}
 	}
+	auto tPuckHit = state.observation.stamp +
+					ros::Duration(state.observation.puckPredictedState.predictedTime);
+
+	if (ros::Time::now() >= state.tPlan) {
+		generator.getPlannedJointState(state, state.tStart);
+		return generateRepelTrajectory();
+	}
+	return false;
 }
 
 Repel::~Repel() {
@@ -60,64 +66,92 @@ Repel::~Repel() {
 
 void Repel::setNextState() {
 	if (ros::Time::now().toSec() > state.tNewTactics) {
-		if (state.hasActiveTrajectory()) {
-			setTactic(REPEL);
-		} else {
-			counter = 0;
-			setTactic(READY);
+		if (hittingFailed) setTactic(READY);
+		// Check if the optimized trajectory is in execution
+		if (ros::Time::now() > state.trajectoryBuffer.getFree().jointTrajectory.header.stamp) {
+			// Check if the hitting trajectory is finished
+			if (ros::Time::now() > state.trajectoryBuffer.getExec().jointTrajectory.header.stamp +
+								   state.trajectoryBuffer.getExec().jointTrajectory.points.back().time_from_start) {
+				setTactic(READY);
+			}
 		}
 	}
 }
 
-bool Repel::generateRepelTrajectory(const JointArrayType &qCur, ros::Time &tStart) {
-	Vector2d xCur2d, vCur2d, xHit2d, vHit2d;
-	vCur2d.setZero();
+bool Repel::generateRepelTrajectory() {
+	Vector2d vZero2d, xHit2d, vHit2d, xStop2d;
+	vZero2d.setZero();
 	Vector3d xCur;
-
-	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, qCur);
-	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
-	xCur = generator.agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
-	generator.transformations->transformRobot2Table(xCur);
-	xCur2d = xCur.block<2, 1>(0, 0);
+	double hitting_time;
 
 	xHit2d = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
-	vHit2d = state.observation.puckPredictedState.state.block<2, 1>(2, 0).normalized();
-	vHit2d = -vHit2d * 1.2;
-
-	generator.getPlannedJointState(state, state.tStart);
+	vHit2d = -state.observation.puckPredictedState.state.block<2, 1>(2, 0).normalized();
+	xStop2d = getStopPoint(xHit2d, vHit2d);
+	vHit2d = vHit2d * 1.2;
 
 	for (size_t i = 0; i < 10; ++i) {
-        state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
-        state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
+		state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
+		state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
-		generator.combinatorialHitNew->plan(xCur2d, vCur2d, xHit2d, vHit2d,
-											state.trajectoryBuffer.getFree().cartTrajectory);
+		if (!generator.combinatorialHitNew->plan(state.xPlan.block<2, 1>(0, 0),
+												 state.vPlan.block<2, 1>(0, 0), xHit2d, vHit2d, hitting_time,
+												 xStop2d, vZero2d, state.trajectoryBuffer.getFree().cartTrajectory)) {
+			ROS_INFO_STREAM("Plan Failed");
+			ROS_INFO_STREAM(
+					state.xPlan.transpose() << " v: " << state.vPlan.transpose() << " xHit: " << xHit2d.transpose()
+											<< " vHit: " << vHit2d.transpose() << " xStop: " << xStop2d.transpose());
+			break;
+		}
 		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
 		if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory,
 														 state.qPlan, state.dqPlan,
 														 state.trajectoryBuffer.getFree().jointTrajectory)) {
-			auto tHitStart = state.observation.stamp +
-						     ros::Duration(state.observation.puckPredictedState.predictedTime) -
-                state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
-			if (ros::Time::now() <= tHitStart){
-				tStart = tHitStart;
-                state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = tStart;
-                state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = tStart;
-				return true;
-			} else {
-                state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
-                state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
-				return false;
+			auto tPuckHit = state.observation.stamp +
+							ros::Duration(state.observation.puckPredictedState.predictedTime);
+
+			if (ros::Time::now() + ros::Duration(hitting_time) < tPuckHit) {
+				double timeScaleFactor = (tPuckHit - ros::Time::now()).toSec() / hitting_time;
+				timeScaleFactor = std::max(timeScaleFactor, 2.0);
+
+				for (int j = 0; j < state.trajectoryBuffer.getFree().jointTrajectory.points.size(); ++j) {
+					state.trajectoryBuffer.getFree().cartTrajectory.points[j].time_from_start *= timeScaleFactor;
+					state.trajectoryBuffer.getFree().jointTrajectory.points[j].time_from_start *= timeScaleFactor;
+				}
+				hitting_time = timeScaleFactor * hitting_time;
 			}
+
+			generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
+			generator.synchronizeCartesianTrajectory(state.trajectoryBuffer.getFree().jointTrajectory,
+													 state.trajectoryBuffer.getFree().cartTrajectory);
+
+			state.tStart = ros::Time::now() + (tPuckHit - ros::Time::now() - ros::Duration(hitting_time));
+			if (state.tStart < ros::Time::now()) state.tStart = ros::Time::now();
+			state.tPlan = state.tStart + state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
+			state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;
+			state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.tStart;
+			hittingFailed = false;
+			return true;
 		} else {
 			vHit2d *= .9;
-			ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " +
-								  "Optimization Failed [REPEL]. Reduce the velocity: " << vHit2d.transpose());
-			continue;
 		}
 	}
 
-
+	vHit2d = vHit2d * 0.;
+	state.tPlan = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
+	state.trajectoryBuffer.getFree() = state.trajectoryBuffer.getExec();
+	state.trajectoryBuffer.getFree() = state.trajectoryBuffer.getExec();
+	ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Optimization Failed [REPEL]");
+	hittingFailed = true;
 	return false;
+}
+
+Vector2d Repel::getStopPoint(Eigen::Vector2d &hitPoint, Eigen::Vector2d &hitDirection) {
+	Vector2d stopPoint;
+	stopPoint = hitPoint + 0.2 * hitDirection;
+
+	stopPoint.x() = fmin(stopPoint.x(), agentParams.hitRange[1]);
+	stopPoint.y() = fmax(fmin(stopPoint.y(), envParams.tableWidth / 2 - envParams.malletRadius - 0.05),
+						 -envParams.tableWidth / 2 + envParams.malletRadius + 0.05);
+	return stopPoint;
 }

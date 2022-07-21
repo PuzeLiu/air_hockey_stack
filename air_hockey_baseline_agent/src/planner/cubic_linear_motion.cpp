@@ -119,8 +119,9 @@ bool CubicLinearMotion::plan(const Vector3d& pStart,
 	double t = 0.;
 	Vector3d xTmp_, vTmp_;
 
-	for (int i = 0; i <= steps; ++i)
+	for (int i = 0; i < steps; ++i)
 	{
+		t += stepSize_;
 		if (t <= tStop) {
 			xTmp_ = coefficients.col(0) + coefficients.col(1) * t
 				+ coefficients.col(2) * pow(t, 2)
@@ -140,7 +141,6 @@ bool CubicLinearMotion::plan(const Vector3d& pStart,
 		viaPoint_.velocities[0].linear.z = vTmp_[2];
 		viaPoint_.time_from_start = ros::Duration(t + t_prev);
 		cartTraj.points.push_back(viaPoint_);
-		t += stepSize_;
 	}
 
 	cartTraj.header.stamp = ros::Time::now();

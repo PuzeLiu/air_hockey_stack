@@ -45,6 +45,7 @@ namespace air_hockey_baseline_agent
 	{
 		ros::Time stamp;
 		PuckState state;
+		Kalman::Covariance<PuckState> covariance;
 		int numOfCollisions;
 		double predictedTime;
 	};

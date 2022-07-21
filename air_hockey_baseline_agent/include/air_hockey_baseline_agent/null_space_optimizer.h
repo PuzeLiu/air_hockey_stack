@@ -45,39 +45,38 @@ namespace air_hockey_baseline_agent {
 		~NullSpaceOptimizer();
 
 		bool optimizeJointTrajectory(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-		                             const JointArrayType &qStart, const JointArrayType &dqStart,
-		                             trajectory_msgs::JointTrajectory &jointTraj);
+									 const JointArrayType &qStart, const JointArrayType &dqStart,
+									 trajectory_msgs::JointTrajectory &jointTraj);
 
 		bool optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-		                                   const JointArrayType &qStart, const JointArrayType &qAnchor,
-		                                   trajectory_msgs::JointTrajectory &jointTraj, bool increasing = true);
-
-		bool optimizeJointTrajectoryAnchor(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-			const JointArrayType &qStart, const JointArrayType &dqStart, const JointArrayType &qAnchor,
-            double hitting_time, trajectory_msgs::JointTrajectory &jointTraj);
+										   const JointArrayType &qStart, const JointArrayType &dqStart,
+										   const JointArrayType &qAnchor, double switching_time,
+										   trajectory_msgs::JointTrajectory &jointTraj);
 
 		void solveJoint7(JointArrayType &q, JointArrayType &dq);
 
 	private:
 		bool solveQP(const Eigen::Vector3d &xDes,
-		             const Eigen::Vector3d &dxDes,
-		             const JointArrayType &qCur,
-		             JointArrayType &qNext,
-		             JointArrayType &dqNext);
+					 const Eigen::Vector3d &dxDes,
+					 const JointArrayType &qCur,
+					 const double dt,
+					 JointArrayType &qNext,
+					 JointArrayType &dqNext);
 
 		bool solveQPAnchor(const Eigen::Vector3d &xDes,
-		                   const Eigen::Vector3d &dxDes,
-		                   const JointArrayType &qCur,
-		                   const JointArrayType &qAnchor,
-		                   JointArrayType &qNext,
-		                   JointArrayType &dqNext);
+						   const Eigen::Vector3d &dxDes,
+						   const JointArrayType &qCur,
+						   const JointArrayType &qAnchor,
+						   const double dt,
+						   JointArrayType &qNext,
+						   JointArrayType &dqNext);
 
 		bool constructQPSolver(bool verbose = false);
 
 		bool checkFeasibility(const Eigen::MatrixXd A,
-		                      const Eigen::VectorXd lowerBound,
-		                      const Eigen::VectorXd upperBound,
-		                      Eigen::VectorXd &feasiblePoint);
+							  const Eigen::VectorXd lowerBound,
+							  const Eigen::VectorXd upperBound,
+							  Eigen::VectorXd &feasiblePoint);
 
 
 	private:

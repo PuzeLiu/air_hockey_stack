@@ -271,6 +271,7 @@ const PuckPredictedState& PuckTracker::getPredictedState(bool visualize, bool de
 {
 	getPrediction(predictedState_.predictedTime, predictedState_.numOfCollisions, stopBeforeSecondCollision);
 	predictedState_.state = puckPredictor_->getState();
+	predictedState_.covariance = puckPredictor_->getCovariance();
 	predictedState_.stamp = ros::Time::now();
 
 	int bufferSize;

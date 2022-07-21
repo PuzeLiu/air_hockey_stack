@@ -118,6 +118,8 @@ namespace air_hockey_baseline_agent {
 		Eigen::Vector3d hitPoint;
 		Eigen::Vector3d hitDirection;
 		double epsilon;
+		double anchorAlpha;
+		JointArrayType anchorPos;
 
 		// Data for Null Space Optimizer
 		int dimNullSpace;
@@ -126,7 +128,7 @@ namespace air_hockey_baseline_agent {
 		Eigen::SparseMatrix<double>P;
 		Eigen::VectorXd q;
 		Eigen::SparseMatrix<double> A;
-		Eigen::VectorXd K;            // Weight for correcting position error
+		double K;            // Weight for correcting position error
 		Eigen::Vector3d xCurPos;
 		Eigen::MatrixXd N_J;
 		Eigen::MatrixXd J;
@@ -138,6 +140,7 @@ namespace air_hockey_baseline_agent {
 
 		OptimizerData(AgentParams& params): agentParams(params){
 			epsilon = sqrt(std::numeric_limits<double>::epsilon());
+			anchorAlpha = 0.;
 			dimNullSpace = 4;
 
 			J.resize(3, agentParams.pinoModel.nv);
@@ -146,6 +149,7 @@ namespace air_hockey_baseline_agent {
 			weightsAnchor.resize(agentParams.nq);
 			upperBound.resize(agentParams.nq);
 			lowerBound.resize(agentParams.nq);
+			anchorPos.resize(agentParams.nq);
 
 			q.resize(dimNullSpace);
 
@@ -154,7 +158,7 @@ namespace air_hockey_baseline_agent {
 			A.resize(agentParams.pinoModel.nq, dimNullSpace);
 			P.setIdentity();
 			A.setZero();
-			K.resize(3);
+			K = 100.;
 			alphaLast.resize(dimNullSpace);
 			alphaLast.setZero();
 		}

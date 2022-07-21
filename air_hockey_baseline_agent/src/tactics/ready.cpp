@@ -29,7 +29,7 @@ using namespace Eigen;
 using namespace air_hockey_baseline_agent;
 
 Ready::Ready(EnvironmentParams &envParams, AgentParams &agentParams,
-             SystemState &state, TrajectoryGenerator *generator) :
+			 SystemState &state, TrajectoryGenerator *generator) :
 		Tactic(envParams, agentParams, state, generator) {
 	debugCount = 0;
 }
@@ -41,40 +41,40 @@ bool Ready::ready() {
 		state.tPlan = ros::Time::now();
 		state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset);
 	} else {
-        state.tStart = state.tPlan + ros::Duration(1.0);
-        if (state.tStart <= ros::Time::now() + ros::Duration(agentParams.planTimeOffset)){
-            state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
-        }
+		state.tStart = state.tPlan + ros::Duration(1.0);
+		if (state.tStart <= ros::Time::now() + ros::Duration(agentParams.planTimeOffset)) {
+			state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset);
+		}
 	}
 	return true;
 }
 
 bool Ready::apply() {
 	state.isNewTactics = false;
-	if (ros::Time::now() >= state.tPlan)
-	{
-        generator.getPlannedJointState(state, state.tStart);
-        state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
-        state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
+	if (ros::Time::now() >= state.tPlan) {
+		generator.getPlannedJointState(state, state.tStart);
+		state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
+		state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
 		double tStop = std::max((agentParams.xHome - state.xPlan).norm() / 1.0, 1.0);
 
 		generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, agentParams.xHome, Vector3d(0., 0., 0.),
-			tStop, state.trajectoryBuffer.getFree().cartTrajectory);
+										  tStop, state.trajectoryBuffer.getFree().cartTrajectory);
 
 		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
-		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.trajectoryBuffer.getFree().cartTrajectory, state.qPlan, state.dqPlan,
-			agentParams.qHome, state.trajectoryBuffer.getFree().cartTrajectory.points.back().time_from_start.toSec() / 2,
-            state.trajectoryBuffer.getFree().jointTrajectory)) {
-            generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
+		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.trajectoryBuffer.getFree().cartTrajectory,
+															   state.qPlan, state.dqPlan,
+															   agentParams.qHome, tStop / 2,
+															   state.trajectoryBuffer.getFree().jointTrajectory)) {
+			generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
+			generator.synchronizeCartesianTrajectory(state.trajectoryBuffer.getFree().jointTrajectory,
+													 state.trajectoryBuffer.getFree().cartTrajectory);
 
 			state.tPlan = state.tStart;
-            state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;
-            state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.tStart;
+			state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;
+			state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.tStart;
 			return true;
-		}
-		else
-		{
+		} else {
 			ROS_INFO_STREAM("Plan Failed");
 			return false;
 		}
@@ -104,8 +104,7 @@ void Ready::setNextState() {
 			} else {
 				setTactic(READY);
 			}
-		}
-		else {
+		} else {
 			if (agentParams.debuggingTactic == SMASH) {
 				setTactic(Tactics::SMASH);
 				agentParams.debuggingTactic = READY;
