@@ -36,13 +36,17 @@ def print_(x, N=5):
 
 
 class Trajectory:
-    def __init__(self, q, dq, ddq, t):
+    def __init__(self, q, dq, ddq, t, q_cps, t_cps):
         self.q = q
         self.dq = dq
         self.ddq = ddq
         self.t = t
         self.init_time = 0
         self.update_samplers()
+        self.q_list = [q]
+        self.t_list = [t]
+        self.q_cps_list = [q_cps]
+        self.t_cps_list = [t_cps]
 
 
     def update_samplers(self):
@@ -50,12 +54,16 @@ class Trajectory:
         self.dqs = interp1d(self.t, self.dq, axis=0)
         self.ddqs = interp1d(self.t, self.ddq, axis=0)
 
-    def append(self, q, dq, ddq, t):
+    def append(self, q, dq, ddq, t, q_cps, t_cps):
         self.q = np.concatenate([self.q, q], axis=0)
         self.dq = np.concatenate([self.dq, dq], axis=0)
         self.ddq = np.concatenate([self.ddq, ddq], axis=0)
         self.t = np.concatenate([self.t, t + self.t[-1]], axis=0)
         self.update_samplers()
+        self.q_list.append(q)
+        self.t_list.append(t)
+        self.q_cps_list.append(q_cps)
+        self.t_cps_list.append(t_cps)
 
     def set_init_time(self, t):
         self.init_time = t
@@ -116,7 +124,7 @@ class NeuralPlannerNode:
         if msg.tactic == 0:
             # plannig_time = 0.038
             # plannig_time = 0.032
-            plannig_time = 0.08
+            plannig_time = 0.06
         elif msg.tactic == 1:
             plannig_time = 0.040
         communication_delays = 0.006
@@ -142,18 +150,13 @@ class NeuralPlannerNode:
         t0 = perf_counter()
         tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time = unpack_planner_request(msg)
 
-        list_q = []
-        list_t = []
-        list_q_cps = []
-        list_t_cps = []
-
         v_mul = 0.7
-        #v_mul = 0.9
         if tactic == 0:  # HIT
             q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
             d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d * v_mul], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
+            self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             planning_time = 0.08
             traj_and_plan_time = t[-1] + planning_time
             print("TRAJ TIME:", t[-1])
@@ -187,39 +190,65 @@ class NeuralPlannerNode:
                 #print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
             else:
                 return False
-            self.actual_trajectory = Trajectory(q, dq, ddq, t)
-            list_q.append(q)
-            list_t.append(t)
-            list_q_cps.append(q_cps)
-            list_t_cps.append(t_cps)
+            self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             d_ret = np.concatenate([q_d, Base.configuration, [0.], Base.position, dq[-1], [0.], ddq[-1], [0.] * 8],
                                    axis=-1)[np.newaxis]
             d_ret = d_ret.astype(np.float32)
             qr, dqr, ddqr, tr, qr_cps, tr_cps = model_inference(self.planner_model, d_ret, self.bsp, self.bspt)
-            self.actual_trajectory.append(qr, dqr, ddqr, tr)
-            list_q.append(qr)
-            list_t.append(tr)
-            list_q_cps.append(qr_cps)
-            list_t_cps.append(tr_cps)
+            self.actual_trajectory.append(qr, dqr, ddqr, tr, qr_cps, tr_cps)
         elif tactic == 1:  # MOVE
             p_d = np.array([x_end, y_end, Base.position[-1]])
             q_d = self.spo.solve(p_d)
             q_dot_d = np.zeros((7,))
             d = np.concatenate([q_0, q_d, p_d, q_dot_0, q_ddot_0, q_dot_d], axis=-1)[np.newaxis]
-            d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
-            self.actual_trajectory = Trajectory(q, dq, ddq, t)
-            list_q.append(q)
-            list_t.append(t)
-            list_q_cps.append(q_cps)
-            list_t_cps.append(t_cps)
+            self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
+        elif tactic == 2:
+            if np.sum(np.abs(q_dot_0)) > 0.1 or np.sum(np.abs(q_0)) > 0.1:
+                print("NEED TO BE AT START WITH 0 VELOCITY")
+                return 0
+            expected_time = 1.
+            x_1 = 0.65
+            y_1 = -0.15
+            th_1 = 0.
+            x_2 = 0.65
+            y_2 = 0.15
+            th_2 = 0.
+            q_d1, q_dot_d1, xyz1 = self.get_hitting_configuration(x_1, y_1, th_1)
+            q_d2, q_dot_d2, xyz2 = self.get_hitting_configuration(x_2, y_2, th_2)
+            mul = 0.2
+            q_dot_d1 *= mul
+            q_dot_d2 *= mul
+            q_dot_d1 = np.pad(q_dot_d1, [[0, 1]], mode='constant')
+            q_dot_d2 = np.pad(q_dot_d2, [[0, 1]], mode='constant')
+            p_d1 = np.array([x_1, y_1, Base.position[-1]])
+            p_d2 = np.array([x_2, y_2, Base.position[-1]])
+            q_dot_0 = np.zeros((7,))
+            q_ddot_0 = np.zeros((7,))
+            d = np.concatenate([Base.configuration, [0.], q_d1, p_d1, q_dot_0, q_ddot_0, q_dot_d1], axis=-1)[np.newaxis]
+            d = d.astype(np.float32)
+            q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=expected_time)
+            self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
+            d = np.concatenate([q_d1, q_d2, p_d2, q_dot_d1, ddq[-1], [0.], q_dot_d2], axis=-1)[np.newaxis]
+            d = d.astype(np.float32)
+            q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt,
+                                                          expected_time=expected_time)
+            t1 = (q, dq, ddq, t, q_cps, t_cps)
+            d = np.concatenate([q_d2, q_d1, p_d1, q_dot_d2, ddq[-1], [0.], q_dot_d1], axis=-1)[np.newaxis]
+            d = d.astype(np.float32)
+            q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt,
+                                                          expected_time=expected_time)
+            t2 = (q, dq, ddq, t, q_cps, t_cps)
+            for i in range(5):
+                self.actual_trajectory.append(*t1)
+                self.actual_trajectory.append(*t2)
 
         tros = rospy.Time.now().to_sec()
-        self.publish_joint_trajectory(list_q_cps, list_t_cps, traj_time)
+        self.publish_joint_trajectory(self.actual_trajectory.q_cps_list, self.actual_trajectory.t_cps_list, traj_time)
         t1 = perf_counter()
         print("PLANNING TIME: ", t1 - t0)
         print("ROS TIME", tros)
-        self.publish_cartesian_trajectory(list_q, list_t)
+        self.publish_cartesian_trajectory(self.actual_trajectory.q_list, self.actual_trajectory.t_list)
 
     def get_hitting_configuration(self, xk, yk, thk):
         qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis])
