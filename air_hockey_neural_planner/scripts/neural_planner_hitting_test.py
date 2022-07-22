@@ -11,6 +11,7 @@ from gazebo_msgs.srv import SetModelState
 
 from air_hockey_neural_planner.msg import PlannerRequest
 
+from air_hockey_puck_tracker.srv import GetPuckState
 
 def print_(x, N=5):
     for i in range(N):
@@ -31,6 +32,8 @@ class NeuralPlannerHittingTestNode:
         self.robot_state_subscriber = rospy.Subscriber("/iiwa_front/joint_states", JointState, self.set_robot_state)
         self.robot_joint_pose = None
         self.robot_joint_velocity = None
+        rospy.wait_for_service('/iiwa_front/get_puck_state')
+        self.get_puck_state = rospy.ServiceProxy('/iiwa_front/get_puck_state', GetPuckState)
         rospy.sleep(2.)
         trans, _ = self.tf_listener.lookupTransform('/F_link_0', '/TableAway', rospy.Time(0))
         # trans = [2.4, 0., 0.1]
@@ -48,20 +51,72 @@ class NeuralPlannerHittingTestNode:
             if inp:
                 break
             if self.request_plan():
-                self.gazebo = False
-                #for i in range(10):
-                rospy.sleep(0.2)
-                print("ROS TIME:", rospy.Time.now().to_sec())
-                self.request_replan()
-                self.gazebo = True
+                # for i in range(10):
+                #rospy.sleep(0.1)
+                #print("ROS TIME:", rospy.Time.now().to_sec())
+                #self.request_replan()
                 pass
 
-    def prepare_planner_request(self):
+    def fake_hit_and_replan(self):
+        while not rospy.is_shutdown():
+            inp = input("Press enter to hit or insert anything to leave")
+            if inp:
+                break
+            # fake hit
+            if self.request_plan((1.1, 0.3, 0.0)):
+                # for i in range(10):
+                rospy.sleep(0.15)
+                self.request_replan()
+                pass
+
+    def read_puck_pose(self, t):
+        resp = self.get_puck_state(t)
+        trans, _ = self.tf_listener.lookupTransform('/F_link_0', resp.prediction.header.frame_id, rospy.Time(0))
+        x = resp.prediction.x + trans[0]
+        y = resp.prediction.y + trans[1]
+        return x, y, resp
+
+    def moving_puck_hitting_test(self):
+        xlow = 0.9
+        xhigh = 1.2
+        xy_valid = lambda x, y: xlow < x < xhigh and -0.35 < y < 0.35
+        allow_planning = False
+        while not rospy.is_shutdown():
+            if not allow_planning:
+                inp = input("Press enter to enable moving")
+                if inp:
+                    break
+                else:
+                    allow_planning = True
+            expected_time = 0.6
+            x, y, resp = self.read_puck_pose(expected_time)
+            print(x)
+            if xy_valid(x, y):
+                print("TRY TO HIT", x, y)
+                self.request_plan((x, y), expected_time)
+                #delay = 0.3
+                #rospy.sleep(delay)
+                #new_expected_time = expected_time - delay - 0.05
+                #x, y, resp = self.read_puck_pose(new_expected_time)
+                #print(f"TRY TO HIT AFTER {delay}s: ", x, y)
+                #if xy_valid(x, y):
+                #    print("VALID")
+                #    self.request_replan((x, y), new_expected_time)
+
+
+                allow_planning = False
+
+    def prepare_planner_request(self, task=None, expected_time=-1., randomize_puck_pose=True):
+        print("PREPARE PLANNER REQUEST")
+
         def get_desired_xyth(puck_pos, goal_pose, mallet_pose):
             abs_puck_y = np.abs(puck_pos[1])
             d = np.abs(puck_pos[0] - 0.9)
             if abs_puck_y > 0.125:
-                goal_pose[1] = (1 + 3.0*np.exp(-100*d**2)) * 0.125 * (abs_puck_y - 0.125) / (0.4 - 0.125) * np.sign(puck_pos[1])
+                goal_pose[1] = (1 + 3.0 * np.exp(-100 * d ** 2)) * 0.125 * (abs_puck_y - 0.125) / (
+                            0.4 - 0.125) * np.sign(puck_pos[1])
+                # torqueint last_n-77
+                # goal_pose[1] = (1 + 3.0 * np.exp(-100 * d ** 2)) * 0.125 * (abs_puck_y - 0.125) / (0.4 - 0.125) * np.sign(puck_pos[1])
             print("GOAL POSE Y: ", goal_pose[1])
             puck_goal_x = goal_pose[0] - puck_pos[0]
             puck_goal_y = goal_pose[1] - puck_pos[1]
@@ -74,7 +129,7 @@ class NeuralPlannerHittingTestNode:
             print("BETA", beta)
             alpha = np.abs(th - beta)
             print("ALPHA", alpha)
-            #th *= (1 - (alpha / (np.pi / 2.))**(1.))
+            # th *= (1 - (alpha / (np.pi / 2.))**(1.))
             print("TH", th)
             r = 0.07
             # r = 0.1
@@ -82,7 +137,7 @@ class NeuralPlannerHittingTestNode:
             y = puck_pos[1] - r * np.sin(th)
             return x, y, th
 
-        if self.gazebo:
+        if self.gazebo and randomize_puck_pose:
             state_msg = ModelState()
             state_msg.model_name = 'puck'
             state_msg.pose.position.x = -0.5 + 0.2 * np.random.rand()
@@ -104,18 +159,24 @@ class NeuralPlannerHittingTestNode:
             trans, rot = self.tf_listener.lookupTransform('/F_link_0', '/Puck', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             return None
-        print_(trans)
-        if not self.gazebo:
-            if trans[0] < 0.7 or trans[0] > 1.3:
-                print("Puck not in x range")
-                return None
-            if trans[1] < -0.4 or trans[1] > 0.4:
-                print("Puck not in y range")
-                return None
         # trans = [0.9585, -0.39, 0.16]
         mallet_pose, _ = self.tf_listener.lookupTransform('/F_link_0', '/F_striker_tip', rospy.Time(0))
         x, y, th = get_desired_xyth(trans, self.goal, mallet_pose)
-        #y *= 0.93 + 0.07 * (x - 0.7) / (1.3 - 0.7)
+        if task is not None:
+            if len(task) == 3:
+                x, y, th = task
+            elif len(task) == 2:
+                x, y, th = get_desired_xyth(task, self.goal, mallet_pose)
+
+        print("DESIRED POSE:", x, " ", y)
+        if not self.gazebo:
+            if x < 0.7 or x > 1.3:
+                print("Puck not in x range")
+                return None
+            if y < -0.4 or y > 0.4:
+                print("Puck not in y range")
+                return None
+        # y *= 0.93 + 0.07 * (x - 0.7) / (1.3 - 0.7)
         pr = PlannerRequest()
         pr.q_0 = self.robot_joint_pose
         print(pr.q_0)
@@ -125,18 +186,20 @@ class NeuralPlannerHittingTestNode:
         hit_point = Point(x, y, 0.16)
         pr.hit_point = hit_point
         pr.hit_angle = th
+        pr.expected_time = expected_time
         pr.tactic = 0
+        pr.header.stamp = rospy.Time.now()
         return pr
 
-    def request_plan(self):
-        pr = self.prepare_planner_request()
+    def request_plan(self, task=None, expected_time=-1.):
+        pr = self.prepare_planner_request(task, expected_time)
         if pr is None:
             return False
         self.planner_request_publisher.publish(pr)
         return True
 
-    def request_replan(self):
-        pr = self.prepare_planner_request()
+    def request_replan(self, task=None, expected_time=-1.):
+        pr = self.prepare_planner_request(task, expected_time, randomize_puck_pose=False)
         if pr is None:
             return False
         self.replanner_request_publisher.publish(pr)
@@ -146,3 +209,5 @@ class NeuralPlannerHittingTestNode:
 if __name__ == '__main__':
     node = NeuralPlannerHittingTestNode()
     node.hit()
+    #node.fake_hit_and_replan()
+    #node.moving_puck_hitting_test()

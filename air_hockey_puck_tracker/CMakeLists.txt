@@ -25,6 +25,7 @@ add_service_files(
         PuckTrackerResetService.srv
         KalmanFilterPrediction.srv
         SetKalmanFilterJacobians.srv
+        GetPuckState.srv
 )
 
 generate_messages(
@@ -76,7 +77,6 @@ target_link_libraries(puck_tracker
 
 add_executable(tracker_node
         src/main.cpp)
-
 add_dependencies(tracker_node
         ${${PROJECT_NAME}_EXPORTED_TARGETS}
         ${catkin_EXPORTED_TARGETS}
@@ -88,6 +88,17 @@ target_link_libraries(tracker_node
         ${Kalman_LIBRARIES}
         puck_tracker
         )
+
+add_executable(puck_tracker_service
+        src/puck_state_service.cpp)
+
+add_dependencies(puck_tracker_service
+        ${${PROJECT_NAME}_EXPORTED_TARGETS}
+        ${catkin_EXPORTED_TARGETS}
+        ${PROJECT_NAME}_generate_messages_cpp)
+
+target_link_libraries(puck_tracker_service ${catkin_LIBRARIES} puck_tracker)
+
 
 #############
 ## Install ##

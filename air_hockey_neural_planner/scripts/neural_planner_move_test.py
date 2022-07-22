@@ -42,20 +42,22 @@ class NeuralPlannerMoveTestNode:
             inp = input("Press enter to move or insert anything to leave")
             if inp:
                 break
-            print("ROS TIME 1:", rospy.Time.now().to_sec())
+            #print("ROS TIME 1:", rospy.Time.now().to_sec())
             self.request_random_plan()
-            rospy.sleep(0.1)
-            print("ROS TIME 2:", rospy.Time.now().to_sec())
-            self.request_random_replan()
+            #rospy.sleep(0.1)
+            #print("ROS TIME 2:", rospy.Time.now().to_sec())
+            #self.request_random_replan()
 
     def prepare_random_plan_request(self):
         pr = PlannerRequest()
         pr.q_0 = self.robot_joint_pose
         pr.q_dot_0 = self.robot_joint_velocity
-        pr.q_ddot_0 = np.zeros(7)
+        pr.q_ddot_0 = [0.] * 7
 
-        x = 0.6 * np.random.rand() + 0.6
-        y = 0.8 * np.random.rand() - 0.4
+        #x = 0.6 * np.random.rand() + 0.6
+        #y = 0.8 * np.random.rand() - 0.4
+        x = 0.70
+        y = -0.35
         end_point = Point(x, y, 0.16)
         pr.end_point = end_point
         pr.tactic = 1
