@@ -62,8 +62,6 @@ bool Tactic::generateStopTrajectory() {
 		state.trajectoryBuffer.getFree().jointTrajectory);
 
 	if (opt_success) {
-		ROS_INFO_STREAM(state.planPrevPoint);
-		ROS_INFO_STREAM(state.trajectoryBuffer.getFree().jointTrajectory.points[0]);
 		generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
 		generator.synchronizeCartesianTrajectory(state.trajectoryBuffer.getFree().jointTrajectory,
 												 state.trajectoryBuffer.getFree().cartTrajectory);
@@ -73,8 +71,6 @@ bool Tactic::generateStopTrajectory() {
 
 		//! Set start time stamp for next tactics
 		state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset * 2);
-		ROS_DEBUG_STREAM(state.trajectoryBuffer.getFree().jointTrajectory.header.stamp);
-		ROS_DEBUG_STREAM(state.trajectoryBuffer.getFree().jointTrajectory);
 		return true;
 	}
 	state.tPlan = ros::Time::now();

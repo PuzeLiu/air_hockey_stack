@@ -82,7 +82,6 @@ bool Cut::apply() {
 			state.tPlan = state.tStart;
 			state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;
 			state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.tStart;
-			ROS_DEBUG_STREAM(state.trajectoryBuffer.getFree().cartTrajectory);
 			return true;
 		} else {
 			ROS_INFO_STREAM("Plan Failed");
