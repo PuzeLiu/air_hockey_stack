@@ -30,7 +30,7 @@ using namespace air_hockey_baseline_agent;
 using namespace Eigen;
 
 NullSpaceOptimizer::NullSpaceOptimizer(AgentParams &agentParams_, OptimizerData &optimizerData) :
-		agentParams(agentParams_), optData(optimizerData) {
+	agentParams(agentParams_), optData(optimizerData) {
 	solver.settings()->setWarmStart(true);
 	solver.settings()->setVerbosity(false);
 	solver.data()->setNumberOfVariables(4);
@@ -51,12 +51,13 @@ NullSpaceOptimizer::NullSpaceOptimizer(AgentParams &agentParams_, OptimizerData 
 NullSpaceOptimizer::~NullSpaceOptimizer() = default;
 
 bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
-                                                 const JointArrayType &qStart, const JointArrayType &dqStart,
-                                                 trajectory_msgs::JointTrajectory &jointTraj) {
+												 const JointArrayType &qStart, const JointArrayType &dqStart,
+												 trajectory_msgs::JointTrajectory &jointTraj) {
 	if (!cartTraj.points.empty()) {
 		Vector3d xDes, dxDes;
-		JointArrayType qCur, qNext, dqNext;
+		JointArrayType qCur, dqCur, qNext, dqNext;
 		qCur = qStart;
+		dqCur = dqStart;
 		optData.anchorAlpha = 0.;
 
 		trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
@@ -79,12 +80,14 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
 
 			double dt = (cartTraj.points[i].time_from_start - jointViaPoint_.time_from_start).toSec();
 
-			if (!solveQP(xDes, dxDes, qCur, dt, qNext, dqNext)) {
+			if (!solveQP(xDes, dxDes, qCur, dt, dqNext)) {
 				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Optimization failed at : " << i);
-				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "qNext: " <<qNext.transpose() << "dqNext: " <<dqNext.transpose());
+				ROS_DEBUG_STREAM_NAMED(agentParams.name,
+									   agentParams.name + ": " + "qNext: " << qNext.transpose() << "dqNext: "
+																		   << dqNext.transpose());
 				return false;
 			}
-
+			qNext = qCur + (dqCur + dqNext) / 2 * dt;
 			solveJoint7(qNext, dqNext);
 
 			jointViaPoint_.time_from_start = cartTraj.points[i].time_from_start;
@@ -95,6 +98,7 @@ bool NullSpaceOptimizer::optimizeJointTrajectory(const trajectory_msgs::MultiDOF
 			jointTraj.points.push_back(jointViaPoint_);
 
 			qCur = qNext;
+			dqCur = dqNext;
 		}
 		jointTraj.header.stamp = cartTraj.header.stamp;
 		return true;
@@ -109,11 +113,11 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 													   trajectory_msgs::JointTrajectory &jointTraj) {
 	if (!cartTraj.points.empty()) {
 		Vector3d xDes, dxDes;
-		JointArrayType qCur, qNext, dqNext, dqAnchorTmp;
+		JointArrayType qCur, dqCur, qNext, dqNext, dqAnchorTmp;
 		double scaleVel;
 
 		qCur = qStart;
-        dqNext = dqStart;
+		dqCur = dqStart;
 
 		trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
 		jointViaPoint_.positions.resize(agentParams.nq);
@@ -134,26 +138,34 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 			dxDes[1] = cartTraj.points[i].velocities[0].linear.y;
 			dxDes[2] = cartTraj.points[i].velocities[0].linear.z;
 
-			dqAnchorTmp = (qAnchor - qCur) / 0.5;
+			if (qAnchor.size() != qCur.size()) {
+				dqAnchorTmp.setZero(qCur.size());
+			} else {
+				dqAnchorTmp = (qAnchor - qCur) / 0.5;
+			}
 
 			if ((cartTraj.points[i].time_from_start - cartTraj.points[0].time_from_start).toSec() <= switching_time) {
 				//! Multiply the phase variable
-				optData.anchorAlpha = (cartTraj.points[i].time_from_start - cartTraj.points[0].time_from_start).toSec() / switching_time;
-                scaleVel = std::min(std::max(1 - optData.anchorAlpha, 0.), 1.);
+				optData.anchorAlpha =
+					(cartTraj.points[i].time_from_start - cartTraj.points[0].time_from_start).toSec() / switching_time;
+				scaleVel = std::min(std::max(1 - optData.anchorAlpha, 0.), 1.);
 			} else {
-				optData.anchorAlpha = (cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec() /
+				optData.anchorAlpha =
+					(cartTraj.points.back().time_from_start - cartTraj.points[i].time_from_start).toSec() /
 						(cartTraj.points.back().time_from_start.toSec() - switching_time);
-                scaleVel = 0.;
+				scaleVel = 0.;
 			}
-			dqAnchorTmp = dqAnchorTmp * optData.anchorAlpha  + dqStart * scaleVel;
+
+			dqAnchorTmp = dqAnchorTmp * optData.anchorAlpha + dqStart * scaleVel;
 
 			double dt = (cartTraj.points[i].time_from_start - jointViaPoint_.time_from_start).toSec();
 
-			if (!solveQPAnchor(xDes, dxDes, qCur, dqAnchorTmp, dt, qNext, dqNext)) {
+			if (!solveQPAnchor(xDes, dxDes, qCur, dqAnchorTmp, dt, dqNext)) {
 				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "qAchor : " << qAnchor.transpose());
 				ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Optimization failed at : " << i);
 				return false;
 			}
+			qNext = qCur + (dqCur + dqNext) / 2 * dt;
 			solveJoint7(qNext, dqNext);
 
 			jointViaPoint_.time_from_start = cartTraj.points[i].time_from_start;
@@ -164,6 +176,7 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 			jointTraj.points.push_back(jointViaPoint_);
 
 			qCur = qNext;
+			dqCur = dqNext;
 		}
 		jointTraj.header.stamp = cartTraj.header.stamp;
 		optData.anchorPos = qAnchor;
@@ -174,24 +187,23 @@ bool NullSpaceOptimizer::optimizeJointTrajectoryAnchor(const trajectory_msgs::Mu
 }
 
 bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
-                                 const Vector3d &dxDes,
-                                 const JointArrayType &qCur,
+								 const Vector3d &dxDes,
+								 const JointArrayType &qCur,
 								 const double dt,
-                                 JointArrayType &qNext,
-                                 JointArrayType &dqNext) {
+								 JointArrayType &dqNext) {
 	Eigen::MatrixXd J_tmp(6, agentParams.pinoModel.nv);
 	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, qCur);
 	pinocchio::computeJointJacobians(agentParams.pinoModel, agentParams.pinoData);
 	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
 	pinocchio::getFrameJacobian(agentParams.pinoModel, agentParams.pinoData,
-	                            agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED, J_tmp);
+								agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED, J_tmp);
 	optData.xCurPos = agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
 	optData.J = J_tmp.topRows(3);
 	getNullSpace(optData.J, optData.N_J);
 	optData.K = 1 / dt;
 
 	VectorXd b = optData.J.transpose() * (optData.J * optData.J.transpose()).ldlt().solve(
-			(optData.K * (xDes - optData.xCurPos) + dxDes));
+		(optData.K * (xDes - optData.xCurPos)));
 
 	if (optData.N_J.cols() != optData.dimNullSpace) {
 		ROS_ERROR_STREAM("Null space of jacobian should be:" << optData.dimNullSpace);
@@ -203,11 +215,11 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
 	optData.A = optData.N_J.sparseView();
 
 	optData.upperBound = agentParams.pinoModel.velocityLimit.cwiseMin(
-			(agentParams.pinoModel.upperPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
+		(agentParams.pinoModel.upperPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
 	optData.lowerBound = (-agentParams.pinoModel.velocityLimit).cwiseMax(
-			(agentParams.pinoModel.lowerPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
+		(agentParams.pinoModel.lowerPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
 
-	if (!constructQPSolver()){
+	if (!constructQPSolver()) {
 		ROS_DEBUG_STREAM("Unable to construct the QR solver");
 		return false;
 	}
@@ -219,36 +231,34 @@ bool NullSpaceOptimizer::solveQP(const Vector3d &xDes,
 	}
 	solver.setPrimalVariable(feasiblePoint);
 
-	if (solver.solveProblem() == OsqpEigen::ErrorExitFlag::NoError and solver.getStatus() == OsqpEigen::Status::Solved)
-	{
+	if (solver.solveProblem() == OsqpEigen::ErrorExitFlag::NoError
+		and solver.getStatus() == OsqpEigen::Status::Solved) {
 		optData.alphaLast = solver.getSolution();
 		dqNext = b + optData.N_J * solver.getSolution();
-		qNext = qCur + dqNext * dt;
 		return true;
 	}
 	return false;
 }
 
 bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
-                                       const Vector3d &dxDes,
-                                       const JointArrayType &qCur,
-                                       const JointArrayType &dqAnchor,
+									   const Vector3d &dxDes,
+									   const JointArrayType &qCur,
+									   const JointArrayType &dqAnchor,
 									   const double dt,
-                                       JointArrayType &qNext,
-                                       JointArrayType &dqNext) {
+									   JointArrayType &dqNext) {
 	Eigen::MatrixXd J_tmp(6, agentParams.pinoModel.nv);
 	pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, qCur);
 	pinocchio::computeJointJacobians(agentParams.pinoModel, agentParams.pinoData);
 	pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
 	pinocchio::getFrameJacobian(agentParams.pinoModel, agentParams.pinoData,
-	                            agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED, J_tmp);
+								agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED, J_tmp);
 	optData.xCurPos = agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
 	optData.J = J_tmp.topRows(3);
 	getNullSpace(optData.J, optData.N_J);
 	optData.K = 1 / dt;
 
 	VectorXd b = optData.J.transpose() * (optData.J * optData.J.transpose()).ldlt().solve(
-			optData.K * (xDes - optData.xCurPos) + dxDes);
+		optData.K * (xDes - optData.xCurPos));
 	MatrixXd I(7, 7);
 	I.setIdentity();
 	VectorXd omega = b - dqAnchor;
@@ -264,12 +274,11 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 	optData.A = optData.N_J.sparseView();
 
 	optData.upperBound = agentParams.pinoModel.velocityLimit.cwiseMin(
-			(agentParams.pinoModel.upperPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
+		(agentParams.pinoModel.upperPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
 	optData.lowerBound = (-agentParams.pinoModel.velocityLimit).cwiseMax(
-			(agentParams.pinoModel.lowerPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
+		(agentParams.pinoModel.lowerPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
 
-
-	if (!constructQPSolver()){
+	if (!constructQPSolver()) {
 		ROS_DEBUG_STREAM("Unable to construct the QR solver");
 		return false;
 	}
@@ -281,11 +290,10 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 	}
 	solver.setPrimalVariable(feasiblePoint);
 
-	if (solver.solveProblem() == OsqpEigen::ErrorExitFlag::NoError and solver.getStatus() == OsqpEigen::Status::Solved)
-	{
+	if (solver.solveProblem() == OsqpEigen::ErrorExitFlag::NoError
+		and solver.getStatus() == OsqpEigen::Status::Solved) {
 		optData.alphaLast = solver.getSolution();
 		dqNext = b + optData.N_J * solver.getSolution();
-        qNext = qCur + dqNext * dt;
 		return true;
 	}
 	return false;
@@ -313,11 +321,11 @@ void NullSpaceOptimizer::solveJoint7(JointArrayType &q, JointArrayType &dq) {
 	}
 
 	dq[6] = boost::algorithm::clamp((target - qCur7) * agentParams.rate,
-	                                -agentParams.pinoModel.velocityLimit[6],
-	                                agentParams.pinoModel.velocityLimit[6]);
+									-agentParams.pinoModel.velocityLimit[6],
+									agentParams.pinoModel.velocityLimit[6]);
 	q[6] = boost::algorithm::clamp(qCur7 + dq[6] / agentParams.rate,
-	                               agentParams.pinoModel.lowerPositionLimit[6],
-	                               agentParams.pinoModel.upperPositionLimit[6]);
+								   agentParams.pinoModel.lowerPositionLimit[6],
+								   agentParams.pinoModel.upperPositionLimit[6]);
 }
 
 bool NullSpaceOptimizer::constructQPSolver(bool verbose) {
@@ -329,25 +337,25 @@ bool NullSpaceOptimizer::constructQPSolver(bool verbose) {
 	solver.data()->setNumberOfVariables(optData.dimNullSpace);
 	solver.data()->setNumberOfConstraints(agentParams.nq);
 
-	if(!solver.data()->setHessianMatrix(optData.P)){
+	if (!solver.data()->setHessianMatrix(optData.P)) {
 		ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "setHessianMatrix Failed.");
 		return false;
 	}
-	if(!solver.data()->setGradient(optData.q)){
+	if (!solver.data()->setGradient(optData.q)) {
 		ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "setGradient Failed.");
 		return false;
 	}
-	if(!solver.data()->setLinearConstraintsMatrix(optData.A)){
+	if (!solver.data()->setLinearConstraintsMatrix(optData.A)) {
 		ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "setLinearConstraintsMatrix Failed.");
 		return false;
 	}
-	if((optData.lowerBound.array() > optData.upperBound.array()).any() or
-	!solver.data()->setBounds(optData.lowerBound, optData.upperBound)){
+	if ((optData.lowerBound.array() > optData.upperBound.array()).any() or
+		!solver.data()->setBounds(optData.lowerBound, optData.upperBound)) {
 		ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "setBounds Failed.");
 		return false;
 	}
 	solver.settings()->setWarmStart(true);
-	if(!solver.initSolver()){
+	if (!solver.initSolver()) {
 		ROS_DEBUG_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "initSolver Failed.");
 		return false;
 	}
@@ -355,9 +363,9 @@ bool NullSpaceOptimizer::constructQPSolver(bool verbose) {
 }
 
 bool NullSpaceOptimizer::checkFeasibility(const MatrixXd A,
-                                          const VectorXd lowerBound,
-                                          const VectorXd upperBound,
-                                          VectorXd &feasiblePoint) {
+										  const VectorXd lowerBound,
+										  const VectorXd upperBound,
+										  VectorXd &feasiblePoint) {
 	// Get Constraint Matrix
 	CoinPackedMatrix matrix;
 	matrix.setDimensions(A.rows(), A.cols());
@@ -376,7 +384,7 @@ bool NullSpaceOptimizer::checkFeasibility(const MatrixXd A,
 	obj.setIdentity();
 
 	simplexModel.loadProblem(matrix, columnLower.data(), columnUpper.data(), obj.data(),
-	                         lowerBound.data(), upperBound.data());
+							 lowerBound.data(), upperBound.data());
 	simplexModel.initialSolve();
 	simplexModel.primal();
 

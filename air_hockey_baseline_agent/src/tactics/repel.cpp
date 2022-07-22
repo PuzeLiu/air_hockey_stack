@@ -28,7 +28,7 @@ using namespace air_hockey_baseline_agent;
 
 Repel::Repel(EnvironmentParams &envParams, AgentParams &agentParams,
 			 SystemState &state, TrajectoryGenerator *generator) :
-		Tactic(envParams, agentParams, state, generator) {
+	Tactic(envParams, agentParams, state, generator) {
 	hittingFailed = false;
 }
 
@@ -50,8 +50,6 @@ bool Repel::apply() {
 			return generateStopTrajectory();
 		}
 	}
-	auto tPuckHit = state.observation.stamp +
-					ros::Duration(state.observation.puckPredictedState.predictedTime);
 
 	if (ros::Time::now() >= state.tPlan) {
 		generator.getPlannedJointState(state, state.tStart);
@@ -71,7 +69,7 @@ void Repel::setNextState() {
 		if (ros::Time::now() > state.trajectoryBuffer.getFree().jointTrajectory.header.stamp) {
 			// Check if the hitting trajectory is finished
 			if (ros::Time::now() > state.trajectoryBuffer.getExec().jointTrajectory.header.stamp +
-								   state.trajectoryBuffer.getExec().jointTrajectory.points.back().time_from_start) {
+				state.trajectoryBuffer.getExec().jointTrajectory.points.back().time_from_start) {
 				setTactic(READY);
 			}
 		}
@@ -97,9 +95,9 @@ bool Repel::generateRepelTrajectory() {
 												 state.vPlan.block<2, 1>(0, 0), xHit2d, vHit2d, hitting_time,
 												 xStop2d, vZero2d, state.trajectoryBuffer.getFree().cartTrajectory)) {
 			ROS_INFO_STREAM("Plan Failed");
-			ROS_INFO_STREAM(
-					state.xPlan.transpose() << " v: " << state.vPlan.transpose() << " xHit: " << xHit2d.transpose()
-											<< " vHit: " << vHit2d.transpose() << " xStop: " << xStop2d.transpose());
+			ROS_INFO_STREAM(state.xPlan.transpose()
+								<< " v: " << state.vPlan.transpose() << " xHit: " << xHit2d.transpose()
+								<< " vHit: " << vHit2d.transpose() << " xStop: " << xStop2d.transpose());
 			break;
 		}
 		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
@@ -108,9 +106,11 @@ bool Repel::generateRepelTrajectory() {
 														 state.qPlan, state.dqPlan,
 														 state.trajectoryBuffer.getFree().jointTrajectory)) {
 			auto tPuckHit = state.observation.stamp +
-							ros::Duration(state.observation.puckPredictedState.predictedTime);
+				ros::Duration(state.observation.puckPredictedState.predictedTime);
 
-			if (ros::Time::now() + ros::Duration(hitting_time) < tPuckHit) {
+			if (state.tStart < ros::Time::now()) state.tStart = ros::Time::now();
+
+			if (state.tStart + ros::Duration(hitting_time) < tPuckHit) {
 				double timeScaleFactor = (tPuckHit - ros::Time::now()).toSec() / hitting_time;
 				timeScaleFactor = std::max(timeScaleFactor, 2.0);
 
@@ -125,8 +125,6 @@ bool Repel::generateRepelTrajectory() {
 			generator.synchronizeCartesianTrajectory(state.trajectoryBuffer.getFree().jointTrajectory,
 													 state.trajectoryBuffer.getFree().cartTrajectory);
 
-			state.tStart = ros::Time::now() + (tPuckHit - ros::Time::now() - ros::Duration(hitting_time));
-			if (state.tStart < ros::Time::now()) state.tStart = ros::Time::now();
 			state.tPlan = state.tStart + state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
 			state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;
 			state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.tStart;

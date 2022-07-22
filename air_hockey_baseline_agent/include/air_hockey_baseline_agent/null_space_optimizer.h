@@ -60,7 +60,6 @@ namespace air_hockey_baseline_agent {
 					 const Eigen::Vector3d &dxDes,
 					 const JointArrayType &qCur,
 					 const double dt,
-					 JointArrayType &qNext,
 					 JointArrayType &dqNext);
 
 		bool solveQPAnchor(const Eigen::Vector3d &xDes,
@@ -68,7 +67,6 @@ namespace air_hockey_baseline_agent {
 						   const JointArrayType &qCur,
 						   const JointArrayType &qAnchor,
 						   const double dt,
-						   JointArrayType &qNext,
 						   JointArrayType &dqNext);
 
 		bool constructQPSolver(bool verbose = false);

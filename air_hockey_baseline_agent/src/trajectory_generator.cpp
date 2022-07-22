@@ -110,9 +110,10 @@ void TrajectoryGenerator::synchronizeCartesianTrajectory(const trajectory_msgs::
 		cartPoint.transforms[0].translation.x = xTmp.x();
 		cartPoint.transforms[0].translation.y = xTmp.y();
 		cartPoint.transforms[0].translation.z = xTmp.z();
-		cartPoint.velocities[0].linear.x = xTmp.x();
-		cartPoint.velocities[0].linear.y = xTmp.y();
-		cartPoint.velocities[0].linear.z = xTmp.z();
+		cartPoint.velocities[0].linear.x = vTmp.x();
+		cartPoint.velocities[0].linear.y = vTmp.y();
+		cartPoint.velocities[0].linear.z = vTmp.z();
+		cartPoint.time_from_start = jointTraj.points[j].time_from_start;
 		cartTraj.points[j] = cartPoint;
 	}
 }
@@ -131,18 +132,18 @@ void TrajectoryGenerator::getPlannedJointState(SystemState &state, ros::Time &tP
 		idx = state.trajectoryBuffer.getExec().jointTrajectory.points.size() - 1;
 		for (int j = 0; j < state.trajectoryBuffer.getExec().jointTrajectory.points.size(); ++j) {
 			if (tPlan <= state.trajectoryBuffer.getExec().jointTrajectory.header.stamp +
-						 state.trajectoryBuffer.getExec().jointTrajectory.points[j].time_from_start) {
+				state.trajectoryBuffer.getExec().jointTrajectory.points[j].time_from_start) {
 				tPlan = state.trajectoryBuffer.getExec().jointTrajectory.header.stamp +
-						state.trajectoryBuffer.getExec().jointTrajectory.points[j].time_from_start;
+					state.trajectoryBuffer.getExec().jointTrajectory.points[j].time_from_start;
 				idx = j;
 				break;
 			}
 		}
 
 		state.qPlan = JointArrayType::Map(
-				state.trajectoryBuffer.getExec().jointTrajectory.points[idx].positions.data(), agentParams.nq);
+			state.trajectoryBuffer.getExec().jointTrajectory.points[idx].positions.data(), agentParams.nq);
 		state.dqPlan = JointArrayType::Map(
-				state.trajectoryBuffer.getExec().jointTrajectory.points[idx].velocities.data(), agentParams.nq);
+			state.trajectoryBuffer.getExec().jointTrajectory.points[idx].velocities.data(), agentParams.nq);
 		state.planPrevPoint = state.trajectoryBuffer.getExec().jointTrajectory.points[idx];
 		state.planPrevPoint.time_from_start = ros::Duration(0);
 	}
@@ -150,22 +151,22 @@ void TrajectoryGenerator::getPlannedJointState(SystemState &state, ros::Time &tP
 	//! Check if tPlan is in the future trajectory
 	if (tPlan >= state.trajectoryBuffer.getFree().jointTrajectory.header.stamp and
 		state.trajectoryBuffer.getFree().jointTrajectory.header.stamp >
-		state.trajectoryBuffer.getExec().jointTrajectory.header.stamp) {
+			state.trajectoryBuffer.getExec().jointTrajectory.header.stamp) {
 		idx = int(state.trajectoryBuffer.getFree().jointTrajectory.points.size()) - 1;
 		for (int j = 0; j < state.trajectoryBuffer.getFree().jointTrajectory.points.size(); ++j) {
 			if (tPlan <= state.trajectoryBuffer.getFree().jointTrajectory.header.stamp +
-						 state.trajectoryBuffer.getFree().jointTrajectory.points[j].time_from_start) {
+				state.trajectoryBuffer.getFree().jointTrajectory.points[j].time_from_start) {
 				tPlan = state.trajectoryBuffer.getFree().jointTrajectory.header.stamp +
-						state.trajectoryBuffer.getFree().jointTrajectory.points[j].time_from_start;
+					state.trajectoryBuffer.getFree().jointTrajectory.points[j].time_from_start;
 				idx = j;
 				break;
 			}
 		}
 
 		state.qPlan = JointArrayType::Map(
-				state.trajectoryBuffer.getFree().jointTrajectory.points[idx].positions.data(), agentParams.nq);
+			state.trajectoryBuffer.getFree().jointTrajectory.points[idx].positions.data(), agentParams.nq);
 		state.dqPlan = JointArrayType::Map(
-				state.trajectoryBuffer.getFree().jointTrajectory.points[idx].velocities.data(), agentParams.nq);
+			state.trajectoryBuffer.getFree().jointTrajectory.points[idx].velocities.data(), agentParams.nq);
 		state.planPrevPoint = state.trajectoryBuffer.getFree().jointTrajectory.points[idx];
 		state.planPrevPoint.time_from_start = ros::Duration(0);
 	}

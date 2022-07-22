@@ -57,7 +57,6 @@ bool Init::apply() {
 	}
 
 	if (ros::Time::now() >= state.tPlan) {
-		exit(-1);
 		generator.getPlannedJointState(state, state.tStart);
 		return planTrajectory();
 	}
