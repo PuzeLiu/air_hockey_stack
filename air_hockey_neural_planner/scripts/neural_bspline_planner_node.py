@@ -62,6 +62,7 @@ class Trajectory:
 
     def sample(self, t):
         t -= self.init_time
+        t = np.maximum(t, 0.)
         idx = np.searchsorted(self.t, t, side="left")
         print("TIME QUERY: ", t)
         print("TIME IDX: ", self.t[idx])
@@ -115,16 +116,15 @@ class NeuralPlannerNode:
         if msg.tactic == 0:
             # plannig_time = 0.038
             # plannig_time = 0.032
-            plannig_time = 0.06
+            plannig_time = 0.08
         elif msg.tactic == 1:
             plannig_time = 0.040
         communication_delays = 0.006
         time_offset = plannig_time + communication_delays
-        traj_time = self.actual_trajectory.init_time + time_offset
-        # traj_time = rospy.Time.now().to_sec() + time_offset
-        # traj_time = msg.header.stamp.to_sec() + plannig_time + communication_delays
+        #traj_time = rospy.Time.now().to_sec() + time_offset
+        traj_time = msg.header.stamp.to_sec() + time_offset
         # print("REPLAN!!!")
-        q_0, q_dot_0, q_ddot_0 = self.actual_trajectory.sample(traj_time)
+        q_0, q_dot_0, q_ddot_0 = self.actual_trajectory.sample(traj_time - 0.003)
         q_0 = np.concatenate([q_0, np.zeros(1)])
         q_dot_0 = np.concatenate([q_dot_0, np.zeros(1)])
         q_ddot_0 = np.concatenate([q_ddot_0, np.zeros(1)])
@@ -136,22 +136,57 @@ class NeuralPlannerNode:
         t1 = perf_counter()
         print("REPLANNING TIME:", t1 - t0)
         print("TIME OFFSET:", time_offset)
-        self.compute_trajectory(msg, traj_time)
+        self.compute_trajectory(msg, traj_time, time_offset)
 
-    def compute_trajectory(self, msg, traj_time=None):
+    def compute_trajectory(self, msg, traj_time=None, time_offset=0.):
         t0 = perf_counter()
-        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end = unpack_planner_request(msg)
+        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time = unpack_planner_request(msg)
 
         list_q = []
         list_t = []
         list_q_cps = []
         list_t_cps = []
 
+        v_mul = 0.7
+        #v_mul = 0.9
         if tactic == 0:  # HIT
             q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
-            d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d], axis=-1)[np.newaxis]
+            d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d * v_mul], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
+            planning_time = 0.08
+            traj_and_plan_time = t[-1] + planning_time
+            print("TRAJ TIME:", t[-1])
+            print("TRAJ AND PLAN TIME:", traj_and_plan_time)
+            print("EXPECTED_TIME:", expected_time)
+            if traj_and_plan_time < expected_time:
+                if traj_time is None:
+                    ttw = expected_time - traj_and_plan_time
+                else:
+                    print("REPLANNING")
+                    ttw = expected_time - t[-1] - time_offset
+                    # robot is not moving
+                print("QDOT:", np.sum(np.abs(q_dot_0)))
+                if np.sum(np.abs(q_dot_0)) < 0.1:
+                    print("TIME TO WAIT:", ttw)
+                    traj_time = msg.header.stamp.to_sec() + ttw
+                else:
+                    traj_and_offset_time = t[-1] + time_offset
+                    print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
+                    if traj_and_offset_time < expected_time:
+                        print("REPLANNING WHILE MOVING AND TOO MUCH TIME")
+                        requested_time = expected_time - time_offset
+                        print("REQ TIME:", requested_time)
+                        ratio = requested_time / t[-1]
+                        print("RATIO:", ratio)
+                        #t_cps /= ratio
+                        #t *= ratio
+            elif traj_and_plan_time < 1.2*expected_time:
+                print("TRY TO ACT EVEN IT IS TOO LATE")
+                #traj_and_offset_time = t[-1] + time_offset
+                #print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
+            else:
+                return False
             self.actual_trajectory = Trajectory(q, dq, ddq, t)
             list_q.append(q)
             list_t.append(t)
@@ -171,6 +206,7 @@ class NeuralPlannerNode:
             q_d = self.spo.solve(p_d)
             q_dot_d = np.zeros((7,))
             d = np.concatenate([q_0, q_d, p_d, q_dot_0, q_ddot_0, q_dot_d], axis=-1)[np.newaxis]
+            d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
             self.actual_trajectory = Trajectory(q, dq, ddq, t)
             list_q.append(q)
@@ -212,7 +248,7 @@ class NeuralPlannerNode:
             iiwa_front_bspline_hitting.t_control_points = ts[i].flatten()
             iiwa_front_bspline.segments.append(iiwa_front_bspline_hitting)
         if traj_time is None:
-            iiwa_front_bspline.header.stamp = rospy.Time.now()  # + rospy.Duration(time_offset)
+            iiwa_front_bspline.header.stamp = rospy.Time.now() + rospy.Duration(0.050)
         else:
             iiwa_front_bspline.header.stamp = rospy.Time(traj_time)
         self.actual_trajectory.set_init_time(iiwa_front_bspline.header.stamp.to_sec())

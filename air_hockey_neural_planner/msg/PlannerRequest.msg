@@ -6,4 +6,5 @@ float32[] q_end
 geometry_msgs/Point hit_point
 geometry_msgs/Point end_point
 float32 hit_angle
+float32 expected_time
 int8 tactic
