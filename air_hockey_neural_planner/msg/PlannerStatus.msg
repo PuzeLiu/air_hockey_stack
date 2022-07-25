@@ -1,0 +1,6 @@
+std_msgs/Header header
+bool success
+float32[] planned_hit_cartesian_velocity
+float32[] planned_hit_joint_velocity
+float32 planning_time
+float32 expected_hitting_time
