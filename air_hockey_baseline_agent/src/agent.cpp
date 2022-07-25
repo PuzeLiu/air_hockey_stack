@@ -129,7 +129,9 @@ void Agent::gotoInit()
     state.trajectoryBuffer.getFree().cartTrajectory.points.push_back(cartViaPoint);
     state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.trajectoryBuffer.getFree().jointTrajectory.header.stamp;
 
-    state.tPlan = state.trajectoryBuffer.getFree().jointTrajectory.header.stamp + state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
+    state.tPlan = state.trajectoryBuffer.getFree().jointTrajectory.header.stamp +
+		state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
+	state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset);
     publishTrajectory();
     ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Initialize the agent, goto initial position");
     ros::Duration(state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start).sleep();
