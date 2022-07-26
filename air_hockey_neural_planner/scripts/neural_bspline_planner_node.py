@@ -68,6 +68,10 @@ class Trajectory:
     def set_init_time(self, t):
         self.init_time = t
 
+    def get_hitting(self):
+        idx = len(self.q_list[0]) - 1
+        return self.t[idx], self.q[idx], self.dq[idx], self.ddq[idx]
+
     def sample(self, t):
         t -= self.init_time
         t = np.maximum(t, 0.)
@@ -335,13 +339,15 @@ class NeuralPlannerNode:
         planner_status = PlannerStatus()
         planner_status.success = valid
         planner_status.planning_time = planning_time
-        planner_status.expected_hitting_time = self.actual_trajectory.t_list[0][-1]
-        planner_status.planned_hit_joint_velocity = dq[-1]
-        q_hit = np.concatenate([q[-1], np.zeros(3)], axis=-1)
+        t_hit, q_hit, dq_hit, _ = self.actual_trajectory.get_hitting()
+        planner_status.planned_motion_time = self.actual_trajectory.t[-1]
+        planner_status.planned_hitting_time = t_hit
+        planner_status.planned_hit_joint_velocity = dq_hit
+        q_hit = np.concatenate([q_hit, np.zeros(3)], axis=-1)
         pino.forwardKinematics(self.pino_model, self.pino_data, q_hit)
         J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q_hit, self.joint_idx,
                                       pino.LOCAL_WORLD_ALIGNED)[:3, :6]
-        planner_status.planned_hit_cartesian_velocity = J @ dq[-1]
+        planner_status.planned_hit_cartesian_velocity = J @ dq_hit
         self.planner_status_publisher.publish(planner_status)
 
 
