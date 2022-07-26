@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+import os.path
+import shlex
+import subprocess
+
+import psutil
 import rospy
 import tf
 
@@ -50,12 +55,25 @@ class NeuralPlannerHittingTestNode:
             inp = input("Press enter to hit or insert anything to leave")
             if inp:
                 break
+            print(__file__)
+            path = os.path.dirname(os.path.dirname(__file__))
+            command = "bash " + os.path.join(path, "record_rosbag.sh 5")
+            print(command)
+            command = shlex.split(command)
+            rosbag_proc = subprocess.Popen(command)
+            rospy.sleep(1.0)
             if self.request_plan():
                 # for i in range(10):
                 #rospy.sleep(0.1)
                 #print("ROS TIME:", rospy.Time.now().to_sec())
                 #self.request_replan()
                 pass
+            rospy.sleep(3.)
+            #parent = psutil.Process(rosbag_proc.pid)
+            #for child in parent.children(recursive=True):  # or parent.children() for recursive=False
+            #    child.kill()
+            #rosbag_proc.kill()
+            #os.killpg(os.getpgid(rosbag_proc.pid), subprocess.signal.SIGTERM)
 
     def fake_hit_and_replan(self):
         while not rospy.is_shutdown():
