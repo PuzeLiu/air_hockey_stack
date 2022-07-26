@@ -170,7 +170,7 @@ void Agent::loadAgentParam()
     agentParams.nq = agentParams.pinoModel.nq;
 
     std::vector<double> xTmp;
-    nh.param("/air_hockey/agent/debug_tactics", agentParams.debugTactics, false);
+    nh.param(agentParams.name + "/debug_tactics", agentParams.debugTactics, false);
 
     if (!nh.getParam("/air_hockey/agent/rate", agentParams.rate))
     {
