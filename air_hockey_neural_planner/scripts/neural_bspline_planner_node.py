@@ -25,6 +25,7 @@ from manifold_planning.utils.bspline import BSpline
 from manifold_planning.utils.spo import StartPointOptimizer
 from manifold_planning.utils.constants import UrdfModels, Limits, Base
 from manifold_planning.utils.model import load_model_boundaries, load_model_hpo, model_inference
+from manifold_planning.utils.feasibility import check_if_plan_valid
 
 
 def print_(x, N=5):
@@ -160,9 +161,9 @@ class NeuralPlannerNode:
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             planning_time = 0.08
             traj_and_plan_time = t[-1] + planning_time
-            print("TRAJ TIME:", t[-1])
-            print("TRAJ AND PLAN TIME:", traj_and_plan_time)
-            print("EXPECTED_TIME:", expected_time)
+            #print("TRAJ TIME:", t[-1])
+            #print("TRAJ AND PLAN TIME:", traj_and_plan_time)
+            #print("EXPECTED_TIME:", expected_time)
             if traj_and_plan_time < expected_time:
                 if traj_time is None:
                     ttw = expected_time - traj_and_plan_time
@@ -190,7 +191,8 @@ class NeuralPlannerNode:
                 # traj_and_offset_time = t[-1] + time_offset
                 # print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
             else:
-                return False
+                if expected_time > 0:
+                    return False
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             d_ret = np.concatenate([q_d, Base.configuration, [0.], Base.position, dq[-1], [0.], ddq[-1], [0.] * 8],
                                    axis=-1)[np.newaxis]
@@ -251,7 +253,7 @@ class NeuralPlannerNode:
         print("PLANNING TIME: ", t1 - t0)
         print("ROS TIME", tros)
         self.publish_cartesian_trajectory(self.actual_trajectory.q_list, self.actual_trajectory.t_list)
-        self.planner_status_publisher(t1 - t0)
+        self.publish_planner_status(t1 - t0)
 
     def get_hitting_configuration(self, xk, yk, thk):
         qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis])
@@ -333,7 +335,7 @@ class NeuralPlannerNode:
         planner_status = PlannerStatus()
         planner_status.success = valid
         planner_status.planning_time = planning_time
-        planner_status.expected_hitting_time = trajectory.t_list[0][-1]
+        planner_status.expected_hitting_time = self.actual_trajectory.t_list[0][-1]
         planner_status.planned_hit_joint_velocity = dq[-1]
         q_hit = np.concatenate([q[-1], np.zeros(3)], axis=-1)
         pino.forwardKinematics(self.pino_model, self.pino_data, q_hit)
