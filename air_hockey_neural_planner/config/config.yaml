@@ -4,7 +4,9 @@ neural_planner:
 
 #  planner_path: "./trained_models/striker/v08a10v_centrifugal/last_n-104" # 1e3 aramis
 #  planner_path: "./trained_models/striker/v08a10v_centrifugal/last_n-110" # 1e2 athos
-#  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-102" # 1e1 porthos
+#  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-129" # 1e2 athos retrained c1 t1em1
+  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-105" # 1e1 porthos
+  #  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-102" # 1e1 porthos
 #  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-99" # 1e1 porthos
 #  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-88" # 1e1 porthos
 #  planner_path: "./trained_models/striker/v08a10v_centrifugal/last_n-65"
@@ -13,9 +15,10 @@ neural_planner:
   #planner_path: "./trained_models/striker/v08a10v_qddotend/best-144"
   #  planner_path: "./trained_models/striker/v08a10v_qddotend/best-156"
   #planner_path: "./trained_models/striker/v08a10v_qddotend/best-115"
-  planner_path: "./trained_models/striker/v08a10v_beyond/best-271"
+#  planner_path: "./trained_models/striker/v08a10v_beyond/best-271"
   #planner_path: "./trained_models/striker/v08a10v_jerk/best-161"
 #  planner_path: "./trained_models/striker/v08a08huberalphaint/best-60"
 
-  ik_hitting_path: "./trained_models/ik_hitting/pos_lossabs/best-77"
+  ik_hitting_path: "./trained_models/ik_hitting/pos_lossabs/best-53"
+#   ik_hitting_path: "./trained_models/ik_hitting/pos_lossabs/best-77"
 #  ik_hitting_path: "./trained_models/ik_hitting/pos_lossabs/best-138"
