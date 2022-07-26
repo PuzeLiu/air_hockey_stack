@@ -9,7 +9,7 @@ from scipy.signal import butter, filtfilt
 from scipy.fft import fft
 
 from manifold_planning.utils.manipulator import Iiwa
-from manifold_planning.utils.feasibility import check_if_plan_valid
+from manifold_planning.utils.feasibility import check_if_plan_valid, compute_cartesian_losses
 
 
 def cal_d(fs, dts):
@@ -46,7 +46,7 @@ def get_vel_acc(t, q_m, iiwa):
     return q_m_filter, dq_m_filter, ddq_m_filter, tau_m_filter, q_m, dq_m, ddq_m, tau_m
 
 
-def compute_vel_acc_tau(q, qd, qd_dot, qd_ddot):
+def compute_vel_acc_tau(t, q, qd, qd_dot, qd_ddot):
     iiwa = Iiwa(iiwa_file)
     desired_torque = iiwa.rnea(qd, qd_dot, qd_ddot).numpy()[0]
 
@@ -55,11 +55,11 @@ def compute_vel_acc_tau(q, qd, qd_dot, qd_ddot):
 
 
 def compute_end_effector(pino_model, pino_data, q, qd):
-    ee_pos_des = np.zeros((t.shape[0], 3))
-    ee_pos_actual = np.zeros((t.shape[0], 3))
+    ee_pos_des = np.zeros((q.shape[0], 3))
+    ee_pos_actual = np.zeros((q.shape[0], 3))
     frame_id = pino_model.getFrameId("F_striker_mallet")
     pino_positions = np.zeros(pino_model.nq)
-    for i, _ in enumerate(t):
+    for i, _ in enumerate(q):
         pino_positions[:7] = qd[i]
         pino.forwardKinematics(pino_model, pino_data, pino_positions)
         pino.updateFramePlacement(pino_model, pino_data, frame_id)
@@ -92,6 +92,42 @@ def check_if_scored(puck, puck_time, puck_time_hit_idx):
     return np.any(if_scored)
 
 
+def compute_puck_velocity(puck, puck_time, puck_time_hit_idx):
+    xyz = puck[puck_time_hit_idx:]
+    t = puck_time[puck_time_hit_idx:]
+    vxy = np.diff(xyz[:, :2], axis=0)
+    vth = np.arctan2(vxy[:, 1], vxy[:, 0])
+    dt = np.diff(t)
+    v = np.sqrt(np.sum(vxy ** 2, axis=-1)) / dt
+    # plt.subplot(131)
+    # plt.plot(xyz[:, 0], xyz[:, 1])
+    # plt.subplot(132)
+    # plt.plot(t[1:], v)
+    # plt.subplot(133)
+    # plt.plot(t[1:], vth)
+    # plt.show()
+    v_mag = np.median(v[:10])
+    v_th = np.median(vth[:10])
+    return v_mag, v_th
+
+
+def compute_planned_velocity(velocity):
+    v_mag = np.sqrt(np.sum(velocity ** 2))
+    v_angle = np.arctan2(velocity[1], velocity[0])
+    return v_mag, v_angle
+
+
+def compute_movement_and_hitting_duration(dq, t, time_hit_idx):
+    dq_v = np.sum(np.abs(dq), axis=-1)
+    moving_idx = np.where(dq_v > 0.02)[0]
+    t0 = t[moving_idx[0]]
+    tf = t[moving_idx[-1]]
+    th = t[time_hit_idx]
+    movement_duration = tf - t0
+    hitting_duration = th - t0
+    return movement_duration, hitting_duration
+
+
 def read_bag(bag):
     time = []
     joint_state_desired = []
@@ -99,6 +135,14 @@ def read_bag(bag):
     joint_state_error = []
     puck_pose = []
     puck_time = []
+    planned_hit_cartesian_velocity = None
+    planned_hit_joint_velocity = None
+    planning_time = None
+    success = None
+    desired_hit_angle = None
+    desired_hit_point = None
+    planned_hitting_time = None
+    planned_motion_time = None
 
     for topic, msg, t_bag in bag.read_messages():
         if topic in ["/iiwa_front/adrc_trajectory_controller/state",
@@ -124,6 +168,17 @@ def read_bag(bag):
                 dz = 0.03
                 puck_pose.append([t.x - dx, t.y - dy, t.z - dz])
                 puck_time.append(data.header.stamp.to_sec())
+        elif topic == "/neural_planner/status":
+            planned_hit_cartesian_velocity = np.array(msg.planned_hit_cartesian_velocity)
+            planned_hit_joint_velocity = np.array(msg.planned_hit_joint_velocity)
+            planning_time = msg.planning_time
+            planned_hitting_time = msg.planned_hitting_time
+            planned_motion_time = msg.planned_motion_time
+            success = msg.success
+        elif topic == "/neural_planner/plan_trajectory":
+            desired_hit_angle = msg.hit_angle
+            hp = msg.hit_point
+            desired_hit_point = np.array([hp.x, hp.y, hp.z])
     desired = np.array(joint_state_desired).astype(np.float32)
     actual = np.array(joint_state_actual).astype(np.float32)
     error = np.array(joint_state_error).astype(np.float32)
@@ -134,15 +189,20 @@ def read_bag(bag):
     puck_time -= puck_time[0]
     t = t.astype(np.float32)
     puck_time = puck_time.astype(np.float32)
-    return t, actual, desired, error, puck_pose, puck_time
+    return dict(t=t, actual=actual, desired=desired, error=error, puck_pose=puck_pose, puck_time=puck_time,
+                planning_time=planning_time, planned_hit_cartesian_velocity=planned_hit_cartesian_velocity,
+                planned_hit_joint_velocity=planned_hit_joint_velocity, desired_hit_angle=desired_hit_angle,
+                desired_hit_point=desired_hit_point, success=success, planned_hitting_time=planned_hitting_time,
+                planned_motion_time=planned_motion_time)
 
 
 root_dir = os.path.dirname(__file__)
 package_dir = os.path.dirname(root_dir)
 # bag_path = os.path.join(package_dir, "test_bspline_adrc_ff.bag")
 # bag_path = os.path.join(package_dir, "bags/qddotend.bag")
-bag_path = os.path.join(package_dir, "bags/straight_c1_t1_3.bag")
-#bag_path = os.path.join(package_dir, "bags/tilted_c1_t1_3.bag")
+# bag_path = os.path.join(package_dir, "bags/straight_c1_t1_3.bag")
+# bag_path = os.path.join(package_dir, "bags/tilted_c1_t1_3.bag")
+bag_path = os.path.join(package_dir, "test.bag")
 bag_file = rosbag.Bag(bag_path)
 
 robot_file = os.path.join(root_dir, "manifold_planning", "iiwa_striker_new.urdf")
@@ -152,24 +212,68 @@ pino_data = pino_model.createData()
 
 result = {}
 
-t, actual, desired, error, puck, puck_time = read_bag(bag_file)
-q, dq, ddq, torque, qd, qd_dot, qd_ddot, torqued = compute_vel_acc_tau(actual[:, :7], desired[:, :7],
-                                                                       desired[:, 7:14], desired[:, 14:21])
+bag_dict = read_bag(bag_file)
+q, dq, ddq, torque, qd, qd_dot, qd_ddot, torqued = compute_vel_acc_tau(bag_dict["t"],
+                                                                       bag_dict["actual"][:, :7],
+                                                                       bag_dict["desired"][:, :7],
+                                                                       bag_dict["desired"][:, 7:14],
+                                                                       bag_dict["desired"][:, 14:21])
 ee, ee_d = compute_end_effector(pino_model, pino_data, q, qd)
 
-time_hit_idx, puck_time_hit_idx = detect_hitting_idx(puck, puck_time, t)
+time_hit_idx, puck_time_hit_idx = detect_hitting_idx(bag_dict["puck_pose"], bag_dict["puck_time"], bag_dict["t"])
+movement_time, hitting_time = compute_movement_and_hitting_duration(dq, bag_dict["t"], time_hit_idx)
 
-scored = check_if_scored(puck, puck_time, puck_time_hit_idx)
+puck_velocity_magnitude, puck_velocity_angle = compute_puck_velocity(bag_dict["puck_pose"], bag_dict["puck_time"],
+                                                                     puck_time_hit_idx)
+planned_hit_velocity_magnitude, planned_hit_velocity_angle = compute_planned_velocity(
+    bag_dict["planned_hit_cartesian_velocity"])
+scored = check_if_scored(bag_dict["puck_pose"], bag_dict["puck_time"], puck_time_hit_idx)
 valid = check_if_plan_valid(ee_d, qd, qd_dot, qd_ddot, torqued)
+desired_z_loss, desired_xlow_loss, desired_xhigh_loss, desired_ylow_loss, desired_yhigh_loss = compute_cartesian_losses(
+    ee_d)
+actual_z_loss, actual_xlow_loss, actual_xhigh_loss, actual_ylow_loss, actual_yhigh_loss = compute_cartesian_losses(ee)
 
 result["scored"] = scored
 result["valid"] = valid
+result["planning_time"] = bag_dict["planning_time"]
+result["planned_hitting_time"] = bag_dict["planned_hitting_time"]
+result["planned_motion_time"] = bag_dict["planned_motion_time"]
+result["actual_hitting_time"] = hitting_time
+result["actual_motion_time"] = movement_time
+
+result["puck_velocity_magnitude"] = puck_velocity_magnitude
+result["planned_puck_velocity_magnitude"] = planned_hit_velocity_magnitude
+result["puck_actual_vs_planned_velocity_magnitude_error"] = puck_velocity_magnitude - planned_hit_velocity_magnitude
+
+result["puck_actual_vs_planned_velocity_angle_error"] = puck_velocity_angle - planned_hit_velocity_angle
+result["puck_planned_vs_desired_angle_error"] = bag_dict["desired_hit_angle"] - planned_hit_velocity_angle
+result["desired_hit_angle"] = bag_dict["desired_hit_angle"]
+result["puck_velocity_angle"] = puck_velocity_angle
+result["planned_puck_velocity_angle"] = planned_hit_velocity_angle
+
+dt = np.diff(bag_dict["t"])
+integral = lambda x: np.sum(np.abs(x)[1:] * dt)
+reduce_integral = lambda x: integral(np.sum(np.abs(x), axis=-1))
+result["planned_z_error"] = integral(desired_z_loss)
+result["planned_xlow_error"] = integral(desired_xlow_loss)
+result["planned_xhigh_error"] = integral(desired_xhigh_loss)
+result["planned_ylow_error"] = integral(desired_ylow_loss)
+result["planned_yhigh_error"] = integral(desired_yhigh_loss)
+result["actual_z_error"] = integral(actual_z_loss)
+result["actual_xlow_error"] = integral(actual_xlow_loss)
+result["actual_xhigh_error"] = integral(actual_xhigh_loss)
+result["actual_ylow_error"] = integral(actual_ylow_loss)
+result["actual_yhigh_error"] = integral(actual_yhigh_loss)
+
+result["joint_trajectory_error"] = reduce_integral(bag_dict["error"])
+result["cartesian_trajectory_error"] = reduce_integral(ee_d - ee)
+
 print(result)
 
-#for i in range(6):
+# for i in range(6):
 #    plt.plot(t, qd_ddot[:, i], label=f"q_ddot_{i}")
-#plt.legend()
-#plt.show()
+# plt.legend()
+# plt.show()
 
 
 # plt.plot(puck[:, 0], puck[:, 1])
