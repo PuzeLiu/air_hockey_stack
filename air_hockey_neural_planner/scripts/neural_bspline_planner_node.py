@@ -16,7 +16,7 @@ SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
 PLANNING_MODULE_DIR = os.path.join(SCRIPT_DIR, "manifold_planning")
 sys.path.append(PLANNING_MODULE_DIR)
-from air_hockey_neural_planner.msg import PlannerRequest
+from air_hockey_neural_planner.msg import PlannerRequest, PlannerStatus
 from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
 from geometry_msgs.msg import Transform, Vector3
 from iiwas_control.msg import BsplineTrajectoryMsg, BsplineSegmentMsg
@@ -25,6 +25,7 @@ from manifold_planning.utils.bspline import BSpline
 from manifold_planning.utils.spo import StartPointOptimizer
 from manifold_planning.utils.constants import UrdfModels, Limits, Base
 from manifold_planning.utils.model import load_model_boundaries, load_model_hpo, model_inference
+from manifold_planning.utils.feasibility import check_if_plan_valid
 
 
 def print_(x, N=5):
@@ -47,7 +48,6 @@ class Trajectory:
         self.t_list = [t]
         self.q_cps_list = [q_cps]
         self.t_cps_list = [t_cps]
-
 
     def update_samplers(self):
         self.qs = interp1d(self.t, self.q, axis=0)
@@ -77,7 +77,7 @@ class Trajectory:
         print("Q IDX:", self.q[idx])
         print("Q INTERP:", self.qs(t))
         return self.qs(t), self.dqs(t), self.dqs(t)
-        #return self.q[idx], self.dq[idx], self.ddq[idx]
+        # return self.q[idx], self.dq[idx], self.ddq[idx]
 
 
 class NeuralPlannerNode:
@@ -96,6 +96,7 @@ class NeuralPlannerNode:
                                                     queue_size=5)
         self.cartesian_front_publisher = rospy.Publisher(f"/iiwa_front/cartesian_trajectory", MultiDOFJointTrajectory,
                                                          queue_size=5)
+        self.planner_status_publisher = rospy.Publisher(f"/neural_planner/status", PlannerStatus, queue_size=5)
         self.urdf_path = os.path.join(PLANNING_MODULE_DIR, UrdfModels.striker)
 
         N = 15
@@ -129,7 +130,7 @@ class NeuralPlannerNode:
             plannig_time = 0.040
         communication_delays = 0.006
         time_offset = plannig_time + communication_delays
-        #traj_time = rospy.Time.now().to_sec() + time_offset
+        # traj_time = rospy.Time.now().to_sec() + time_offset
         traj_time = msg.header.stamp.to_sec() + time_offset
         # print("REPLAN!!!")
         q_0, q_dot_0, q_ddot_0 = self.actual_trajectory.sample(traj_time - 0.003)
@@ -229,7 +230,8 @@ class NeuralPlannerNode:
             q_ddot_0 = np.zeros((7,))
             d = np.concatenate([Base.configuration, [0.], q_d1, p_d1, q_dot_0, q_ddot_0, q_dot_d1], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
-            q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=expected_time)
+            q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt,
+                                                          expected_time=expected_time)
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             d = np.concatenate([q_d1, q_d2, p_d2, q_dot_d1, ddq[-1], [0.], q_dot_d2], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
@@ -251,6 +253,7 @@ class NeuralPlannerNode:
         print("PLANNING TIME: ", t1 - t0)
         print("ROS TIME", tros)
         self.publish_cartesian_trajectory(self.actual_trajectory.q_list, self.actual_trajectory.t_list)
+        self.publish_planner_status(t1 - t0)
 
     def get_hitting_configuration(self, xk, yk, thk):
         qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis])
@@ -310,6 +313,36 @@ class NeuralPlannerNode:
             cart_traj.points.append(point)
 
         self.cartesian_front_publisher.publish(cart_traj)
+
+    def publish_planner_status(self, planning_time):
+        q = self.actual_trajectory.q
+        dq = self.actual_trajectory.dq
+        ddq = self.actual_trajectory.ddq
+        q_ = np.pad(q, [[0, 0], [0, 3]])
+        dq_ = np.pad(dq, [[0, 0], [0, 3]])
+        ddq_ = np.pad(ddq, [[0, 0], [0, 3]])
+        torque = []
+        xyz = []
+        for i in range(q.shape[0]):
+            t = pino.rnea(self.pino_model, self.pino_data, q_[i], dq_[i], ddq_[i])
+            torque.append(t)
+            pino.forwardKinematics(self.pino_model, self.pino_data, q_[i])
+            xyz_pino = copy(self.pino_data.oMi[-1].translation)
+            xyz.append(xyz_pino)
+        torque = np.array(torque)[:, :6]
+        xyz = np.array(xyz)
+        valid = check_if_plan_valid(xyz, q, dq, ddq, torque)
+        planner_status = PlannerStatus()
+        planner_status.success = valid
+        planner_status.planning_time = planning_time
+        planner_status.expected_hitting_time = self.actual_trajectory.t_list[0][-1]
+        planner_status.planned_hit_joint_velocity = dq[-1]
+        q_hit = np.concatenate([q[-1], np.zeros(3)], axis=-1)
+        pino.forwardKinematics(self.pino_model, self.pino_data, q_hit)
+        J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q_hit, self.joint_idx,
+                                      pino.LOCAL_WORLD_ALIGNED)[:3, :6]
+        planner_status.planned_hit_cartesian_velocity = J @ dq[-1]
+        self.planner_status_publisher.publish(planner_status)
 
 
 if __name__ == '__main__':
