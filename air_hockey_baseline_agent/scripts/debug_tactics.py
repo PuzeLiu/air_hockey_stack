@@ -36,8 +36,8 @@ class TacticsDebugger():
     def start(self):
         while not rospy.is_shutdown():
             tactic = input("Wait for Tactics: "
-                           "\n\t h: HIT/SMASH, "
-                           "\n\t c: CUT/DEFEND, "
+                           "\n\t h: HIT / SMASH, "
+                           "\n\t c: CUT / DEFEND, "
                            "\n\t p: PREPARE, "
                            "\n\t r: REPEL,"
                            "\n\t q: Quit,"
@@ -77,7 +77,7 @@ class TacticsDebugger():
                     target_pos = np.random.uniform([-self.table_length / 2, -self.goal_width / 2],
                                                    [-self.table_length / 2, self.goal_width / 2])
                     puck_vel = target_pos - puck_pos
-                    puck_vel = puck_vel / np.linalg.norm(puck_vel) * np.random.uniform(0.5, 3.0)
+                    puck_vel = puck_vel / np.linalg.norm(puck_vel) * np.random.uniform(0.5, 2.0)
                     self.set_puck_state(puck_pos[0], puck_pos[1], puck_vel[0], puck_vel[1])
             elif tactic == 'z':
                 self.reset_puck = not self.reset_puck

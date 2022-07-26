@@ -46,7 +46,7 @@ bool Repel::apply() {
 	if (state.isNewTactics) {
 		state.isNewTactics = false;
 		generator.getPlannedJointState(state, state.tStart);
-		if (state.dqPlan.norm() > 0.2) {
+		if (state.vPlan.norm() > 0.01) {
 			return generateStopTrajectory();
 		}
 	}
@@ -81,15 +81,17 @@ bool Repel::generateRepelTrajectory() {
 	vZero2d.setZero();
 	Vector3d xCur;
 	double hitting_time;
-
-	xHit2d = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
-	vHit2d = -state.observation.puckPredictedState.state.block<2, 1>(2, 0).normalized();
-	xStop2d = getStopPoint(xHit2d, vHit2d);
-	vHit2d = vHit2d * 1.2;
+	double repel_velocity = 1.0;
 
 	for (size_t i = 0; i < 10; ++i) {
 		state.trajectoryBuffer.getFree().cartTrajectory.points.clear();
 		state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
+
+		state.observer->updateObservation(0.5);
+		xHit2d = state.observation.puckPredictedState.state.block<2, 1>(0, 0);
+		vHit2d = -state.observation.puckPredictedState.state.block<2, 1>(2, 0).normalized();
+		xStop2d = getStopPoint(xHit2d, vHit2d);
+		vHit2d = vHit2d * repel_velocity;
 
 		if (!generator.combinatorialHitNew->plan(state.xPlan.block<2, 1>(0, 0),
 												 state.vPlan.block<2, 1>(0, 0), xHit2d, vHit2d, hitting_time,
@@ -102,8 +104,8 @@ bool Repel::generateRepelTrajectory() {
 		}
 		generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
-		if (generator.optimizer->optimizeJointTrajectory(state.trajectoryBuffer.getFree().cartTrajectory,
-														 state.qPlan, state.dqPlan,
+		if (generator.optimizer->optimizeJointTrajectoryAnchor(state.trajectoryBuffer.getFree().cartTrajectory,
+														 state.qPlan, state.dqPlan, state.qPlan, hitting_time,
 														 state.trajectoryBuffer.getFree().jointTrajectory)) {
 			auto tPuckHit = state.observation.stamp +
 				ros::Duration(state.observation.puckPredictedState.predictedTime);
@@ -131,7 +133,7 @@ bool Repel::generateRepelTrajectory() {
 			hittingFailed = false;
 			return true;
 		} else {
-			vHit2d *= .9;
+			repel_velocity *= .8;
 		}
 	}
 
@@ -146,7 +148,7 @@ bool Repel::generateRepelTrajectory() {
 
 Vector2d Repel::getStopPoint(Eigen::Vector2d &hitPoint, Eigen::Vector2d &hitDirection) {
 	Vector2d stopPoint;
-	stopPoint = hitPoint + 0.2 * hitDirection;
+	stopPoint = hitPoint + 0.05 * hitDirection;
 
 	stopPoint.x() = fmin(stopPoint.x(), agentParams.hitRange[1]);
 	stopPoint.y() = fmax(fmin(stopPoint.y(), envParams.tableWidth / 2 - envParams.malletRadius - 0.05),

@@ -38,17 +38,15 @@ Agent::Agent(ros::NodeHandle nh) :
 
     loadEnvironmentParams();
     loadAgentParam();
-    state.init(agentParams);
+    state.init(nh, agentParams, getControllerName());
 
-    std::string controllerName = getControllerName();
-    observer = new Observer(nh, controllerName, agentParams.defendLine, agentParams.nq);
-    agentParams.tPredictionMax = observer->getMaxPredictionTime();
+    agentParams.tPredictionMax = state.observer->getMaxPredictionTime();
 
     generator = new TrajectoryGenerator(nh, agentParams, envParams);
 
     computeBaseConfigurations();
 
-    jointTrajectoryPub = nh.advertise<JointTrajectory>(controllerName + "/command", 2);
+    jointTrajectoryPub = nh.advertise<JointTrajectory>(getControllerName() + "/command", 2);
     cartTrajectoryPub = nh.advertise<MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
     loadTactics();
@@ -56,7 +54,6 @@ Agent::Agent(ros::NodeHandle nh) :
 
 Agent::~Agent()
 {
-    delete observer;
     delete generator;
 
     for (auto tactic : tacticsProcessor)
@@ -70,7 +67,7 @@ void Agent::start()
     ros::Duration(2.).sleep();
     gotoInit();
     ROS_INFO_STREAM_NAMED(nh.getNamespace(), nh.getNamespace() + ": " + "Agent Started");
-    observer->start();
+    state.observer->start();
 
     if (agentParams.debugTactics)
     {
@@ -80,7 +77,7 @@ void Agent::start()
 
     while (ros::ok())
     {
-        state.updateObservationAndState(observer->getObservation(), agentParams);
+        state.updateObservationAndState(agentParams);
 
         tacticsProcessor[state.currentTactic]->updateTactic();
 

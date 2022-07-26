@@ -267,12 +267,14 @@ const PuckState& PuckTracker::getEstimatedState(bool visualize)
 	return kalmanFilter_->getState();
 }
 
-const PuckPredictedState& PuckTracker::getPredictedState(bool visualize, bool delayed, bool stopBeforeSecondCollision)
+PuckPredictedState PuckTracker::getPredictedState(bool visualize, bool delayed, bool stopBeforeSecondCollision,
+														 float time)
 {
-	getPrediction(predictedState_.predictedTime, predictedState_.numOfCollisions, stopBeforeSecondCollision);
+	getPrediction(predictedState_.predictedTime, predictedState_.numOfCollisions, stopBeforeSecondCollision, time);
 	predictedState_.state = puckPredictor_->getState();
 	predictedState_.covariance = puckPredictor_->getCovariance();
 	predictedState_.stamp = ros::Time::now();
+    predictedState_.frame_id = tableRefName_;
 
 	int bufferSize;
 	if (delayed) { bufferSize = maxPredictionSteps_; }
@@ -293,10 +295,15 @@ const PuckPredictedState& PuckTracker::getPredictedState(bool visualize, bool de
 	return predictedState_;
 }
 
-void PuckTracker::getPrediction(double& predictedTime, int& nCollision, bool stopBeforeSecondCollision)
+void PuckTracker::getPrediction(double& predictedTime, int& nCollision, bool stopBeforeSecondCollision, float time)
 {
 	nCollision = 0;
 	predictedTime = 0;
+
+    int predictionSteps = maxPredictionSteps_;
+    if (time >= 0.) {
+        predictionSteps = (int) (time / rate_->expectedCycleTime().toSec());
+    }
 	if (kalmanFilter_->isStateInsideTable and kalmanFilter_->isMeasurementInsideTable)
 	{
 		//! predict future steps
@@ -305,7 +312,7 @@ void PuckTracker::getPrediction(double& predictedTime, int& nCollision, bool sto
 		if (defendingLine_ <= 0.0)
 		{
 			//! If not consider defending line, do maximum steps prediction
-			for (int i = 0; i < maxPredictionSteps_; ++i)
+			for (int i = 0; i < predictionSteps; ++i)
 			{
 				if (systemModel_->isOutsideBoundary(puckPredictor_->getState())) { break; }
 				statePrev_ = puckPredictor_->getState();
