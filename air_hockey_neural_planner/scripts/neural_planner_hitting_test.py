@@ -110,12 +110,11 @@ class NeuralPlannerHittingTestNode:
         print("PREPARE PLANNER REQUEST")
 
         def get_desired_xyth(puck_pos, goal_pose, mallet_pose):
-            abs_puck_y = np.abs(puck_pos[1])
-            d = np.abs(puck_pos[0] - 0.9)
-            if abs_puck_y > 0.125:
-                goal_pose[1] = (1 + 3.0 * np.exp(-100 * d ** 2)) * 0.125 * (abs_puck_y - 0.125) / (
-                            0.4 - 0.125) * np.sign(puck_pos[1])
-                # torqueint last_n-77
+            #abs_puck_y = np.abs(puck_pos[1])
+            #d = np.abs(puck_pos[0] - 0.9)
+            #if abs_puck_y > 0.125:
+            #    goal_pose[1] = (1 + 3.0 * np.exp(-100 * d ** 2)) * 0.125 * (abs_puck_y - 0.125) / (
+            #                0.4 - 0.125) * np.sign(puck_pos[1])
                 # goal_pose[1] = (1 + 3.0 * np.exp(-100 * d ** 2)) * 0.125 * (abs_puck_y - 0.125) / (0.4 - 0.125) * np.sign(puck_pos[1])
             print("GOAL POSE Y: ", goal_pose[1])
             puck_goal_x = goal_pose[0] - puck_pos[0]
