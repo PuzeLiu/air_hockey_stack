@@ -190,6 +190,21 @@ class NeuralPlannerHittingTestNode:
         pr.header.stamp = rospy.Time.now()
         return pr
 
+    def hit_xyth(self, x, y, th):
+        pr = PlannerRequest()
+        pr.q_0 = self.robot_joint_pose
+        pr.q_dot_0 = self.robot_joint_velocity
+        pr.q_ddot_0 = np.zeros(7)
+        hit_point = Point(x, y, 0.16)
+        pr.hit_point = hit_point
+        pr.hit_angle = th
+        pr.tactic = 0
+        pr.header.stamp = rospy.Time.now()
+        self.planner_request_publisher.publish(pr)
+        return True
+
+
+
     def request_plan(self, task=None, expected_time=-1.):
         pr = self.prepare_planner_request(task, expected_time)
         if pr is None:
@@ -207,6 +222,10 @@ class NeuralPlannerHittingTestNode:
 
 if __name__ == '__main__':
     node = NeuralPlannerHittingTestNode()
+    #node.hit_xyth(0.85, -0.1891, -1.0105)
+    #node.hit_xyth(0.8586, -0.2136, -1.12)
+    # node.hit_xyth(0.9, -0.3, -0.87606)
+    #node.hit_xyth(1.0, -0.3, 0.1)
     node.hit()
     #node.fake_hit_and_replan()
     #node.moving_puck_hitting_test()
