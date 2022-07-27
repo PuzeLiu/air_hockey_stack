@@ -18,6 +18,7 @@ from air_hockey_neural_planner.msg import PlannerRequest
 
 from air_hockey_puck_tracker.srv import GetPuckState
 
+
 def print_(x, N=5):
     for i in range(N):
         print()
@@ -64,9 +65,9 @@ class NeuralPlannerHittingTestNode:
             rospy.sleep(1.0)
             if self.request_plan():
                 # for i in range(10):
-                #rospy.sleep(0.1)
-                #print("ROS TIME:", rospy.Time.now().to_sec())
-                #self.request_replan()
+                # rospy.sleep(0.1)
+                # print("ROS TIME:", rospy.Time.now().to_sec())
+                # self.request_replan()
                 pass
             rospy.sleep(3.)
             #parent = psutil.Process(rosbag_proc.pid)
@@ -85,7 +86,22 @@ class NeuralPlannerHittingTestNode:
                 # for i in range(10):
                 rospy.sleep(0.15)
                 self.request_replan()
-                pass
+
+    def lissajoux_hit(self):
+        while not rospy.is_shutdown():
+            inp = input("Press enter to hit or insert anything to leave")
+            if inp:
+                break
+            # lissajoux
+            pr = PlannerRequest()
+            pr.q_0 = self.robot_joint_pose
+            pr.q_dot_0 = self.robot_joint_velocity
+            pr.q_ddot_0 = np.zeros(7)
+            pr.tactic = 2
+            pr.header.stamp = rospy.Time.now()
+            self.planner_request_publisher.publish(pr)
+            rospy.sleep(2.0)
+            self.request_replan()
 
     def read_puck_pose(self, t):
         resp = self.get_puck_state(t)
@@ -112,15 +128,14 @@ class NeuralPlannerHittingTestNode:
             if xy_valid(x, y):
                 print("TRY TO HIT", x, y)
                 self.request_plan((x, y), expected_time)
-                #delay = 0.3
-                #rospy.sleep(delay)
-                #new_expected_time = expected_time - delay - 0.05
-                #x, y, resp = self.read_puck_pose(new_expected_time)
-                #print(f"TRY TO HIT AFTER {delay}s: ", x, y)
-                #if xy_valid(x, y):
+                # delay = 0.3
+                # rospy.sleep(delay)
+                # new_expected_time = expected_time - delay - 0.05
+                # x, y, resp = self.read_puck_pose(new_expected_time)
+                # print(f"TRY TO HIT AFTER {delay}s: ", x, y)
+                # if xy_valid(x, y):
                 #    print("VALID")
                 #    self.request_replan((x, y), new_expected_time)
-
 
                 allow_planning = False
 
@@ -247,3 +262,6 @@ if __name__ == '__main__':
     node.hit()
     #node.fake_hit_and_replan()
     #node.moving_puck_hitting_test()
+    # node.fake_hit_and_replan()
+    #node.lissajoux_hit()
+    # node.moving_puck_hitting_test()
