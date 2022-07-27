@@ -267,10 +267,12 @@ const PuckState& PuckTracker::getEstimatedState(bool visualize)
 	return kalmanFilter_->getState();
 }
 
-const PuckPredictedState& PuckTracker::getPredictedState(bool visualize, bool delayed, bool stopBeforeSecondCollision, float time)
+PuckPredictedState PuckTracker::getPredictedState(bool visualize, bool delayed, bool stopBeforeSecondCollision,
+														 float time)
 {
 	getPrediction(predictedState_.predictedTime, predictedState_.numOfCollisions, stopBeforeSecondCollision, time);
 	predictedState_.state = puckPredictor_->getState();
+	predictedState_.covariance = puckPredictor_->getCovariance();
 	predictedState_.stamp = ros::Time::now();
     predictedState_.frame_id = tableRefName_;
 

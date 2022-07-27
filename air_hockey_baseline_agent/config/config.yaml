@@ -1,6 +1,5 @@
 air_hockey:
   agent:
-    debug_tactics: True
     rate: 100
     init_position_height: 0.2
     universal_joint_height:   0.058 # 0.0545
@@ -28,3 +27,9 @@ air_hockey:
     defend_max_ee_velocity: 0.8
     defend_plan_steps: 10
     defend_target_update_ratio: 0.2
+
+iiwa_front:
+  debug_tactics: True
+
+iiwa_back:
+  debug_tactics: False

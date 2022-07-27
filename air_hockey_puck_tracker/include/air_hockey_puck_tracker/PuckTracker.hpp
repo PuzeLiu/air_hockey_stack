@@ -46,6 +46,7 @@ namespace air_hockey_baseline_agent
 		ros::Time stamp;
         std::string frame_id;
 		PuckState state;
+		Kalman::Covariance<PuckState> covariance;
 		int numOfCollisions;
 		double predictedTime;
 	};
@@ -62,7 +63,7 @@ namespace air_hockey_baseline_agent
 
 		void start();
 
-		const PuckPredictedState& getPredictedState(bool visualize = true, bool delayed = false,
+		PuckPredictedState getPredictedState(bool visualize = true, bool delayed = false,
 			bool stopBeforeSecondCollision=false, float time = -1.);
 
 		const PuckState& getEstimatedState(bool visualize = false);
