@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="table_urdf" default="$(find air_hockey_description)/urdf/air_hockey_table/model.urdf.xacro"/>
+    <arg name="puck_urdf" default="$(find air_hockey_description)/urdf/puck/model.urdf.xacro"/>
+
+    <arg name="table_parent" default="Table"/>
+    <arg name="puck_parent" default="Puck"/>
+
+    <node name="rviz" pkg="rviz" type="rviz"
+          args="-d $(find air_hockey_puck_tracker)/rviz/config.rviz"/>
+
+    <group ns="air_hockey_table">
+        <param name="robot_description" command="$(find xacro)/xacro '$(arg table_urdf)' parent:=$(arg table_parent)"/>
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+    </group>
+
+    <group ns="puck">
+        <param name="robot_description"
+               command="$(find xacro)/xacro '$(arg puck_urdf)' parent:=$(arg puck_parent)"/>
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="frame_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="50.0"/>
+        </node>
+    </group>
+
+    <include file="$(find optitrack_bridge)/launch/optitrack.launch">
+        <arg name="output" value="log"/>
+        <arg name="use_2d" default="true"/>
+        <arg name="plane_height" default="0.110"/>
+    </include>
+
+
+    <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
+    <node name="puck_tracker_service" pkg="air_hockey_puck_tracker" type="puck_tracker_service" output="screen" ns="iiwa_front"/>
+
+
+</launch>
