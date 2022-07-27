@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+import os.path
+import shlex
+import subprocess
+
+import psutil
 import rospy
 import tf
 
@@ -51,12 +56,25 @@ class NeuralPlannerHittingTestNode:
             inp = input("Press enter to hit or insert anything to leave")
             if inp:
                 break
+            print(__file__)
+            path = os.path.dirname(os.path.dirname(__file__))
+            command = "bash " + os.path.join(path, "record_rosbag.sh 5")
+            print(command)
+            command = shlex.split(command)
+            rosbag_proc = subprocess.Popen(command)
+            rospy.sleep(1.0)
             if self.request_plan():
                 # for i in range(10):
                 # rospy.sleep(0.1)
                 # print("ROS TIME:", rospy.Time.now().to_sec())
                 # self.request_replan()
                 pass
+            rospy.sleep(3.)
+            #parent = psutil.Process(rosbag_proc.pid)
+            #for child in parent.children(recursive=True):  # or parent.children() for recursive=False
+            #    child.kill()
+            #rosbag_proc.kill()
+            #os.killpg(os.getpgid(rosbag_proc.pid), subprocess.signal.SIGTERM)
 
     def fake_hit_and_replan(self):
         while not rospy.is_shutdown():
@@ -125,12 +143,11 @@ class NeuralPlannerHittingTestNode:
         print("PREPARE PLANNER REQUEST")
 
         def get_desired_xyth(puck_pos, goal_pose, mallet_pose):
-            abs_puck_y = np.abs(puck_pos[1])
-            d = np.abs(puck_pos[0] - 0.9)
-            if abs_puck_y > 0.125:
-                goal_pose[1] = (1 + 3.0 * np.exp(-100 * d ** 2)) * 0.125 * (abs_puck_y - 0.125) / (
-                        0.4 - 0.125) * np.sign(puck_pos[1])
-                # torqueint last_n-77
+            #abs_puck_y = np.abs(puck_pos[1])
+            #d = np.abs(puck_pos[0] - 0.9)
+            #if abs_puck_y > 0.125:
+            #    goal_pose[1] = (1 + 3.0 * np.exp(-100 * d ** 2)) * 0.125 * (abs_puck_y - 0.125) / (
+            #                0.4 - 0.125) * np.sign(puck_pos[1])
                 # goal_pose[1] = (1 + 3.0 * np.exp(-100 * d ** 2)) * 0.125 * (abs_puck_y - 0.125) / (0.4 - 0.125) * np.sign(puck_pos[1])
             print("GOAL POSE Y: ", goal_pose[1])
             puck_goal_x = goal_pose[0] - puck_pos[0]
@@ -206,6 +223,21 @@ class NeuralPlannerHittingTestNode:
         pr.header.stamp = rospy.Time.now()
         return pr
 
+    def hit_xyth(self, x, y, th):
+        pr = PlannerRequest()
+        pr.q_0 = self.robot_joint_pose
+        pr.q_dot_0 = self.robot_joint_velocity
+        pr.q_ddot_0 = np.zeros(7)
+        hit_point = Point(x, y, 0.16)
+        pr.hit_point = hit_point
+        pr.hit_angle = th
+        pr.tactic = 0
+        pr.header.stamp = rospy.Time.now()
+        self.planner_request_publisher.publish(pr)
+        return True
+
+
+
     def request_plan(self, task=None, expected_time=-1.):
         pr = self.prepare_planner_request(task, expected_time)
         if pr is None:
@@ -223,7 +255,13 @@ class NeuralPlannerHittingTestNode:
 
 if __name__ == '__main__':
     node = NeuralPlannerHittingTestNode()
-    # node.hit()
+    #node.hit_xyth(0.85, -0.1891, -1.0105)
+    #node.hit_xyth(0.8586, -0.2136, -1.12)
+    # node.hit_xyth(0.9, -0.3, -0.87606)
+    #node.hit_xyth(1.0, -0.3, 0.1)
+    node.hit()
+    #node.fake_hit_and_replan()
+    #node.moving_puck_hitting_test()
     # node.fake_hit_and_replan()
-    node.lissajoux_hit()
+    #node.lissajoux_hit()
     # node.moving_puck_hitting_test()

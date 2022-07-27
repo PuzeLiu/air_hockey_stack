@@ -68,6 +68,10 @@ class Trajectory:
     def set_init_time(self, t):
         self.init_time = t
 
+    def get_hitting(self):
+        idx = len(self.q_list[0]) - 1
+        return self.t[idx], self.q[idx], self.dq[idx], self.ddq[idx]
+
     def sample(self, t):
         t -= self.init_time
         t = np.maximum(t, 0.)
@@ -151,47 +155,47 @@ class NeuralPlannerNode:
         t0 = perf_counter()
         tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time = unpack_planner_request(msg)
 
-        v_mul = 0.7
+        v_mul = 1.0
         if tactic == 0:  # HIT
             q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
-            d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d * v_mul], axis=-1)[
-                np.newaxis]
+            d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d * v_mul], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
+            #q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=t[-1]*1.5)
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             planning_time = 0.08
             traj_and_plan_time = t[-1] + planning_time
-            #print("TRAJ TIME:", t[-1])
-            #print("TRAJ AND PLAN TIME:", traj_and_plan_time)
-            #print("EXPECTED_TIME:", expected_time)
-            if traj_and_plan_time < expected_time:
-                if traj_time is None:
-                    ttw = expected_time - traj_and_plan_time
+            print("TRAJ TIME:", t[-1])
+            print("TRAJ AND PLAN TIME:", traj_and_plan_time)
+            print("EXPECTED_TIME:", expected_time)
+            if expected_time > 0.:
+                if traj_and_plan_time < expected_time:
+                    if traj_time is None:
+                        ttw = expected_time - traj_and_plan_time
+                    else:
+                        print("REPLANNING")
+                        ttw = expected_time - t[-1] - time_offset
+                        # robot is not moving
+                    print("QDOT:", np.sum(np.abs(q_dot_0)))
+                    if np.sum(np.abs(q_dot_0)) < 0.1:
+                        print("TIME TO WAIT:", ttw)
+                        traj_time = msg.header.stamp.to_sec() + ttw
+                    else:
+                        traj_and_offset_time = t[-1] + time_offset
+                        print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
+                        if traj_and_offset_time < expected_time:
+                            print("REPLANNING WHILE MOVING AND TOO MUCH TIME")
+                            requested_time = expected_time - time_offset
+                            print("REQ TIME:", requested_time)
+                            ratio = requested_time / t[-1]
+                            print("RATIO:", ratio)
+                            #t_cps /= ratio
+                            #t *= ratio
+                elif traj_and_plan_time < 1.2*expected_time:
+                    print("TRY TO ACT EVEN IT IS TOO LATE")
+                    #traj_and_offset_time = t[-1] + time_offset
+                    #print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
                 else:
-                    print("REPLANNING")
-                    ttw = expected_time - t[-1] - time_offset
-                    # robot is not moving
-                print("QDOT:", np.sum(np.abs(q_dot_0)))
-                if np.sum(np.abs(q_dot_0)) < 0.1:
-                    print("TIME TO WAIT:", ttw)
-                    traj_time = msg.header.stamp.to_sec() + ttw
-                else:
-                    traj_and_offset_time = t[-1] + time_offset
-                    print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
-                    if traj_and_offset_time < expected_time:
-                        print("REPLANNING WHILE MOVING AND TOO MUCH TIME")
-                        requested_time = expected_time - time_offset
-                        print("REQ TIME:", requested_time)
-                        ratio = requested_time / t[-1]
-                        print("RATIO:", ratio)
-                        # t_cps /= ratio
-                        # t *= ratio
-            elif traj_and_plan_time < 1.2 * expected_time:
-                print("TRY TO ACT EVEN IT IS TOO LATE")
-                # traj_and_offset_time = t[-1] + time_offset
-                # print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
-            else:
-                if expected_time > 0:
                     return False
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             d_ret = np.concatenate([q_d, Base.configuration, [0.], Base.position, dq[-1], [0.], ddq[-1], [0.] * 8],
@@ -282,7 +286,7 @@ class NeuralPlannerNode:
             iiwa_front_bspline_hitting.t_control_points = ts[i].flatten()
             iiwa_front_bspline.segments.append(iiwa_front_bspline_hitting)
         if traj_time is None:
-            iiwa_front_bspline.header.stamp = rospy.Time.now() + rospy.Duration(0.050)
+            iiwa_front_bspline.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
         else:
             iiwa_front_bspline.header.stamp = rospy.Time(traj_time)
         self.actual_trajectory.set_init_time(iiwa_front_bspline.header.stamp.to_sec())
@@ -335,13 +339,15 @@ class NeuralPlannerNode:
         planner_status = PlannerStatus()
         planner_status.success = valid
         planner_status.planning_time = planning_time
-        planner_status.expected_hitting_time = self.actual_trajectory.t_list[0][-1]
-        planner_status.planned_hit_joint_velocity = dq[-1]
-        q_hit = np.concatenate([q[-1], np.zeros(3)], axis=-1)
+        t_hit, q_hit, dq_hit, _ = self.actual_trajectory.get_hitting()
+        planner_status.planned_motion_time = self.actual_trajectory.t[-1]
+        planner_status.planned_hitting_time = t_hit
+        planner_status.planned_hit_joint_velocity = dq_hit
+        q_hit = np.concatenate([q_hit, np.zeros(3)], axis=-1)
         pino.forwardKinematics(self.pino_model, self.pino_data, q_hit)
         J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q_hit, self.joint_idx,
                                       pino.LOCAL_WORLD_ALIGNED)[:3, :6]
-        planner_status.planned_hit_cartesian_velocity = J @ dq[-1]
+        planner_status.planned_hit_cartesian_velocity = J @ dq_hit
         self.planner_status_publisher.publish(planner_status)
 
 
