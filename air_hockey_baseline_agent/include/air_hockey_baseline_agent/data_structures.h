@@ -110,7 +110,7 @@ namespace air_hockey_baseline_agent {
 		JointArrayType jointDesiredVelocity;
 		PuckState puckEstimatedState;
 		PuckPredictedState puckPredictedState;
-		air_hockey_referee::GameStatus gameStatus;
+		air_hockey_msgs::GameStatus gameStatus;
 	};
 
 	struct OptimizerData {

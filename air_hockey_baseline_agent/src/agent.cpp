@@ -367,7 +367,8 @@ std::string Agent::getControllerName()
     return controllerName;
 }
 
-bool Agent::setTacticService(SetTacticsService::Request& req, SetTacticsService::Response& res)
+bool Agent::setTacticService(air_hockey_msgs::SetTacticsService::Request& req,
+							 air_hockey_msgs::SetTacticsService::Response& res)
 {
 	if (req.tactic == "SMASH") {
 		agentParams.debuggingTactic = Tactics::SMASH;

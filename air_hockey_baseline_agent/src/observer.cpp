@@ -60,7 +60,7 @@ const ObservationState& Observer::getObservation() {
     return observation;
 }
 
-void Observer::refereeStatusCallback(const air_hockey_referee::GameStatus::ConstPtr &msg) {
+void Observer::refereeStatusCallback(const air_hockey_msgs::GameStatus::ConstPtr &msg) {
 	auto newStatus = *msg;
 	statusChanged = statusChanged || (newStatus.status != observation.gameStatus.status);
     observation.gameStatus = newStatus;

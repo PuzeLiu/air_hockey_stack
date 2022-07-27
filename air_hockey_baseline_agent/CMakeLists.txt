@@ -4,16 +4,16 @@ project(air_hockey_baseline_agent)
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
-   roscpp
-   geometry_msgs
-   sensor_msgs
-   trajectory_msgs
-   tf2
-   tf2_ros
-   tf2_geometry_msgs
-   air_hockey_puck_tracker
-   air_hockey_referee
-   )
+    roscpp
+    geometry_msgs
+    sensor_msgs
+    trajectory_msgs
+    tf2
+    tf2_ros
+    tf2_geometry_msgs
+    air_hockey_puck_tracker
+    air_hockey_referee
+    )
 
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(Eigen3 REQUIRED)
@@ -22,21 +22,10 @@ find_package(OsqpEigen REQUIRED)
 find_package(NLopt REQUIRED)
 find_package(pinocchio REQUIRED)
 
-add_service_files(
-        FILES
-        SetTacticsService.srv
-)
-
-generate_messages(
-        DEPENDENCIES
-        std_msgs
-)
-
-
 catkin_package(
-   INCLUDE_DIRS include
-   LIBRARIES air_hockey_puck_tracker
-   CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros tf2_geometry_msgs air_hockey_puck_tracker air_hockey_referee
+    INCLUDE_DIRS include
+    LIBRARIES air_hockey_puck_tracker
+    CATKIN_DEPENDS roscpp geometry_msgs sensor_msgs tf2 tf2_ros tf2_geometry_msgs air_hockey_msgs air_hockey_puck_tracker air_hockey_referee
 )
 
 ###########
@@ -44,8 +33,8 @@ catkin_package(
 ###########
 
 include_directories(
-   include
-   ${catkin_INCLUDE_DIRS}
+    include
+    ${catkin_INCLUDE_DIRS}
 )
 
 link_directories(
@@ -53,37 +42,37 @@ link_directories(
 )
 
 set(SOURCES
-   src/agent.cpp
-   src/system_state.cpp
-   src/utils.cpp
-   src/null_space_optimizer.cpp
-   src/hitting_point_optimizer.cpp
-   src/observer.cpp
-   src/trajectory_generator.cpp
-   src/trajectory_buffer.cpp
-   src/transformations.cpp
-   src/planner/bezier_hit.cpp
-   src/planner/combinatorial_hit.cpp
-   src/planner/combinatorial_hit_new.cpp
-   src/planner/stable_dynamics_motion.cpp
-   src/planner/cubic_linear_motion.cpp
-   src/tactics/cut.cpp
-   src/tactics/init.cpp
-   src/tactics/move_puck.cpp
-   src/tactics/prepare.cpp
-   src/tactics/ready.cpp
-   src/tactics/repel.cpp
-   src/tactics/smash.cpp
-   src/tactics/tactics.cpp
-   )
+    src/agent.cpp
+    src/system_state.cpp
+    src/utils.cpp
+    src/null_space_optimizer.cpp
+    src/hitting_point_optimizer.cpp
+    src/observer.cpp
+    src/trajectory_generator.cpp
+    src/trajectory_buffer.cpp
+    src/transformations.cpp
+    src/planner/bezier_hit.cpp
+    src/planner/combinatorial_hit.cpp
+    src/planner/combinatorial_hit_new.cpp
+    src/planner/stable_dynamics_motion.cpp
+    src/planner/cubic_linear_motion.cpp
+    src/tactics/cut.cpp
+    src/tactics/init.cpp
+    src/tactics/move_puck.cpp
+    src/tactics/prepare.cpp
+    src/tactics/ready.cpp
+    src/tactics/repel.cpp
+    src/tactics/smash.cpp
+    src/tactics/tactics.cpp
+    )
 
 add_executable(${PROJECT_NAME}
-   src/main.cpp
-   ${SOURCES})
+    src/main.cpp
+    ${SOURCES})
 
 add_executable(hitting_point_optimizer_example
-   src/utils.cpp
-   src/hitting_point_optimizer.cpp
+    src/utils.cpp
+    src/hitting_point_optimizer.cpp
     examples/hitting_point_optimizer_example.cpp)
 
 add_executable(null_space_optimizer_example
@@ -96,33 +85,33 @@ add_executable(null_space_optimizer_example
     examples/null_space_optimizer_example.cpp)
 
 add_executable(null_space_optimizer_generate_data
-        src/utils.cpp
-        src/null_space_optimizer.cpp
-        src/hitting_point_optimizer.cpp
-        src/planner/combinatorial_hit_new.cpp
-        src/planner/cubic_linear_motion.cpp
-        src/transformations.cpp
-        examples/null_space_optimizer_generate_data.cpp)
+    src/utils.cpp
+    src/null_space_optimizer.cpp
+    src/hitting_point_optimizer.cpp
+    src/planner/combinatorial_hit_new.cpp
+    src/planner/cubic_linear_motion.cpp
+    src/transformations.cpp
+    examples/null_space_optimizer_generate_data.cpp)
 
 add_executable(promp_test
-   src/test/ProMP_test.cpp)
+    src/test/ProMP_test.cpp)
 
 target_link_libraries(${PROJECT_NAME}
-   ${catkin_LIBRARIES}
-   osqp::osqp
-   OsqpEigen::OsqpEigen
-   NLopt::nlopt
-   Clp
-   CoinUtils
-   pinocchio::pinocchio
-   )
+    ${catkin_LIBRARIES}
+    osqp::osqp
+    OsqpEigen::OsqpEigen
+    NLopt::nlopt
+    Clp
+    CoinUtils
+    pinocchio::pinocchio
+    )
 target_link_libraries(hitting_point_optimizer_example
-   ${catkin_LIBRARIES}
-   NLopt::nlopt
-   Clp
-   CoinUtils
-   pinocchio::pinocchio
-   )
+    ${catkin_LIBRARIES}
+    NLopt::nlopt
+    Clp
+    CoinUtils
+    pinocchio::pinocchio
+    )
 target_link_libraries(null_space_optimizer_example
     ${catkin_LIBRARIES}
     osqp::osqp
@@ -133,41 +122,41 @@ target_link_libraries(null_space_optimizer_example
     pinocchio::pinocchio
     )
 target_link_libraries(null_space_optimizer_generate_data
-        ${catkin_LIBRARIES}
-        osqp::osqp
-        OsqpEigen
-        NLopt::nlopt
-        Clp
-        CoinUtils
-        pinocchio::pinocchio
-        )
+    ${catkin_LIBRARIES}
+    osqp::osqp
+    OsqpEigen
+    NLopt::nlopt
+    Clp
+    CoinUtils
+    pinocchio::pinocchio
+    )
 
 target_link_libraries(promp_test
-   ${catkin_LIBRARIES}
-   )
+    ${catkin_LIBRARIES}
+    )
 
 #############
 ## Install ##
 #############
 
 install(TARGETS ${PROJECT_NAME}
-   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-   )
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
 
 install(DIRECTORY include/${PROJECT_NAME}/
-   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-   FILES_MATCHING PATTERN "*.h"
-   PATTERN ".svn" EXCLUDE
-   )
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+    FILES_MATCHING PATTERN "*.h"
+    PATTERN ".svn" EXCLUDE
+    )
 
 install(DIRECTORY launch
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-   PATTERN ".svn" EXCLUDE
-   )
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    PATTERN ".svn" EXCLUDE
+    )
 
 install(DIRECTORY config
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-   PATTERN ".svn" EXCLUDE
-   )
+    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+    PATTERN ".svn" EXCLUDE
+    )
 
 

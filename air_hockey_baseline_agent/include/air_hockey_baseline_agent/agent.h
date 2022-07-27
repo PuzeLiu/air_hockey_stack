@@ -32,10 +32,8 @@
 #include "air_hockey_baseline_agent/null_space_optimizer.h"
 #include "air_hockey_baseline_agent/transformations.h"
 #include "air_hockey_baseline_agent/utils.h"
-#include "air_hockey_baseline_agent/SetTacticsService.h"
+#include "air_hockey_msgs/SetTacticsService.h"
 #include <ros/package.h>
-
-using namespace std;
 
 namespace air_hockey_baseline_agent {
 
@@ -45,7 +43,8 @@ public:
 	~Agent();
 
 	void start();
-	bool setTacticService(SetTacticsService::Request &req, SetTacticsService::Response &res);
+	bool setTacticService(air_hockey_msgs::SetTacticsService::Request &req,
+						  air_hockey_msgs::SetTacticsService::Response &res);
 
 private:
 	std::string getControllerName();

@@ -18,6 +18,7 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
+  <depend>air_hockey_msgs</depend>
   <depend>air_hockey_puck_tracker</depend>
   <depend>air_hockey_referee</depend>
   <build_depend>roscpp</build_depend>

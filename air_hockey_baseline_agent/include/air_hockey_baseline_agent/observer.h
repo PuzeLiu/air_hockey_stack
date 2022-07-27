@@ -56,7 +56,7 @@ namespace air_hockey_baseline_agent {
 
     private:
         void jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg);
-        void refereeStatusCallback(const air_hockey_referee::GameStatus::ConstPtr &msg);
+        void refereeStatusCallback(const air_hockey_msgs::GameStatus::ConstPtr &msg);
 
     private:
         ros::Subscriber jointSub;
