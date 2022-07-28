@@ -135,6 +135,10 @@ target_link_libraries(promp_test
     ${catkin_LIBRARIES}
     )
 
+
+catkin_install_python(PROGRAMS scripts/debug_tactics.py
+    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+    )
 #############
 ## Install ##
 #############

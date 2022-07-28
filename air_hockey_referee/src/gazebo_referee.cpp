@@ -63,9 +63,9 @@ bool GazeboReferee::resetPuck(std::string* msg, bool onHome) {
 
 void GazeboReferee::update() {
     Referee::update();
-    checkMallet();
+    // checkMallet();
     if (gameStatusMsg.status == GameStatus::PAUSE){
-        ros::Duration(5.0).sleep();
+        ros::Duration(3.0).sleep();
         if (isPuckOnTable()) {
             gameStatusMsg.status = GameStatus::START;
             statusPub.publish(gameStatusMsg);

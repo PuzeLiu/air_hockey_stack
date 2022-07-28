@@ -54,6 +54,8 @@ namespace air_hockey_baseline_agent {
 
 		void cubicSplineInterpolation(trajectory_msgs::JointTrajectory &jointTraj, trajectory_msgs::JointTrajectoryPoint &planPrevPoint);
 
+		void synchronizeCartesianTrajectory(const trajectory_msgs::JointTrajectory &jointTraj, trajectory_msgs::MultiDOFJointTrajectory &cartTraj);
+
 		void initOptimizerData(const ros::NodeHandle &nh);
 
 

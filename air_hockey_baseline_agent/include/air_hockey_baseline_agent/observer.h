@@ -32,42 +32,33 @@
 #include "air_hockey_baseline_agent/data_structures.h"
 
 namespace air_hockey_baseline_agent {
-    class Observer {
-    public:
-        Observer(ros::NodeHandle& nh, std::string controllerName, double defendLine, int n_joints);
+class Observer {
+ public:
+  Observer(ros::NodeHandle &nh, std::string controllerName,
+           ObservationState *observation, double defendLine);
 
-        ~Observer();
+  ~Observer();
 
-        void start();
+  void start();
 
-        const ObservationState& getObservation();
+  void updateObservation(float prediction_time = -1.);
 
-        inline bool isGameStatusChanged() {
-        	bool changed = statusChanged;
-        	statusChanged = false;
-        	return changed;
-        }
+  inline const double getMaxPredictionTime() {
+	  return maxPredictionTime;
+  }
 
-        inline const double getMaxPredictionTime() {
-        	return maxPredictionTime;
-        }
+ private:
+  void jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg);
+  void refereeStatusCallback(const air_hockey_msgs::GameStatus::ConstPtr &msg);
 
+ private:
+  ros::Subscriber jointSub;
+  ros::Subscriber refereeSub;
 
-
-    private:
-        void jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg);
-        void refereeStatusCallback(const air_hockey_msgs::GameStatus::ConstPtr &msg);
-
-    private:
-        ros::Subscriber jointSub;
-        ros::Subscriber refereeSub;
-
-        PuckTracker puckTracker;
-        double maxPredictionTime;
-
-        ObservationState observation;
-        bool statusChanged;
-    };
+  PuckTracker puckTracker;
+  double maxPredictionTime;
+  ObservationState *observation;
+};
 }
 
 #endif //SRC_TACTICAL_AGENT_OBSERVATION_H

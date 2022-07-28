@@ -29,7 +29,11 @@ using namespace air_hockey_baseline_agent;
 SystemState::SystemState() {
 }
 
-void SystemState::init(const AgentParams &agentParams)
+SystemState::~SystemState() {
+	delete observer;
+}
+
+void SystemState::init(ros::NodeHandle nh, const AgentParams &agentParams, std::string controllerName)
 {
     trajectoryBuffer = TrajectoryBuffer(agentParams);
 
@@ -44,6 +48,20 @@ void SystemState::init(const AgentParams &agentParams)
 	dqPlan.resize(agentParams.nq);
     planPrevPoint.positions.resize(agentParams.nq);
     planPrevPoint.velocities.resize(agentParams.nq);
+
+	observation.jointPosition.resize(agentParams.nq);
+	observation.jointVelocity.resize(agentParams.nq);
+	observation.jointDesiredPosition.resize(agentParams.nq);
+	observation.jointDesiredVelocity.resize(agentParams.nq);
+	observation.jointPosition.setZero();
+	observation.jointVelocity.setZero();
+	observation.jointDesiredPosition.setZero();
+	observation.jointDesiredVelocity.setZero();
+	observation.puckEstimatedState.setZero();
+	observation.puckPredictedState.state.setZero();
+	observation.puckPredictedState.covariance.setZero();
+
+	observer = new Observer(nh, controllerName, &observation, agentParams.defendLine);
 }
 
 bool SystemState::hasActiveTrajectory() {
@@ -59,17 +77,15 @@ bool SystemState::isPuckApproaching() {
 	return approachingCount > 10;
 }
 
-void SystemState::updateObservationAndState(ObservationState observationState,
-											const AgentParams& agentParams){
-	observation = observationState;
-
+void SystemState::updateObservationAndState(const AgentParams& agentParams){
+	observer->updateObservation();
 	if (observation.puckPredictedState.state.block<2, 1>(2, 0).norm() < agentParams.staticVelocityThreshold){
 		++staticCount;
 	} else {
 		staticCount = 0;
 	}
 
-	if (observationState.puckEstimatedState.dx() < 0){
+	if (observation.puckEstimatedState.dx() < 0){
 		++approachingCount;
 	} else {
 		approachingCount = 0;

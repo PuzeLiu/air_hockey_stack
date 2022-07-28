@@ -51,8 +51,8 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &x_start, const Eigen::Vect
 	vEnd = v_end;
 
 	//! check the velocity at start and end point
-	if ((v_start.norm() > 1e-3 && v_end.norm() > 1e-3) ||
-	    (v_start.norm() < 1e-3 && v_end.norm() < 1e-3)) {
+	if ((v_start.norm() > 1e-2 && v_end.norm() > 1e-2) ||
+	    (v_start.norm() < 1e-2 && v_end.norm() < 1e-2)) {
 		cerr << "One of the velocity at start / end point should be zero" << endl;
 		cerr << "Start: " << v_start.transpose() << endl;
 		cerr << "End: " << v_end.transpose() << endl;

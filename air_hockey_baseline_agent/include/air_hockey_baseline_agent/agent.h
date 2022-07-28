@@ -70,7 +70,6 @@ private:
 	AgentParams agentParams;
 
 	// Logic
-	Observer *observer;
 	TrajectoryGenerator *generator;
 	std::vector<Tactic*> tacticsProcessor;
 

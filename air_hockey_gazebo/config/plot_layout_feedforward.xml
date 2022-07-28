@@ -1,0 +1,239 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root>
+ <tabbed_widget name="Main Window" parent="main_window">
+  <Tab containers="1" tab_name="Position">
+   <Container>
+    <DockSplitter count="2" sizes="0.500564;0.499436" orientation="-">
+     <DockSplitter count="3" sizes="0.333333;0.333333;0.333333" orientation="|">
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.004930" right="288.624000" left="268.624000" top="-0.004930"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/positions.0"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/positions.0"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.106764" right="288.624000" left="268.624000" top="-0.106764"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/positions.1"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/positions.1"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="0.001197" right="288.624000" left="268.624000" top="0.001199"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/positions.2"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/positions.2"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+     <DockSplitter count="4" sizes="0.25032;0.24968;0.25032;0.24968" orientation="|">
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-1.688237" right="288.624000" left="268.624000" top="-1.688237"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/positions.3"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/positions.3"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="0.003766" right="288.624000" left="268.624000" top="0.003766"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/positions.4"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/positions.4"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="1.167572" right="288.624000" left="268.624000" top="1.167572"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/positions.5"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/positions.5"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.009514" right="288.624000" left="268.624000" top="-0.009510"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/positions.6"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/positions.6"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab containers="1" tab_name="Velocities">
+   <Container>
+    <DockSplitter count="2" sizes="0.500564;0.499436" orientation="-">
+     <DockSplitter count="3" sizes="0.333333;0.333333;0.333333" orientation="|">
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.000000" right="289.146000" left="269.146000" top="0.000000"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/velocities.0"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/velocities.0"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.000000" right="289.146000" left="269.146000" top="0.000000"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/velocities.1"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/velocities.1"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.000000" right="289.146000" left="269.146000" top="0.000000"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/velocities.2"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/velocities.2"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+     <DockSplitter count="4" sizes="0.25032;0.24968;0.25032;0.24968" orientation="|">
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.000000" right="289.146000" left="269.146000" top="0.000000"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/velocities.3"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/velocities.3"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.000000" right="289.146000" left="269.146000" top="0.000000"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/velocities.4"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/velocities.4"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.000000" right="289.146000" left="269.146000" top="0.000000"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/velocities.5"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/velocities.5"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.000000" right="289.146000" left="269.146000" top="0.000000"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_feedforward_trajectory_controller/state/desired/velocities.6"/>
+        <curve color="#d62728" name="/iiwa_front/joint_feedforward_trajectory_controller/state/actual/velocities.6"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <Tab containers="1" tab_name="Effort">
+   <Container>
+    <DockSplitter count="2" sizes="0.500564;0.499436" orientation="-">
+     <DockSplitter count="3" sizes="0.333333;0.333333;0.333333" orientation="|">
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="0.000000" right="290.836000" left="270.836000" top="0.000000"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_states/F_joint_1/effort"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-13.633622" right="290.836000" left="270.836000" top="-13.633621"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_states/F_joint_2/effort"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="0.035005" right="290.836000" left="270.836000" top="0.035005"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_states/F_joint_3/effort"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+     <DockSplitter count="4" sizes="0.25032;0.24968;0.25032;0.24968" orientation="|">
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="18.072478" right="290.836000" left="270.836000" top="18.072478"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_states/F_joint_4/effort"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-0.332371" right="290.836000" left="270.836000" top="-0.332371"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_states/F_joint_5/effort"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="-1.230141" right="290.836000" left="270.836000" top="-1.230141"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_states/F_joint_6/effort"/>
+       </plot>
+      </DockArea>
+      <DockArea name="...">
+       <plot style="Lines" mode="TimeSeries" flip_x="false" flip_y="false">
+        <range bottom="0.000000" right="290.836000" left="270.836000" top="0.000000"/>
+        <limitY/>
+        <curve color="#1f77b4" name="/iiwa_front/joint_states/F_joint_7/effort"/>
+       </plot>
+      </DockArea>
+     </DockSplitter>
+    </DockSplitter>
+   </Container>
+  </Tab>
+  <currentTabIndex index="2"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="0"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad CSV">
+   <default time_axis="" delimiter="0"/>
+  </plugin>
+  <plugin ID="DataLoad ROS bags">
+   <use_header_stamp value="false"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+   <boolean_strings_to_number value="true"/>
+   <remove_suffix_from_strings value="true"/>
+  </plugin>
+  <plugin ID="DataLoad ULog"/>
+  <plugin ID="ROS Topic Subscriber">
+   <use_header_stamp value="false"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+   <boolean_strings_to_number value="true"/>
+   <remove_suffix_from_strings value="true"/>
+  </plugin>
+  <plugin ID="UDP Server"/>
+  <plugin ID="WebSocket Server"/>
+  <plugin ID="Fast Fourier Transform"/>
+  <plugin ID="Quaternion to RPY"/>
+  <plugin ID="Reactive Script Editor">
+   <library code="--[[ Helper function to create a ScatterXY series from arrays.&#xa;&#xa; series_name: name of the created ScatterXY series&#xa; prefix:      prefix of the timeseries, before the index of the array&#xa; suffix_X:   suffix to complete the name of the series containing the X value.&#xa;             if [nil], the index of the array will be used.&#xa; suffix_Y:   suffix to complete the name of the series containing the Y value&#xa; timestamp:   usually the tracker_time variable&#xa;              &#xa; Example:&#xa; &#xa; Assuming we have multiple series in the form:&#xa; &#xa;   /trajectory/node.{N}/position/x&#xa;   /trajectory/node.{N}/position/y&#xa;   &#xa; where {N} is the index of the array (integer). We can create a reactive series from the array with:&#xa; &#xa;   CreateSeriesFromArray( &quot;my_trajectory&quot;, &quot;/trajectory/node&quot;,  &quot;position/x&quot;, &quot;position/y&quot;, tracker_time );&#xa;]]--&#xa;&#xa;function CreateSeriesFromArray( series_name, prefix, suffix_X, suffix_Y, timestamp )&#xa;  --- create a new series or overwite the previous one&#xa;  new_series = MutableScatterXY.new(series_name)&#xa;  &#xa;  --- Append points to new_series&#xa;  index = 0&#xa;  while(true) do&#xa;&#xa;    x = index;&#xa;    -- if not nil, get the X coordinate from a series&#xa;    if suffix_X ~= nil then &#xa;      series_x = TimeseriesView.find( string.format( &quot;%s.%d/%s&quot;, prefix, index, suffix_X) )&#xa;      if series_x == nil then break end&#xa;      x = series_x:atTime(timestamp)&#x9; &#xa;    end&#xa;    &#xa;    series_y = TimeseriesView.find( string.format( &quot;%s.%d/%s&quot;, prefix, index, suffix_Y) )&#xa;    if series_x == nil then break end &#xa;    y = series_y:atTime(timestamp)&#xa;    &#xa;    new_series:push_back(x,y)&#xa;    index = index+1&#xa;  end&#xa;end&#xa;"/>
+   <scripts/>
+  </plugin>
+  <plugin ID="CSV Exporter"/>
+  <plugin ID="ROS /rosout Visualization"/>
+  <plugin ID="ROS Topic Re-Publisher"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <previouslyLoaded_Datafiles/>
+ <previouslyLoaded_Streamer name="ROS Topic Subscriber"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets/>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

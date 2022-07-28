@@ -65,6 +65,10 @@ public:
 	bool apply() override;
 	void setNextState() override;
 	~Init() override;
+
+protected:
+	bool planTrajectory();
+	bool hasPlannedToInitPoint;
 };
 
 class Home: public Tactic {
@@ -118,9 +122,10 @@ public:
 	void setNextState() override;
 	~Repel() override;
 protected:
-	bool generateRepelTrajectory(const JointArrayType &qCur, ros::Time &tStart);
+	bool generateRepelTrajectory();
+	Eigen::Vector2d getStopPoint(Eigen::Vector2d &hitPoint, Eigen::Vector2d &hitDirection);
 
-	int counter;
+	bool hittingFailed;
 };
 
 class Prepare: public Tactic {

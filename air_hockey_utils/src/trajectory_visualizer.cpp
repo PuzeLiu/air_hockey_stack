@@ -27,6 +27,11 @@ nh(nh_.getNamespace()), tfListener(tfBuffer)
     {
         ROS_FATAL_STREAM("Unknown namespace for trajectory visualization: " << nh.getNamespace());
     }
+
+	if (not tfBuffer.canTransform(sourceFrame, targetFrame, ros::Time::now(), ros::Duration(10))) {
+		ROS_WARN_STREAM("Unable to find transform between " << sourceFrame << " and " << targetFrame);
+		ROS_WARN_STREAM("The visualizer may not work properly");
+	}
 }
 
 void TrajectoryVisualizer::update()

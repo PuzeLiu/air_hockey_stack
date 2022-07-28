@@ -38,17 +38,15 @@ Agent::Agent(ros::NodeHandle nh) :
 
     loadEnvironmentParams();
     loadAgentParam();
-    state.init(agentParams);
+    state.init(nh, agentParams, getControllerName());
 
-    std::string controllerName = getControllerName();
-    observer = new Observer(nh, controllerName, agentParams.defendLine, agentParams.nq);
-    agentParams.tPredictionMax = observer->getMaxPredictionTime();
+    agentParams.tPredictionMax = state.observer->getMaxPredictionTime();
 
     generator = new TrajectoryGenerator(nh, agentParams, envParams);
 
     computeBaseConfigurations();
 
-    jointTrajectoryPub = nh.advertise<JointTrajectory>(controllerName + "/command", 2);
+    jointTrajectoryPub = nh.advertise<JointTrajectory>(getControllerName() + "/command", 2);
     cartTrajectoryPub = nh.advertise<MultiDOFJointTrajectory>("cartesian_trajectory", 1);
 
     loadTactics();
@@ -56,7 +54,6 @@ Agent::Agent(ros::NodeHandle nh) :
 
 Agent::~Agent()
 {
-    delete observer;
     delete generator;
 
     for (auto tactic : tacticsProcessor)
@@ -70,7 +67,7 @@ void Agent::start()
     ros::Duration(2.).sleep();
     gotoInit();
     ROS_INFO_STREAM_NAMED(nh.getNamespace(), nh.getNamespace() + ": " + "Agent Started");
-    observer->start();
+    state.observer->start();
 
     if (agentParams.debugTactics)
     {
@@ -80,7 +77,7 @@ void Agent::start()
 
     while (ros::ok())
     {
-        state.updateObservationAndState(observer->getObservation(), agentParams);
+        state.updateObservationAndState(agentParams);
 
         tacticsProcessor[state.currentTactic]->updateTactic();
 
@@ -129,7 +126,9 @@ void Agent::gotoInit()
     state.trajectoryBuffer.getFree().cartTrajectory.points.push_back(cartViaPoint);
     state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.trajectoryBuffer.getFree().jointTrajectory.header.stamp;
 
-    state.tPlan = state.trajectoryBuffer.getFree().jointTrajectory.header.stamp + state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
+    state.tPlan = state.trajectoryBuffer.getFree().jointTrajectory.header.stamp +
+		state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start;
+	state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset);
     publishTrajectory();
     ROS_INFO_STREAM_NAMED(agentParams.name, agentParams.name + ": " + "Initialize the agent, goto initial position");
     ros::Duration(state.trajectoryBuffer.getFree().jointTrajectory.points.back().time_from_start).sleep();
@@ -168,7 +167,7 @@ void Agent::loadAgentParam()
     agentParams.nq = agentParams.pinoModel.nq;
 
     std::vector<double> xTmp;
-    nh.param("/air_hockey/agent/debug_tactics", agentParams.debugTactics, false);
+    nh.param(agentParams.name + "/debug_tactics", agentParams.debugTactics, false);
 
     if (!nh.getParam("/air_hockey/agent/rate", agentParams.rate))
     {
