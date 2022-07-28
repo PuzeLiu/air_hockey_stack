@@ -211,9 +211,9 @@ class NeuralPlannerNode:
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
         elif tactic == 2:
-            if np.sum(np.abs(q_dot_0)) > 0.1 or np.sum(np.abs(q_0)) > 0.1:
-                print("NEED TO BE AT START WITH 0 VELOCITY")
-                return 0
+            #if np.sum(np.abs(q_dot_0)) > 0.1 or np.sum(np.abs(q_0)) > 0.1:
+            #    print("NEED TO BE AT START WITH 0 VELOCITY")
+            #    return 0
             expected_time = 1.
             x_1 = 0.65
             y_1 = -0.15
@@ -230,9 +230,9 @@ class NeuralPlannerNode:
             q_dot_d2 = np.pad(q_dot_d2, [[0, 1]], mode='constant')
             p_d1 = np.array([x_1, y_1, Base.position[-1]])
             p_d2 = np.array([x_2, y_2, Base.position[-1]])
-            q_dot_0 = np.zeros((7,))
+            #q_dot_0 = np.zeros((7,))
             q_ddot_0 = np.zeros((7,))
-            d = np.concatenate([Base.configuration, [0.], q_d1, p_d1, q_dot_0, q_ddot_0, q_dot_d1], axis=-1)[np.newaxis]
+            d = np.concatenate([q_0, q_d1, p_d1, q_dot_0, q_ddot_0, q_dot_d1], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt,
                                                           expected_time=expected_time)
