@@ -26,6 +26,7 @@
 using namespace air_hockey_baseline_agent;
 using namespace trajectory_msgs;
 using namespace Eigen;
+using namespace std;
 
 Agent::Agent(ros::NodeHandle nh) :
     nh(nh), rate(100)

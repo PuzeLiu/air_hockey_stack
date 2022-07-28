@@ -46,6 +46,11 @@ namespace air_hockey_baseline_agent {
 			const Eigen::Vector2d &xEnd, const Eigen::Vector2d &vEnd,
 			trajectory_msgs::MultiDOFJointTrajectory &cartTraj);
 
+		bool plan(const Eigen::Vector3d &xStart, const Eigen::Vector3d &vStart,
+		        Eigen::Vector3d &xHit, Eigen::Vector3d &vHit, double &hitting_time,
+		        const Eigen::Vector3d &xEnd, const Eigen::Vector3d &vEnd,
+		        trajectory_msgs::MultiDOFJointTrajectory &cartTraj);
+
 	private:
 		bool getMiddlePoint();
 

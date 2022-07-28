@@ -24,12 +24,11 @@
 #ifndef SRC_TACTICAL_AGENT_OBSERVATION_H
 #define SRC_TACTICAL_AGENT_OBSERVATION_H
 
+#include "air_hockey_baseline_agent/data_structures.h"
 #include <ros/ros.h>
 #include <geometry_msgs/TransformStamped.h>
 
 #include <control_msgs/JointTrajectoryControllerState.h>
-
-#include "air_hockey_baseline_agent/data_structures.h"
 
 namespace air_hockey_baseline_agent {
 class Observer {

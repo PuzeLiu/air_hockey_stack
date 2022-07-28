@@ -46,6 +46,26 @@ public:
 	bool setTacticService(air_hockey_msgs::SetTacticsService::Request &req,
 						  air_hockey_msgs::SetTacticsService::Response &res);
 
+	inline AgentParams& getAgentParams() {
+		return agentParams;
+	}
+
+	inline EnvironmentParams& getEnvironmentParams() {
+	  return envParams;
+	}
+
+	inline SystemState& getState() {
+		return state;
+	}
+
+	inline TrajectoryGenerator& getTrajectoryGenerator() {
+		return *generator;
+	}
+
+	inline std::vector<Tactic*> getTacticsProcessor() {
+		return tacticsProcessor;
+	}
+
 private:
 	std::string getControllerName();
 

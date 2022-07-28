@@ -96,6 +96,10 @@ add_executable(null_space_optimizer_generate_data
 add_executable(promp_test
     src/test/ProMP_test.cpp)
 
+add_executable(baseline_hitting_experiment
+    examples/baseline_hitting_experiment.cpp
+    ${SOURCES})
+
 target_link_libraries(${PROJECT_NAME}
     ${catkin_LIBRARIES}
     osqp::osqp
@@ -134,6 +138,15 @@ target_link_libraries(null_space_optimizer_generate_data
 target_link_libraries(promp_test
     ${catkin_LIBRARIES}
     )
+
+target_link_libraries(baseline_hitting_experiment
+    ${catkin_LIBRARIES}
+    osqp::osqp
+    OsqpEigen
+    NLopt::nlopt
+    Clp
+    CoinUtils
+    pinocchio::pinocchio)
 
 
 catkin_install_python(PROGRAMS scripts/debug_tactics.py
