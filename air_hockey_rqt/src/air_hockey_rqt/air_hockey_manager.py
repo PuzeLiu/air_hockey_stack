@@ -10,8 +10,9 @@ from python_qt_binding.QtGui import QTextCursor, QTextCharFormat, QBrush, QColor
 from python_qt_binding.QtWidgets import QWidget, QDialogButtonBox
 
 
-from air_hockey_referee.srv import *
-from air_hockey_referee.msg import GameStatus
+from air_hockey_msgs.srv import PauseGame, PauseGameRequest, ResetRobot, ResetRobotRequest, \
+    StopGame, StopGameRequest, StartGame, StartGameRequest
+from air_hockey_msgs.msg import GameStatus
 
 
 class AirHockeyManager(Plugin):
