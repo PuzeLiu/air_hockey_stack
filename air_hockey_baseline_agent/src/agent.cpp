@@ -355,6 +355,11 @@ std::string Agent::getControllerName()
                 controllerName = "adrc_trajectory_controller";
                 break;
             }
+            else if (topics[i].name == nh.getNamespace() + "/bspline_adrc_joint_trajectory_controller/state")
+            {
+	            controllerName = "bspline_adrc_joint_trajectory_controller";
+	            break;
+            }
         }
 
         if (controllerName == "")

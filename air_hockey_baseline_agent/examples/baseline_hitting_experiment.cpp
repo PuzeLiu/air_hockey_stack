@@ -28,7 +28,7 @@ using namespace air_hockey_baseline_agent;
 using namespace baseline_hitting_experiment;
 
 BaselineHittingExperiment::BaselineHittingExperiment(ros::NodeHandle nh) : nh(nh), agent(nh) {
-	plannerRequestSub = nh.subscribe("plan_request", 1, &BaselineHittingExperiment::planRequestCB, this);
+	plannerRequestSub = nh.subscribe("/neural_planner/plan_trajectory", 1, &BaselineHittingExperiment::planRequestCB, this);
 	plannerStatusPub = nh.advertise<air_hockey_msgs::PlannerStatus>("plan_status", 1);
 	publishStatus = false;
 
@@ -73,11 +73,10 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 	agent.getTrajectoryGenerator().getCartesianPosAndVel(xStart, vStart, qStart, dqStart);
 	agent.getTrajectoryGenerator().transformations->transformRobot2Table(xStart);
 	agent.getTrajectoryGenerator().transformations->rotationRobot2Table(vStart);
-
+	qHitRef = qStart;
 	agent.getTrajectoryGenerator().hittingPointOptimizer->solve(hitPos, hitDir, qHitRef, hitVelMag);
 
 	Eigen::Vector3d hitVel, xEnd;
-
 	if (hitPos.y() > 0) {
 		xEnd = hitPos + Eigen::Vector3d(0.1, -0.15, 0.0);
 	} else {
@@ -143,13 +142,13 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 
 void BaselineHittingExperiment::planRequestCB(air_hockey_msgs::PlannerRequestConstPtr msg) {
 	publishStatus = true;
-	qStart = JointArrayType::Map((double *)msg->q_0.data(), msg->q_0.size());
-	dqStart = JointArrayType::Map((double *)msg->q_dot_0.data(), msg->q_dot_0.size());
-	ddqStart = JointArrayType::Map((double *)msg->q_ddot_0.data(), msg->q_ddot_0.size());
-	qEnd = JointArrayType::Map((double *)msg->q_end.data(), msg->q_end.size());
-	hitPos = Eigen::Vector3d(msg->hit_point.x, msg->hit_point.y, msg->hit_point.z);
-	hitDir = Eigen::Vector3d(cos(msg->hit_angle), sin(msg->hit_angle), 0.);
-	endPoint = Eigen::Vector3d(msg->end_point.x, msg->end_point.y, msg->end_point.z);
+	qStart = Eigen::VectorXf::Map(msg->q_0.data(), msg->q_0.size()).cast<double>();
+	dqStart = Eigen::VectorXf::Map(msg->q_dot_0.data(), msg->q_dot_0.size()).cast<double>();
+	ddqStart = Eigen::VectorXf::Map(msg->q_ddot_0.data(), msg->q_ddot_0.size()).cast<double>();
+	qEnd = Eigen::VectorXf::Map(msg->q_end.data(), msg->q_end.size()).cast<double>();
+	hitPos = Eigen::Vector3f(msg->hit_point.x, msg->hit_point.y, msg->hit_point.z).cast<double>();
+	hitDir = Eigen::Vector3f(cos(msg->hit_angle), sin(msg->hit_angle), 0.).cast<double>();
+	endPoint = Eigen::Vector3f(msg->end_point.x, msg->end_point.y, msg->end_point.z).cast<double>();
 
 	prePlanPoint.time_from_start = ros::Duration(0.);
 	prePlanPoint.positions = std::vector<double>(std::begin(msg->q_0), std::end(msg->q_0));
