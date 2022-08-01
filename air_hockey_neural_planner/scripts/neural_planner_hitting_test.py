@@ -179,8 +179,9 @@ class NeuralPlannerHittingTestNode:
             alpha = np.abs(th - beta)
             # th *= (1 - (alpha / (np.pi / 2.))**(1.))
             print("TH", th)
-            r = 0.07975
+            #r = 0.07975
             #r = 0.07
+            r = 0.06
             #r = 0.1
             x = puck_pose[0] - r * np.cos(th)
             y = puck_pose[1] - r * np.sin(th)
