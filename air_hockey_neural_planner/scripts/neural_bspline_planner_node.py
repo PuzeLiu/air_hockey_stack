@@ -16,7 +16,7 @@ SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
 PLANNING_MODULE_DIR = os.path.join(SCRIPT_DIR, "manifold_planning")
 sys.path.append(PLANNING_MODULE_DIR)
-from air_hockey_neural_planner.msg import PlannerRequest, PlannerStatus
+from air_hockey_msgs.msg import PlannerRequest, PlannerStatus
 from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
 from geometry_msgs.msg import Transform, Vector3
 from iiwas_control.msg import BsplineTrajectoryMsg, BsplineSegmentMsg
