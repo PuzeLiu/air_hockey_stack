@@ -29,7 +29,7 @@ using namespace baseline_hitting_experiment;
 
 BaselineHittingExperiment::BaselineHittingExperiment(ros::NodeHandle nh) : nh(nh), agent(nh) {
 	plannerRequestSub = nh.subscribe("/neural_planner/plan_trajectory", 1, &BaselineHittingExperiment::planRequestCB, this);
-	plannerStatusPub = nh.advertise<air_hockey_msgs::PlannerStatus>("plan_status", 1);
+	plannerStatusPub = nh.advertise<air_hockey_msgs::PlannerStatus>("/neural_planner/status", 1);
 	publishStatus = false;
 
 	if (agent.getAgentParams().name == "iiwa_front") {
