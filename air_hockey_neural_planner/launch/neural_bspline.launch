@@ -3,7 +3,7 @@
     <!-- Arguments -->
 <!--     <arg name="front_controllers" default="adrc_trajectory_controller"/> -->
 <!--     <arg name="back_controllers" default="adrc_trajectory_controller"/> -->
-<!--     <arg name="front_controllers" default="joint_feedforward_trajectory_controller"/> -->
+<!--     <arg name="front_controllers" default="joint_feedforward_trajectory_controller"/>-->
 <!--     <arg name="back_controllers" default="joint_feedforward_trajectory_controller"/> -->
 <!--     <arg name="front_controllers" default="bspline_joint_trajectory_controller"/> -->
     <arg name="front_controllers" default="bspline_adrc_joint_trajectory_controller"/>
@@ -16,6 +16,9 @@
         <param name="front_controllers" value="$(arg front_controllers)" />
         <param name="back_controllers" value="$(arg back_controllers)" />
     </node>
+
+<!--    <node pkg="air_hockey_baseline_agent" type="baseline_hitting_experiment" name="baseline_hitting_exp" output="screen" ns="iiwa_front"/>-->
+
 
     <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
     <node name="puck_tracker_service" pkg="air_hockey_puck_tracker" type="puck_tracker_service" output="screen" ns="iiwa_front"/>

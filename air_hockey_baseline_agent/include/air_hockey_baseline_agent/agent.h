@@ -66,6 +66,8 @@ public:
 		return tacticsProcessor;
 	}
 
+	void publishTrajectory();
+
 private:
 	std::string getControllerName();
 
@@ -73,7 +75,6 @@ private:
 	void loadEnvironmentParams();
 	void computeBaseConfigurations();
 	void loadTactics();
-	void publishTrajectory();
 	void gotoInit();
 
 

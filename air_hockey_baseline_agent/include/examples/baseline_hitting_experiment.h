@@ -46,8 +46,6 @@ class BaselineHittingExperiment {
   air_hockey_baseline_agent::Agent agent;
   ros::Subscriber plannerRequestSub;
   ros::Publisher plannerStatusPub;
-  ros::Publisher jointTrajectoryCmdPub;
-  ros::Publisher cartTrajectoryCmdPub;
 
   trajectory_msgs::MultiDOFJointTrajectory cartTraj;
   trajectory_msgs::JointTrajectory jointTraj;

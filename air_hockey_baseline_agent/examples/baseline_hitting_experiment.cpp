@@ -29,7 +29,7 @@ using namespace baseline_hitting_experiment;
 
 BaselineHittingExperiment::BaselineHittingExperiment(ros::NodeHandle nh) : nh(nh), agent(nh) {
 	plannerRequestSub = nh.subscribe("/neural_planner/plan_trajectory", 1, &BaselineHittingExperiment::planRequestCB, this);
-	plannerStatusPub = nh.advertise<air_hockey_msgs::PlannerStatus>("plan_status", 1);
+	plannerStatusPub = nh.advertise<air_hockey_msgs::PlannerStatus>("/neural_planner/status", 1);
 	publishStatus = false;
 
 	if (agent.getAgentParams().name == "iiwa_front") {
@@ -45,6 +45,33 @@ BaselineHittingExperiment::BaselineHittingExperiment(ros::NodeHandle nh) : nh(nh
 	for (int j = 0; j < agent.getAgentParams().nq; ++j) {
 		jointTraj.joint_names.push_back(agent.getAgentParams().pinoModel.names[j + 1]);
 	}
+	ros::Duration(1.0).sleep();
+
+	ROS_INFO_STREAM("GoTo Initial Configuration");
+	trajectory_msgs::JointTrajectoryPoint initPoint;
+	initPoint.positions = std::vector<double>(agent.getAgentParams().qHome.data(),
+											  agent.getAgentParams().qHome.data() + agent.getAgentParams().qHome.size());
+	initPoint.velocities.resize(agent.getAgentParams().nq, 0.);
+	initPoint.time_from_start = ros::Duration(3.0);
+	agent.getState().trajectoryBuffer.getFree().jointTrajectory.points.clear();
+	agent.getState().trajectoryBuffer.getFree().jointTrajectory.points.push_back(initPoint);
+	agent.getState().trajectoryBuffer.getFree().jointTrajectory.header.stamp = ros::Time::now();
+
+	trajectory_msgs::MultiDOFJointTrajectoryPoint initCartPoint;
+	geometry_msgs::Transform transform_tmp;
+	transform_tmp.translation.x = agent.getAgentParams().xHome[0];
+	transform_tmp.translation.y = agent.getAgentParams().xHome[1];
+	transform_tmp.translation.z = agent.getAgentParams().xHome[2];
+	initCartPoint.time_from_start = initPoint.time_from_start;
+	initCartPoint.transforms.push_back(transform_tmp);
+	agent.getState().trajectoryBuffer.getFree().cartTrajectory.points.clear();
+	agent.getState().trajectoryBuffer.getFree().cartTrajectory.points.push_back(initCartPoint);
+	agent.getState().trajectoryBuffer.getFree().cartTrajectory.header.stamp =
+		agent.getState().trajectoryBuffer.getFree().jointTrajectory.header.stamp;
+
+	agent.publishTrajectory();
+	ros::Duration(4.0).sleep();
+	ROS_INFO_STREAM("Wait for the topic");
 }
 
 void BaselineHittingExperiment::start() {
@@ -52,8 +79,9 @@ void BaselineHittingExperiment::start() {
 	while (ros::ok()) {
 		if (publishStatus) {
 			if (planHittingTrajectory()) {
-				jointTrajectoryCmdPub.publish(jointTraj);
-				cartTrajectoryCmdPub.publish(cartTraj);
+				agent.getState().trajectoryBuffer.getFree().jointTrajectory = jointTraj;
+				agent.getState().trajectoryBuffer.getFree().cartTrajectory = cartTraj;
+				agent.publishTrajectory();
 			}
 			plannerStatusPub.publish(plannerStatusMsg);
 			publishStatus = false;
@@ -87,7 +115,7 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 	                     agent.getEnvironmentParams().tableWidth / 2 - agent.getEnvironmentParams().malletRadius
 		                     - 0.05),
 	                -agent.getEnvironmentParams().tableWidth / 2 + agent.getEnvironmentParams().malletRadius + 0.05);
-	double tStop = (xEnd - xStart).norm() / 1.0;
+	double tStop = (xEnd - agent.getAgentParams().xHome).norm() / 1.0;
 
 	for (int i = 0; i < 10; ++i) {
 		cartTraj.points.clear();
@@ -97,8 +125,9 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 
 		agent.getTrajectoryGenerator().combinatorialHitNew->plan(xStart, vStart, hitPos, hitVel, hittingTime,
 		                                                         xEnd, Eigen::Vector3d::Zero(), cartTraj);
+		int size = cartTraj.points.size();
 		agent.getTrajectoryGenerator().cubicLinearMotion->plan(xEnd, Eigen::Vector3d::Zero(),
-															   endPoint, Eigen::Vector3d::Zero(),
+															   agent.getAgentParams().xHome, Eigen::Vector3d::Zero(),
 															   tStop, cartTraj);
 		agent.getTrajectoryGenerator().transformations->transformTrajectory(cartTraj);
 
@@ -129,7 +158,7 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 			hitVelMag *= 0.9;
 		}
 	}
-
+	ROS_INFO_STREAM("Optimization Failed");
 	plannerStatusMsg.planning_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t_start).count();
 	plannerStatusMsg.header.stamp = jointTraj.header.stamp;
 	plannerStatusMsg.success = false;
@@ -149,6 +178,9 @@ void BaselineHittingExperiment::planRequestCB(air_hockey_msgs::PlannerRequestCon
 	hitPos = Eigen::Vector3f(msg->hit_point.x, msg->hit_point.y, msg->hit_point.z).cast<double>();
 	hitDir = Eigen::Vector3f(cos(msg->hit_angle), sin(msg->hit_angle), 0.).cast<double>();
 	endPoint = Eigen::Vector3f(msg->end_point.x, msg->end_point.y, msg->end_point.z).cast<double>();
+
+	agent.getTrajectoryGenerator().transformations->transformRobot2Table(hitPos);
+	agent.getTrajectoryGenerator().transformations->rotationRobot2Table(hitDir);
 
 	prePlanPoint.time_from_start = ros::Duration(0.);
 	prePlanPoint.positions = std::vector<double>(std::begin(msg->q_0), std::end(msg->q_0));
