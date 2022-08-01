@@ -24,18 +24,17 @@
 #ifndef SRC_TACTICAL_AGENT_OBSERVATION_H
 #define SRC_TACTICAL_AGENT_OBSERVATION_H
 
+#include "air_hockey_baseline_agent/data_structures.h"
 #include <ros/ros.h>
 #include <geometry_msgs/TransformStamped.h>
 
 #include <control_msgs/JointTrajectoryControllerState.h>
 
-#include "air_hockey_baseline_agent/data_structures.h"
-
 namespace air_hockey_baseline_agent {
 class Observer {
  public:
   Observer(ros::NodeHandle &nh, std::string controllerName,
-		   ObservationState *observation, double defendLine);
+           ObservationState *observation, double defendLine);
 
   ~Observer();
 
@@ -49,7 +48,7 @@ class Observer {
 
  private:
   void jointStateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr &msg);
-  void refereeStatusCallback(const air_hockey_referee::GameStatus::ConstPtr &msg);
+  void refereeStatusCallback(const air_hockey_msgs::GameStatus::ConstPtr &msg);
 
  private:
   ros::Subscriber jointSub;
@@ -57,8 +56,7 @@ class Observer {
 
   PuckTracker puckTracker;
   double maxPredictionTime;
-
-  ObservationState* observation;
+  ObservationState *observation;
 };
 }
 

@@ -268,7 +268,7 @@ const PuckState& PuckTracker::getEstimatedState(bool visualize)
 }
 
 PuckPredictedState PuckTracker::getPredictedState(bool visualize, bool delayed, bool stopBeforeSecondCollision,
-														 float time)
+												  float time)
 {
 	getPrediction(predictedState_.predictedTime, predictedState_.numOfCollisions, stopBeforeSecondCollision, time);
 	predictedState_.state = puckPredictor_->getState();

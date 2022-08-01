@@ -57,7 +57,7 @@ void Observer::updateObservation(float prediction_time) {
 	observation->stamp = ros::Time::now();
 }
 
-void Observer::refereeStatusCallback(const air_hockey_referee::GameStatus::ConstPtr &msg) {
+void Observer::refereeStatusCallback(const air_hockey_msgs::GameStatus::ConstPtr &msg) {
 	auto newStatus = *msg;
 	observation->gameStatus = newStatus;
 }

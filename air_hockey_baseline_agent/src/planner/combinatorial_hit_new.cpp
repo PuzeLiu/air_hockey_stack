@@ -122,6 +122,21 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &xStart_, const Eigen::Vect
 	return true;
 }
 
+bool CombinatorialHitNew::plan(const Eigen::Vector3d &xStart, const Eigen::Vector3d &vStart,
+          Eigen::Vector3d &xHit, Eigen::Vector3d &vHit, double &hitting_time,
+          const Eigen::Vector3d &xEnd, const Eigen::Vector3d &vEnd,
+          trajectory_msgs::MultiDOFJointTrajectory &cartTraj){
+	Vector2d xStart2d, vStart2d, xHit2d, vHit2d, xEnd2d, vEnd2d;
+	xStart2d =xStart.block<2, 1>(0, 0);
+	vStart2d =vStart.block<2, 1>(0, 0);
+	xHit2d =xHit.block<2, 1>(0, 0);
+	vHit2d =vHit.block<2, 1>(0, 0);
+	xEnd2d =xEnd.block<2, 1>(0, 0);
+	vEnd2d =vEnd.block<2, 1>(0, 0);
+
+	return plan(xStart2d, vStart2d, xHit2d, vHit2d, hitting_time, xEnd2d, vEnd2d, cartTraj);
+}
+
 bool CombinatorialHitNew::getMiddlePoint() {
 	for (int i = 0; i < 2; ++i) {
 		xStart[i] = boost::algorithm::clamp(xStart[i], boundLower[i], boundUpper[i]);

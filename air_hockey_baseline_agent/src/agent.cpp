@@ -26,6 +26,7 @@
 using namespace air_hockey_baseline_agent;
 using namespace trajectory_msgs;
 using namespace Eigen;
+using namespace std;
 
 Agent::Agent(ros::NodeHandle nh) :
     nh(nh), rate(100)
@@ -354,6 +355,11 @@ std::string Agent::getControllerName()
                 controllerName = "adrc_trajectory_controller";
                 break;
             }
+            else if (topics[i].name == nh.getNamespace() + "/bspline_adrc_joint_trajectory_controller/state")
+            {
+	            controllerName = "bspline_adrc_joint_trajectory_controller";
+	            break;
+            }
         }
 
         if (controllerName == "")
@@ -366,7 +372,8 @@ std::string Agent::getControllerName()
     return controllerName;
 }
 
-bool Agent::setTacticService(SetTacticsService::Request& req, SetTacticsService::Response& res)
+bool Agent::setTacticService(air_hockey_msgs::SetTacticsService::Request& req,
+							 air_hockey_msgs::SetTacticsService::Response& res)
 {
 	if (req.tactic == "SMASH") {
 		agentParams.debuggingTactic = Tactics::SMASH;

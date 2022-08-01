@@ -29,11 +29,11 @@
 #include <std_msgs/Int8.h>
 #include <tf2_ros/transform_listener.h>
 #include <Eigen/Dense>
-#include "air_hockey_referee/GameStatus.h"
-#include "air_hockey_referee/StartGame.h"
-#include "air_hockey_referee/StopGame.h"
-#include "air_hockey_referee/PauseGame.h"
-#include "air_hockey_referee/ResetRobot.h"
+#include "air_hockey_msgs/GameStatus.h"
+#include "air_hockey_msgs/StartGame.h"
+#include "air_hockey_msgs/StopGame.h"
+#include "air_hockey_msgs/PauseGame.h"
+#include "air_hockey_msgs/ResetRobot.h"
 
 namespace air_hockey_baseline_agent{
     enum GameStatus {
@@ -53,10 +53,10 @@ protected:
     bool isPuckOnTable();
 
 private:
-    bool serviceStartCallback(air_hockey_referee::StartGame::Request &req, air_hockey_referee::StartGame::Response &res);
-    bool servicePauseCallback(air_hockey_referee::PauseGame::Request &req, air_hockey_referee::PauseGame::Response &res);
-    bool serviceStopCallback(air_hockey_referee::StopGame::Request &req, air_hockey_referee::StopGame::Response &res);
-    bool serviceResetCallback(air_hockey_referee::ResetRobot::Request &req, air_hockey_referee::ResetRobot::Response &res);
+    bool serviceStartCallback(air_hockey_msgs::StartGame::Request &req, air_hockey_msgs::StartGame::Response &res);
+    bool servicePauseCallback(air_hockey_msgs::PauseGame::Request &req, air_hockey_msgs::PauseGame::Response &res);
+    bool serviceStopCallback(air_hockey_msgs::StopGame::Request &req, air_hockey_msgs::StopGame::Response &res);
+    bool serviceResetCallback(air_hockey_msgs::ResetRobot::Request &req, air_hockey_msgs::ResetRobot::Response &res);
 
 protected:
     double tableLength, tableWidth, goalWidth, puckRadius, malletRadius, pauseRegionLength;
@@ -68,7 +68,7 @@ protected:
     ros::ServiceServer serviceStart, serviceStop, servicePause, serviceReset;
 
     geometry_msgs::TransformStamped tfPuck, tfPuckPrev;
-    air_hockey_referee::GameStatus gameStatusMsg;
+    air_hockey_msgs::GameStatus gameStatusMsg;
 
 	std::mt19937 gen;
 	std::uniform_int_distribution<int> dist;

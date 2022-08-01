@@ -1,10 +1,11 @@
 #include "air_hockey_referee/referee.h"
 
-using namespace air_hockey_baseline_agent;
 using namespace std;
+using namespace air_hockey_msgs;
+using namespace air_hockey_baseline_agent;
 
 Referee::Referee(ros::NodeHandle nh) : nh(nh), tfBuffer(), tfListener(tfBuffer), dist(0, 1){
-    statusPub = nh.advertise<air_hockey_referee::GameStatus>("game_status", 1);
+    statusPub = nh.advertise<air_hockey_msgs::GameStatus>("game_status", 1);
     serviceStart = nh.advertiseService("start_game", &Referee::serviceStartCallback, this);
     servicePause = nh.advertiseService("pause_game", &Referee::servicePauseCallback, this);
     serviceStop = nh.advertiseService("stop_game", &Referee::serviceStopCallback, this);
@@ -91,8 +92,8 @@ void Referee::update() {
     }
 }
 
-bool Referee::serviceStartCallback(air_hockey_referee::StartGame::Request &req,
-                                   air_hockey_referee::StartGame::Response &res) {
+bool Referee::serviceStartCallback(StartGame::Request &req,
+                                   StartGame::Response &res) {
     if (gameStatusMsg.status == GameStatus::START){
         res.success = false;
         res.msg = "StartGame service fail, already started";
@@ -113,8 +114,8 @@ bool Referee::serviceStartCallback(air_hockey_referee::StartGame::Request &req,
     return true;
 }
 
-bool Referee::servicePauseCallback(air_hockey_referee::PauseGame::Request &req,
-                                   air_hockey_referee::PauseGame::Response &res) {
+bool Referee::servicePauseCallback(PauseGame::Request &req,
+                                   PauseGame::Response &res) {
     if (gameStatusMsg.status != GameStatus::START){
         res.success = false;
         res.msg = "PauseGame service fail, already paused";
@@ -128,8 +129,8 @@ bool Referee::servicePauseCallback(air_hockey_referee::PauseGame::Request &req,
     }
 }
 
-bool Referee::serviceStopCallback(air_hockey_referee::StopGame::Request &req,
-                                  air_hockey_referee::StopGame::Response &res) {
+bool Referee::serviceStopCallback(StopGame::Request &req,
+                                  StopGame::Response &res) {
     if (gameStatusMsg.status == GameStatus::STOP){
         res.success = false;
         res.msg = "StopGame service fail, already stopped";
@@ -145,8 +146,8 @@ bool Referee::serviceStopCallback(air_hockey_referee::StopGame::Request &req,
     }
 }
 
-bool Referee::serviceResetCallback(air_hockey_referee::ResetRobot::Request &req,
-                                   air_hockey_referee::ResetRobot::Response &res) {
+bool Referee::serviceResetCallback(ResetRobot::Request &req,
+                                   ResetRobot::Response &res) {
 	string msg;
 	bool success = resetPuck(&msg);
 

@@ -24,13 +24,11 @@
 #ifndef AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_SYSTEM_STATE_H_
 #define AIRHOCKEY_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_AIR_HOCKEY_BASELINE_SYSTEM_STATE_H_
 
-
+#include "observer.h"
 #include <iostream>
 #include <ros/ros.h>
 #include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
-
-#include "observer.h"
 
 namespace air_hockey_baseline_agent {
 	class SystemState {

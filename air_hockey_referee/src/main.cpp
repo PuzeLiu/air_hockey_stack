@@ -24,7 +24,6 @@
 #include <ros/ros.h>
 #include "air_hockey_referee/gazebo_referee.h"
 #include "air_hockey_referee/real_world_referee.h"
-#include "air_hockey_referee/pybullet_referee.h"
 
 using namespace air_hockey_baseline_agent;
 using namespace std;
@@ -50,12 +49,6 @@ int main(int argc, char **argv) {
             referee.update();
             rate.sleep();
         }
-    } else if (physicsEnv == "pybullet"){
-		PybulletReferee referee(nh);
-		while (ros::ok()){
-			referee.update();
-			rate.sleep();
-		}
 	} else {
 		ROS_ERROR_STREAM("Unknown parameter in /air_hockey_referee/physics, options: [gazebo, real, pybullet]");
 	}
