@@ -28,6 +28,7 @@
 #include "air_hockey_baseline_agent/agent.h"
 #include "air_hockey_msgs/PlannerRequest.h"
 #include "air_hockey_msgs/PlannerStatus.h"
+#include "air_hockey_msgs/GetHittingState.h"
 #include <ros/ros.h>
 
 namespace baseline_hitting_experiment {
@@ -43,6 +44,7 @@ class BaselineHittingExperiment {
 
  private:
   ros::NodeHandle nh;
+  ros::ServiceClient get_hitting_state_client;
   air_hockey_baseline_agent::Agent agent;
   ros::Subscriber plannerRequestSub;
   ros::Publisher plannerStatusPub;

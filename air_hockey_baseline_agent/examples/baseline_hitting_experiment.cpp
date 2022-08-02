@@ -30,6 +30,7 @@ using namespace baseline_hitting_experiment;
 BaselineHittingExperiment::BaselineHittingExperiment(ros::NodeHandle nh) : nh(nh), agent(nh) {
 	plannerRequestSub = nh.subscribe("/neural_planner/plan_trajectory", 1, &BaselineHittingExperiment::planRequestCB, this);
 	plannerStatusPub = nh.advertise<air_hockey_msgs::PlannerStatus>("/neural_planner/status", 1);
+	get_hitting_state_client = nh.serviceClient<air_hockey_msgs::GetHittingState>("/iiwa_front/get_hitting_state");
 	publishStatus = false;
 
 	if (agent.getAgentParams().name == "iiwa_front") {
@@ -85,6 +86,33 @@ void BaselineHittingExperiment::start() {
 			}
 			plannerStatusPub.publish(plannerStatusMsg);
 			publishStatus = false;
+			(cartTraj.points.back().time_from_start + ros::Duration(1.0)).sleep();
+
+			JointArrayType qStartTmp = JointArrayType::Map(jointTraj.points.back().positions.data(), jointTraj.points.back().positions.size());
+			JointArrayType dqStartTmp = JointArrayType::Map(jointTraj.points.back().velocities.data(), jointTraj.points.back().velocities.size());
+			ROS_INFO_STREAM(qStartTmp.transpose() << " dq:"<< dqStartTmp.transpose());
+			ROS_INFO_STREAM(cartTraj.points.size());
+
+			cartTraj.points.clear();
+			jointTraj.points.clear();
+			agent.getTrajectoryGenerator().cubicLinearMotion->plan(agent.getAgentParams().xHome, Eigen::Vector3d::Zero(), agent.getAgentParams().xHome, Eigen::Vector3d::Zero(), 2.0, cartTraj);
+		    agent.getTrajectoryGenerator().transformations->transformTrajectory(cartTraj);
+
+            prePlanPoint.time_from_start = ros::Duration(0.);
+            prePlanPoint.positions = std::vector<double>(qStartTmp.data(), qStartTmp.data() + qStartTmp.size());
+            prePlanPoint.velocities = std::vector<double>(dqStartTmp.data(), dqStartTmp.data() + dqStartTmp.size());
+			if(agent.getTrajectoryGenerator().optimizer->optimizeJointTrajectoryAnchor(cartTraj, qStartTmp, dqStartTmp, agent.getAgentParams().qHome, 2.0, jointTraj)){
+			    agent.getTrajectoryGenerator().cubicSplineInterpolation(jointTraj, prePlanPoint);
+    			agent.getTrajectoryGenerator().synchronizeCartesianTrajectory(jointTraj,cartTraj);
+	    		jointTraj.header.stamp = ros::Time::now() + ros::Duration(0.1);
+		    	cartTraj.header.stamp = jointTraj.header.stamp;
+
+				agent.getState().trajectoryBuffer.getFree().jointTrajectory = jointTraj;
+				agent.getState().trajectoryBuffer.getFree().cartTrajectory = cartTraj;
+				agent.publishTrajectory();
+			} else {
+			    ROS_INFO_STREAM("Planning Failed");
+			}
 		}
 		ros::spinOnce();
 		rate.sleep();
@@ -102,7 +130,18 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 	agent.getTrajectoryGenerator().transformations->transformRobot2Table(xStart);
 	agent.getTrajectoryGenerator().transformations->rotationRobot2Table(vStart);
 	qHitRef = qStart;
-	agent.getTrajectoryGenerator().hittingPointOptimizer->solve(hitPos, hitDir, qHitRef, hitVelMag);
+	// Hitting point optimization by Puze
+	//agent.getTrajectoryGenerator().hittingPointOptimizer->solve(hitPos, hitDir, qHitRef, hitVelMag);
+	// Hitting point optimization by IK NN
+	air_hockey_msgs::GetHittingState srv;
+	srv.request.x = hitPos[0];
+	srv.request.y = hitPos[1];
+	srv.request.th = atan2(hitDir[1], hitDir[0]);
+	get_hitting_state_client.call(srv);
+	for (auto i = 0; i < 6; ++i){
+	    qHitRef[i] = srv.response.q[i];
+	}
+	hitVelMag = srv.response.magnitude;
 
 	Eigen::Vector3d hitVel, xEnd;
 	if (hitPos.y() > 0) {
@@ -115,7 +154,7 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 	                     agent.getEnvironmentParams().tableWidth / 2 - agent.getEnvironmentParams().malletRadius
 		                     - 0.05),
 	                -agent.getEnvironmentParams().tableWidth / 2 + agent.getEnvironmentParams().malletRadius + 0.05);
-	double tStop = (xEnd - agent.getAgentParams().xHome).norm() / 1.0;
+	double tStop = (xEnd - agent.getAgentParams().xHome).norm() / 0.7;
 
 	for (int i = 0; i < 10; ++i) {
 		cartTraj.points.clear();
