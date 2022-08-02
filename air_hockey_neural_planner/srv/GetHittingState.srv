@@ -1,0 +1,7 @@
+float32 x
+float32 y
+float32 th
+---
+float32[] q
+float32[] q_dot
+float32 magnitude
