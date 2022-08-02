@@ -11,7 +11,7 @@ PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
 PLANNING_MODULE_DIR = os.path.join(SCRIPT_DIR, "manifold_planning")
 sys.path.append(PLANNING_MODULE_DIR)
 
-from air_hockey_neural_planner.srv import GetHittingState
+from air_hockey_msgs.srv import GetHittingState
 from manifold_planning.utils.model import load_model_hpo
 from manifold_planning.utils.constants import UrdfModels, Limits
 

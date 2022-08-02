@@ -25,6 +25,7 @@ add_service_files(
     StartGame.srv
     StopGame.srv
     SetTacticsService.srv
+    GetHittingState.srv
 )
 
 
