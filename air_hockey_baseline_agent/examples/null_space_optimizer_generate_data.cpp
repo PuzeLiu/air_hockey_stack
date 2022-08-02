@@ -257,7 +257,7 @@ int main(int argc, char* argv[])
         transformations.rotationTable2Robot(hitDir3d);
 
         hittingPointOptimizer.solve(hitPoint3d, hitDir3d, qAnchor, velMag);
-        hitDir3d = hitDir3d * velMag * agentParams.hitVelocityScale;
+        hitDir3d = hitDir3d * velMag;
         vHit2d = hitDir3d.topRows(2);
 
         /** AQP Optimization*/

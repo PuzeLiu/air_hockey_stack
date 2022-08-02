@@ -116,7 +116,7 @@ void Smash::getHitPointVelocity(Vector2d &xHit2d, Vector2d &vHit2d,
 	// prepare output
 	generator.transformations->transformRobot2Table(xHit);
 	generator.transformations->rotationRobot2Table(vHit);
-	vHit = vHit * velMag * agentParams.hitVelocityScale;
+	vHit = vHit * velMag;
 	xHit2d = xHit.block<2, 1>(0, 0);
 	vHit2d = vHit.block<2, 1>(0, 0);
 }

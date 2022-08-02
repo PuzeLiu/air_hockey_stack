@@ -273,9 +273,9 @@ bool NullSpaceOptimizer::solveQPAnchor(const Vector3d &xDes,
 	optData.q = omega.transpose() * optData.weightsAnchor.asDiagonal() * optData.N_J;
 	optData.A = optData.N_J.sparseView();
 
-	optData.upperBound = agentParams.pinoModel.velocityLimit.cwiseMin(
+	optData.upperBound = (agentParams.pinoModel.velocityLimit * agentParams.hitVelocityScale).cwiseMin(
 		(agentParams.pinoModel.upperPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
-	optData.lowerBound = (-agentParams.pinoModel.velocityLimit).cwiseMax(
+	optData.lowerBound = (-agentParams.pinoModel.velocityLimit * agentParams.hitVelocityScale).cwiseMax(
 		(agentParams.pinoModel.lowerPositionLimit * 0.95 - qCur) * agentParams.rate) - b;
 
 	if (!constructQPSolver()) {
