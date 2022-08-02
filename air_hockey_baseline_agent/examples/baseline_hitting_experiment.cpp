@@ -88,31 +88,9 @@ void BaselineHittingExperiment::start() {
 			publishStatus = false;
 			(cartTraj.points.back().time_from_start + ros::Duration(1.0)).sleep();
 
-			JointArrayType qStartTmp = JointArrayType::Map(jointTraj.points.back().positions.data(), jointTraj.points.back().positions.size());
-			JointArrayType dqStartTmp = JointArrayType::Map(jointTraj.points.back().velocities.data(), jointTraj.points.back().velocities.size());
-			ROS_INFO_STREAM(qStartTmp.transpose() << " dq:"<< dqStartTmp.transpose());
-			ROS_INFO_STREAM(cartTraj.points.size());
+			planGettingBackTrajectory();
 
-			cartTraj.points.clear();
-			jointTraj.points.clear();
-			agent.getTrajectoryGenerator().cubicLinearMotion->plan(agent.getAgentParams().xHome, Eigen::Vector3d::Zero(), agent.getAgentParams().xHome, Eigen::Vector3d::Zero(), 2.0, cartTraj);
-		    agent.getTrajectoryGenerator().transformations->transformTrajectory(cartTraj);
 
-            prePlanPoint.time_from_start = ros::Duration(0.);
-            prePlanPoint.positions = std::vector<double>(qStartTmp.data(), qStartTmp.data() + qStartTmp.size());
-            prePlanPoint.velocities = std::vector<double>(dqStartTmp.data(), dqStartTmp.data() + dqStartTmp.size());
-			if(agent.getTrajectoryGenerator().optimizer->optimizeJointTrajectoryAnchor(cartTraj, qStartTmp, dqStartTmp, agent.getAgentParams().qHome, 2.0, jointTraj)){
-			    agent.getTrajectoryGenerator().cubicSplineInterpolation(jointTraj, prePlanPoint);
-    			agent.getTrajectoryGenerator().synchronizeCartesianTrajectory(jointTraj,cartTraj);
-	    		jointTraj.header.stamp = ros::Time::now() + ros::Duration(0.1);
-		    	cartTraj.header.stamp = jointTraj.header.stamp;
-
-				agent.getState().trajectoryBuffer.getFree().jointTrajectory = jointTraj;
-				agent.getState().trajectoryBuffer.getFree().cartTrajectory = cartTraj;
-				agent.publishTrajectory();
-			} else {
-			    ROS_INFO_STREAM("Planning Failed");
-			}
 		}
 		ros::spinOnce();
 		rate.sleep();
@@ -164,10 +142,9 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 
 		agent.getTrajectoryGenerator().combinatorialHitNew->plan(xStart, vStart, hitPos, hitVel, hittingTime,
 		                                                         xEnd, Eigen::Vector3d::Zero(), cartTraj);
-		int size = cartTraj.points.size();
-		agent.getTrajectoryGenerator().cubicLinearMotion->plan(xEnd, Eigen::Vector3d::Zero(),
-															   agent.getAgentParams().xHome, Eigen::Vector3d::Zero(),
-															   tStop, cartTraj);
+//		agent.getTrajectoryGenerator().cubicLinearMotion->plan(xEnd, Eigen::Vector3d::Zero(),
+//															   agent.getAgentParams().xHome, Eigen::Vector3d::Zero(),
+//															   tStop, cartTraj);
 		agent.getTrajectoryGenerator().transformations->transformTrajectory(cartTraj);
 
 		if (agent.getTrajectoryGenerator().optimizer
@@ -197,7 +174,7 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 			hitVelMag *= 0.9;
 		}
 	}
-	ROS_INFO_STREAM("Optimization Failed");
+	ROS_INFO_STREAM("Optimization Hitting Failed");
 	plannerStatusMsg.planning_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t_start).count();
 	plannerStatusMsg.header.stamp = jointTraj.header.stamp;
 	plannerStatusMsg.success = false;
@@ -205,6 +182,39 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 	plannerStatusMsg.planned_motion_time = -1.;
 	plannerStatusMsg.planned_hit_joint_velocity.clear();
 	plannerStatusMsg.planned_hit_cartesian_velocity.clear();
+	return false;
+}
+
+bool BaselineHittingExperiment::planGettingBackTrajectory() {
+	JointArrayType qStartTmp = JointArrayType::Map(jointTraj.points.back().positions.data(), jointTraj.points.back().positions.size());
+	JointArrayType dqStartTmp = JointArrayType::Map(jointTraj.points.back().velocities.data(), jointTraj.points.back().velocities.size());
+
+	double tStop = 2.0;
+	for (int j = 0; j < 10; ++j) {
+		cartTraj.points.clear();
+		jointTraj.points.clear();
+		agent.getTrajectoryGenerator().cubicLinearMotion->plan(agent.getAgentParams().xHome, Eigen::Vector3d::Zero(),
+															   agent.getAgentParams().xHome, Eigen::Vector3d::Zero(), tStop, cartTraj);
+		agent.getTrajectoryGenerator().transformations->transformTrajectory(cartTraj);
+
+		prePlanPoint.time_from_start = ros::Duration(0.);
+		prePlanPoint.positions = std::vector<double>(qStartTmp.data(), qStartTmp.data() + qStartTmp.size());
+		prePlanPoint.velocities = std::vector<double>(dqStartTmp.data(), dqStartTmp.data() + dqStartTmp.size());
+		if(agent.getTrajectoryGenerator().optimizer->optimizeJointTrajectoryAnchor(cartTraj, qStartTmp, dqStartTmp, agent.getAgentParams().qHome, 2.0, jointTraj)){
+			agent.getTrajectoryGenerator().cubicSplineInterpolation(jointTraj, prePlanPoint);
+			agent.getTrajectoryGenerator().synchronizeCartesianTrajectory(jointTraj,cartTraj);
+			jointTraj.header.stamp = ros::Time::now() + ros::Duration(0.1);
+			cartTraj.header.stamp = jointTraj.header.stamp;
+
+			agent.getState().trajectoryBuffer.getFree().jointTrajectory = jointTraj;
+			agent.getState().trajectoryBuffer.getFree().cartTrajectory = cartTraj;
+			agent.publishTrajectory();
+			return true;
+		} else {
+			tStop *= 1.2;
+		}
+	}
+	ROS_INFO_STREAM("Optimization Move Back Failed");
 	return false;
 }
 

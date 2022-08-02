@@ -40,6 +40,8 @@ class BaselineHittingExperiment {
 
   bool planHittingTrajectory();
 
+  bool planGettingBackTrajectory();
+
   void planRequestCB(air_hockey_msgs::PlannerRequestConstPtr msg);
 
  private:
