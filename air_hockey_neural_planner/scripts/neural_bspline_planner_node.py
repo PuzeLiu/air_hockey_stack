@@ -154,6 +154,7 @@ class NeuralPlannerNode:
     def compute_trajectory(self, msg, traj_time=None, time_offset=0.):
         t0 = perf_counter()
         tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time = unpack_planner_request(msg)
+        print("TH HIT:", th_hit)
 
         v_mul = 1.0
         if tactic == 0:  # HIT
@@ -214,16 +215,16 @@ class NeuralPlannerNode:
             #if np.sum(np.abs(q_dot_0)) > 0.1 or np.sum(np.abs(q_0)) > 0.1:
             #    print("NEED TO BE AT START WITH 0 VELOCITY")
             #    return 0
-            expected_time = 1.
-            x_1 = 0.65
+            expected_time = 0.5
+            x_1 = 0.7
             y_1 = -0.15
             th_1 = 0.
-            x_2 = 0.65
+            x_2 = 0.7
             y_2 = 0.15
             th_2 = 0.
             q_d1, q_dot_d1, xyz1 = self.get_hitting_configuration(x_1, y_1, th_1)
             q_d2, q_dot_d2, xyz2 = self.get_hitting_configuration(x_2, y_2, th_2)
-            mul = 0.2
+            mul = 0.4
             q_dot_d1 *= mul
             q_dot_d2 *= mul
             q_dot_d1 = np.pad(q_dot_d1, [[0, 1]], mode='constant')
@@ -260,8 +261,8 @@ class NeuralPlannerNode:
         self.publish_planner_status(t1 - t0)
 
     def get_hitting_configuration(self, xk, yk, thk):
-        qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis])
-        q = np.concatenate([qk.numpy()[0], np.zeros(3)], axis=-1)
+        qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis]).numpy()[0]
+        q = np.concatenate([qk, np.zeros(3)], axis=-1)
         pino.forwardKinematics(self.pino_model, self.pino_data, q)
         xyz_pino = copy(self.pino_data.oMi[-1].translation)
         # J = pino.computeJointJacobians(self.pino_model, self.pino_data, q)

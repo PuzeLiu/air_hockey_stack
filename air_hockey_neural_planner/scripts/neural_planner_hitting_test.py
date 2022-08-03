@@ -92,6 +92,12 @@ class NeuralPlannerHittingTestNode:
             inp = input("Press enter to hit or insert anything to leave")
             if inp:
                 break
+            path = os.path.dirname(os.path.dirname(__file__))
+            command = "bash " + os.path.join(path, "record_rosbag.sh 15")
+            print(command)
+            command = shlex.split(command)
+            rosbag_proc = subprocess.Popen(command)
+            rospy.sleep(1.0)
             # lissajoux
             pr = PlannerRequest()
             pr.q_0 = self.robot_joint_pose
@@ -100,7 +106,7 @@ class NeuralPlannerHittingTestNode:
             pr.tactic = 2
             pr.header.stamp = rospy.Time.now()
             self.planner_request_publisher.publish(pr)
-            rospy.sleep(2.0)
+            rospy.sleep(2.5)
             self.request_replan()
 
     def read_puck_pose(self, t):
@@ -142,31 +148,43 @@ class NeuralPlannerHittingTestNode:
     def prepare_planner_request(self, task=None, expected_time=-1., randomize_puck_pose=True):
         print("PREPARE PLANNER REQUEST")
 
-        def get_desired_xyth(puck_pos, goal_pose, mallet_pose):
+        def get_desired_xyth(puck_pose, goal_pose, mallet_pose):
+            puck_pose = list(puck_pose)
+            goal_pose = list(goal_pose)
+            mallet_pose = list(mallet_pose)
             #abs_puck_y = np.abs(puck_pos[1])
             #d = np.abs(puck_pos[0] - 0.9)
             #if abs_puck_y > 0.125:
             #    goal_pose[1] = (1 + 3.0 * np.exp(-100 * d ** 2)) * 0.125 * (abs_puck_y - 0.125) / (
             #                0.4 - 0.125) * np.sign(puck_pos[1])
                 # goal_pose[1] = (1 + 3.0 * np.exp(-100 * d ** 2)) * 0.125 * (abs_puck_y - 0.125) / (0.4 - 0.125) * np.sign(puck_pos[1])
-            print("GOAL POSE Y: ", goal_pose[1])
-            puck_goal_x = goal_pose[0] - puck_pos[0]
-            puck_goal_y = goal_pose[1] - puck_pos[1]
+
+
+            #dy = 0.11
+            dy = 0.0
+            print("GOAL POSE Y BEFORE: ", goal_pose[1])
+            if puck_pose[1] > 0.125:
+                goal_pose[1] += dy
+            elif puck_pose[1] < -0.125:
+                goal_pose[1] -= dy
+            print("GOAL POSE Y UPDATED: ", goal_pose[1])
+            puck_goal_x = goal_pose[0] - puck_pose[0]
+            puck_goal_y = goal_pose[1] - puck_pose[1]
             print(puck_goal_y, puck_goal_x)
             th = np.arctan2(puck_goal_y, puck_goal_x)
-            mallet_puck_x = puck_pos[0] - mallet_pose[0]
-            mallet_puck_y = puck_pos[1] - mallet_pose[1]
+            mallet_puck_x = puck_pose[0] - mallet_pose[0]
+            mallet_puck_y = puck_pose[1] - mallet_pose[1]
             print(mallet_puck_y, mallet_puck_x)
             beta = np.arctan2(mallet_puck_y, mallet_puck_x)
-            print("BETA", beta)
             alpha = np.abs(th - beta)
-            print("ALPHA", alpha)
             # th *= (1 - (alpha / (np.pi / 2.))**(1.))
             print("TH", th)
-            r = 0.07
-            # r = 0.1
-            x = puck_pos[0] - r * np.cos(th)
-            y = puck_pos[1] - r * np.sin(th)
+            #r = 0.07975
+            #r = 0.07
+            r = 0.06
+            #r = 0.1
+            x = puck_pose[0] - r * np.cos(th)
+            y = puck_pose[1] - r * np.sin(th)
             return x, y, th
 
         if self.gazebo and randomize_puck_pose:
@@ -260,8 +278,8 @@ if __name__ == '__main__':
     # node.hit_xyth(0.9, -0.3, -0.87606)
     #node.hit_xyth(1.0, -0.3, 0.1)
     node.hit()
+    #node.lissajoux_hit()
     #node.fake_hit_and_replan()
     #node.moving_puck_hitting_test()
     # node.fake_hit_and_replan()
-    #node.lissajoux_hit()
     # node.moving_puck_hitting_test()

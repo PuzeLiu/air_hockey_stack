@@ -55,6 +55,7 @@ def read_bag(bag, duration):
     for topic, msg, t_bag in bag.read_messages():
         if topic in ["/iiwa_front/adrc_trajectory_controller/state",
                      "/iiwa_front/bspline_adrc_joint_trajectory_controller/state",
+                     "/iiwa_front/bspline_ff_joint_trajectory_controller/state",
                      "/iiwa_front/joint_feedforward_trajectory_controller/state"]:
             n_joints = len(msg.joint_names)
             time.append(msg.header.stamp.to_sec())
@@ -85,8 +86,19 @@ root_dir = os.path.dirname(__file__)
 package_dir = os.path.dirname(root_dir)
 # bag_path = os.path.join(package_dir, "test_bspline_adrc_ff.bag")
 # bag_path = os.path.join(package_dir, "bags/qddotend.bag")
-bag_path = os.path.join(package_dir, "bags/straight_c1_t1_3.bag")
+#bag_path = os.path.join(package_dir, "bags/straight_c1_t1_3.bag")
 #bag_path = os.path.join(package_dir, "bags/tilted_c1_t1.bag")
+# bag_path = os.path.join(package_dir, "88_right.bag")
+# bag_path = os.path.join(package_dir, "105_left.bag")
+# bag_path = os.path.join(package_dir, "115_right.bag")
+# bag_path = os.path.join(package_dir, "2022-07-27-15-48-47.bag")
+#bag_path = os.path.join(package_dir, "132_right3.bag")
+#bag_path = os.path.join(package_dir, "128_right3.bag")
+# bag_path = os.path.join(package_dir, "b59_left1a.bag")
+#bag_path = os.path.join(package_dir, "b59_right1a.bag")
+bag_path = os.path.join(package_dir, "neural/2022-08-01-17-43-17.bag")
+
+mul = 1.
 
 bag_file = rosbag.Bag(bag_path)
 
@@ -111,6 +123,11 @@ ee_pos_actual = np.zeros((t.shape[0], 3))
 # frame_id = pino_model.getFrameId("F_striker_joint_link")
 frame_id = pino_model.getFrameId("F_striker_mallet")
 centrifugal_coriolis = []
+mass_matricies = []
+energy = []
+dkwii = []
+ee_des_vxy = []
+joint_idx = pino_model.getFrameId("F_striker_tip")
 for i, _ in enumerate(t):
     pino_positions[:7] = desired[i, :7]
     pino.forwardKinematics(pino_model, pino_data, pino_positions)
@@ -126,9 +143,21 @@ for i, _ in enumerate(t):
     #dqi = np.pad(q[i], [[0, 2]])
     qi = np.pad(desired[i, :7], [[0, 2]])
     dqi = np.pad(desired[i, 7:14], [[0, 2]])
+    J = pino.computeFrameJacobian(pino_model, pino_data, qi, joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
+    ee_des_vxy.append(J @ desired[i, :6])
     centrifugal_coriolis.append(pino.nonLinearEffects(pino_model, pino_data, qi, dqi) - pino.nonLinearEffects(pino_model, pino_data, qi, np.zeros_like(dqi)))
+    m = pino.crba(pino_model, pino_data, qi)[:6, :6]
+    mass_matricies.append(m)
+    dqtm = desired[i, 7:13, np.newaxis].T @ m
+    energy.append((dqtm @ desired[i, 7:13, np.newaxis])[0, 0] / 2)
+    dkwii.append([dqi[j] * dqtm[0, j] for j in range(6)])
+    a = 0
 
 centrifugal_coriolis = np.array(centrifugal_coriolis)
+mass_matricies = np.stack(mass_matricies, axis=0)
+energy = np.array(energy)
+dkwii = np.array(dkwii)
+ee_des_vxy = np.stack(ee_des_vxy, axis=0)
 
 # detect hitting idx
 vxpuck = np.diff(puck[:, 0], axis=0)
@@ -136,24 +165,55 @@ vypuck = np.diff(puck[:, 0], axis=0)
 vpuck = np.sqrt(vxpuck ** 2 + vypuck ** 2)
 hit_idx = np.where(vpuck > 0.01)[0][0]
 puck_time_hit = puck_time[hit_idx] - puck_time[0]
+puck_time_zeroed = puck_time - puck_time[0]
 time_zeroed = t - t[0]
 time_hit_idx = np.argmin(np.abs(puck_time_hit - time_zeroed))
-
+#time_hit_idx = 0
 
 plt.figure()
-plt.plot(ee_pos_des[:, 0], ee_pos_des[:, 1], 'b', label="desired")
-plt.plot(ee_pos_actual[:, 0], ee_pos_actual[:, 1], 'r', label="actual")
-plt.plot(puck[:, 0], puck[:, 1], 'g', label="puck")
+plt.plot(ee_pos_des[:, 0], mul * ee_pos_des[:, 1], 'b', label="desired")
+plt.plot(ee_pos_actual[:, 0], mul * ee_pos_actual[:, 1], 'r', label="actual")
+plt.plot(puck[:, 0], mul * puck[:, 1], 'g', label="puck")
 plt.legend()
+#plt.xlim(0.6, 1.1)
+#plt.ylim(0.0, 0.5)
 plt.show()
+#assert False
+
+ee_act_vx = np.diff(ee_pos_actual[:, 0], axis=0) / np.diff(t)
+ee_act_vy = np.diff(ee_pos_actual[:, 1], axis=0) / np.diff(t)
+ee_des_vx = np.diff(ee_pos_des[:, 0], axis=0) / np.diff(t)
+ee_des_vy = np.diff(ee_pos_des[:, 1], axis=0) / np.diff(t)
+puck_vx = np.diff(puck[:, 0], axis=0) / np.diff(puck_time)
+puck_vy = np.diff(puck[:, 1], axis=0) / np.diff(puck_time)
+
+plt.figure()
+plt.subplot(131)
+plt.plot(time_zeroed[:-1], ee_des_vx, label="desired_x")
+plt.plot(time_zeroed[:-1], ee_act_vx, label="actual_x")
+plt.plot(puck_time_zeroed[:-1], puck_vx, label="puck_x")
+plt.legend()
+plt.subplot(132)
+plt.plot(time_zeroed[:-1], ee_des_vy, label="desired_y")
+plt.plot(time_zeroed[:-1], ee_act_vy, label="actual_y")
+plt.plot(puck_time_zeroed[:-1], puck_vy, label="puck_y")
+plt.subplot(133)
+#plt.plot(time_zeroed[:-1], np.abs(ee_des_vy) / (np.abs(ee_des_vx) + 1e-4), label="desired_y")
+#plt.plot(time_zeroed[:-1], np.abs(ee_act_vy) / (np.abs(ee_act_vx) + 1e-4), label="actual_y")
+plt.plot(time_zeroed, np.abs(ee_des_vxy[:, 1]) / (np.abs(ee_des_vxy[:, 0]) + 1e-4), label="actual_y")
+plt.plot(puck_time_zeroed[:-1], np.abs(puck_vy) / (np.abs(puck_vx) + 1e-4), label="puck_y")
+plt.legend()
 
 plt.figure()
 plt.subplot(121)
-plt.plot(t, ee_pos_des[:, 0], label="desired_x")
-plt.plot(t, ee_pos_actual[:, 0], label="actual_x")
+plt.plot(time_zeroed, ee_pos_des[:, 0], label="desired_x")
+plt.plot(time_zeroed, ee_pos_actual[:, 0], label="actual_x")
+plt.plot(puck_time_zeroed, puck[:, 0], label="puck_x")
+plt.legend()
 plt.subplot(122)
-plt.plot(t, ee_pos_actual[:, 1], label="actual_y")
-plt.plot(t, ee_pos_des[:, 1], label="desired_y")
+plt.plot(time_zeroed, ee_pos_des[:, 1], label="desired_y")
+plt.plot(time_zeroed, ee_pos_actual[:, 1], label="actual_y")
+plt.plot(puck_time_zeroed, puck[:, 1], label="puck_y")
 plt.legend()
 
 fig_1, axes_1 = plt.subplots(3, 2)
@@ -180,10 +240,13 @@ def plot_actual_desired(ax, i, actual, desired):
 
 
 for i in range(6):
-    axes_1[int(i / 2), i % 2].plot(t, error[:, i])
+    axes_1[int(i / 2), i % 2].plot(t, np.abs(error[:, i]), 'r', label=f"err_{i}")
     axes_1[int(i / 2), i % 2].plot(t[time_hit_idx], np.abs(error[time_hit_idx, i]), 'rx')
-    axes_1[int(i / 2), i % 2].plot(t, 1e-3*np.abs(centrifugal_coriolis[:, i]))
+    axes_1[int(i / 2), i % 2].plot(t, 1e-3*np.abs(centrifugal_coriolis[:, i]), 'b', label=f"cc_{i}")
+    axes_1[int(i / 2), i % 2].plot(t, 1e-3*np.abs(dkwii[:, i]), 'm', label=f"dkwii_{i}")
+    axes_1[int(i / 2), i % 2].plot(t, 1e-3*np.abs(energy), 'g', label=f"energy")
     axes_1[int(i / 2), i % 2].set_title("joint_{}".format(i + 1))
+    axes_1[int(i / 2), i % 2].legend()
     axes_6[int(i / 2), i % 2].plot(t, centrifugal_coriolis[:, i])
     axes_6[int(i / 2), i % 2].plot(t[time_hit_idx], centrifugal_coriolis[time_hit_idx, i], 'rx')
     axes_6[int(i / 2), i % 2].set_title("joint_{}".format(i + 1))
