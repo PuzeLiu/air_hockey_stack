@@ -9,7 +9,7 @@ from geometry_msgs.msg import Point
 from gazebo_msgs.msg import ModelState 
 from gazebo_msgs.srv import SetModelState
 
-from air_hockey_neural_planner.msg import PlannerRequest
+from air_hockey_msgs.msg import PlannerRequest
 
 
 def print_(x, N=5):
