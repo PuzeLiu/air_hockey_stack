@@ -8,6 +8,8 @@
 <!--     <arg name="front_controllers" default="bspline_joint_trajectory_controller"/> -->
     <arg name="front_controllers" default="bspline_adrc_joint_trajectory_controller"/>
     <arg name="back_controllers" default="bspline_adrc_joint_trajectory_controller"/>
+<!--     <arg name="front_controllers" default="bspline_ff_joint_trajectory_controller"/> -->
+<!--     <arg name="back_controllers" default="bspline_ff_joint_trajectory_controller"/> -->
 
     <arg name="use_front_iiwa" default="true"/>
     <arg name="use_back_iiwa" default="true"/>

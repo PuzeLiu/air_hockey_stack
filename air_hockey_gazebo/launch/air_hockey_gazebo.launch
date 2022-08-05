@@ -14,8 +14,9 @@
 <!--     <arg name="front_controllers" default="joint_feedforward_trajectory_controller"/> -->
 <!--     <arg name="back_controllers" default="joint_feedforward_trajectory_controller"/> -->
 <!--     <arg name="front_controllers" default="bspline_joint_trajectory_controller"/> -->
-    <arg name="front_controllers" default="bspline_adrc_joint_trajectory_controller"/>
-    <arg name="back_controllers" default="bspline_adrc_joint_trajectory_controller"/>
+<!--     <arg name="front_controllers" default="bspline_adrc_joint_trajectory_controller"/> -->
+    <arg name="front_controllers" default="bspline_ff_joint_trajectory_controller"/>
+    <arg name="back_controllers" default="bspline_ff_joint_trajectory_controller"/>
 
     <arg name="use_front_iiwa" default="true"/>
     <arg name="use_back_iiwa" default="true"/>
@@ -125,11 +126,6 @@
     <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
     <rosparam file="$(find air_hockey_baseline_agent)/config/config.yaml" command="load" subst_value="true"/>
     <rosparam file="$(find air_hockey_neural_planner)/config/config.yaml" command="load" subst_value="true"/>
-
-    <node name="plotjuggler_with_layout"
-          pkg="plotjuggler"
-          type="plotjuggler"
-          args="--layout $(find air_hockey_neural_planner)/config/layout_bspline_adrc.xml"/>
 
 <!--    &lt;!&ndash; Load Parameters of kalman filter &ndash;&gt;-->
 
