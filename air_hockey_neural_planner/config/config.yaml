@@ -2,7 +2,18 @@ neural_planner:
 #  planner_path: "./trained_models/striker/v08a10v_tilted/best-143"
 #  planner_path: "./trained_models/striker/v08a10v_tilted/last_n-134" # better
 
-  planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-51" # looks good
+
+  #planner_path: "./trained_models/striker/v08a10v_newopt/best-52" # if used with nn endcnf, ok in sim, in real large z deviation but perfect scoring
+  #planner_path: "./trained_models/striker/v08a10v_newopt/best-71" #  if used with nn endcnf,ok in sim but slows down before hitting, in real large z deviation but perfect scoring
+  #planner_path: "./trained_models/striker/v08a10v_newopt/last_n-46" # if used with nn endcnf,ok in sim but slows down before hitting, in real large z deviation but perfect scoring
+  #planner_path: "./trained_models/striker/v08a10v_newopt/last_n-35" #
+  #planner_path: "./trained_models/striker/v08a10v_newopt/best-44" #
+
+  #planner_path: "./trained_models/striker/v08a10v_newopt/last_n-39" # seems nice
+  #planner_path: "./trained_models/striker/v08a10v_newopt/last_n-56" # seems nice a bit tighter
+  planner_path: "./trained_models/striker/v08a10v_newopt/last_n-69" # nice but different
+
+  #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-51" # looks good
 #  planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-59" # looks good
   #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-122" # looks good, but worse on long shots
   #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/last_n-59" # looks good, but scores poorly
