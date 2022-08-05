@@ -83,13 +83,11 @@ void BaselineHittingExperiment::start() {
 				agent.getState().trajectoryBuffer.getFree().jointTrajectory = jointTraj;
 				agent.getState().trajectoryBuffer.getFree().cartTrajectory = cartTraj;
 				agent.publishTrajectory();
+                (cartTraj.points.back().time_from_start).sleep();
+                planGettingBackTrajectory();
 			}
 			plannerStatusPub.publish(plannerStatusMsg);
 			publishStatus = false;
-			(cartTraj.points.back().time_from_start + ros::Duration(1.0)).sleep();
-
-			planGettingBackTrajectory();
-
 
 		}
 		ros::spinOnce();
@@ -114,12 +112,21 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 	air_hockey_msgs::GetHittingState srv;
 	srv.request.x = hitPos[0];
 	srv.request.y = hitPos[1];
+    //std::cout << "HIT POS: " <<  hitPos[0] << "  " << hitPos[1] <<  std::endl;
 	srv.request.th = atan2(hitDir[1], hitDir[0]);
 	get_hitting_state_client.call(srv);
+    //std::cout << "CHECKING IF VELOCITIES ARE THERE:" << std::endl;
+	if (srv.response.magnitude == 0.) {return false;}
+    //std::cout << "HITTING VELOCITY FROM MY OPT:" << std::endl;
 	for (auto i = 0; i < 6; ++i){
 	    qHitRef[i] = srv.response.q[i];
+        //std::cout << srv.response.q_dot[i] << " ";
 	}
+    //std::cout << std::endl;
 	hitVelMag = srv.response.magnitude;
+
+	agent.getTrajectoryGenerator().transformations->transformRobot2Table(hitPos);
+	agent.getTrajectoryGenerator().transformations->rotationRobot2Table(hitDir);
 
 	Eigen::Vector3d hitVel, xEnd;
 	if (hitPos.y() > 0) {
@@ -133,12 +140,14 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 		                     - 0.05),
 	                -agent.getEnvironmentParams().tableWidth / 2 + agent.getEnvironmentParams().malletRadius + 0.05);
 	double tStop = (xEnd - agent.getAgentParams().xHome).norm() / 0.7;
+	ROS_INFO_STREAM(xStart.transpose() << " v: " << vStart.transpose() << "vHitMag: " << hitVelMag << " end: " << xEnd.transpose());
 
 	for (int i = 0; i < 10; ++i) {
 		cartTraj.points.clear();
 		jointTraj.points.clear();
 
 		hitVel = hitDir * hitVelMag;
+        ROS_INFO_STREAM("HITVEL: " << hitVel);
 
 		agent.getTrajectoryGenerator().combinatorialHitNew->plan(xStart, vStart, hitPos, hitVel, hittingTime,
 		                                                         xEnd, Eigen::Vector3d::Zero(), cartTraj);
@@ -171,6 +180,7 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 			return true;
 		}
 		else {
+            ROS_INFO_STREAM("Scaled down");
 			hitVelMag *= 0.9;
 		}
 	}
@@ -188,19 +198,23 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 bool BaselineHittingExperiment::planGettingBackTrajectory() {
 	JointArrayType qStartTmp = JointArrayType::Map(jointTraj.points.back().positions.data(), jointTraj.points.back().positions.size());
 	JointArrayType dqStartTmp = JointArrayType::Map(jointTraj.points.back().velocities.data(), jointTraj.points.back().velocities.size());
+    Eigen::Vector3d xEnd(cartTraj.points.back().transforms[0].translation.x,
+                         cartTraj.points.back().transforms[0].translation.y,
+                         cartTraj.points.back().transforms[0].translation.z);
+    agent.getTrajectoryGenerator().transformations->transformRobot2Table(xEnd);
 
 	double tStop = 2.0;
 	for (int j = 0; j < 10; ++j) {
 		cartTraj.points.clear();
 		jointTraj.points.clear();
-		agent.getTrajectoryGenerator().cubicLinearMotion->plan(agent.getAgentParams().xHome, Eigen::Vector3d::Zero(),
+		agent.getTrajectoryGenerator().cubicLinearMotion->plan(xEnd, Eigen::Vector3d::Zero(),
 															   agent.getAgentParams().xHome, Eigen::Vector3d::Zero(), tStop, cartTraj);
 		agent.getTrajectoryGenerator().transformations->transformTrajectory(cartTraj);
 
 		prePlanPoint.time_from_start = ros::Duration(0.);
 		prePlanPoint.positions = std::vector<double>(qStartTmp.data(), qStartTmp.data() + qStartTmp.size());
 		prePlanPoint.velocities = std::vector<double>(dqStartTmp.data(), dqStartTmp.data() + dqStartTmp.size());
-		if(agent.getTrajectoryGenerator().optimizer->optimizeJointTrajectoryAnchor(cartTraj, qStartTmp, dqStartTmp, agent.getAgentParams().qHome, 2.0, jointTraj)){
+		if(agent.getTrajectoryGenerator().optimizer->optimizeJointTrajectoryAnchor(cartTraj, qStartTmp, dqStartTmp, agent.getAgentParams().qHome, tStop, jointTraj)){
 			agent.getTrajectoryGenerator().cubicSplineInterpolation(jointTraj, prePlanPoint);
 			agent.getTrajectoryGenerator().synchronizeCartesianTrajectory(jointTraj,cartTraj);
 			jointTraj.header.stamp = ros::Time::now() + ros::Duration(0.1);
@@ -227,9 +241,6 @@ void BaselineHittingExperiment::planRequestCB(air_hockey_msgs::PlannerRequestCon
 	hitPos = Eigen::Vector3f(msg->hit_point.x, msg->hit_point.y, msg->hit_point.z).cast<double>();
 	hitDir = Eigen::Vector3f(cos(msg->hit_angle), sin(msg->hit_angle), 0.).cast<double>();
 	endPoint = Eigen::Vector3f(msg->end_point.x, msg->end_point.y, msg->end_point.z).cast<double>();
-
-	agent.getTrajectoryGenerator().transformations->transformRobot2Table(hitPos);
-	agent.getTrajectoryGenerator().transformations->rotationRobot2Table(hitDir);
 
 	prePlanPoint.time_from_start = ros::Duration(0.);
 	prePlanPoint.positions = std::vector<double>(std::begin(msg->q_0), std::end(msg->q_0));
