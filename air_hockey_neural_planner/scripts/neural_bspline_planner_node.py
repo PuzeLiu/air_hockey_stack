@@ -12,6 +12,7 @@ import pinocchio as pino
 from time import perf_counter
 from scipy.interpolate import interp1d
 
+
 SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
 PLANNING_MODULE_DIR = os.path.join(SCRIPT_DIR, "manifold_planning")
@@ -26,6 +27,7 @@ from manifold_planning.utils.spo import StartPointOptimizer
 from manifold_planning.utils.constants import UrdfModels, Limits, Base
 from manifold_planning.utils.model import load_model_boundaries, load_model_hpo, model_inference
 from manifold_planning.utils.feasibility import check_if_plan_valid
+from manifold_planning.utils.hpo_interface import get_hitting_configuration_opt
 
 
 def print_(x, N=5):
@@ -89,6 +91,7 @@ class NeuralPlannerNode:
         rospy.init_node("neural_planner_node", anonymous=True)
         front_controller_type = rospy.get_param("~front_controllers", "bspline_adrc_joint_trajectory_controller")
         back_controller_type = rospy.get_param("~back_controllers", "bspline_adrc_joint_trajectory_controller")
+        print(front_controller_type)
         planner_path = os.path.join(PACKAGE_DIR, rospy.get_param("/neural_planner/planner_path"))
         ik_hitting_path = os.path.join(PACKAGE_DIR, rospy.get_param("/neural_planner/ik_hitting_path"))
         self.planning_request_subscriber = rospy.Subscriber("/neural_planner/plan_trajectory", PlannerRequest,
@@ -261,19 +264,26 @@ class NeuralPlannerNode:
         self.publish_planner_status(t1 - t0)
 
     def get_hitting_configuration(self, xk, yk, thk):
-        qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis]).numpy()[0]
-        q = np.concatenate([qk, np.zeros(3)], axis=-1)
+        qk, q_dot_k = get_hitting_configuration_opt(xk, yk, Base.position[-1], thk)
+        if qk is None or q_dot_k is None:
+            return None, None
+        q = np.concatenate([qk, np.zeros(2)], axis=-1)
         pino.forwardKinematics(self.pino_model, self.pino_data, q)
-        xyz_pino = copy(self.pino_data.oMi[-1].translation)
-        # J = pino.computeJointJacobians(self.pino_model, self.pino_data, q)
-        J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3,
-            :6]
-        pinvJ = np.linalg.pinv(J)
-        # pinv63J = pinvJ[:6, :3]
-        q_dot = (pinvJ @ np.array([np.cos(thk), np.sin(thk), 0])[:, np.newaxis])[:, 0]
-        max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
-        qdotk = q_dot / max_mul
-        return q[:7], qdotk, xyz_pino
+        xyz_pino = self.pino_data.oMi[-1].translation
+        return q[:7], np.array(q_dot_k[:7]), xyz_pino
+        #qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis]).numpy()[0]
+        #q = np.concatenate([qk, np.zeros(3)], axis=-1)
+        #pino.forwardKinematics(self.pino_model, self.pino_data, q)
+        #xyz_pino = copy(self.pino_data.oMi[-1].translation)
+        ## J = pino.computeJointJacobians(self.pino_model, self.pino_data, q)
+        #J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3,
+        #    :6]
+        #pinvJ = np.linalg.pinv(J)
+        ## pinv63J = pinvJ[:6, :3]
+        #q_dot = (pinvJ @ np.array([np.cos(thk), np.sin(thk), 0])[:, np.newaxis])[:, 0]
+        #max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
+        #qdotk = q_dot / max_mul
+        #return q[:7], qdotk, xyz_pino
 
     def publish_joint_trajectory(self, qs, ts, traj_time=None):
         assert len(qs) == len(ts)
