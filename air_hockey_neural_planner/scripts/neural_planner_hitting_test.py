@@ -58,7 +58,7 @@ class NeuralPlannerHittingTestNode:
                 break
             print(__file__)
             path = os.path.dirname(os.path.dirname(__file__))
-            command = "bash " + os.path.join(path, "record_rosbag.sh 5")
+            command = "bash " + os.path.join(path, "record_rosbag.sh 6")
             print(command)
             command = shlex.split(command)
             rosbag_proc = subprocess.Popen(command)
@@ -69,7 +69,7 @@ class NeuralPlannerHittingTestNode:
                 # print("ROS TIME:", rospy.Time.now().to_sec())
                 # self.request_replan()
                 pass
-            rospy.sleep(3.)
+            rospy.sleep(5.0)
             #parent = psutil.Process(rosbag_proc.pid)
             #for child in parent.children(recursive=True):  # or parent.children() for recursive=False
             #    child.kill()
@@ -192,7 +192,9 @@ class NeuralPlannerHittingTestNode:
             state_msg.model_name = 'puck'
             state_msg.pose.position.x = -0.5 + 0.2 * np.random.rand()
             state_msg.pose.position.y = -0.4 + 0.8 * np.random.rand()
-            v = 0.1
+            #state_msg.pose.position.x = -0.5
+            #state_msg.pose.position.y = -0.4
+            v = 0.0
             state_msg.twist.linear.x = v * (2 * np.random.rand() - 1.)
             state_msg.twist.linear.y = v * (2 * np.random.rand() - 1.)
             state_msg.pose.position.z = 0.0
@@ -220,10 +222,10 @@ class NeuralPlannerHittingTestNode:
 
         print("DESIRED POSE:", x, " ", y)
         if not self.gazebo:
-            if x < 0.7 or x > 1.3:
+            if x < 0.68 or x > 1.3:
                 print("Puck not in x range")
                 return None
-            if y < -0.4 or y > 0.4:
+            if y < -0.41 or y > 0.41:
                 print("Puck not in y range")
                 return None
         # y *= 0.93 + 0.07 * (x - 0.7) / (1.3 - 0.7)
