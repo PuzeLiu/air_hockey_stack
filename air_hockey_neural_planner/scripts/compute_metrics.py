@@ -9,6 +9,7 @@ from glob import glob
 import pinocchio as pino
 from scipy.signal import butter, filtfilt
 from scipy.fft import fft
+from scipy.interpolate import interp1d
 
 from manifold_planning.utils.manipulator import Iiwa
 from manifold_planning.utils.feasibility import check_if_plan_valid, compute_cartesian_losses
@@ -78,7 +79,10 @@ def detect_hitting_idx(puck, puck_time, t):
     vxpuck = np.diff(puck[:, 0], axis=0)
     vypuck = np.diff(puck[:, 0], axis=0)
     vpuck = np.sqrt(vxpuck ** 2 + vypuck ** 2)
-    hit_idx = np.where(vpuck > 0.01)[0][0]
+    nonzero_vel = np.where(vpuck > 0.01)
+    if not len(nonzero_vel[0]):
+        return None, None
+    hit_idx = nonzero_vel[0][0]
     puck_time_hit = puck_time[hit_idx] - puck_time[0]
     time_zeroed = t - t[0]
     time_hit_idx = np.argmin(np.abs(puck_time_hit - time_zeroed))
@@ -86,11 +90,30 @@ def detect_hitting_idx(puck, puck_time, t):
 
 
 def check_if_scored(puck, puck_time, puck_time_hit_idx):
-    x_in_range = np.logical_and(2.42 < puck[:, 0], puck[:, 0] < 2.44)
-    y_in_range = np.logical_and(-0.125 < puck[:, 1], puck[:, 1] < 0.125)
+    time_in_range = np.logical_and(puck_time[puck_time_hit_idx] < puck_time, puck_time < puck_time[puck_time_hit_idx] + 1.5)
+    puck_x = puck[time_in_range, 0]
+    puck_y = puck[time_in_range, 1]
+    xs = interp1d(np.linspace(0., 1., len(puck_x)), puck_x)
+    ys = interp1d(np.linspace(0., 1., len(puck_y)), puck_y)
+    x = xs(np.linspace(0., 1., 300))
+    y = ys(np.linspace(0., 1., 300))
+    x_in_range = np.logical_and(2.42 < x, x < 2.44)
+    #x_in_range = np.logical_and(2.435 < puck[time_in_range, 0], puck[time_in_range, 0] < 2.44)
+    #y_in_range = np.logical_and(-0.125 < puck[:, 1], puck[:, 1] < 0.125)
+    #y_in_range = np.logical_and(-0.09335 < puck[time_in_range, 1], puck[time_in_range, 1] < 0.09335)
+    #y_in_range = np.logical_and(-0.09335 < y, y < 0.09335)
+    y_in_range = np.logical_and(-0.105 < y, y < 0.105)
+    #y_in_range = np.logical_and(-0.125 < y, y < 0.125)
+    vx_sign = np.diff(x, axis=0) > 0
     xy_in_range = np.logical_and(x_in_range, y_in_range)
-    time_in_range = puck_time < puck_time[puck_time_hit_idx] + 2.
-    if_scored = np.logical_and(xy_in_range, time_in_range)
+    if_scored = np.logical_and(xy_in_range[1:], vx_sign)
+    #if_scored = np.logical_and(x_in_range, y_in_range)
+
+    #print("SEP")
+    #print(np.any(xy_in_range))
+    #print(np.any(if_scored))
+    #plt.plot(x, y)
+    #plt.show()
     return np.any(if_scored)
 
 
@@ -230,9 +253,29 @@ def compute_metrics(bag_path):
                                                                            bag_dict["desired"][:, :7],
                                                                            bag_dict["desired"][:, 7:14],
                                                                            bag_dict["desired"][:, 14:21])
+    plt.plot(bag_dict["t"], qd_dot[..., :2], 'r')
+    plt.plot(bag_dict["t"], dq[..., :2], 'm')
+    moving = np.linalg.norm(qd_dot, axis=-1) > 1e-2
+    q = q[moving]
+    dq = dq[moving]
+    ddq = ddq[moving]
+    torque = torque[moving]
+    qd = qd[moving]
+    qd_dot = qd_dot[moving]
+    qd_ddot = qd_ddot[moving]
+    torqued = torqued[moving]
+    t = bag_dict["t"][moving]
+    plt.plot(t, qd_dot[..., :2], 'b')
+    plt.plot(t, dq[..., :2], 'g')
+    plt.show()
     ee, ee_d = compute_end_effector(pino_model, pino_data, q, qd)
 
     time_hit_idx, puck_time_hit_idx = detect_hitting_idx(bag_dict["puck_pose"], bag_dict["puck_time"], bag_dict["t"])
+    if time_hit_idx is None:
+        result["puck_initial_pose"] = np.median(bag_dict["puck_pose"][:10], axis=0)
+        result["scored"] = 0
+        result["valid"] = 0
+        return result
     movement_time, hitting_time = compute_movement_and_hitting_duration(dq, bag_dict["t"], time_hit_idx)
 
     puck_velocity_magnitude, puck_velocity_angle = compute_puck_velocity(bag_dict["puck_pose"], bag_dict["puck_time"],
@@ -252,6 +295,7 @@ def compute_metrics(bag_path):
     result["planned_motion_time"] = bag_dict["planned_motion_time"]
     result["actual_hitting_time"] = hitting_time
     result["actual_motion_time"] = movement_time
+    result["puck_initial_pose"] = np.median(bag_dict["puck_pose"][:10], axis=0)
 
     result["puck_velocity_magnitude"] = puck_velocity_magnitude
     result["planned_puck_velocity_magnitude"] = planned_hit_velocity_magnitude
@@ -263,9 +307,10 @@ def compute_metrics(bag_path):
     result["puck_velocity_angle"] = puck_velocity_angle
     result["planned_puck_velocity_angle"] = planned_hit_velocity_angle
 
-    dt = np.diff(bag_dict["t"])
+    dt = np.diff(t)
     integral = lambda x: np.sum(np.abs(x)[1:] * dt)
-    reduce_integral = lambda x: integral(np.sum(np.abs(x), axis=-1))
+    #reduce_integral = lambda x: integral(np.sum(np.abs(x), axis=-1))
+    reduce_integral = lambda x: integral(np.linalg.norm(x, axis=-1))
     result["planned_z_error"] = integral(desired_z_loss)
     result["planned_xlow_error"] = integral(desired_xlow_loss)
     result["planned_xhigh_error"] = integral(desired_xhigh_loss)
@@ -277,14 +322,14 @@ def compute_metrics(bag_path):
     result["actual_ylow_error"] = integral(actual_ylow_loss)
     result["actual_yhigh_error"] = integral(actual_yhigh_loss)
 
-    result["joint_trajectory_error"] = reduce_integral(bag_dict["error"])
+    result["joint_trajectory_error"] = reduce_integral(bag_dict["error"][moving])
     result["cartesian_trajectory_error"] = reduce_integral(ee_d - ee)
 
     print(result)
     return result
 
-#dir_path = os.path.join(package_dir, "bags/baseline_nn/")
-dir_path = os.path.join(package_dir, "bags/ours_nn/")
+# dir_path = os.path.join(package_dir, "bags/baseline_opt_lp/")
+dir_path = os.path.join(package_dir, "bags/ours_opt_lp/")
 sp = dir_path.replace("bags", "results")
 os.makedirs(sp, exist_ok=True)
 for p in glob(dir_path + "*.bag"):
