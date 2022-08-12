@@ -253,8 +253,8 @@ def compute_metrics(bag_path):
                                                                            bag_dict["desired"][:, :7],
                                                                            bag_dict["desired"][:, 7:14],
                                                                            bag_dict["desired"][:, 14:21])
-    plt.plot(bag_dict["t"], qd_dot[..., :2], 'r')
-    plt.plot(bag_dict["t"], dq[..., :2], 'm')
+    #plt.plot(bag_dict["t"], qd_dot[..., :2], 'r')
+    #plt.plot(bag_dict["t"], dq[..., :2], 'm')
     moving = np.linalg.norm(qd_dot, axis=-1) > 1e-2
     q = q[moving]
     dq = dq[moving]
@@ -265,9 +265,9 @@ def compute_metrics(bag_path):
     qd_ddot = qd_ddot[moving]
     torqued = torqued[moving]
     t = bag_dict["t"][moving]
-    plt.plot(t, qd_dot[..., :2], 'b')
-    plt.plot(t, dq[..., :2], 'g')
-    plt.show()
+    #plt.plot(t, qd_dot[..., :2], 'b')
+    #plt.plot(t, dq[..., :2], 'g')
+    #plt.show()
     ee, ee_d = compute_end_effector(pino_model, pino_data, q, qd)
 
     time_hit_idx, puck_time_hit_idx = detect_hitting_idx(bag_dict["puck_pose"], bag_dict["puck_time"], bag_dict["t"])
@@ -328,8 +328,9 @@ def compute_metrics(bag_path):
     print(result)
     return result
 
-# dir_path = os.path.join(package_dir, "bags/baseline_opt_lp/")
-dir_path = os.path.join(package_dir, "bags/ours_opt_lp/")
+dir_path = os.path.join(package_dir, "bags/baseline_opt_lp/")
+# dir_path = os.path.join(package_dir, "bags/ours_opt_lp/")
+#dir_path = os.path.join(package_dir, "bags/baseline_comming_back_time/")
 sp = dir_path.replace("bags", "results")
 os.makedirs(sp, exist_ok=True)
 for p in glob(dir_path + "*.bag"):
