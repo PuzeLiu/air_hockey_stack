@@ -6,6 +6,7 @@ import numpy as np
 import pinocchio as pino
 import rospy
 
+
 SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
 PLANNING_MODULE_DIR = os.path.join(SCRIPT_DIR, "manifold_planning")
@@ -38,7 +39,6 @@ class GHS():
         if qk is None or q_dot_k is None:
             print("ERROR WITH OPT")
             return [], [], 0.
-        #qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis]).numpy()[0]
         q = np.concatenate([qk, np.zeros(2)], axis=-1)
         J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3,
             :6]
