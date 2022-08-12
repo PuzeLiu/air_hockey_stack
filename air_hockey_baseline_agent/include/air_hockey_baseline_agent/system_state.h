@@ -30,13 +30,15 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 
-#include "data_structures.h"
+#include "observer.h"
+
 namespace air_hockey_baseline_agent {
 	class SystemState {
 	public:
 		SystemState();
+		~SystemState();
 
-		void init(const AgentParams &agentParams);
+		void init(ros::NodeHandle nh, const AgentParams &agentParams, std::string controllerName);
 
 		bool hasActiveTrajectory();
 
@@ -44,11 +46,11 @@ namespace air_hockey_baseline_agent {
 
 		bool isPuckApproaching();
 
-		void updateObservationAndState(air_hockey_baseline_agent::ObservationState observationState,
-		                               const air_hockey_baseline_agent::AgentParams &agentParams);
+		void updateObservationAndState(const air_hockey_baseline_agent::AgentParams &agentParams);
 
 	public:
         TrajectoryBuffer trajectoryBuffer;
+		air_hockey_baseline_agent::Observer* observer;
 
 		air_hockey_baseline_agent::ObservationState observation;
 		air_hockey_baseline_agent::Tactics currentTactic;

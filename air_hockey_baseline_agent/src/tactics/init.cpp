@@ -51,7 +51,7 @@ bool Init::apply() {
 		state.isNewTactics = false;
 		hasPlannedToInitPoint = false;
 		generator.getPlannedJointState(state, state.tStart);
-		if (state.dqPlan.norm() > 0.2) {
+		if (state.vPlan.norm() > 0.01) {
 			return generateStopTrajectory();
 		}
 	}

@@ -44,6 +44,7 @@ namespace air_hockey_baseline_agent
 	struct PuckPredictedState
 	{
 		ros::Time stamp;
+        std::string frame_id;
 		PuckState state;
 		Kalman::Covariance<PuckState> covariance;
 		int numOfCollisions;
@@ -62,8 +63,8 @@ namespace air_hockey_baseline_agent
 
 		void start();
 
-		const PuckPredictedState& getPredictedState(bool visualize = true, bool delayed = false,
-			bool stopBeforeSecondCollision=false);
+		PuckPredictedState getPredictedState(bool visualize = true, bool delayed = false,
+			bool stopBeforeSecondCollision=false, float time = -1.);
 
 		const PuckState& getEstimatedState(bool visualize = false);
 
@@ -95,7 +96,7 @@ namespace air_hockey_baseline_agent
 
 		void startTracking();
 
-		void getPrediction(double& predictedTime, int& nCollision, bool stopBeforeSecondCollision=false);
+		void getPrediction(double& predictedTime, int& nCollision, bool stopBeforeSecondCollision=false, float time=-1.);
 
 		bool getMeasurement();
 

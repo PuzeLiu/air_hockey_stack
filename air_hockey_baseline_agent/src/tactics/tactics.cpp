@@ -31,13 +31,14 @@ using namespace Eigen;
 using namespace air_hockey_baseline_agent;
 
 Tactic::Tactic(EnvironmentParams &envParams, AgentParams &agentParams,
-			   SystemState &state, TrajectoryGenerator *generator) :
+               SystemState &state, TrajectoryGenerator *generator) :
 	envParams(envParams), agentParams(agentParams), state(state), generator(
 	*generator) {
 
 }
 
 bool Tactic::generateStopTrajectory() {
+	ROS_DEBUG_STREAM("Plan Stop Trajectory");
 	// Detect the stop point
 	state.tStart = ros::Time::now() + ros::Duration(agentParams.planTimeOffset * 1.5);
 	generator.getPlannedJointState(state, state.tStart);
@@ -51,8 +52,8 @@ bool Tactic::generateStopTrajectory() {
 	state.trajectoryBuffer.getFree().jointTrajectory.points.clear();
 
 	generator.cubicLinearMotion->plan(state.xPlan, state.vPlan, xStop,
-									  Vector3d(0., 0., 0.), agentParams.planTimeOffset * 2,
-									  state.trajectoryBuffer.getFree().cartTrajectory);
+	                                  Vector3d(0., 0., 0.), agentParams.planTimeOffset * 2,
+	                                  state.trajectoryBuffer.getFree().cartTrajectory);
 	generator.transformations->transformTrajectory(state.trajectoryBuffer.getFree().cartTrajectory);
 
 	bool opt_success;
@@ -64,13 +65,13 @@ bool Tactic::generateStopTrajectory() {
 	if (opt_success) {
 		generator.cubicSplineInterpolation(state.trajectoryBuffer.getFree().jointTrajectory, state.planPrevPoint);
 		generator.synchronizeCartesianTrajectory(state.trajectoryBuffer.getFree().jointTrajectory,
-												 state.trajectoryBuffer.getFree().cartTrajectory);
+		                                         state.trajectoryBuffer.getFree().cartTrajectory);
 		state.tPlan = state.tStart;
 		state.trajectoryBuffer.getFree().jointTrajectory.header.stamp = state.tStart;
 		state.trajectoryBuffer.getFree().cartTrajectory.header.stamp = state.tStart;
 
 		//! Set start time stamp for next tactics
-		state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset * 2);
+		state.tStart = state.tPlan + ros::Duration(agentParams.planTimeOffset * 2.5);
 		return true;
 	}
 	state.tPlan = ros::Time::now();
@@ -116,35 +117,43 @@ std::string Tactic::tactic2String(Tactics tactic) {
 }
 
 bool Tactic::canSmash() {
-	if (state.observation.puckPredictedState.state.x() < agentParams.hitRange.mean() &&
-		state.observation.puckPredictedState.state.x() > agentParams.hitRange[0] &&
-		abs(state.observation.puckPredictedState.state.y()) < (envParams.tableWidth / 2 - envParams.puckRadius - 0.1)) {
-		return true;
-	}
-	if (state.observation.puckPredictedState.state.x() > agentParams.hitRange.mean() &&
-		state.observation.puckPredictedState.state.x() < agentParams.hitRange[1] &&
-		state.observation.puckPredictedState.state.dx() < 0) {
-		return true;
+	if (state.isPuckStatic()){
+		// Check if the puck is in the hitting range
+		if (state.observation.puckPredictedState.state.x() < agentParams.hitRange[1] &&
+			state.observation.puckPredictedState.state.x() > agentParams.hitRange[0] &&
+			abs(state.observation.puckPredictedState.state.y()) < (envParams.tableWidth / 2 - envParams.puckRadius - 0.05)) {
+			// If the puck is leaving, don't smash
+			if (state.observation.puckPredictedState.state.x() > agentParams.hitRange.mean() &&
+				state.observation.puckPredictedState.state.dx() > 0) {
+				return false;
+			}
+			return true;
+		}
 	}
 	return false;
 }
 
 bool Tactic::shouldCut() {
-	if (state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax &&
-		(state.observation.puckPredictedState.numOfCollisions > 0 ||
-			(abs(state.observation.puckPredictedState.state.y()) < (envParams.tableWidth / 2 - envParams.malletRadius))
-		)) {
-		return true;
+	if (state.isPuckApproaching()) {
+		if (state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax &&
+			(state.observation.puckPredictedState.numOfCollisions > 0 ||
+				(abs(state.observation.puckPredictedState.state.y())
+					< (envParams.tableWidth / 2 - envParams.malletRadius))
+			)) {
+			return true;
+		}
 	}
 	return false;
 }
 
 bool Tactic::shouldRepel() {
-	if ((state.observation.puckPredictedState.numOfCollisions == 0) &&
-		(state.observation.puckPredictedState.predictedTime < agentParams.tPredictionMax &&
-			state.observation.puckPredictedState.predictedTime > agentParams.tPredictionMax / 2 &&
-			abs(state.observation.puckPredictedState.state.y()) < agentParams.defendZoneWidth / 2)) {
-		return true;
+	if (state.isPuckApproaching()) {
+		if ((state.observation.puckPredictedState.numOfCollisions == 0)
+			&& (state.observation.puckPredictedState.state.x() >= agentParams.defendLine
+				&& state.observation.puckPredictedState.state.x() < 0.4
+				&& abs(state.observation.puckPredictedState.state.y()) < agentParams.defendZoneWidth / 2)) {
+			return true;
+		}
 	}
 	return false;
 }
