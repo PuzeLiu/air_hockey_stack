@@ -3,12 +3,102 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from glob import glob
+from collections import namedtuple
 
 root_dir = os.path.dirname(__file__)
 package_dir = os.path.dirname(root_dir)
 baseline_path = os.path.join(package_dir, "results/baseline_opt_lp/")
 ours_path = os.path.join(package_dir, "results/ours_opt_lp/")
 
+def make_patch_spines_invisible(ax):
+    ax.set_frame_on(True)
+    ax.patch.set_visible(False)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+
+def box_plot(data):
+    extract = lambda x, y: [v[y] for _, v in x.items() if y in v]
+    #criteria = ["planned_z_error", "planning_time"]
+    #titles = [, "Planning time [ms]"]
+    #scales = [(1000., 1000.), (1., 1.)]
+    description = namedtuple("Description", "name title scales")
+    descriptions = [description("planned_z_error", "Integral of the deviation \n of the plan in z-axis [mm⋅s]", (1000., 1000.)),
+                    description("planning_time", "Planning time [ms]", (1., 1.)),
+                    description("planned_hitting_time", "Planned hitting \n time [ms]", (1., 1.)),
+                    description("planned_puck_velocity_magnitude", "Planned velocity \n magnitude [m/s]", (1., 1.)),
+                    description("joint_trajectory_error", "Integral of the joint \n trajectory error [rad⋅s]", (1., 1.)),
+                    description("cartesian_trajectory_error", "Integral of the end-effector \n trajectory error [mm⋅s]", (1000., 1000.)),
+                    ]
+    collection = [[np.array(extract(d, k)) for d in data] for k in [x.name for x in descriptions]]
+    #a_planned_z_error = extract(a, "planned_z_error")
+    #b_planned_z_error = extract(b, "planned_z_error")
+    #data = [a_planned_z_error, b_planned_z_error]
+    spacing = 0.2
+    c1 = "red"
+    c2 = "blue"
+    #positions = np.reshape(np.array([[i, i + spacing] for i in range(int(len(data) / 2.))]), -1)
+
+    plt.figure(figsize=(12, 8))
+    for i in range(len(descriptions)):
+        ax = plt.subplot(1, len(descriptions), 1 + i)
+        ax.set_title(descriptions[i].title, rotation=45, ha="left", x=-0.)
+        datapoints = [x * descriptions[i].scales[k] for k, x in enumerate(collection[i])]
+        bp = ax.boxplot(datapoints, positions=np.arange(0., spacing*len(collection[i]), spacing))
+        #bp = ax.boxplot(collection[i], positions=[0, spacing])
+        ax.set_xlim(-0.15, 0.35)
+        for i in range(len(bp["boxes"])):
+            if i % 2:
+                bp["boxes"][i].set_color(c1)
+                bp["fliers"][i].set_color(c1)
+                bp["whiskers"][2 * i].set_color(c1)
+                bp["whiskers"][2 * i + 1].set_color(c1)
+                bp["caps"][2 * i].set_color(c1)
+                bp["caps"][2 * i + 1].set_color(c1)
+            else:
+                bp["boxes"][i].set_color(c2)
+                bp["fliers"][i].set_color(c2)
+                bp["whiskers"][2 * i].set_color(c2)
+                bp["whiskers"][2 * i + 1].set_color(c2)
+                bp["caps"][2 * i].set_color(c2)
+                bp["caps"][2 * i + 1].set_color(c2)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.set_xticks([])
+    plt.subplots_adjust(left=0.1,
+                        right=0.9,
+                        top=0.7,
+                        )
+    plt.show()
+
+
+    #fig, host = plt.subplots()
+    #fig.subplots_adjust(right=0.75)
+
+    #par1 = host.twinx()
+    #par2 = host.twinx()
+    #par2.spines["right"].set_position(("axes", 1.2))
+    #make_patch_spines_invisible(par2)
+    #par2.spines["right"].set_visible(True)
+    ##p1, = host.plot([0, 1, 2], [0, 1, 2], "b-", label="Density")
+    #p1 = host.boxplot(data, positions=positions)
+
+    #p2, = par1.plot([0, 1, 2], [0, 3, 2], "r-", label="Temperature")
+    #p3, = par2.plot([0, 1, 2], [50, 30, 15], "g-", label="Velocity")
+    #host.set_xlim(0, 2)
+    #host.set_ylim(0, 2)
+    #par1.set_ylim(0, 4)
+    #par2.set_ylim(1, 65)
+
+    #host.set_xlabel("Distance")
+    #host.set_ylabel("Density")
+    #par1.set_ylabel("Temperature")
+    #par2.set_ylabel("Velocity")
+
+    #plt.show()
+
+    #plt.boxplot(data, positions=positions)
+    #plt.show()
 
 def scoring_ratio(r):
     return mean(r, "scored")
@@ -130,6 +220,7 @@ print("OURS:", actual_hitting_time(ours))
 print("BASELINE:", actual_hitting_time(baseline))
 print(ours["K0"])
 
+box_plot((ours, baseline))
 plot_scatter(ours, "scored")
 plot_scatter(ours, "planned_puck_velocity_magnitude")
 plot_scatter(baseline, "scored")
