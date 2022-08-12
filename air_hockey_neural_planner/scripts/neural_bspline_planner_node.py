@@ -21,6 +21,7 @@ from air_hockey_msgs.msg import PlannerRequest, PlannerStatus
 from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
 from geometry_msgs.msg import Transform, Vector3
 from iiwas_control.msg import BsplineTrajectoryMsg, BsplineSegmentMsg
+from air_hockey_msgs.srv import GetHittingState
 from planner_request_utils import unpack_planner_request
 from manifold_planning.utils.bspline import BSpline
 from manifold_planning.utils.spo import StartPointOptimizer
@@ -105,6 +106,8 @@ class NeuralPlannerNode:
                                                          queue_size=5)
         self.planner_status_publisher = rospy.Publisher(f"/neural_planner/status", PlannerStatus, queue_size=5)
         self.urdf_path = os.path.join(PLANNING_MODULE_DIR, UrdfModels.striker)
+        rospy.wait_for_service('/iiwa_front/get_hitting_state')
+        self.get_hitting_state = rospy.ServiceProxy('/iiwa_front/get_hitting_state', GetHittingState)
 
         N = 15
         self.bsp = BSpline(N, num_T_pts=64)
@@ -156,16 +159,24 @@ class NeuralPlannerNode:
 
     def compute_trajectory(self, msg, traj_time=None, time_offset=0.):
         t0 = perf_counter()
-        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time = unpack_planner_request(msg)
+        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time, expected_velocity = unpack_planner_request(msg)
         print("TH HIT:", th_hit)
 
         v_mul = 1.0
         if tactic == 0:  # HIT
-            q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
+            #q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
+            r = self.get_hitting_state(x_hit, y_hit, th_hit)
+            q_d = np.array(r.q)
+            q_dot_d = np.array(r.q_dot)
+            magnitude = r.magnitude
+            print("EXPECTED VEL: ", expected_velocity)
+            print("MAGNITUDE: ", magnitude)
+            if expected_velocity > 0. and expected_velocity < magnitude:
+                q_dot_d = q_dot_d / magnitude * expected_velocity
             d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d * v_mul], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
-            #q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=t[-1]*1.5)
+            #q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=t[-1]*1.1)
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             planning_time = 0.08
             traj_and_plan_time = t[-1] + planning_time
@@ -183,7 +194,7 @@ class NeuralPlannerNode:
                     print("QDOT:", np.sum(np.abs(q_dot_0)))
                     if np.sum(np.abs(q_dot_0)) < 0.1:
                         print("TIME TO WAIT:", ttw)
-                        traj_time = msg.header.stamp.to_sec() + ttw
+                        traj_time = msg.header.stamp.to_sec() + np.maximum(ttw - 0.00, 0.)
                     else:
                         traj_and_offset_time = t[-1] + time_offset
                         print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
@@ -212,7 +223,9 @@ class NeuralPlannerNode:
             q_d = self.spo.solve(p_d)
             q_dot_d = np.zeros((7,))
             d = np.concatenate([q_0, q_d, p_d, q_dot_0, q_ddot_0, q_dot_d], axis=-1)[np.newaxis]
+            d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
+            print("TRAJ TIME:", t[-1])
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
         elif tactic == 2:
             #if np.sum(np.abs(q_dot_0)) > 0.1 or np.sum(np.abs(q_0)) > 0.1:
@@ -349,7 +362,7 @@ class NeuralPlannerNode:
         valid = check_if_plan_valid(xyz, q, dq, ddq, torque)
         planner_status = PlannerStatus()
         planner_status.success = valid
-        planner_status.planning_time = planning_time
+        planner_status.planning_time = planning_time * 1000.
         t_hit, q_hit, dq_hit, _ = self.actual_trajectory.get_hitting()
         planner_status.planned_motion_time = self.actual_trajectory.t[-1]
         planner_status.planned_hitting_time = t_hit
