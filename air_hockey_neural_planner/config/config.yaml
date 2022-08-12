@@ -1,48 +1,11 @@
 neural_planner:
-#  planner_path: "./trained_models/striker/v08a10v_tilted/best-143"
-#  planner_path: "./trained_models/striker/v08a10v_tilted/last_n-134" # better
+  planner_path: "./trained_models/striker/opt_man_lp/best-149" # works well LP (used for experiments)
 
+#  planner_path: "./trained_models/striker/opt_man_lp/general/last_n-111" # general LP works ok but sometimes goes to high (used for trick-shots)
 
-  #planner_path: "./trained_models/striker/v08a10v_newopt/best-52" # if used with nn endcnf, ok in sim, in real large z deviation but perfect scoring
-  #planner_path: "./trained_models/striker/v08a10v_newopt/best-71" #  if used with nn endcnf,ok in sim but slows down before hitting, in real large z deviation but perfect scoring
-  #planner_path: "./trained_models/striker/v08a10v_newopt/last_n-46" # if used with nn endcnf,ok in sim but slows down before hitting, in real large z deviation but perfect scoring
-  #planner_path: "./trained_models/striker/v08a10v_newopt/last_n-35" #
-  #planner_path: "./trained_models/striker/v08a10v_newopt/best-44" #
+  #planner_path: "./trained_models/striker/opt_man_lp/general/last_n-156" # general LP porthos tighter but still problems for >=7 and short plans
+#  planner_path: "./trained_models/striker/opt_man_lp/general/last_n-203" # general LP porthos tighter but still problems for >=7
 
-  #planner_path: "./trained_models/striker/v08a10v_newopt/last_n-39" # seems nice
-  #planner_path: "./trained_models/striker/v08a10v_newopt/last_n-56" # seems nice a bit tighter
-  planner_path: "./trained_models/striker/v08a10v_newopt/last_n-69" # nice but different
-
-  #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-51" # looks good
-#  planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-59" # looks good
-  #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-122" # looks good, but worse on long shots
-  #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/last_n-59" # looks good, but scores poorly
-  #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/last_n-68" # looks good, but scores poorly
-
-    #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-219" # not bad but a bit worse, fast but cannot score
-  #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/last_n-177" # not so good
-
-  #  planner_path: "./trained_models/striker/v08a10v_centrifugal/last_n-104" # 1e3 aramis
-#  planner_path: "./trained_models/striker/v08a10v_centrifugal/last_n-110" # 1e2 athos
-#  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-129" # 1e2 athos retrained c1 t1em1
-#  planner_path: "./trained_models/striker/v08a10v_centrifugalend/best-132" # 1e0 cont porthos
-
-#  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-128" # 1e1 porthos
-
-  #  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-115" # 1e1 porthos
-#  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-105" # 1e1 porthos
-  #  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-102" # 1e1 porthos
-#  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-99" # 1e1 porthos
-#  planner_path: "./trained_models/striker/v08a10v_centrifugal/best-88" # 1e1 porthos
-#  planner_path: "./trained_models/striker/v08a10v_centrifugal/last_n-65"
-    #planner_path: "./trained_models/striker/v08a10v_torqueint/last_n-77"
-#  planner_path: "./trained_models/striker/v08a7v_beyond/best-123"
-  #planner_path: "./trained_models/striker/v08a10v_qddotend/best-144"
-  #  planner_path: "./trained_models/striker/v08a10v_qddotend/best-156"
-  #planner_path: "./trained_models/striker/v08a10v_qddotend/best-115"
-#  planner_path: "./trained_models/striker/v08a10v_beyond/best-271"
-  #planner_path: "./trained_models/striker/v08a10v_jerk/best-161"
-#  planner_path: "./trained_models/striker/v08a08huberalphaint/best-60"
 
 #  ik_hitting_path: "./trained_models/ik_hitting/pos_lossabs/best-53"
   ik_hitting_path: "./trained_models/ik_hitting/pos_lossabs/best-77"
