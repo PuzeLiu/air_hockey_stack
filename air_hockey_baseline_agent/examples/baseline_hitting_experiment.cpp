@@ -140,14 +140,12 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 		                     - 0.05),
 	                -agent.getEnvironmentParams().tableWidth / 2 + agent.getEnvironmentParams().malletRadius + 0.05);
 	double tStop = (xEnd - agent.getAgentParams().xHome).norm() / 0.7;
-	ROS_INFO_STREAM(xStart.transpose() << " v: " << vStart.transpose() << "vHitMag: " << hitVelMag << " end: " << xEnd.transpose());
 
 	for (int i = 0; i < 10; ++i) {
 		cartTraj.points.clear();
 		jointTraj.points.clear();
 
 		hitVel = hitDir * hitVelMag;
-        ROS_INFO_STREAM("HITVEL: " << hitVel);
 
 		agent.getTrajectoryGenerator().combinatorialHitNew->plan(xStart, vStart, hitPos, hitVel, hittingTime,
 		                                                         xEnd, Eigen::Vector3d::Zero(), cartTraj);
@@ -165,7 +163,6 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 			jointTraj.header.stamp = ros::Time::now() + ros::Duration(0.1);
 			cartTraj.header.stamp = jointTraj.header.stamp;
 
-			plannerStatusMsg.planning_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t_start).count();
 			plannerStatusMsg.header.stamp = jointTraj.header.stamp;
 			plannerStatusMsg.success = true;
 			plannerStatusMsg.planned_hitting_time = hittingTime;
