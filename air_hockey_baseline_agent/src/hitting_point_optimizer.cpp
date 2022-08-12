@@ -124,7 +124,9 @@ double HittingPointOptimizer::f(const vector<double> &x, const OptimizerData *da
 	                                data->agentParams.pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED,
 	                                jacobian);
 	auto vec = data->hitDirection.transpose() * jacobian.topRows(3);
-	return vec.squaredNorm();
+	auto diff = (qCur - data->agentParams.qHome).topRows(6);
+	auto dist = diff.cwiseProduct(data->agentParams.pinoModel.velocityLimit.topRows(6).cwiseInverse());
+	return vec.squaredNorm() - 1e0 * dist.squaredNorm();
 }
 
 double HittingPointOptimizer::h(const vector<double> &x, const OptimizerData *data) {
@@ -214,7 +216,7 @@ double HittingPointOptimizer::getMaxVelocityLP(const JointArrayType &q) {
 	}
 
 	// Generate Problem
-	Eigen::VectorXd velLowerLimit = -agentParams.pinoModel.velocityLimit;
+	Eigen::VectorXd velLowerLimit = -agentParams.pinoModel.velocityLimit * 0.8;
 	simplexModel.loadProblem(matrix, columnLower.data(), columnUpper.data(), objective.data(),
 	                         velLowerLimit.data(), agentParams.pinoModel.velocityLimit.data());
 	// Get Solution

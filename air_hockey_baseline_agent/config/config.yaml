@@ -2,11 +2,12 @@ air_hockey:
   agent:
     debug_tactics: True
     rate: 100
-    init_position_height: 0.2
+    init_position_height: 0.1
     universal_joint_height:   0.058 # 0.0545
     home: [0.08, 0.0]
     goal: [0.98, 0.0]
-    q_ref: [0., 0.06580,  0., -1.45996, 0.,  1.22487, 0.]
+#    q_ref: [0., 0.06580,  0., -1.45996, 0.,  1.22487, 0.]
+    q_ref: [0, 0.6, 0, -0.505, 0., 1.92, 0.]
 
     plan_time_offset: 0.1
     min_tactic_switch_time: 0.5
