@@ -12,7 +12,6 @@ import pinocchio as pino
 from time import perf_counter
 from scipy.interpolate import interp1d
 
-
 SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
 PLANNING_MODULE_DIR = os.path.join(SCRIPT_DIR, "manifold_planning")
@@ -116,8 +115,9 @@ class NeuralPlannerNode:
         self.spo = StartPointOptimizer(self.urdf_path)
         self.planner_model = load_model_boundaries(planner_path, N, 3, 2, self.bsp, self.bspt)
         print("striker model loaded")
-        self.ik_hitting_model = load_model_hpo(ik_hitting_path)
-        print("ik hitting model loaded")
+        # self.ik_hitting_model = load_model_hpo(ik_hitting_path)
+        self.po = StartPointOptimizer(self.urdf_path)
+        # print("ik hitting model loaded")
         self.pino_model = pino.buildModelFromUrdf(self.urdf_path)
         self.pino_data = self.pino_model.createData()
         self.joint_idx = self.pino_model.getFrameId("F_striker_tip")
@@ -159,12 +159,13 @@ class NeuralPlannerNode:
 
     def compute_trajectory(self, msg, traj_time=None, time_offset=0.):
         t0 = perf_counter()
-        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time, expected_velocity = unpack_planner_request(msg)
+        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time, expected_velocity = unpack_planner_request(
+            msg)
         print("TH HIT:", th_hit)
 
         v_mul = 1.0
         if tactic == 0:  # HIT
-            #q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
+            # q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
             r = self.get_hitting_state(x_hit, y_hit, th_hit)
             q_d = np.array(r.q)
             q_dot_d = np.array(r.q_dot)
@@ -173,10 +174,11 @@ class NeuralPlannerNode:
             print("MAGNITUDE: ", magnitude)
             if expected_velocity > 0. and expected_velocity < magnitude:
                 q_dot_d = q_dot_d / magnitude * expected_velocity
-            d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d * v_mul], axis=-1)[np.newaxis]
+            d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d * v_mul], axis=-1)[
+                np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
-            #q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=t[-1]*1.1)
+            # q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=t[-1]*1.1)
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             planning_time = 0.08
             traj_and_plan_time = t[-1] + planning_time
@@ -204,12 +206,12 @@ class NeuralPlannerNode:
                             print("REQ TIME:", requested_time)
                             ratio = requested_time / t[-1]
                             print("RATIO:", ratio)
-                            #t_cps /= ratio
-                            #t *= ratio
-                elif traj_and_plan_time < 1.2*expected_time:
+                            # t_cps /= ratio
+                            # t *= ratio
+                elif traj_and_plan_time < 1.2 * expected_time:
                     print("TRY TO ACT EVEN IT IS TOO LATE")
-                    #traj_and_offset_time = t[-1] + time_offset
-                    #print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
+                    # traj_and_offset_time = t[-1] + time_offset
+                    # print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
                 else:
                     return False
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
@@ -228,26 +230,34 @@ class NeuralPlannerNode:
             print("TRAJ TIME:", t[-1])
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
         elif tactic == 2:
-            #if np.sum(np.abs(q_dot_0)) > 0.1 or np.sum(np.abs(q_0)) > 0.1:
-            #    print("NEED TO BE AT START WITH 0 VELOCITY")
-            #    return 0
-            expected_time = 0.5
-            x_1 = 0.7
+            expected_time = 0.6
+            x_1 = 0.75
             y_1 = -0.15
-            th_1 = 0.
-            x_2 = 0.7
+            th_1 = 0.5
+            x_2 = 0.75
             y_2 = 0.15
-            th_2 = 0.
-            q_d1, q_dot_d1, xyz1 = self.get_hitting_configuration(x_1, y_1, th_1)
-            q_d2, q_dot_d2, xyz2 = self.get_hitting_configuration(x_2, y_2, th_2)
-            mul = 0.4
-            q_dot_d1 *= mul
-            q_dot_d2 *= mul
-            q_dot_d1 = np.pad(q_dot_d1, [[0, 1]], mode='constant')
-            q_dot_d2 = np.pad(q_dot_d2, [[0, 1]], mode='constant')
+            th_2 = -0.5
             p_d1 = np.array([x_1, y_1, Base.position[-1]])
             p_d2 = np.array([x_2, y_2, Base.position[-1]])
-            #q_dot_0 = np.zeros((7,))
+            mul = 0.5
+            v1 = mul * np.array([np.cos(th_1), np.sin(th_1), 0.])
+            v2 = mul * np.array([np.cos(th_2), np.sin(th_2), 0.])
+
+            q_d1 = self.po.solve(p_d1, q_0[:6])
+            q_d2 = self.po.solve(p_d2, q_d1[:6])
+
+            def get_velocity(q, v_xyz):
+                q = np.pad(q, (0, 9 - q.shape[0]), mode='constant')
+                idx_ = self.pino_model.getFrameId("F_striker_tip")
+                J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, idx_, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
+                pinvJ = np.linalg.pinv(J)
+                q_dot = pinvJ @ v_xyz
+                return q_dot
+
+            q_dot_d1 = get_velocity(q_d1, v1)
+            q_dot_d2 = get_velocity(q_d2, v2)
+            q_dot_d1 = np.pad(q_dot_d1, [[0, 1]], mode='constant')
+            q_dot_d2 = np.pad(q_dot_d2, [[0, 1]], mode='constant')
             q_ddot_0 = np.zeros((7,))
             d = np.concatenate([q_0, q_d1, p_d1, q_dot_0, q_ddot_0, q_dot_d1], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
@@ -284,19 +294,19 @@ class NeuralPlannerNode:
         pino.forwardKinematics(self.pino_model, self.pino_data, q)
         xyz_pino = self.pino_data.oMi[-1].translation
         return q[:7], np.array(q_dot_k[:7]), xyz_pino
-        #qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis]).numpy()[0]
-        #q = np.concatenate([qk, np.zeros(3)], axis=-1)
-        #pino.forwardKinematics(self.pino_model, self.pino_data, q)
-        #xyz_pino = copy(self.pino_data.oMi[-1].translation)
+        # qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis]).numpy()[0]
+        # q = np.concatenate([qk, np.zeros(3)], axis=-1)
+        # pino.forwardKinematics(self.pino_model, self.pino_data, q)
+        # xyz_pino = copy(self.pino_data.oMi[-1].translation)
         ## J = pino.computeJointJacobians(self.pino_model, self.pino_data, q)
-        #J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3,
+        # J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3,
         #    :6]
-        #pinvJ = np.linalg.pinv(J)
+        # pinvJ = np.linalg.pinv(J)
         ## pinv63J = pinvJ[:6, :3]
-        #q_dot = (pinvJ @ np.array([np.cos(thk), np.sin(thk), 0])[:, np.newaxis])[:, 0]
-        #max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
-        #qdotk = q_dot / max_mul
-        #return q[:7], qdotk, xyz_pino
+        # q_dot = (pinvJ @ np.array([np.cos(thk), np.sin(thk), 0])[:, np.newaxis])[:, 0]
+        # max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
+        # qdotk = q_dot / max_mul
+        # return q[:7], qdotk, xyz_pino
 
     def publish_joint_trajectory(self, qs, ts, traj_time=None):
         assert len(qs) == len(ts)
