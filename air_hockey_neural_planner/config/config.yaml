@@ -1,7 +1,8 @@
 neural_planner:
-  planner_path: "./trained_models/striker/opt_man_lp/best-149" # works well LP (used for experiments)
+  #planner_path: "./trained_models/striker/opt_man_lp/best-149" # works well LP (used for experiments)
 
-#  planner_path: "./trained_models/striker/opt_man_lp/general/last_n-111" # general LP works ok but sometimes goes to high (used for trick-shots)
+  #planner_path: "./trained_models/striker/opt_man_lp/general/last_n-111" # general LP works ok but sometimes goes to high (used for trick-shots)
+  planner_path: "./trained_models/striker/opt_man_lp/general/last_n-108" # general LP reliable general model, which fails to score sometimes (tested on the last day)
 
   #planner_path: "./trained_models/striker/opt_man_lp/general/last_n-156" # general LP porthos tighter but still problems for >=7 and short plans
 #  planner_path: "./trained_models/striker/opt_man_lp/general/last_n-203" # general LP porthos tighter but still problems for >=7
