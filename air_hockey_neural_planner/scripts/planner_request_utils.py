@@ -1,5 +1,5 @@
 import numpy as np
-from air_hockey_neural_planner.msg import PlannerRequest
+from air_hockey_msgs.msg import PlannerRequest
 
 
 def unpack_planner_request(msg):
