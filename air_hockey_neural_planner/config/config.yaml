@@ -2,7 +2,9 @@ neural_planner:
 #  planner_path: "./trained_models/striker/v08a10v_tilted/best-143"
 #  planner_path: "./trained_models/striker/v08a10v_tilted/last_n-134" # better
 
-  planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-51" # looks good
+  planner_path: "./trained_models/striker/opt_man_lp/best-149" # from experiments
+
+  #  planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-51" # looks good
 #  planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-59" # looks good
   #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/best-122" # looks good, but worse on long shots
   #planner_path: "./trained_models/striker/v08a10v_centrifugalsigmoid/last_n-59" # looks good, but scores poorly
