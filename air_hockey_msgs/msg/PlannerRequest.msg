@@ -7,4 +7,5 @@ geometry_msgs/Point hit_point
 geometry_msgs/Point end_point
 float32 hit_angle
 float32 expected_time
+float32 expected_velocity
 int8 tactic

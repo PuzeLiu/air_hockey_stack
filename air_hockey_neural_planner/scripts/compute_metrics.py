@@ -328,8 +328,9 @@ def compute_metrics(bag_path):
     print(result)
     return result
 
-# dir_path = os.path.join(package_dir, "bags/baseline_opt_lp/")
-dir_path = os.path.join(package_dir, "bags/ours_opt_lp/")
+dir_path = os.path.join(package_dir, "bags/baseline_opt_lp/")
+# dir_path = os.path.join(package_dir, "bags/ours_opt_lp/")
+#dir_path = os.path.join(package_dir, "bags/baseline_comming_back_time/")
 sp = dir_path.replace("bags", "results")
 os.makedirs(sp, exist_ok=True)
 for p in glob(dir_path + "*.bag"):

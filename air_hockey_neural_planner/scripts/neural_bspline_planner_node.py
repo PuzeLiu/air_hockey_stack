@@ -12,6 +12,7 @@ import pinocchio as pino
 from time import perf_counter
 from scipy.interpolate import interp1d
 
+
 SCRIPT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
 PLANNING_MODULE_DIR = os.path.join(SCRIPT_DIR, "manifold_planning")
@@ -20,12 +21,14 @@ from air_hockey_msgs.msg import PlannerRequest, PlannerStatus
 from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
 from geometry_msgs.msg import Transform, Vector3
 from iiwas_control.msg import BsplineTrajectoryMsg, BsplineSegmentMsg
+from air_hockey_msgs.srv import GetHittingState
 from planner_request_utils import unpack_planner_request
 from manifold_planning.utils.bspline import BSpline
 from manifold_planning.utils.spo import StartPointOptimizer
 from manifold_planning.utils.constants import UrdfModels, Limits, Base
 from manifold_planning.utils.model import load_model_boundaries, load_model_hpo, model_inference
 from manifold_planning.utils.feasibility import check_if_plan_valid
+from manifold_planning.utils.hpo_interface import get_hitting_configuration_opt
 
 
 def print_(x, N=5):
@@ -89,6 +92,7 @@ class NeuralPlannerNode:
         rospy.init_node("neural_planner_node", anonymous=True)
         front_controller_type = rospy.get_param("~front_controllers", "bspline_adrc_joint_trajectory_controller")
         back_controller_type = rospy.get_param("~back_controllers", "bspline_adrc_joint_trajectory_controller")
+        print(front_controller_type)
         planner_path = os.path.join(PACKAGE_DIR, rospy.get_param("/neural_planner/planner_path"))
         ik_hitting_path = os.path.join(PACKAGE_DIR, rospy.get_param("/neural_planner/ik_hitting_path"))
         self.planning_request_subscriber = rospy.Subscriber("/neural_planner/plan_trajectory", PlannerRequest,
@@ -102,6 +106,8 @@ class NeuralPlannerNode:
                                                          queue_size=5)
         self.planner_status_publisher = rospy.Publisher(f"/neural_planner/status", PlannerStatus, queue_size=5)
         self.urdf_path = os.path.join(PLANNING_MODULE_DIR, UrdfModels.striker)
+        rospy.wait_for_service('/iiwa_front/get_hitting_state')
+        self.get_hitting_state = rospy.ServiceProxy('/iiwa_front/get_hitting_state', GetHittingState)
 
         N = 15
         self.bsp = BSpline(N, num_T_pts=64)
@@ -110,8 +116,9 @@ class NeuralPlannerNode:
         self.spo = StartPointOptimizer(self.urdf_path)
         self.planner_model = load_model_boundaries(planner_path, N, 3, 2, self.bsp, self.bspt)
         print("striker model loaded")
-        self.ik_hitting_model = load_model_hpo(ik_hitting_path)
-        print("ik hitting model loaded")
+        # self.ik_hitting_model = load_model_hpo(ik_hitting_path)
+        # print("ik hitting model loaded")
+        self.po = StartPointOptimizer(self.urdf_path)
         self.pino_model = pino.buildModelFromUrdf(self.urdf_path)
         self.pino_data = self.pino_model.createData()
         self.joint_idx = self.pino_model.getFrameId("F_striker_tip")
@@ -153,16 +160,24 @@ class NeuralPlannerNode:
 
     def compute_trajectory(self, msg, traj_time=None, time_offset=0.):
         t0 = perf_counter()
-        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time = unpack_planner_request(msg)
+        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time, expected_velocity = unpack_planner_request(msg)
         print("TH HIT:", th_hit)
 
         v_mul = 1.0
         if tactic == 0:  # HIT
-            q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
+            #q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
+            r = self.get_hitting_state(x_hit, y_hit, th_hit)
+            q_d = np.array(r.q)
+            q_dot_d = np.array(r.q_dot)
+            magnitude = r.magnitude
+            print("EXPECTED VEL: ", expected_velocity)
+            print("MAGNITUDE: ", magnitude)
+            if expected_velocity > 0. and expected_velocity < magnitude:
+                q_dot_d = q_dot_d / magnitude * expected_velocity
             d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d * v_mul], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
-            #q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=t[-1]*1.5)
+            #q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=t[-1]*1.1)
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             planning_time = 0.08
             traj_and_plan_time = t[-1] + planning_time
@@ -180,7 +195,7 @@ class NeuralPlannerNode:
                     print("QDOT:", np.sum(np.abs(q_dot_0)))
                     if np.sum(np.abs(q_dot_0)) < 0.1:
                         print("TIME TO WAIT:", ttw)
-                        traj_time = msg.header.stamp.to_sec() + ttw
+                        traj_time = msg.header.stamp.to_sec() + np.maximum(ttw - 0.00, 0.)
                     else:
                         traj_and_offset_time = t[-1] + time_offset
                         print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
@@ -209,29 +224,39 @@ class NeuralPlannerNode:
             q_d = self.spo.solve(p_d)
             q_dot_d = np.zeros((7,))
             d = np.concatenate([q_0, q_d, p_d, q_dot_0, q_ddot_0, q_dot_d], axis=-1)[np.newaxis]
+            d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
+            print("TRAJ TIME:", t[-1])
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
         elif tactic == 2:
-            #if np.sum(np.abs(q_dot_0)) > 0.1 or np.sum(np.abs(q_0)) > 0.1:
-            #    print("NEED TO BE AT START WITH 0 VELOCITY")
-            #    return 0
-            expected_time = 0.5
-            x_1 = 0.7
+            expected_time = 0.6
+            x_1 = 0.75
             y_1 = -0.15
-            th_1 = 0.
-            x_2 = 0.7
+            th_1 = 0.5
+            x_2 = 0.75
             y_2 = 0.15
-            th_2 = 0.
-            q_d1, q_dot_d1, xyz1 = self.get_hitting_configuration(x_1, y_1, th_1)
-            q_d2, q_dot_d2, xyz2 = self.get_hitting_configuration(x_2, y_2, th_2)
-            mul = 0.4
-            q_dot_d1 *= mul
-            q_dot_d2 *= mul
-            q_dot_d1 = np.pad(q_dot_d1, [[0, 1]], mode='constant')
-            q_dot_d2 = np.pad(q_dot_d2, [[0, 1]], mode='constant')
+            th_2 = -0.5
             p_d1 = np.array([x_1, y_1, Base.position[-1]])
             p_d2 = np.array([x_2, y_2, Base.position[-1]])
-            #q_dot_0 = np.zeros((7,))
+            mul = 0.5
+            v1 = mul * np.array([np.cos(th_1), np.sin(th_1), 0.])
+            v2 = mul * np.array([np.cos(th_2), np.sin(th_2), 0.])
+
+            q_d1 = self.po.solve(p_d1, q_0[:6])
+            q_d2 = self.po.solve(p_d2, q_d1[:6])
+
+            def get_velocity(q, v_xyz):
+                q = np.pad(q, (0, 9 - q.shape[0]), mode='constant')
+                idx_ = self.pino_model.getFrameId("F_striker_tip")
+                J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, idx_, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
+                pinvJ = np.linalg.pinv(J)
+                q_dot = pinvJ @ v_xyz
+                return q_dot
+
+            q_dot_d1 = get_velocity(q_d1, v1)
+            q_dot_d2 = get_velocity(q_d2, v2)
+            q_dot_d1 = np.pad(q_dot_d1, [[0, 1]], mode='constant')
+            q_dot_d2 = np.pad(q_dot_d2, [[0, 1]], mode='constant')
             q_ddot_0 = np.zeros((7,))
             d = np.concatenate([q_0, q_d1, p_d1, q_dot_0, q_ddot_0, q_dot_d1], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
@@ -261,19 +286,26 @@ class NeuralPlannerNode:
         self.publish_planner_status(t1 - t0)
 
     def get_hitting_configuration(self, xk, yk, thk):
-        qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis]).numpy()[0]
-        q = np.concatenate([qk, np.zeros(3)], axis=-1)
+        qk, q_dot_k = get_hitting_configuration_opt(xk, yk, Base.position[-1], thk)
+        if qk is None or q_dot_k is None:
+            return None, None
+        q = np.concatenate([qk, np.zeros(2)], axis=-1)
         pino.forwardKinematics(self.pino_model, self.pino_data, q)
-        xyz_pino = copy(self.pino_data.oMi[-1].translation)
-        # J = pino.computeJointJacobians(self.pino_model, self.pino_data, q)
-        J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3,
-            :6]
-        pinvJ = np.linalg.pinv(J)
-        # pinv63J = pinvJ[:6, :3]
-        q_dot = (pinvJ @ np.array([np.cos(thk), np.sin(thk), 0])[:, np.newaxis])[:, 0]
-        max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
-        qdotk = q_dot / max_mul
-        return q[:7], qdotk, xyz_pino
+        xyz_pino = self.pino_data.oMi[-1].translation
+        return q[:7], np.array(q_dot_k[:7]), xyz_pino
+        #qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis]).numpy()[0]
+        #q = np.concatenate([qk, np.zeros(3)], axis=-1)
+        #pino.forwardKinematics(self.pino_model, self.pino_data, q)
+        #xyz_pino = copy(self.pino_data.oMi[-1].translation)
+        ## J = pino.computeJointJacobians(self.pino_model, self.pino_data, q)
+        #J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3,
+        #    :6]
+        #pinvJ = np.linalg.pinv(J)
+        ## pinv63J = pinvJ[:6, :3]
+        #q_dot = (pinvJ @ np.array([np.cos(thk), np.sin(thk), 0])[:, np.newaxis])[:, 0]
+        #max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
+        #qdotk = q_dot / max_mul
+        #return q[:7], qdotk, xyz_pino
 
     def publish_joint_trajectory(self, qs, ts, traj_time=None):
         assert len(qs) == len(ts)
@@ -339,7 +371,7 @@ class NeuralPlannerNode:
         valid = check_if_plan_valid(xyz, q, dq, ddq, torque)
         planner_status = PlannerStatus()
         planner_status.success = valid
-        planner_status.planning_time = planning_time
+        planner_status.planning_time = planning_time * 1000.
         t_hit, q_hit, dq_hit, _ = self.actual_trajectory.get_hitting()
         planner_status.planned_motion_time = self.actual_trajectory.t[-1]
         planner_status.planned_hitting_time = t_hit

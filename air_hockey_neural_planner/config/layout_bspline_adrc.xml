@@ -6,24 +6,24 @@
     <DockSplitter count="2" orientation="-" sizes="0.500564;0.499436">
      <DockSplitter count="3" orientation="|" sizes="0.333333;0.333333;0.333333">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.000361" right="16.862939" top="0.000989" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.006324" bottom="-0.026252" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/positions.0" color="#1f77b4"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/positions.0" color="#17becf"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="0.789744" right="16.862939" top="0.869716" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.915258" bottom="0.658268" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/positions.1" color="#d62728"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/positions.1" color="#bcbd22"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.001269" right="16.862939" top="0.002166" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.010234" bottom="-0.335754" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/positions.2" color="#1ac938"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/positions.2" color="#1f77b4"/>
@@ -32,24 +32,24 @@
      </DockSplitter>
      <DockSplitter count="3" orientation="|" sizes="0.334613;0.330774;0.334613">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.388116" right="16.879023" top="-0.364201" left="16.784642"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="-0.501158" bottom="-0.634756" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/positions.3" color="#ff7f0e"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/positions.3" color="#d62728"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.008498" right="16.862939" top="0.007779" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.026346" bottom="-0.191064" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/positions.4" color="#f14cc1"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/positions.4" color="#1ac938"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="1.460970" right="16.862939" top="1.647626" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="1.951975" bottom="1.130460" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/positions.5" color="#9467bd"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/positions.5" color="#ff7f0e"/>
@@ -61,55 +61,55 @@
   </Tab>
   <Tab containers="1" tab_name="est">
    <Container>
-    <DockSplitter count="2" orientation="-" sizes="0.5;0.5">
-     <DockSplitter count="3" orientation="|" sizes="0.336735;0.336735;0.326531">
+    <DockSplitter count="2" orientation="-" sizes="0.500564;0.499436">
+     <DockSplitter count="3" orientation="|" sizes="0.336532;0.337172;0.326296">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.000145" right="16.862939" top="0.000123" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.000604" bottom="-0.000515" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/accelerations.0" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="0.000548" right="16.862939" top="0.001444" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.001210" bottom="-0.000656" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/accelerations.1" color="#d62728"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.000190" right="16.862939" top="0.000221" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.000787" bottom="-0.001037" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/accelerations.2" color="#1ac938"/>
        </plot>
       </DockArea>
      </DockSplitter>
-     <DockSplitter count="4" orientation="|" sizes="0.25;0.25;0.25;0.25">
+     <DockSplitter count="4" orientation="|" sizes="0.25032;0.24968;0.25032;0.24968">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.000003" right="16.862939" top="0.001349" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.001218" bottom="-0.000718" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/accelerations.3" color="#ff7f0e"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.000888" right="16.862939" top="0.000861" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.000621" bottom="-0.000705" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/accelerations.4" color="#f14cc1"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.001472" right="16.862939" top="0.001197" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.001793" bottom="-0.002291" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/accelerations.5" color="#9467bd"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.001095" right="16.862939" top="0.000744" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.000001" bottom="-0.000001" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/accelerations.6" color="#1f77b4"/>
        </plot>
@@ -123,22 +123,22 @@
     <DockSplitter count="2" orientation="-" sizes="0.500564;0.499436">
      <DockSplitter count="3" orientation="|" sizes="0.333333;0.333333;0.333333">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.001074" right="16.862939" top="0.000359" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.006366" bottom="-0.009392" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/positions.0" color="#17becf"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="0.000856" right="16.862939" top="0.002643" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.004827" bottom="-0.003280" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/positions.1" color="#bcbd22"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.002542" right="16.862939" top="0.002163" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.005736" bottom="-0.006001" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/positions.2" color="#1f77b4"/>
        </plot>
@@ -146,22 +146,22 @@
      </DockSplitter>
      <DockSplitter count="3" orientation="|" sizes="0.334613;0.330774;0.334613">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="0.000093" right="16.862939" top="0.004881" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.006100" bottom="-0.004414" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/positions.3" color="#d62728"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.008497" right="16.862939" top="0.007639" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.006650" bottom="-0.003521" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/positions.4" color="#1ac938"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="0.006197" right="16.862939" top="0.024707" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.009601" bottom="-0.010718" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/error/positions.5" color="#ff7f0e"/>
        </plot>
@@ -172,64 +172,56 @@
   </Tab>
   <Tab containers="1" tab_name="vel">
    <Container>
-    <DockSplitter count="2" orientation="-" sizes="0.5;0.5">
-     <DockSplitter count="3" orientation="|" sizes="0.336735;0.336735;0.326531">
+    <DockSplitter count="2" orientation="-" sizes="0.500564;0.499436">
+     <DockSplitter count="3" orientation="|" sizes="0.336532;0.337172;0.326296">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.026036" right="16.862939" top="0.032278" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.339532" bottom="-0.152391" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/velocities.0" color="#f14cc1"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/velocities.0" color="#1ac938"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="0.399259" right="16.862939" top="0.978128" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="1.020354" bottom="-0.638244" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/velocities.1" color="#9467bd"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/velocities.1" color="#ff7f0e"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.097315" right="16.862939" top="0.033769" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.785877" bottom="-0.992585" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/velocities.2" color="#17becf"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/velocities.2" color="#f14cc1"/>
        </plot>
       </DockArea>
      </DockSplitter>
-     <DockSplitter count="4" orientation="|" sizes="0.25;0.25;0.25;0.25">
+     <DockSplitter count="3" orientation="|" sizes="0.333333;0.333333;0.333333">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="0.078074" right="16.862939" top="0.833230" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="1.071701" bottom="-0.677998" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/velocities.3" color="#bcbd22"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/velocities.3" color="#9467bd"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.284431" right="16.862939" top="0.026449" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="0.676985" bottom="-0.726431" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/velocities.4" color="#1f77b4"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/velocities.4" color="#17becf"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-2.407014" right="16.862939" top="-0.454653" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="1.801729" bottom="-2.120552" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/velocities.5" color="#d62728"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/velocities.5" color="#bcbd22"/>
-       </plot>
-      </DockArea>
-      <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.371254" right="16.862939" top="0.526085" left="16.768558"/>
-        <limitY/>
-        <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/velocities.6" color="#1f77b4"/>
-        <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/velocities.6" color="#d62728"/>
        </plot>
       </DockArea>
      </DockSplitter>
@@ -238,11 +230,11 @@
   </Tab>
   <Tab containers="1" tab_name="u">
    <Container>
-    <DockSplitter count="2" orientation="-" sizes="0.5;0.5">
-     <DockSplitter count="3" orientation="|" sizes="0.336735;0.336735;0.326531">
+    <DockSplitter count="2" orientation="-" sizes="0.500564;0.499436">
+     <DockSplitter count="3" orientation="|" sizes="0.336532;0.337172;0.326296">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-7.776463" right="16.862939" top="5.385790" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="51.285561" bottom="-43.943405" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/joint_states/F_joint_1/effort" color="#1f77b4"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.0" color="#d62728"/>
@@ -251,8 +243,8 @@
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-88.888224" right="16.862939" top="11.235596" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="68.238604" bottom="-115.885183" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/joint_states/F_joint_2/effort" color="#1f77b4"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.1" color="#d62728"/>
@@ -261,8 +253,8 @@
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-14.978893" right="16.862939" top="12.527340" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="31.099602" bottom="-15.083686" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/joint_states/F_joint_3/effort" color="#1f77b4"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.2" color="#d62728"/>
@@ -271,10 +263,10 @@
        </plot>
       </DockArea>
      </DockSplitter>
-     <DockSplitter count="3" orientation="|" sizes="0.336735;0.336735;0.326531">
+     <DockSplitter count="3" orientation="|" sizes="0.337812;0.337812;0.324376">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-8.470516" right="16.862939" top="35.139495" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="37.803891" bottom="-24.846384" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/joint_states/F_joint_4/effort" color="#1f77b4"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.3" color="#d62728"/>
@@ -283,8 +275,8 @@
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-53.258237" right="16.862939" top="50.031405" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="15.638336" bottom="-11.171779" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/joint_states/F_joint_5/effort" color="#1f77b4"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.4" color="#d62728"/>
@@ -293,8 +285,8 @@
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-78.307630" right="16.862939" top="97.068169" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="15.717204" bottom="-14.405370" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/joint_states/F_joint_6/effort" color="#1f77b4"/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.5" color="#d62728"/>
@@ -308,48 +300,48 @@
   </Tab>
   <Tab containers="1" tab_name="acc">
    <Container>
-    <DockSplitter count="2" orientation="-" sizes="0.5;0.5">
-     <DockSplitter count="3" orientation="|" sizes="0.336735;0.336735;0.326531">
+    <DockSplitter count="2" orientation="-" sizes="0.500564;0.499436">
+     <DockSplitter count="3" orientation="|" sizes="0.336532;0.337172;0.326296">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.256755" right="16.862939" top="1.931806" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="4.109002" bottom="-5.347842" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/accelerations.0" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-10.300667" right="16.862939" top="1.678947" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="10.184541" bottom="-7.883349" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/accelerations.1" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.644257" right="16.862939" top="1.185062" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="9.363364" bottom="-5.828922" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/accelerations.2" color="#1f77b4"/>
        </plot>
       </DockArea>
      </DockSplitter>
-     <DockSplitter count="3" orientation="|" sizes="0.336735;0.336735;0.326531">
+     <DockSplitter count="3" orientation="|" sizes="0.337812;0.337812;0.324376">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-7.707742" right="16.862939" top="2.077290" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="17.023090" bottom="-6.089808" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/accelerations.3" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-2.483684" right="16.862939" top="0.701515" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="11.794118" bottom="-7.131589" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/accelerations.4" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-1.506227" right="16.862939" top="25.804221" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="17.647780" bottom="-18.377030" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/desired/accelerations.5" color="#1f77b4"/>
        </plot>
@@ -360,55 +352,55 @@
   </Tab>
   <Tab containers="1" tab_name="u_adrc">
    <Container>
-    <DockSplitter count="2" orientation="-" sizes="0.5;0.5">
-     <DockSplitter count="3" orientation="|" sizes="0.336735;0.336735;0.326531">
+    <DockSplitter count="2" orientation="-" sizes="0.500564;0.499436">
+     <DockSplitter count="3" orientation="|" sizes="0.336532;0.337172;0.326296">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-7.775681" right="16.862939" top="5.353736" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="37.535748" bottom="-30.627359" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.0" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-38.853533" right="16.862939" top="10.015238" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="-21.896131" bottom="-113.686775" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.1" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-3.696781" right="16.862939" top="2.721735" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="18.443005" bottom="-11.419301" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.2" color="#1f77b4"/>
        </plot>
       </DockArea>
      </DockSplitter>
-     <DockSplitter count="4" orientation="|" sizes="0.25;0.25;0.25;0.25">
+     <DockSplitter count="4" orientation="|" sizes="0.25032;0.24968;0.25032;0.24968">
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-8.040367" right="16.862939" top="17.503379" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="37.306022" bottom="-4.433739" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.3" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-2.470580" right="16.862939" top="2.354495" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="10.139652" bottom="-6.589100" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.4" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-3.622140" right="16.862939" top="5.311125" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="13.377018" bottom="-7.884132" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.5" color="#1f77b4"/>
        </plot>
       </DockArea>
       <DockArea name="...">
-       <plot flip_x="false" style="Lines" mode="TimeSeries" flip_y="false">
-        <range bottom="-0.277738" right="16.862939" top="0.164440" left="16.768558"/>
+       <plot style="Lines" flip_y="false" flip_x="false" mode="TimeSeries">
+        <range left="13.879179" top="-0.174310" bottom="-0.296613" right="15.770337"/>
         <limitY/>
         <curve name="/iiwa_front/bspline_adrc_joint_trajectory_controller/state/actual/effort.6" color="#1f77b4"/>
        </plot>
@@ -417,14 +409,14 @@
     </DockSplitter>
    </Container>
   </Tab>
-  <currentTabIndex index="0"/>
+  <currentTabIndex index="3"/>
  </tabbed_widget>
  <use_relative_time_offset enabled="1"/>
  <!-- - - - - - - - - - - - - - - -->
  <!-- - - - - - - - - - - - - - - -->
  <Plugins>
   <plugin ID="DataLoad CSV">
-   <default time_axis="" delimiter="0"/>
+   <default delimiter="0" time_axis=""/>
   </plugin>
   <plugin ID="DataLoad ROS bags">
    <use_header_stamp value="false"/>
