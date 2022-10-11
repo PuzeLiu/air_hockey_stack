@@ -28,7 +28,8 @@ def print_(x, N=5):
 
 
 class NeuralPlannerHittingTestNode:
-    def __init__(self):
+    def __init__(self, record=False):
+        self.record = record
         rospy.init_node("neural_planner_hitting_test", anonymous=True)
         self.tf_listener = tf.TransformListener()
         self.planner_request_publisher = rospy.Publisher("/neural_planner/plan_trajectory", PlannerRequest,
@@ -64,7 +65,8 @@ class NeuralPlannerHittingTestNode:
             if inp:
                 break
             self.randomize_puck_pose()
-            self.record_rosbag(6)
+            if self.record:
+                self.record_rosbag(6)
             if self.request_hit_plan():
                 pass
             rospy.sleep(5.0)
@@ -75,7 +77,8 @@ class NeuralPlannerHittingTestNode:
             if inp:
                 break
             self.randomize_puck_pose()
-            self.record_rosbag(6)
+            if self.record:
+                self.record_rosbag(6)
             if self.request_hit_plan(bounce=-1):
                 pass
             rospy.sleep(5.0)
@@ -96,7 +99,8 @@ class NeuralPlannerHittingTestNode:
             inp = input("Press enter to hit or insert anything to leave")
             if inp:
                 break
-            self.record_rosbag(15)
+            if self.record:
+                self.record_rosbag(15)
             rospy.sleep(1.0)
             # lissajoux
             pr = PlannerRequest()
@@ -140,7 +144,8 @@ class NeuralPlannerHittingTestNode:
             inp = input("Press enter to enable moving")
             if inp:
                 break
-            self.record_rosbag(10)
+            if self.record:
+                self.record_rosbag(10)
             rospy.sleep(1.0)
             self.set_puck_pose(-0.5, 0., 0., 0.)
             x, y, th, v, resp = self.read_puck_pose(expected_time)
@@ -149,7 +154,7 @@ class NeuralPlannerHittingTestNode:
             rospy.sleep(0.8)
             #rospy.sleep(0.35)
             #self.request_hit_replan((x, y, np.pi / 2), expected_velocity=0.5)
-            self.request_hit_plan((x, y, np.pi / 2 - 0.1), expected_velocity=1.6)
+            self.request_hit_plan((x, y, np.pi / 2 - 0.1), expected_velocity=1.0)
             rospy.sleep(1.5)
             for i in range(100):
                 print(i)
@@ -180,7 +185,8 @@ class NeuralPlannerHittingTestNode:
             inp = input("Press enter to enable moving")
             if inp:
                 break
-            #self.record_rosbag(10)
+            if self.record:
+                self.record_rosbag(10)
             #rospy.sleep(1.0)
             x, y, th, v, resp = self.read_puck_pose(expected_time)
             x_init = x - 0.05
@@ -258,7 +264,8 @@ class NeuralPlannerHittingTestNode:
                 if inp:
                     break
                 else:
-                    self.record_rosbag(15)
+                    if self.record:
+                        self.record_rosbag(15)
                     allow_planning = True
             self.randomize_puck_pose()
             expected_time = 0.8
@@ -289,7 +296,8 @@ class NeuralPlannerHittingTestNode:
                     break
                 else:
                     #self.request_move_plan(0.65, 0.)
-                    #self.record_rosbag(15)
+                    # if self.record:
+                    #     self.record_rosbag(15)
                     allow_planning = True
             self.randomize_puck_pose()
             expected_time = 0.6
@@ -489,19 +497,21 @@ class NeuralPlannerHittingTestNode:
 
 
 if __name__ == '__main__':
-    node = NeuralPlannerHittingTestNode()
+    node = NeuralPlannerHittingTestNode(record=False)
     # node.hit_xyth(0.85, -0.1891, -1.0105)
     # node.hit_xyth(0.8586, -0.2136, -1.12)
     # node.hit_xyth(0.9, -0.3, -0.87606)
     # node.hit_xyth(1.0, -0.3, 0.1)
-    node.hit()
-    #node.lissajoux_hit()
-    #node.hit_with_bounce()
-    #node.moving_puck_hitting_test()
-    # node.moving_puck_defending_test()
-    #node.demo_bounce_and_hit()
-    #node.demo_straight_hitting()
-    #node.demo_bounce_hitting()
+    # node.hit()
+    # node.lissajoux_hit()
+
+    # node.lissajoux_hit()
+    # node.hit_with_bounce()
+    # node.moving_puck_hitting_test()
+    node.moving_puck_defending_test()
+    # node.demo_bounce_and_hit()
+    # node.demo_straight_hitting()
+    # node.demo_bounce_hitting()
     # node.demo_slice_hitting()
 
     # node.fake_hit_and_replan()
