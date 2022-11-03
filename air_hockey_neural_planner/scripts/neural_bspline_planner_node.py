@@ -242,8 +242,8 @@ class NeuralPlannerNode:
             v1 = mul * np.array([np.cos(th_1), np.sin(th_1), 0.])
             v2 = mul * np.array([np.cos(th_2), np.sin(th_2), 0.])
 
-            q_d1 = self.po.solve(p_d1, q_0[:6])
-            q_d2 = self.po.solve(p_d2, q_d1[:6])
+            q_d1 = self.po.solve(p_d1)
+            q_d2 = self.po.solve(p_d2)
 
             def get_velocity(q, v_xyz):
                 q = np.pad(q, (0, 9 - q.shape[0]), mode='constant')
