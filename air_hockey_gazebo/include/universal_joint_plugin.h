@@ -45,6 +45,7 @@ namespace gazebo {
 	    pinocchio::Model pinoModel_;
 	    pinocchio::Data pinoData_;
 	    Eigen::VectorXd qCur_;
+	    Eigen::Vector3d base_pos;
 	    int frame_id;
     };
 

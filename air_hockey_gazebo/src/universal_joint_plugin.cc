@@ -3,6 +3,8 @@
 using namespace gazebo;
 using namespace Eigen;
 
+constexpr double pi() { return std::atan(1)*4;}
+
 UniversalJointPlugin::UniversalJointPlugin():nh_("/"){
 
 }
@@ -63,6 +65,10 @@ void UniversalJointPlugin::Load(gazebo::physics::ModelPtr _model,
 	qCur_.resize(pinoModel_.nq);
 	qCur_.setZero();
 
+    pinocchio::forwardKinematics(pinoModel_, pinoData_, qCur_);
+    pinocchio::updateFramePlacements(pinoModel_, pinoData_);
+    base_pos = pinoData_.oMf[frame_id].translation();
+
 	universalJointState_.position.resize(2);
 	universalJointState_.velocity.push_back(0.);
 	universalJointState_.velocity.push_back(0.);
@@ -98,11 +104,55 @@ void UniversalJointPlugin::OnUpdate() {
 			pinocchio::updateFramePlacements(pinoModel_, pinoData_);
 
 			auto rot_mat = pinoData_.oMf[frame_id].rotation();
+			auto pos = pinoData_.oMf[frame_id].translation();
 
-			double q1, q2;
+			auto v_x = rot_mat.col(0);
+            auto v_y = rot_mat.col(1);
 
-			q1 = acos(rot_mat.col(2).dot(Vector3d(0., 0., -1)));
-			q2 = 0.;
+            // Compute y rotation, joint 8
+            Eigen::Vector2d n_y;
+            n_y << v_y(0), v_y(1);
+            auto a = v_y[1] / n_y.norm();
+            auto b = v_y[0] / n_y.norm();
+
+            Eigen::Vector3d target_x;
+            target_x << a, -b, 0;
+
+            auto q1 = acos(v_x.dot(target_x));
+
+            if (q1 > pi() / 2) {
+                target_x *= -1.;
+                q1 = acos(v_x.dot(target_x));
+            }
+
+            // Rotate x by y rotation
+            Eigen::Matrix3d w;
+            w << 0., -v_y[2], v_y[1],
+                v_y[2], 0., -v_y[0],
+                -v_y[1], v_y[0], 0.;
+
+            auto r = Eigen::Matrix3d::Identity() + w * sin(q1) + w.cwiseProduct(w) * (1 - cos(q1));
+            v_x = r * v_x;
+
+            // Compute x rotation, joint 9
+            Eigen::Vector2d n_x;
+            n_x << v_x(0), v_x(1);
+            a = v_x[1] / n_x.norm();
+            b = v_x[0] / n_x.norm();
+
+            Eigen::Vector3d target_y;
+            target_y << a, -b, 0;
+
+            auto q2 = acos(v_y.dot(target_y)); // skipped rounding to 4 decimal places
+
+            if (q2 > pi() / 2) { // possible typo
+                target_y *= -1.;
+                q2 = acos(v_y.dot(target_y)); // skipped rounding to 4 decimal places
+            }
+
+            // Adjust the sign of the angle based on the y position of the ee
+            q2 = (pos(1) - base_pos(1) > 0.) ? q2 : -q2;
+
 
 			this->jointController_->SetPositionTarget(jointName1_, q1);
 			this->jointController_->SetPositionTarget(jointName2_, q2);
