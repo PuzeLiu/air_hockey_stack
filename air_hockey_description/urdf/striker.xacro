@@ -38,9 +38,7 @@
             <child link="${robot_name}_striker_joint_link"/>
             <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
             <axis xyz="0 1 0"/>
-            <limit effort="1" lower="-${PI/2}" upper="${PI/2}" velocity="3.1415926"/>
-            <safety_controller k_position="100" k_velocity="10" soft_lower_limit="-2.094395102"
-                               soft_upper_limit="2.094395102"/>
+            <limit effort="1" lower="-${PI/2}" upper="${PI/2}"/>
             <dynamics damping="0.05"/>
         </joint>
 
@@ -58,9 +56,7 @@
             <child link="${robot_name}_striker_mallet"/>
             <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
             <axis xyz="1 0 0"/>
-            <limit effort="1" lower="-${PI/2}" upper="${PI/2}" velocity="3.1415926"/>
-            <safety_controller k_position="100" k_velocity="10" soft_lower_limit="-2.094395102"
-                               soft_upper_limit="2.094395102"/>
+            <limit effort="1" lower="-${PI/2}" upper="${PI/2}"/>
             <dynamics damping="0.05"/>
         </joint>
 
