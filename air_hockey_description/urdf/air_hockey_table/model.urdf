@@ -28,37 +28,37 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0.0"/>
       <geometry>
-        <box size="2.136 1.222 0.11"/>
+        <box size="2.128 1.218 0.11"/>
       </geometry>
       <material name="white"/>
     </visual>
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0.0"/>
       <geometry>
-        <box size="2.136 1.222 0.11"/>
+        <box size="2.128 1.218 0.11"/>
       </geometry>
     </collision>
     <contact>
-      <restitution value="0.8468189914210034"/>
-      <lateral_friction value="0.0002959345937628299"/>
+      <restitution value="0.742386791998004"/>
+      <lateral_friction value="0.0001"/>
       <rolling_friction value="0.0"/>
       <spinning_friction value="0.0"/>
     </contact>
   </link>
   <joint name="base_home_joint" type="fixed">
-    <origin rpy="0 0 0" xyz="-0.9780000000000001 0 0"/>
+    <origin rpy="0 0 0" xyz="-0.9740000000000001 0 0"/>
     <parent link="Table"/>
     <child link="TableHome"/>
   </joint>
   <link name="TableHome"/>
   <joint name="base_away_joint" type="fixed">
-    <origin rpy="0 0 3.141592653589793" xyz="0.9780000000000001 0 0"/>
+    <origin rpy="0 0 3.141592653589793" xyz="0.9740000000000001 0 0"/>
     <parent link="Table"/>
     <child link="TableAway"/>
   </joint>
   <link name="TableAway"/>
   <joint name="base_down_rim_l" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="1.0230000000000001                                            0.323                                            0.06"/>
+    <origin rpy="0.0 0.0 0.0" xyz="1.0190000000000001                                            0.321                                            0.06"/>
     <parent link="t_base"/>
     <child link="t_down_rim_l"/>
     <preserveFixedJoint>true</preserveFixedJoint>
@@ -81,14 +81,14 @@
       </geometry>
     </collision>
     <contact>
-      <restitution value="0.9697840083850648"/>
-      <lateral_friction value="0.12931021481683416"/>
+      <restitution value="0.742386791998004"/>
+      <lateral_friction value="0.14175473462785318"/>
       <rolling_friction value="0.0"/>
       <spinning_friction value="0.0"/>
     </contact>
   </link>
   <joint name="base_down_rim_r" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="1.0230000000000001                                            -0.323                                            0.06"/>
+    <origin rpy="0.0 0.0 0.0" xyz="1.0190000000000001                                            -0.321                                            0.06"/>
     <parent link="t_base"/>
     <child link="t_down_rim_r"/>
     <preserveFixedJoint>true</preserveFixedJoint>
@@ -111,14 +111,14 @@
       </geometry>
     </collision>
     <contact>
-      <restitution value="0.9697840083850648"/>
-      <lateral_friction value="0.12931021481683416"/>
+      <restitution value="0.742386791998004"/>
+      <lateral_friction value="0.14175473462785318"/>
       <rolling_friction value="0.0"/>
       <spinning_friction value="0.0"/>
     </contact>
   </link>
   <joint name="base_down_rim_top" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="1.0230000000000001                                            0.0                                            0.075"/>
+    <origin rpy="0.0 0.0 0.0" xyz="1.0190000000000001                                            0.0                                            0.075"/>
     <parent link="t_base"/>
     <child link="t_down_rim_top"/>
     <preserveFixedJoint>true</preserveFixedJoint>
@@ -130,7 +130,7 @@
     </inertial>
     <visual>
       <geometry>
-        <box size="0.09 1.042 0.02"/>
+        <box size="0.09 1.038 0.02"/>
       </geometry>
       <material name="grey"/>
     </visual>
@@ -140,14 +140,14 @@
     <!--                </geometry>-->
     <!--            </collision>-->
     <contact>
-      <restitution value="0.9697840083850648"/>
-      <lateral_friction value="0.12931021481683416"/>
+      <restitution value="0.742386791998004"/>
+      <lateral_friction value="0.14175473462785318"/>
       <rolling_friction value="0.0"/>
       <spinning_friction value="0.0"/>
     </contact>
   </link>
   <joint name="base_up_rim_l" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="-1.0230000000000001                                            0.323                                            0.06"/>
+    <origin rpy="0.0 0.0 0.0" xyz="-1.0190000000000001                                            0.321                                            0.06"/>
     <parent link="t_base"/>
     <child link="t_up_rim_l"/>
     <preserveFixedJoint>true</preserveFixedJoint>
@@ -170,14 +170,14 @@
       </geometry>
     </collision>
     <contact>
-      <restitution value="0.9697840083850648"/>
-      <lateral_friction value="0.12931021481683416"/>
+      <restitution value="0.742386791998004"/>
+      <lateral_friction value="0.14175473462785318"/>
       <rolling_friction value="0.0"/>
       <spinning_friction value="0.0"/>
     </contact>
   </link>
   <joint name="base_up_rim_r" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="-1.0230000000000001                                            -0.323                                            0.06"/>
+    <origin rpy="0.0 0.0 0.0" xyz="-1.0190000000000001                                            -0.321                                            0.06"/>
     <parent link="t_base"/>
     <child link="t_up_rim_r"/>
     <preserveFixedJoint>true</preserveFixedJoint>
@@ -200,14 +200,14 @@
       </geometry>
     </collision>
     <contact>
-      <restitution value="0.9697840083850648"/>
-      <lateral_friction value="0.12931021481683416"/>
+      <restitution value="0.742386791998004"/>
+      <lateral_friction value="0.14175473462785318"/>
       <rolling_friction value="0.0"/>
       <spinning_friction value="0.0"/>
     </contact>
   </link>
   <joint name="base_up_rim_top" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="-1.0230000000000001                                            0.0                                            0.075"/>
+    <origin rpy="0.0 0.0 0.0" xyz="-1.0190000000000001                                            0.0                                            0.075"/>
     <parent link="t_base"/>
     <child link="t_up_rim_top"/>
     <preserveFixedJoint>true</preserveFixedJoint>
@@ -219,19 +219,19 @@
     </inertial>
     <visual>
       <geometry>
-        <box size="0.09 1.042 0.02"/>
+        <box size="0.09 1.038 0.02"/>
       </geometry>
       <material name="grey"/>
     </visual>
     <contact>
-      <restitution value="0.9697840083850648"/>
-      <lateral_friction value="0.12931021481683416"/>
+      <restitution value="0.742386791998004"/>
+      <lateral_friction value="0.14175473462785318"/>
       <rolling_friction value="0.0"/>
       <spinning_friction value="0.0"/>
     </contact>
   </link>
   <joint name="base_left_rim" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="0.0                                            0.566                                            0.07"/>
+    <origin rpy="0.0 0.0 0.0" xyz="0.0                                            0.564                                            0.07"/>
     <parent link="t_base"/>
     <child link="t_left_rim"/>
     <preserveFixedJoint>true</preserveFixedJoint>
@@ -243,25 +243,25 @@
     </inertial>
     <visual>
       <geometry>
-        <box size="2.136 0.09 0.03"/>
+        <box size="2.128 0.09 0.03"/>
       </geometry>
       <material name="grey"/>
     </visual>
     <collision>
       <origin xyz="0.0 0.0 0.0"/>
       <geometry>
-        <box size="2.136 0.09 0.13"/>
+        <box size="2.128 0.09 0.13"/>
       </geometry>
     </collision>
     <contact>
-      <restitution value="0.8468189914210034"/>
-      <lateral_friction value="0.12931021481683416"/>
+      <restitution value="0.742386791998004"/>
+      <lateral_friction value="0.14175473462785318"/>
       <rolling_friction value="0.0"/>
       <spinning_friction value="0.0"/>
     </contact>
   </link>
   <joint name="base_right_rim" type="fixed">
-    <origin rpy="0.0 0.0 0.0" xyz="0.0                                            -0.566                                            0.07"/>
+    <origin rpy="0.0 0.0 0.0" xyz="0.0                                            -0.564                                            0.07"/>
     <parent link="t_base"/>
     <child link="t_right_rim"/>
     <preserveFixedJoint>true</preserveFixedJoint>
@@ -273,19 +273,19 @@
     </inertial>
     <visual>
       <geometry>
-        <box size="2.136 0.09 0.03"/>
+        <box size="2.128 0.09 0.03"/>
       </geometry>
       <material name="grey"/>
     </visual>
     <collision>
       <origin xyz="0.0 0.0 0.0"/>
       <geometry>
-        <box size="2.136 0.09 0.13"/>
+        <box size="2.128 0.09 0.13"/>
       </geometry>
     </collision>
     <contact>
-      <restitution value="0.8468189914210034"/>
-      <lateral_friction value="0.12931021481683416"/>
+      <restitution value="0.742386791998004"/>
+      <lateral_friction value="0.14175473462785318"/>
       <rolling_friction value="0.0"/>
       <spinning_friction value="0.0"/>
     </contact>
@@ -294,15 +294,15 @@
     <collision>
       <surface>
         <bounce>
-          <restitution_coefficient>0.8468189914210034</restitution_coefficient>
+          <restitution_coefficient>0.742386791998004</restitution_coefficient>
           <threshold>0</threshold>
         </bounce>
         <friction>
           <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
           <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
           <ode>
-            <mu>0.0002959345937628299</mu>
-            <mu2>0.0002959345937628299</mu2>
+            <mu>0.0001</mu>
+            <mu2>0.0001</mu2>
           </ode>
         </friction>
         <contact>
@@ -322,15 +322,15 @@
     <collision>
       <surface>
         <bounce>
-          <restitution_coefficient>0.9697840083850648</restitution_coefficient>
+          <restitution_coefficient>0.742386791998004</restitution_coefficient>
           <threshold>0</threshold>
         </bounce>
         <friction>
           <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
           <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
           <ode>
-            <mu>0.12931021481683416</mu>
-            <mu2>0.12931021481683416</mu2>
+            <mu>0.14175473462785318</mu>
+            <mu2>0.14175473462785318</mu2>
           </ode>
         </friction>
         <contact>
@@ -350,15 +350,15 @@
     <collision>
       <surface>
         <bounce>
-          <restitution_coefficient>0.9697840083850648</restitution_coefficient>
+          <restitution_coefficient>0.742386791998004</restitution_coefficient>
           <threshold>0</threshold>
         </bounce>
         <friction>
           <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
           <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
           <ode>
-            <mu>0.12931021481683416</mu>
-            <mu2>0.12931021481683416</mu2>
+            <mu>0.14175473462785318</mu>
+            <mu2>0.14175473462785318</mu2>
           </ode>
         </friction>
         <contact>
@@ -405,15 +405,15 @@
     <collision>
       <surface>
         <bounce>
-          <restitution_coefficient>0.9697840083850648</restitution_coefficient>
+          <restitution_coefficient>0.742386791998004</restitution_coefficient>
           <threshold>0</threshold>
         </bounce>
         <friction>
           <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
           <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
           <ode>
-            <mu>0.12931021481683416</mu>
-            <mu2>0.12931021481683416</mu2>
+            <mu>0.14175473462785318</mu>
+            <mu2>0.14175473462785318</mu2>
           </ode>
         </friction>
         <contact>
@@ -433,15 +433,15 @@
     <collision>
       <surface>
         <bounce>
-          <restitution_coefficient>0.9697840083850648</restitution_coefficient>
+          <restitution_coefficient>0.742386791998004</restitution_coefficient>
           <threshold>0</threshold>
         </bounce>
         <friction>
           <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
           <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
           <ode>
-            <mu>0.12931021481683416</mu>
-            <mu2>0.12931021481683416</mu2>
+            <mu>0.14175473462785318</mu>
+            <mu2>0.14175473462785318</mu2>
           </ode>
         </friction>
         <contact>
@@ -488,15 +488,15 @@
     <collision>
       <surface>
         <bounce>
-          <restitution_coefficient>0.8468189914210034</restitution_coefficient>
+          <restitution_coefficient>0.742386791998004</restitution_coefficient>
           <threshold>0</threshold>
         </bounce>
         <friction>
           <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
           <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
           <ode>
-            <mu>0.12931021481683416</mu>
-            <mu2>0.12931021481683416</mu2>
+            <mu>0.14175473462785318</mu>
+            <mu2>0.14175473462785318</mu2>
           </ode>
         </friction>
         <contact>
@@ -516,15 +516,15 @@
     <collision>
       <surface>
         <bounce>
-          <restitution_coefficient>0.8468189914210034</restitution_coefficient>
+          <restitution_coefficient>0.742386791998004</restitution_coefficient>
           <threshold>0</threshold>
         </bounce>
         <friction>
           <!-- For Gazebo Must contain tag ode, mu, mu2, check https://github.com/osrf/sdformat/issues/31 -->
           <!-- https://github.com/osrf/gazebo/blob/gazebo11/gazebo/physics/bullet/BulletSurfaceParams.cc -->
           <ode>
-            <mu>0.12931021481683416</mu>
-            <mu2>0.12931021481683416</mu2>
+            <mu>0.14175473462785318</mu>
+            <mu2>0.14175473462785318</mu2>
           </ode>
         </friction>
         <contact>
