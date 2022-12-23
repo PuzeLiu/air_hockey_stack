@@ -78,8 +78,8 @@ def compute_end_effector(pino_model, pino_data, q, qd):
 def detect_hitting_idx(puck, puck_time, t):
     vxpuck = np.diff(puck[:, 0], axis=0)
     vypuck = np.diff(puck[:, 0], axis=0)
-    vpuck = np.sqrt(vxpuck ** 2 + vypuck ** 2)
-    nonzero_vel = np.where(vpuck > 0.01)
+    vpuck = np.sqrt(vxpuck ** 2 + vypuck ** 2) / np.diff(puck_time, axis=0)
+    nonzero_vel = np.where(vpuck > 0.1)
     if not len(nonzero_vel[0]):
         return None, None
     hit_idx = nonzero_vel[0][0]
@@ -142,14 +142,13 @@ def compute_planned_velocity(velocity):
     return v_mag, v_angle
 
 
-def compute_movement_and_hitting_duration(dq, t, time_hit_idx):
+def compute_movement_and_hitting_duration(dq, t, t_hit):
     dq_v = np.sum(np.abs(dq), axis=-1)
     moving_idx = np.where(dq_v > 0.02)[0]
     t0 = t[moving_idx[0]]
     tf = t[moving_idx[-1]]
-    th = t[time_hit_idx]
     movement_duration = tf - t0
-    hitting_duration = th - t0
+    hitting_duration = t_hit - t0
     return movement_duration, hitting_duration
 
 
@@ -172,6 +171,7 @@ def read_bag(bag):
     for topic, msg, t_bag in bag.read_messages():
         if topic in ["/iiwa_front/adrc_trajectory_controller/state",
                      "/iiwa_front/bspline_adrc_joint_trajectory_controller/state",
+                     "/iiwa_front/bspline_ff_joint_trajectory_controller/state",
                      "/iiwa_front/joint_feedforward_trajectory_controller/state"]:
             n_joints = len(msg.joint_names)
             time.append(msg.header.stamp.to_sec())
@@ -265,31 +265,55 @@ def compute_metrics(bag_path):
     qd_ddot = qd_ddot[moving]
     torqued = torqued[moving]
     t = bag_dict["t"][moving]
-    #plt.plot(t, qd_dot[..., :2], 'b')
-    #plt.plot(t, dq[..., :2], 'g')
-    #plt.show()
+
     ee, ee_d = compute_end_effector(pino_model, pino_data, q, qd)
+    #plt.plot(ee[..., 0], ee[..., 1], 'r')
+    #plt.plot(ee_d[..., 0], ee_d[..., 1], 'g')
+    #plt.plot(bag_dict['puck_pose'][:, 0], bag_dict['puck_pose'][:, 1], 'b')
+    #plt.show()
+
+    #for i in range(6):
+    #    plt.subplot(321 + i)
+    #    plt.plot(t, q[..., i], 'r')
+    #    plt.plot(t, qd[..., i], 'g')
+    #plt.show()
+    #for i in range(6):
+    #    plt.subplot(321 + i)
+    #    plt.plot(t, np.abs(q[..., i] - qd[..., i]))
+    #    plt.plot(t, np.linalg.norm(ee_d[..., :2] - ee[..., :2], axis=-1))
+    #plt.show()
 
     time_hit_idx, puck_time_hit_idx = detect_hitting_idx(bag_dict["puck_pose"], bag_dict["puck_time"], bag_dict["t"])
-    if time_hit_idx is None:
-        result["puck_initial_pose"] = np.median(bag_dict["puck_pose"][:10], axis=0)
-        result["scored"] = 0
-        result["valid"] = 0
-        return result
-    movement_time, hitting_time = compute_movement_and_hitting_duration(dq, bag_dict["t"], time_hit_idx)
+    movement_time = None
+    hitting_time = None
+    puck_velocity_magnitude = 0.
+    puck_velocity_angle = np.nan
+    scored = False
+    if time_hit_idx is not None:
+        #movement_time, hitting_time = compute_movement_and_hitting_duration(dq, bag_dict["t"], time_hit_idx)
+        t_hit = bag_dict["t"][time_hit_idx]
+        movement_time, hitting_time = compute_movement_and_hitting_duration(dq, t, t_hit)
 
-    puck_velocity_magnitude, puck_velocity_angle = compute_puck_velocity(bag_dict["puck_pose"], bag_dict["puck_time"],
-                                                                         puck_time_hit_idx)
+        puck_velocity_magnitude, puck_velocity_angle = compute_puck_velocity(bag_dict["puck_pose"], bag_dict["puck_time"],
+                                                                             puck_time_hit_idx)
+        scored = check_if_scored(bag_dict["puck_pose"], bag_dict["puck_time"], puck_time_hit_idx)
+
     planned_hit_velocity_magnitude, planned_hit_velocity_angle = compute_planned_velocity(
         bag_dict["planned_hit_cartesian_velocity"])
-    scored = check_if_scored(bag_dict["puck_pose"], bag_dict["puck_time"], puck_time_hit_idx)
     valid = check_if_plan_valid(ee_d, qd, qd_dot, qd_ddot, torqued)
     desired_z_loss, desired_xlow_loss, desired_xhigh_loss, desired_ylow_loss, desired_yhigh_loss = compute_cartesian_losses(
         ee_d)
     actual_z_loss, actual_xlow_loss, actual_xhigh_loss, actual_ylow_loss, actual_yhigh_loss = compute_cartesian_losses(ee)
 
+    #if scored == 0:
+    #    plt.plot(ee[..., 0], ee[..., 1], 'r')
+    #    plt.plot(ee_d[..., 0], ee_d[..., 1], 'g')
+    #    plt.plot(bag_dict['puck_pose'][:, 0], bag_dict['puck_pose'][:, 1], 'b')
+    #    plt.show()
+
     result["scored"] = int(scored)
     result["valid"] = int(valid)
+    result["hit"] = 1 if time_hit_idx is not None else 0
     result["planning_time"] = bag_dict["planning_time"]
     result["planned_hitting_time"] = bag_dict["planned_hitting_time"]
     result["planned_motion_time"] = bag_dict["planned_motion_time"]
@@ -328,24 +352,18 @@ def compute_metrics(bag_path):
     print(result)
     return result
 
-dir_path = os.path.join(package_dir, "bags/baseline_opt_lp/")
-# dir_path = os.path.join(package_dir, "bags/ours_opt_lp/")
-#dir_path = os.path.join(package_dir, "bags/baseline_comming_back_time/")
-sp = dir_path.replace("bags", "results")
-os.makedirs(sp, exist_ok=True)
-for p in glob(dir_path + "*.bag"):
-    d = compute_metrics(p)
-    save_path = p[:-3] + "res"
-    save_path = save_path.replace("bags", "results")
-    with open(save_path, 'wb') as fh:
-        pickle.dump(d, fh)
-
-
-# for i in range(6):
-#    plt.plot(t, qd_ddot[:, i], label=f"q_ddot_{i}")
-# plt.legend()
-# plt.show()
-
-
-# plt.plot(puck[:, 0], puck[:, 1])
-# plt.show()
+#planners = ["ours", "nlopt", "sst", "cirrt", "mpcmpnet", "iros"]
+planners = ["mpcmpnet_newp"]
+package_dir = "/home/piotr/b8/ah_ws/data"
+for planner in planners:
+    print(planner)
+    dir_path = os.path.join(package_dir, "hitting_exp", planner)
+    sp = dir_path.replace("data", "results")
+    os.makedirs(sp, exist_ok=True)
+    for i, p in enumerate(glob(os.path.join(dir_path, "*.bag"))):
+        print(i)
+        d = compute_metrics(p)
+        save_path = p[:-3] + "res"
+        save_path = save_path.replace("data", "results")
+        with open(save_path, 'wb') as fh:
+            pickle.dump(d, fh)

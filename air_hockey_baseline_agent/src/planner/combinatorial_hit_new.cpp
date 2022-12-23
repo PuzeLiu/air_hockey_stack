@@ -122,6 +122,19 @@ bool CombinatorialHitNew::plan(const Eigen::Vector2d &xStart_, const Eigen::Vect
 	return true;
 }
 
+bool CombinatorialHitNew::planHit(const Eigen::Vector2d &xStart_, const Eigen::Vector2d &vStart_,
+	Eigen::Vector2d &xHit_, Eigen::Vector2d &vHit_, double &hitting_time,
+	const Eigen::Vector2d &xEnd_, const Eigen::Vector2d &vEnd_,
+	trajectory_msgs::MultiDOFJointTrajectory &cartTraj) {
+	if (not plan(xStart_, vStart_, xHit_, vHit_, cartTraj)) {
+		cerr << "Failed at hitting phase" << endl;
+		return false;
+	}
+	hitting_time = cartTraj.points.back().time_from_start.toSec();
+	cartTraj.header.stamp = ros::Time::now();
+	return true;
+}
+
 bool CombinatorialHitNew::plan(const Eigen::Vector3d &xStart, const Eigen::Vector3d &vStart,
           Eigen::Vector3d &xHit, Eigen::Vector3d &vHit, double &hitting_time,
           const Eigen::Vector3d &xEnd, const Eigen::Vector3d &vEnd,

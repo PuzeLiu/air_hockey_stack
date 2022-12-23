@@ -96,7 +96,6 @@ void BaselineHittingExperiment::start() {
 }
 
 bool BaselineHittingExperiment::planHittingTrajectory() {
-	auto t_start = std::chrono::high_resolution_clock::now();
 
 	Eigen::Vector3d xStart, vStart;
 	double hittingTime, hitVelMag;
@@ -127,6 +126,9 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 
 	agent.getTrajectoryGenerator().transformations->transformRobot2Table(hitPos);
 	agent.getTrajectoryGenerator().transformations->rotationRobot2Table(hitDir);
+
+	//start planning time measurement
+	auto t_start = std::chrono::high_resolution_clock::now();
 
 	Eigen::Vector3d hitVel, xEnd;
 	if (hitPos.y() > 0) {
@@ -160,6 +162,8 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 			agent.getTrajectoryGenerator().cubicSplineInterpolation(jointTraj, prePlanPoint);
 			agent.getTrajectoryGenerator().synchronizeCartesianTrajectory(jointTraj,cartTraj);
 
+            plannerStatusMsg.planning_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - t_start).count();
+
 			jointTraj.header.stamp = ros::Time::now() + ros::Duration(0.1);
 			cartTraj.header.stamp = jointTraj.header.stamp;
 
@@ -187,6 +191,7 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 	plannerStatusMsg.success = false;
 	plannerStatusMsg.planned_hitting_time = -1.;
 	plannerStatusMsg.planned_motion_time = -1.;
+    plannerStatusMsg.planning_time = -1.;
 	plannerStatusMsg.planned_hit_joint_velocity.clear();
 	plannerStatusMsg.planned_hit_cartesian_velocity.clear();
 	return false;

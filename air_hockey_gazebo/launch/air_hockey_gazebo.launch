@@ -11,14 +11,18 @@
 
 <!--     <arg name="front_controllers" default="adrc_trajectory_controller"/> -->
 <!--     <arg name="back_controllers" default="adrc_trajectory_controller"/> -->
-     <arg name="front_controllers" default="feedforward_joint_trajectory_controller"/>
-     <arg name="back_controllers" default="feedforward_joint_trajectory_controller"/>
+<!--      <arg name="front_controllers" default="feedforward_joint_trajectory_controller"/> -->
+<!--      <arg name="back_controllers" default="feedforward_joint_trajectory_controller"/> -->
 <!--     <arg name="front_controllers" default="bspline_joint_trajectory_controller"/> -->
+<!--     <arg name="back_controllers" default="bspline_joint_trajectory_controller"/> -->
 <!--    <arg name="front_controllers" default="bspline_adrc_joint_trajectory_controller"/>-->
 <!--    <arg name="back_controllers" default="bspline_adrc_joint_trajectory_controller"/>-->
+   <arg name="front_controllers" default="bspline_ff_joint_trajectory_controller"/>-->
+   <arg name="back_controllers" default="bspline_ff_joint_trajectory_controller"/>-->
 
     <arg name="use_front_iiwa" default="true"/>
-    <arg name="use_back_iiwa" default="true"/>
+<!--     <arg name="use_back_iiwa" default="true"/> -->
+    <arg name="use_back_iiwa" default="false"/>
 
     <arg name="table_surface_x" default="1.694"/>
     <arg name="table_surface_y" default="0.813"/>
@@ -88,7 +92,7 @@
               args="-urdf -model iiwa_front -param robot_description -wait iiwas_frame"/>
         <node name="trajectory_visualizer" pkg="air_hockey_utils" type="visualize_trajectory_node" output="screen">
             <param name="update_frequency" value="50.0"/>
-            <param name="desired_buffer_size" value="300"/>
+            <param name="desirediiwa_model_spawner_buffer_size" value="300"/>
             <param name="actual_buffer_size" value="300"/>
         </node>
     </group>
@@ -126,10 +130,10 @@
     <rosparam file="$(find air_hockey_baseline_agent)/config/config.yaml" command="load" subst_value="true"/>
     <rosparam file="$(find air_hockey_neural_planner)/config/config.yaml" command="load" subst_value="true"/>
 
-    <node name="plotjuggler_with_layout"
-          pkg="plotjuggler"
-          type="plotjuggler"
-          args="--layout $(find air_hockey_neural_planner)/config/layout_bspline_adrc.xml"/>
+<!--     <node name="plotjuggler_with_layout" -->
+<!--           pkg="plotjuggler" -->
+<!--           type="plotjuggler" -->
+<!--           args="layout $(find air_hockey_neural_planner)/config/layout_bspline_ff.xml"/> -->
 
 <!--    &lt;!&ndash; Load Parameters of kalman filter &ndash;&gt;-->
 

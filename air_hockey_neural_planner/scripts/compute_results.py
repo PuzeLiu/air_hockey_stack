@@ -9,6 +9,7 @@ root_dir = os.path.dirname(__file__)
 package_dir = os.path.dirname(root_dir)
 baseline_path = os.path.join(package_dir, "results/baseline_opt_lp/")
 ours_path = os.path.join(package_dir, "results/ours_opt_lp/")
+#ours_path = os.path.join("/home/piotr/b8/ah_ws", "results/hitting_exp/ours")
 
 def make_patch_spines_invisible(ax):
     ax.set_frame_on(True)
@@ -22,14 +23,26 @@ def box_plot(data):
     #titles = [, "Planning time [ms]"]
     #scales = [(1000., 1000.), (1., 1.)]
     description = namedtuple("Description", "name title scales")
-    descriptions = [description("planned_z_error", "Integral of the deviation \n of the plan in z-axis [mm⋅s]", (1000., 1000.)),
+    descriptions = [
+                    #description("planning_time", "Planning time [ms]", (1., 1.)),
+                    #description("planned_hitting_time", "Planned hitting \n time [ms]", (1., 1.)),
+                    #description("planned_puck_velocity_magnitude", "Planned velocity \n magnitude [m/s]", (1., 1.)),
+                    #description("planned_z_error", "Integral of the deviation \n of the plan in z-axis [mm⋅s]", (1000., 1000.)),
+                    #description("joint_trajectory_error", "Integral of the joint \n trajectory error [rad⋅s]", (1., 1.)),
+                    #description("puck_actual_vs_planned_velocity_magnitude_error", "Puck velocity magnitude \n realization error [m/s]", (1., 1.)),
+                    #description("puck_actual_vs_planned_velocity_angle_error", "Puck velocity angle \n realization error [rad]", (1., 1.)),
+                    #description("cartesian_trajectory_error", "Integral of the end-effector \n trajectory error [mm⋅s]", (1000., 1000.)),
                     description("planning_time", "Planning time [ms]", (1., 1.)),
-                    description("planned_hitting_time", "Planned hitting \n time [ms]", (1., 1.)),
-                    description("planned_puck_velocity_magnitude", "Planned velocity \n magnitude [m/s]", (1., 1.)),
-                    description("joint_trajectory_error", "Integral of the joint \n trajectory error [rad⋅s]", (1., 1.)),
-                    description("cartesian_trajectory_error", "Integral of the end-effector \n trajectory error [mm⋅s]", (1000., 1000.)),
+                    description("planned_hitting_time", "Planned hitting \n time [s]", (1., 1.)),
+                    description("planned_puck_velocity_magnitude", "Planned hitting\n velocity magnitude [m/s]", (1., 1.)),
+                    description("planned_z_error", "Integral of \n the planned \n z-axis error [mm⋅s]", (1000., 1000.)),
+                    description("actual_z_error", "Integral of \n the executed trajectory \n z-axis error [mm⋅s]", (1000., 1000.)),
+                    description("joint_trajectory_error", "Integral of \n the joint trajectory \n error [rad⋅s]", (1., 1.)),
+                    #description("puck_actual_vs_planned_velocity_magnitude_error", "Puck velocity \n magnitude realization \n error [m/s]", (1., 1.)),
+                    #description("puck_actual_vs_planned_velocity_angle_error", "Puck velocity \n angle realization \n error [rad]", (1., 1.)),
                     ]
     collection = [[np.array(extract(d, k)) for d in data] for k in [x.name for x in descriptions]]
+    collection[0][1] += 23.75  # mean coming back movement planning time, that was not measured during the experiments
     #a_planned_z_error = extract(a, "planned_z_error")
     #b_planned_z_error = extract(b, "planned_z_error")
     #data = [a_planned_z_error, b_planned_z_error]
@@ -38,12 +51,17 @@ def box_plot(data):
     c2 = "blue"
     #positions = np.reshape(np.array([[i, i + spacing] for i in range(int(len(data) / 2.))]), -1)
 
-    plt.figure(figsize=(12, 8))
+    plt.rc('font', size=10)
+    #plt.figure(figsize=(18, 4))
+    plt.figure(figsize=(9, 7))
     for i in range(len(descriptions)):
-        ax = plt.subplot(1, len(descriptions), 1 + i)
-        ax.set_title(descriptions[i].title, rotation=45, ha="left", x=-0.)
+        #ax = plt.subplot(1, len(descriptions), 1 + i)
+        ax = plt.subplot(2, 3, 1 + i)
+        #ax.set_title(descriptions[i].title, rotation=45, ha="left", x=-0.)
+        ax.set_title(descriptions[i].title, rotation=0, ha="center", x=0.60)
         datapoints = [x * descriptions[i].scales[k] for k, x in enumerate(collection[i])]
-        bp = ax.boxplot(datapoints, positions=np.arange(0., spacing*len(collection[i]), spacing))
+        bp = ax.boxplot(datapoints, positions=np.arange(0., spacing*len(collection[i]), spacing), labels=["ours", "AQP [8]"],
+                        widths=0.15)
         #bp = ax.boxplot(collection[i], positions=[0, spacing])
         ax.set_xlim(-0.15, 0.35)
         for i in range(len(bp["boxes"])):
@@ -65,10 +83,17 @@ def box_plot(data):
         ax.spines['right'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
         ax.set_xticks([])
-    plt.subplots_adjust(left=0.1,
-                        right=0.9,
-                        top=0.7,
-                        )
+    #plt.subplots_adjust(left=0.1,
+    #                    right=0.9,
+    #                    top=0.7,
+    #                    )
+    #plt.subplots_adjust(wspace=0.9, top=0.7)
+    plt.subplots_adjust(hspace=0.3)
+    #handles, labels = ax.get_legend_handles_labels()
+    #plt.gcf().legend(handles, labels, loc='lower center', ncol=2, frameon=False)
+    #plt.gcf().legend([bp["boxes"][0], bp["boxes"][1]], ['ours', 'AQP'], ncol=2, loc='lower center', frameon=False)
+    #plt.gcf().legend([bp["boxes"][0], bp["boxes"][1]], ['CKNMPBs (ours)', 'AQP [8]'], ncol=2, bbox_to_anchor=(0.6, 0.1), frameon=False)
+    plt.gcf().legend([bp["boxes"][0], bp["boxes"][1]], ['CKNMPBs (ours)', 'AQP [8]'], ncol=2, bbox_to_anchor=(0.7, 0.1), frameon=False)
     plt.show()
 
 
@@ -162,6 +187,28 @@ def plot_scatter(r, k, abs=True, name="", alpha=1.):
     plt.ylim(-0.45, 0.45)
     plt.show()
 
+def plot_scatter_2(r1, r2, k, abs=True, name="", alpha=1.):
+    xy = np.array([v["puck_initial_pose"][:2] for _, v in r1.items()])
+    v1 = [np.abs(v[k]) if k in v else 0. for _, v in r1.items()] if abs else \
+        [v[k] if k in v else 0. for _, v in r1.items()]
+    v2 = [np.abs(v[k]) if k in v else 0. for _, v in r2.items()] if abs else \
+        [v[k] if k in v else 0. for _, v in r2.items()]
+    def color(v):
+        return np.array([[1., 0., 0.] if x == 0 else [0., 1., 0.] for x in v])
+    ax = plt.subplot(121)
+    ax.set_title("CKNMPBs")
+    plt.scatter(xy[:, 0], xy[:, 1], c=color(v1))
+    plt.xlim(0.6, 1.5)
+    plt.ylim(-0.45, 0.45)
+    ax = plt.subplot(122)
+    ax.set_title("AQP")
+    plt.scatter(xy[:, 0], xy[:, 1], c=color(v2))
+    #plt.colorbar()
+    #plt.clim(0.5, 2.2)
+    plt.xlim(0.6, 1.5)
+    plt.ylim(-0.45, 0.45)
+    plt.show()
+
 
 def hit_errors(r):
     magnitude_errors = []
@@ -221,6 +268,7 @@ print("BASELINE:", actual_hitting_time(baseline))
 print(ours["K0"])
 
 box_plot((ours, baseline))
+plot_scatter_2(ours, baseline, "scored")
 plot_scatter(ours, "scored")
 plot_scatter(ours, "planned_puck_velocity_magnitude")
 plot_scatter(baseline, "scored")

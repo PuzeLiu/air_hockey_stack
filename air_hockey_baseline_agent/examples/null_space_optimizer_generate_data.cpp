@@ -73,7 +73,8 @@ void loadAgentParams(AgentParams& agentParams, Transformations transformations)
 	agentParams.nq = agentParams.pinoModel.nq;
 
 	agentParams.qRef.resize(agentParams.pinoModel.nq);
-	agentParams.qRef.block<7, 1>(0, 0) << 0., 0.06580, 0., -1.45996, 0., 1.22487, 0.;
+	//agentParams.qRef.block<7, 1>(0, 0) << 0., 0.06580, 0., -1.45996, 0., 1.22487, 0.;
+    agentParams.qRef.block<7, 1>(0, 0) << 0., 0.697, 0, -0.505, 0., 1.92, 0.;
 	agentParams.xGoal << 1.98, 0.0;
 	agentParams.xHome << 0.08, 0.0, 0.0;
 	agentParams.xInit << 0.4, 0.0, 0.0;
@@ -187,8 +188,10 @@ int main(int argc, char* argv[])
 	vector<int> successes = {};
 	vector<float> times = {};
     string parent_dir = ros::package::getPath("air_hockey_baseline_agent");
-    string ds = "test";
-    string data_file = parent_dir + "/data/airhockey_maximal_velocity_hitting/" + ds + "/data.tsv";
+    string ds = "val";
+    string ds_name = "airhockey_table_moves_v08_a10v_optimized_hitting_regularized_man_lp_new";
+    //string data_file = parent_dir + "/data/airhockey_maximal_velocity_hitting/" + ds + "/data.tsv";
+    string data_file = parent_dir + "/data/" + ds_name + "/" + ds + "/data.tsv";
     ifstream fin(data_file);
     string line;
     while (getline(fin, line)) {
@@ -214,6 +217,7 @@ int main(int argc, char* argv[])
 	Vector2d xStart2d, vStart2d, xHit2d, vHit2d, xEnd2d, vEnd2d, xStop2d, vStop2d;
     vStart2d.setZero();
     for (int k=0; k < data.size(); k++) {
+    //for (int k=14623; k < data.size(); k++) {
 	//for (int k=0; k < 500; k++) {
 	    // random settings
         //xStart2d << agentParams.xHome[0], agentParams.xHome[1]; // The start point and qStart in nullOptimizer should match
@@ -232,6 +236,11 @@ int main(int argc, char* argv[])
         xStart2d << record[38] - 0.526, record[39];
         agentParams.qInit.block<7, 1>(0, 0) << record[0], record[1], record[2], record[3], record[4], record[5], record[6];
         agentParams.qHome.block<7, 1>(0, 0) << record[0], record[1], record[2], record[3], record[4], record[5], record[6];
+
+        pinocchio::forwardKinematics(agentParams.pinoModel, agentParams.pinoData, agentParams.qInit);
+        pinocchio::updateFramePlacements(agentParams.pinoModel, agentParams.pinoData);
+        auto xStart3d = agentParams.pinoData.oMf[agentParams.pinoFrameId].translation();
+        xStart2d << xStart3d[0] - 0.526, xStart3d[1];
         //v0 = record[40];
         //vStart2d << v0 * cos(record[39]), v0 * sin(record[39]);
         xHit2d << record[14] - 0.526, record[15];
@@ -270,7 +279,7 @@ int main(int argc, char* argv[])
             cartTraj.points.clear();
             jointTraj.points.clear();
 
-            if (not combPlanner.plan(xStart2d, vStart2d, xHit2d, vHit2d, hitting_time, xStop2d, vStop2d, cartTraj)) {
+            if (not combPlanner.planHit(xStart2d, vStart2d, xHit2d, vHit2d, hitting_time, xStop2d, vStop2d, cartTraj)) {
                 break;
             }
             transformations.transformTrajectory(cartTraj);
@@ -298,7 +307,7 @@ int main(int argc, char* argv[])
         //        cout << v << "\t";
         //    cout << endl;
         //}
-        auto fileName = "./data/" + ds + "/" + leading_zeros(k, 5) + ".path";
+        auto fileName = "./data/" + ds_name + "/" + ds + "/" + leading_zeros(k, 5) + ".path";
         FILE* fout = fopen(fileName.c_str(), "w");
         for (int j = 0; j < jointTraj.points.size(); j++)
         {

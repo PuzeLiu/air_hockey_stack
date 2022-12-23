@@ -89,9 +89,14 @@ class NeuralPlannerHittingTestNode:
             if inp:
                 break
             # fake hit
-            if self.request_hit_plan((1.1, 0.3, 0.0)):
+            #self.set_puck_pose(-0.5, -0.3, 0., 0.)
+            self.randomize_puck_pose()
+            #if self.request_hit_plan((1.1, 0.3, 0.0)):
+            if self.request_hit_plan():
+                rospy.sleep(0.4)
+                self.set_puck_pose(-0.5, -0.3, 0., 0., False)
                 # for i in range(10):
-                rospy.sleep(0.15)
+                rospy.sleep(0.03)
                 self.request_hit_replan()
 
     def lissajoux_hit(self):
@@ -101,6 +106,7 @@ class NeuralPlannerHittingTestNode:
                 break
             if self.record:
                 self.record_rosbag(15)
+            self.randomize_puck_pose()
             rospy.sleep(1.0)
             # lissajoux
             pr = PlannerRequest()
@@ -110,7 +116,7 @@ class NeuralPlannerHittingTestNode:
             pr.tactic = 2
             pr.header.stamp = rospy.Time.now()
             self.planner_request_publisher.publish(pr)
-            rospy.sleep(3.0)
+            rospy.sleep(2.0 + np.random.random())
             self.request_hit_replan()
 
     def read_puck_pose(self, t):
@@ -335,7 +341,7 @@ class NeuralPlannerHittingTestNode:
         vy = v * np.sin(a)
         self.set_puck_pose(x, y, vx, vy)
 
-    def set_puck_pose(self, x, y, vx, vy):
+    def set_puck_pose(self, x, y, vx, vy, sleep=True):
         if self.gazebo:
             state_msg = ModelState()
             state_msg.model_name = 'puck'
@@ -352,7 +358,8 @@ class NeuralPlannerHittingTestNode:
             rospy.wait_for_service('/gazebo/set_model_state')
             set_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
             set_state(state_msg)
-            rospy.sleep(0.5)
+            if sleep:
+                rospy.sleep(0.5)
 
     def prepare_move_planner_request(self, x, y, expected_time):
         pr = PlannerRequest()
@@ -505,13 +512,13 @@ if __name__ == '__main__':
     # node.hit()
     # node.lissajoux_hit()
 
-    # node.lissajoux_hit()
+    #node.lissajoux_hit()
     # node.hit_with_bounce()
     # node.moving_puck_hitting_test()
-    node.moving_puck_defending_test()
+    #node.moving_puck_defending_test()
     # node.demo_bounce_and_hit()
     # node.demo_straight_hitting()
     # node.demo_bounce_hitting()
     # node.demo_slice_hitting()
 
-    # node.fake_hit_and_replan()
+    node.fake_hit_and_replan()

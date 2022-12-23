@@ -96,7 +96,8 @@ package_dir = os.path.dirname(root_dir)
 #bag_path = os.path.join(package_dir, "128_right3.bag")
 # bag_path = os.path.join(package_dir, "b59_left1a.bag")
 #bag_path = os.path.join(package_dir, "b59_right1a.bag")
-bag_path = os.path.join(package_dir, "neural/2022-08-01-17-43-17.bag")
+#bag_path = os.path.join(package_dir, "neural/2022-08-01-17-43-17.bag")
+bag_path = os.path.join(package_dir, "bags/ours_opt_lp/E0.bag")
 
 mul = 1.
 

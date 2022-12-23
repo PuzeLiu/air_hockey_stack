@@ -2,7 +2,7 @@
 import rospy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
-from air_hockey_referee.msg import GameStatus
+from air_hockey_msgs.msg import GameStatus
 
 import numpy as np
 
@@ -48,7 +48,7 @@ class RobotInitializerNode:
             self.iiwa_back_trajectory.header.stamp = rospy.Time.now()
 
             self.iiwa_front_publisher.publish(self.iiwa_front_trajectory)
-            self.iiwa_back_publisher.publish(self.iiwa_back_trajectory)
+            #self.iiwa_back_publisher.publish(self.iiwa_back_trajectory)
 
 
 if __name__ == '__main__':
