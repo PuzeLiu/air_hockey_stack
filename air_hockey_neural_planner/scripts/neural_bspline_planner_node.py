@@ -26,7 +26,7 @@ from planner_request_utils import unpack_planner_request
 from manifold_planning.utils.bspline import BSpline
 from manifold_planning.utils.spo import StartPointOptimizer
 from manifold_planning.utils.constants import UrdfModels, Limits, Base
-from manifold_planning.utils.model import load_model_boundaries_hitting, load_model_hpo, model_inference
+from manifold_planning.utils.model import load_model_hitting, model_inference
 from manifold_planning.utils.feasibility import check_if_plan_valid
 from manifold_planning.utils.hpo_interface import get_hitting_configuration_opt
 
@@ -115,10 +115,8 @@ class NeuralPlannerNode:
         self.bspt = BSpline(self.num_t_control_points, num_T_pts=64)
         print("Bspline initialized")
         self.spo = StartPointOptimizer(self.urdf_path)
-        self.planner_model = load_model_boundaries_hitting(planner_path, self.num_q_control_points, 3, 2, self.bsp, self.bspt)
+        self.planner_model = load_model_hitting(planner_path, self.num_q_control_points, self.bsp, self.bspt)
         print("striker model loaded")
-        # self.ik_hitting_model = load_model_hpo(ik_hitting_path)
-        # print("ik hitting model loaded")
         self.po = StartPointOptimizer(self.urdf_path)
         self.pino_model = pino.buildModelFromUrdf(self.urdf_path)
         self.pino_data = self.pino_model.createData()
