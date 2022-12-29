@@ -1,3 +1,4 @@
 [submodule "air_hockey_neural_planner/scripts/manifold_planning"]
 	path = air_hockey_neural_planner/scripts/manifold_planning
-	url = git@github.com:pkicki/manifold_planning.git
+	url = git@github.com:pkicki/cnp-b.git
+	branch = release
