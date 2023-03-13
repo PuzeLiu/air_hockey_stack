@@ -8,4 +8,5 @@ geometry_msgs/Point end_point
 float32 hit_angle
 float32 expected_time
 float32 expected_velocity
+float32 table_height
 int8 tactic

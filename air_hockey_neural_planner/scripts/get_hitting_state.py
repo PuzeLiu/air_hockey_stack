@@ -36,8 +36,9 @@ class GHS():
         print(req)
         xk = req.x
         yk = req.y
+        zk = req.z
         thk = req.th
-        qk, q_dot_k = get_hitting_configuration_opt(xk, yk, Base.position[-1], thk)
+        qk, q_dot_k = get_hitting_configuration_opt(xk, yk, zk, thk)
         if qk is None or q_dot_k is None:
             print("ERROR WITH OPT")
             return [], [], 0.

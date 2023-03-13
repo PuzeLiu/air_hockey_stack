@@ -15,5 +15,6 @@ def unpack_planner_request(msg):
     th_hit = msg.hit_angle
     expected_time = msg.expected_time
     expected_velocity = msg.expected_velocity
+    table_height = msg.table_height
     tactic = msg.tactic
-    return tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time, expected_velocity
+    return tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time, expected_velocity, table_height

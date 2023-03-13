@@ -3,6 +3,9 @@ import os.path
 import shlex
 import signal
 import subprocess
+import sys
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 import psutil
 import rospy
@@ -19,6 +22,13 @@ from air_hockey_msgs.msg import PlannerRequest, PlannerStatus
 
 from air_hockey_puck_tracker.srv import GetPuckState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+
+SCRIPT_DIR = os.path.dirname(__file__)
+PACKAGE_DIR = os.path.dirname(SCRIPT_DIR)
+PLANNING_MODULE_DIR = os.path.join(SCRIPT_DIR, "manifold_planning")
+sys.path.append(PLANNING_MODULE_DIR)
+sys.path.append(SCRIPT_DIR)
+from manifold_planning.utils.spo import StartPointOptimizer
 
 
 def print_(x, N=5):
@@ -43,7 +53,7 @@ class PlannersEvaluationNode:
                                                     queue_size=5)
         self.robot_joint_pose = None
         self.robot_joint_velocity = None
-        self.q_base = rospy.get_param("/air_hockey/agent/q_ref")
+        #self.q_base = rospy.get_param("/air_hockey/agent/q_ref")
         rospy.wait_for_service('/iiwa_front/get_puck_state')
         self.get_puck_state = rospy.ServiceProxy('/iiwa_front/get_puck_state', GetPuckState)
         rospy.sleep(2.)
@@ -54,12 +64,26 @@ class PlannersEvaluationNode:
         self.is_moving = False
         # self.method = "sst"
         #self.method = "mpcmpnet"
-        self.method = "mpcmpnet_newp"
-        #self.method = "ours"
+        #self.method = "mpcmpnet_newp"
+        self.method = "ours_h16"
         # self.method = "iros"
         # self.method = "nlopt"
         # self.method = "cbirrt"
         #self.method = "cbirrt_vel"
+        #self.table_height = 0.30
+        #self.table_height = 0.22
+        #self.table_height = 0.20
+        #self.table_height = 0.18
+        self.table_height = 0.16
+        #self.table_height = 0.14
+        #self.table_height = 0.12
+        #self.table_height = 0.10
+        #self.table_height = 0.08
+        #self.method = f"ours_h{int(self.table_height * 100)}"
+        self.set_table_height(self.table_height)
+        po = StartPointOptimizer(os.path.join(PLANNING_MODULE_DIR, "iiwa_striker.urdf"))
+        self.q_base = po.solve([0.65, 0.0, self.table_height])
+        self.move_to_base()
 
     def move_to_base(self):
         iiwa_front_msg = JointTrajectory()
@@ -91,6 +115,7 @@ class PlannersEvaluationNode:
         # path = os.path.dirname(os.path.dirname(__file__))
         # command = "bash " + os.path.join(path, f"record_rosbag.sh {time}")
         name = f"data/hitting_exp/{self.method}/x{x:.2f}_y{y:.2f}.bag"
+        os.makedirs(os.path.dirname(name), exist_ok=True)
         command = "rosbag record " \
                   f"-O {name} " \
                   "/iiwa_front/bspline_ff_joint_trajectory_controller/state " \
@@ -162,6 +187,18 @@ class PlannersEvaluationNode:
         set_state(state_msg)
         rospy.sleep(0.5)
 
+    def set_table_height(self, table_height):
+        state_msg = ModelState()
+        state_msg.model_name = 'air_hockey_table'
+        state_msg.pose.position.x = 1.694
+        state_msg.pose.position.y = 0.813
+        state_msg.pose.position.z = table_height - 0.03
+        state_msg.reference_frame = ""
+        rospy.wait_for_service('/gazebo/set_model_state')
+        set_state = rospy.ServiceProxy('/gazebo/set_model_state', SetModelState)
+        set_state(state_msg)
+        rospy.sleep(0.5)
+
     def prepare_hit_planner_request(self, x, y):
         print("PREPARE PLANNER REQUEST")
 
@@ -190,13 +227,14 @@ class PlannersEvaluationNode:
         print(type(pr.q_0))
         pr.q_dot_0 = self.robot_joint_velocity
         pr.q_ddot_0 = np.zeros(7)
-        hit_point = Point(x, y, 0.16)
+        hit_point = Point(x, y, self.table_height)
         pr.hit_point = hit_point
         pr.hit_angle = th
         print("TH:", th)
         pr.expected_time = -1.
         pr.expected_velocity = -1.
         pr.tactic = 0
+        pr.table_height = self.table_height
         pr.header.stamp = rospy.Time.now()
         return pr
 
@@ -205,10 +243,11 @@ class PlannersEvaluationNode:
         pr.q_0 = self.robot_joint_pose
         pr.q_dot_0 = self.robot_joint_velocity
         pr.q_ddot_0 = np.zeros(7)
-        hit_point = Point(x, y, 0.16)
+        hit_point = Point(x, y, self.table_height)
         pr.hit_point = hit_point
         pr.hit_angle = th
         pr.tactic = 0
+        pr.table_height = self.table_height
         pr.header.stamp = rospy.Time.now()
         self.planner_request_publisher.publish(pr)
         return True
