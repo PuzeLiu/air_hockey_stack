@@ -158,35 +158,38 @@ class NeuralPlannerNode:
         msg.q_ddot_0 = q_ddot_0
         t1 = perf_counter()
         print("REPLANNING TIME:", t1 - t0)
-        print("TIME OFFSET:", time_offset   )
+        print("TIME OFFSET:", time_offset)
         self.compute_trajectory(msg, traj_time, time_offset)
 
     def compute_trajectory(self, msg, traj_time=None, time_offset=0.):
-        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time, expected_velocity = unpack_planner_request(msg)
-        #print("TH HIT:", th_hit)
+        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, \
+        expected_time, expected_velocity, table_height = unpack_planner_request(msg)
+        # print("TH HIT:", th_hit)
+        print("TABLE HEIGHT:", table_height)
 
         v_mul = 1.0
         if tactic == 0:  # HIT
-            #q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
-            r = self.get_hitting_state(x_hit, y_hit, th_hit)
+            # q_d, q_dot_d, xyz = self.get_hitting_configuration(x_hit, y_hit, th_hit)
+            r = self.get_hitting_state(x_hit, y_hit, table_height, th_hit)
             q_d = np.array(r.q)
             q_dot_d = np.array(r.q_dot)
             magnitude = r.magnitude
-            #print("EXPECTED VEL: ", expected_velocity)
-            #print("MAGNITUDE: ", magnitude)
+            # print("EXPECTED VEL: ", expected_velocity)
+            # print("MAGNITUDE: ", magnitude)
             if expected_velocity > 0. and expected_velocity < magnitude:
                 q_dot_d = q_dot_d / magnitude * expected_velocity
             t0 = perf_counter()
-            d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d * v_mul], axis=-1)[np.newaxis]
+            d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit],
+                                q_dot_0, q_ddot_0, q_dot_d * v_mul, [table_height]], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             #q_, dq_, ddq_, t_, q_cps_, t_cps_ = model_inference(self.planner_model, d, self.bsp, self.bspt)
             q, dq, ddq, t, q_cps, t_cps = model_fast_inference(self.planner_model, d, self.bsp, self.bspt)
             # q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=t[-1]*1.5)
             planning_time = 0.08
             traj_and_plan_time = t[-1] + planning_time
-            #print("TRAJ TIME:", t[-1])
-            #print("TRAJ AND PLAN TIME:", traj_and_plan_time)
-            #print("EXPECTED_TIME:", expected_time)
+            # print("TRAJ TIME:", t[-1])
+            # print("TRAJ AND PLAN TIME:", traj_and_plan_time)
+            # print("EXPECTED_TIME:", expected_time)
             if expected_time > 0.:
                 if traj_and_plan_time < expected_time:
                     if traj_time is None:
@@ -208,32 +211,33 @@ class NeuralPlannerNode:
                             print("REQ TIME:", requested_time)
                             ratio = requested_time / t[-1]
                             print("RATIO:", ratio)
-                            #t_cps /= ratio
-                            #t *= ratio
-                elif traj_and_plan_time < 1.2*expected_time:
+                            # t_cps /= ratio
+                            # t *= ratio
+                elif traj_and_plan_time < 1.2 * expected_time:
                     print("TRY TO ACT EVEN IT IS TOO LATE")
-                    #traj_and_offset_time = t[-1] + time_offset
-                    #print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
+                    # traj_and_offset_time = t[-1] + time_offset
+                    # print("TRAJ AND OFFSET TIME:", traj_and_offset_time)
                 else:
                     return False
             t1 = perf_counter()
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
             t2 = perf_counter()
-            d_ret = np.concatenate([q_d, Base.configuration, [0.], Base.position, dq[-1], [0.], ddq[-1], [0.] * 8],
-                                   axis=-1)[np.newaxis]
+            #d_ret = np.concatenate([q_d, Base.configuration, [0.], Base.position,
+            d_ret = np.concatenate([q_d, q_0, Base.position,
+                                    dq[-1], [0.], ddq[-1], [0.] * 8, [table_height]], axis=-1)[np.newaxis]
             d_ret = d_ret.astype(np.float32)
             #qr, dqr, ddqr, tr, qr_cps, tr_cps = model_inference(self.planner_model, d_ret, self.bsp, self.bspt)
             qr, dqr, ddqr, tr, qr_cps, tr_cps = model_fast_inference(self.planner_model, d_ret, self.bsp, self.bspt)
             t3 = perf_counter()
             self.actual_trajectory.append(qr, dqr, ddqr, tr, qr_cps, tr_cps)
-            total_planning_time = t1 - t0# + t3 - t2
+            total_planning_time = t1 - t0  # + t3 - t2
             print("TOTAL PLANNIVG TIME: ", total_planning_time)
             self.publish_planner_status(total_planning_time)
         elif tactic == 1:  # MOVE
             p_d = np.array([x_end, y_end, Base.position[-1]])
             q_d = self.spo.solve(p_d)
             q_dot_d = np.zeros((7,))
-            d = np.concatenate([q_0, q_d, p_d, q_dot_0, q_ddot_0, q_dot_d], axis=-1)[np.newaxis]
+            d = np.concatenate([q_0, q_d, p_d, q_dot_0, q_ddot_0, q_dot_d, [table_height]], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
             print("TRAJ TIME:", t[-1])
@@ -258,7 +262,8 @@ class NeuralPlannerNode:
             def get_velocity(q, v_xyz):
                 q = np.pad(q, (0, 9 - q.shape[0]), mode='constant')
                 idx_ = self.pino_model.getFrameId("F_striker_tip")
-                J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, idx_, pino.LOCAL_WORLD_ALIGNED)[:3, :6]
+                J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, idx_, pino.LOCAL_WORLD_ALIGNED)[:3,
+                    :6]
                 pinvJ = np.linalg.pinv(J)
                 q_dot = pinvJ @ v_xyz
                 return q_dot
@@ -268,17 +273,17 @@ class NeuralPlannerNode:
             q_dot_d1 = np.pad(q_dot_d1, [[0, 1]], mode='constant')
             q_dot_d2 = np.pad(q_dot_d2, [[0, 1]], mode='constant')
             q_ddot_0 = np.zeros((7,))
-            d = np.concatenate([q_0, q_d1, p_d1, q_dot_0, q_ddot_0, q_dot_d1], axis=-1)[np.newaxis]
+            d = np.concatenate([q_0, q_d1, p_d1, q_dot_0, q_ddot_0, q_dot_d1, [table_height]], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt,
                                                           expected_time=expected_time)
             self.actual_trajectory = Trajectory(q, dq, ddq, t, q_cps, t_cps)
-            d = np.concatenate([q_d1, q_d2, p_d2, q_dot_d1, ddq[-1], [0.], q_dot_d2], axis=-1)[np.newaxis]
+            d = np.concatenate([q_d1, q_d2, p_d2, q_dot_d1, ddq[-1], [0.], q_dot_d2, [table_height]], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt,
                                                           expected_time=expected_time)
             t1 = (q, dq, ddq, t, q_cps, t_cps)
-            d = np.concatenate([q_d2, q_d1, p_d1, q_dot_d2, ddq[-1], [0.], q_dot_d1], axis=-1)[np.newaxis]
+            d = np.concatenate([q_d2, q_d1, p_d1, q_dot_d2, ddq[-1], [0.], q_dot_d1, [table_height]], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
             q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt,
                                                           expected_time=expected_time)
@@ -301,19 +306,19 @@ class NeuralPlannerNode:
         pino.forwardKinematics(self.pino_model, self.pino_data, q)
         xyz_pino = self.pino_data.oMi[-1].translation
         return q[:7], np.array(q_dot_k[:7]), xyz_pino
-        #qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis]).numpy()[0]
-        #q = np.concatenate([qk, np.zeros(3)], axis=-1)
-        #pino.forwardKinematics(self.pino_model, self.pino_data, q)
-        #xyz_pino = copy(self.pino_data.oMi[-1].translation)
+        # qk = self.ik_hitting_model(np.array([xk, yk, thk])[np.newaxis]).numpy()[0]
+        # q = np.concatenate([qk, np.zeros(3)], axis=-1)
+        # pino.forwardKinematics(self.pino_model, self.pino_data, q)
+        # xyz_pino = copy(self.pino_data.oMi[-1].translation)
         ## J = pino.computeJointJacobians(self.pino_model, self.pino_data, q)
-        #J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3,
+        # J = pino.computeFrameJacobian(self.pino_model, self.pino_data, q, self.joint_idx, pino.LOCAL_WORLD_ALIGNED)[:3,
         #    :6]
-        #pinvJ = np.linalg.pinv(J)
+        # pinvJ = np.linalg.pinv(J)
         ## pinv63J = pinvJ[:6, :3]
-        #q_dot = (pinvJ @ np.array([np.cos(thk), np.sin(thk), 0])[:, np.newaxis])[:, 0]
-        #max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
-        #qdotk = q_dot / max_mul
-        #return q[:7], qdotk, xyz_pino
+        # q_dot = (pinvJ @ np.array([np.cos(thk), np.sin(thk), 0])[:, np.newaxis])[:, 0]
+        # max_mul = np.max(np.abs(q_dot) / Limits.q_dot)
+        # qdotk = q_dot / max_mul
+        # return q[:7], qdotk, xyz_pino
 
     def publish_joint_trajectory(self, qs, ts, traj_time=None):
         assert len(qs) == len(ts)
