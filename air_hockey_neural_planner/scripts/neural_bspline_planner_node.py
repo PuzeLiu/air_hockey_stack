@@ -26,7 +26,8 @@ from planner_request_utils import unpack_planner_request
 from manifold_planning.utils.bspline import BSpline
 from manifold_planning.utils.spo import StartPointOptimizer
 from manifold_planning.utils.constants import UrdfModels, Limits, Base
-from manifold_planning.utils.model import load_model_boundaries_hitting, load_model_hpo, model_inference
+from manifold_planning.utils.model import load_model_boundaries_hitting, load_model_hpo, model_inference, \
+    load_model_boundaries_hitting_heights, model_fast_inference
 from manifold_planning.utils.feasibility import check_if_plan_valid
 from manifold_planning.utils.hpo_interface import get_hitting_configuration_opt
 
@@ -177,8 +178,9 @@ class NeuralPlannerNode:
             t0 = perf_counter()
             d = np.concatenate([q_0, q_d, [x_hit, y_hit, th_hit], q_dot_0, q_ddot_0, q_dot_d * v_mul], axis=-1)[np.newaxis]
             d = d.astype(np.float32)
-            q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt)
-            #q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=t[-1]*1.5)
+            #q_, dq_, ddq_, t_, q_cps_, t_cps_ = model_inference(self.planner_model, d, self.bsp, self.bspt)
+            q, dq, ddq, t, q_cps, t_cps = model_fast_inference(self.planner_model, d, self.bsp, self.bspt)
+            # q, dq, ddq, t, q_cps, t_cps = model_inference(self.planner_model, d, self.bsp, self.bspt, expected_time=t[-1]*1.5)
             planning_time = 0.08
             traj_and_plan_time = t[-1] + planning_time
             #print("TRAJ TIME:", t[-1])
@@ -219,7 +221,8 @@ class NeuralPlannerNode:
             d_ret = np.concatenate([q_d, Base.configuration, [0.], Base.position, dq[-1], [0.], ddq[-1], [0.] * 8],
                                    axis=-1)[np.newaxis]
             d_ret = d_ret.astype(np.float32)
-            qr, dqr, ddqr, tr, qr_cps, tr_cps = model_inference(self.planner_model, d_ret, self.bsp, self.bspt)
+            #qr, dqr, ddqr, tr, qr_cps, tr_cps = model_inference(self.planner_model, d_ret, self.bsp, self.bspt)
+            qr, dqr, ddqr, tr, qr_cps, tr_cps = model_fast_inference(self.planner_model, d_ret, self.bsp, self.bspt)
             t3 = perf_counter()
             self.actual_trajectory.append(qr, dqr, ddqr, tr, qr_cps, tr_cps)
             total_planning_time = t1 - t0# + t3 - t2
