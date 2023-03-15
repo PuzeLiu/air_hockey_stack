@@ -116,10 +116,10 @@
 <!--    <node pkg="air_hockey_rqt" type="air_hockey_rqt" name="air_hockey_rqt" ns="air_hockey_referee" output="screen"/>-->
     <node pkg="rqt_gui" type="rqt_gui" name="air_hockey_dashboard" args="--perspective-file $(find air_hockey_description)/rviz/air_hockey_dashboard.perspective"/>
 
-    <node pkg="air_hockey_neural_planner" type="robot_initializer_node.py" name="robot_initializer_node" output="screen">
-        <param name="front_controllers" value="$(arg front_controllers)" />
-        <param name="back_controllers" value="$(arg back_controllers)" />
-    </node>
+<!--     <node pkg="air_hockey_neural_planner" type="robot_initializer_node.py" name="robot_initializer_node" output="screen"> -->
+<!--         <param name="front_controllers" value="$(arg front_controllers)" /> -->
+<!--         <param name="back_controllers" value="$(arg back_controllers)" /> -->
+<!--     </node> -->
 
 <!--     <node pkg="air_hockey_neural_planner" type="neural_bspline_planner_node.py" name="neural_bspline_planner_node" output="screen"> -->
 <!--         <param name="front_controllers" value="$(arg front_controllers)" /> -->

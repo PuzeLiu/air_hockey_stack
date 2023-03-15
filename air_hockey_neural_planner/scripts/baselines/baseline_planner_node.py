@@ -81,10 +81,11 @@ class NloptPlannerNode:
         self.actual_trajectory = None
 
     def compute_trajectory(self, msg):
-        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time, expected_velocity = unpack_planner_request(msg)
+        tactic, x_hit, y_hit, th_hit, q_0, q_dot_0, q_ddot_0, x_end, y_end, expected_time, expected_velocity,\
+        table_height = unpack_planner_request(msg)
         print("TH HIT:", th_hit)
 
-        r = self.get_hitting_state(x_hit, y_hit, th_hit)
+        r = self.get_hitting_state(x_hit, y_hit, table_height, th_hit)
         q_d = np.array(r.q)
         q_dot_d = np.array(r.q_dot)
         q, dq, ddq, t, planning_time = self.planner.solve(q_0, q_dot_0, q_d, q_dot_d)

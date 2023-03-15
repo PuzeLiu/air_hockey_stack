@@ -79,11 +79,30 @@ class PlannersEvaluationNode:
         #self.table_height = 0.12
         #self.table_height = 0.10
         #self.table_height = 0.08
-        #self.method = f"ours_h{int(self.table_height * 100)}"
+        #self.table_height = 0.06
+        #self.method = f"newours_h{int(self.table_height * 100)}"
+        self.method = f"baseours_h{int(self.table_height * 100)}_7jc"
+        #self.method = "ours_0001trainingdata"
         self.set_table_height(self.table_height)
-        po = StartPointOptimizer(os.path.join(PLANNING_MODULE_DIR, "iiwa_striker.urdf"))
-        self.q_base = po.solve([0.65, 0.0, self.table_height])
+        self.po = StartPointOptimizer(os.path.join(PLANNING_MODULE_DIR, "iiwa_striker.urdf"))
+        self.q_base = self.po.solve([0.65, 0.0, self.table_height])
         self.move_to_base()
+        rospy.sleep(2.0)
+
+    def evaluate_heights(self):
+        heights = np.arange(0, 9, 2)[::-1]
+        #heights = np.arange(-26, -21, 2)
+        #heights = np.arange(34, 31, 2)
+        #heights = np.arange(-30, 41, 2)
+        #heights = [0, 2, 4, 6]
+        #heights = [10]
+        for h in heights:
+            self.table_height = float(h) / 100.
+            self.method = f"baseours_h{h}_7jc"
+            self.set_table_height(self.table_height)
+            self.q_base = self.po.solve([0.65, 0.0, self.table_height])
+            self.move_to_base()
+            self.evaluate()
 
     def move_to_base(self):
         iiwa_front_msg = JointTrajectory()
@@ -96,6 +115,7 @@ class PlannersEvaluationNode:
         iiwa_front_msg.header.stamp = rospy.Time.now() + rospy.Duration(0.1)
         iiwa_front_msg.joint_names = [f"F_joint_{i}" for i in range(1, 8)]
         self.iiwa_front_publisher.publish(iiwa_front_msg)
+        rospy.sleep(2.5)
 
     def kill_rosbag_proc(self, msg):
         print("XDDDDD")
@@ -119,11 +139,11 @@ class PlannersEvaluationNode:
         command = "rosbag record " \
                   f"-O {name} " \
                   "/iiwa_front/bspline_ff_joint_trajectory_controller/state " \
-                  "/iiwa_front/joint_states /tf " \
+                  "/tf " \
                   "/neural_planner/status /neural_planner/plan_trajectory"
         command = shlex.split(command)
         self.rosbag_proc = subprocess.Popen(command)
-        rospy.sleep(1.0)
+        rospy.sleep(1.5)
 
     def evaluate(self):
         xs = np.linspace(0.8, 1.2, 9)
@@ -151,7 +171,7 @@ class PlannersEvaluationNode:
                    i += 1
                    pass
                self.move_to_base()
-               rospy.sleep(4.)
+               #rospy.sleep(2.)
 
     def for_video(self):
         xs = [0.8, 0.95, 1., 0.9, 1.15]
