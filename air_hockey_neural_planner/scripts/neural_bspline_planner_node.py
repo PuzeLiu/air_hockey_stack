@@ -119,8 +119,6 @@ class NeuralPlannerNode:
         self.planner_model = load_model_boundaries_hitting(planner_path, self.num_q_control_points, 3, 2, self.bsp, self.bspt)
         #self.planner_model = load_model_boundaries_hitting_heights(planner_path, self.num_q_control_points, 3, 2, self.bsp, self.bspt)
         print("striker model loaded")
-        # self.ik_hitting_model = load_model_hpo(ik_hitting_path)
-        # print("ik hitting model loaded")
         self.po = StartPointOptimizer(self.urdf_path)
         self.pino_model = pino.buildModelFromUrdf(self.urdf_path)
         self.pino_data = self.pino_model.createData()
