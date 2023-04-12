@@ -44,6 +44,12 @@ class BaselineHittingExperiment {
 
   void planRequestCB(air_hockey_msgs::PlannerRequestConstPtr msg);
 
+  bool solveJointTrajectoryIK(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj,
+                              const air_hockey_baseline_agent::JointArrayType &qStart,
+							  const air_hockey_baseline_agent::JointArrayType &dqStart,
+                              trajectory_msgs::JointTrajectory &jointTraj);
+
+
  private:
   ros::NodeHandle nh;
   ros::ServiceClient get_hitting_state_client;
@@ -61,6 +67,8 @@ class BaselineHittingExperiment {
   bool publishStatus;
 
   air_hockey_msgs::PlannerStatus plannerStatusMsg;
+
+  bool solve_with_ik;
 };
 }
 #endif //SRC_AIR_HOCKEY_STACK_AIR_HOCKEY_BASELINE_AGENT_INCLUDE_EXAMPLES_BASELINE_HITTING_EXPERIMENT_H_

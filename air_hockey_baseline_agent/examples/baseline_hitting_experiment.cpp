@@ -31,6 +31,9 @@ BaselineHittingExperiment::BaselineHittingExperiment(ros::NodeHandle nh) : nh(nh
 	plannerRequestSub = nh.subscribe("/neural_planner/plan_trajectory", 1, &BaselineHittingExperiment::planRequestCB, this);
 	plannerStatusPub = nh.advertise<air_hockey_msgs::PlannerStatus>("/neural_planner/status", 1);
 	get_hitting_state_client = nh.serviceClient<air_hockey_msgs::GetHittingState>("/iiwa_front/get_hitting_state");
+
+	nh.param<bool>("solve_with_ik", solve_with_ik, false);
+
 	publishStatus = false;
 
 	if (agent.getAgentParams().name == "iiwa_front") {
@@ -156,8 +159,16 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 //															   tStop, cartTraj);
 		agent.getTrajectoryGenerator().transformations->transformTrajectory(cartTraj);
 
-		if (agent.getTrajectoryGenerator().optimizer
+        bool success = false;
+		if (solve_with_ik) {
+			solveJointTrajectoryIK(cartTraj, qStart, dqStart, jointTraj);
+			success = true;
+		} else if (agent.getTrajectoryGenerator().optimizer
 			->optimizeJointTrajectoryAnchor(cartTraj, qStart, dqStart, qHitRef, hittingTime, jointTraj)) {
+			success = true;
+		}
+
+
 
 			agent.getTrajectoryGenerator().cubicSplineInterpolation(jointTraj, prePlanPoint);
 			agent.getTrajectoryGenerator().synchronizeCartesianTrajectory(jointTraj,cartTraj);
@@ -234,6 +245,65 @@ bool BaselineHittingExperiment::planGettingBackTrajectory() {
 	return false;
 }
 
+bool BaselineHittingExperiment::solveJointTrajectoryIK(const trajectory_msgs::MultiDOFJointTrajectory &cartTraj_,
+                                                       const air_hockey_baseline_agent::JointArrayType &qStart_,
+                                                       const air_hockey_baseline_agent::JointArrayType &dqStart_,
+                                                       trajectory_msgs::JointTrajectory &jointTraj_) {
+	jointTraj_.points.clear();
+	trajectory_msgs::JointTrajectoryPoint jointViaPoint_;
+	jointViaPoint_.positions.resize(agent.getAgentParams().nq);
+	jointViaPoint_.velocities.resize(agent.getAgentParams().nq);
+	for (int i = 0; i < agent.getAgentParams().nq; ++i) {
+		jointViaPoint_.positions[i] = qStart_[i];
+		jointViaPoint_.velocities[i] = dqStart_[i];
+	}
+	jointViaPoint_.time_from_start = ros::Duration(0);
+
+	air_hockey_baseline_agent::JointArrayType qCur, dqCur, qNext, dqNext;
+	qCur = qStart;
+	Eigen::Vector3d xDes, dxDes, xCurPos, deltaX;
+	Eigen::MatrixXd J_tmp(6, agent.getAgentParams().pinoModel.nv),  J(3, agent.getAgentParams().pinoModel.nv);
+	for (size_t i = 0; i < cartTraj_.points.size(); ++i) {
+		xDes[0] = cartTraj_.points[i].transforms[0].translation.x;
+		xDes[1] = cartTraj_.points[i].transforms[0].translation.y;
+		xDes[2] = cartTraj_.points[i].transforms[0].translation.z;
+
+		dxDes[0] = cartTraj_.points[i].velocities[0].linear.x;
+		dxDes[1] = cartTraj_.points[i].velocities[0].linear.y;
+		dxDes[2] = cartTraj_.points[i].velocities[0].linear.z;
+
+		pinocchio::forwardKinematics(agent.getAgentParams().pinoModel, agent.getAgentParams().pinoData, qCur);
+		pinocchio::computeJointJacobians(agent.getAgentParams().pinoModel, agent.getAgentParams().pinoData);
+		pinocchio::updateFramePlacements(agent.getAgentParams().pinoModel, agent.getAgentParams().pinoData);
+		pinocchio::getFrameJacobian(agent.getAgentParams().pinoModel, agent.getAgentParams().pinoData,
+		                            agent.getAgentParams().pinoFrameId, pinocchio::LOCAL_WORLD_ALIGNED, J_tmp);
+
+		xCurPos = agent.getAgentParams().pinoData.oMf[agent.getAgentParams().pinoFrameId].translation();
+
+		double dt = (cartTraj_.points[i].time_from_start - jointViaPoint_.time_from_start).toSec();
+		J = J_tmp.topRows(3);
+		deltaX = (xDes - xCurPos) / dt;
+		Eigen::VectorXd deltaQ = J.colPivHouseholderQr().solve(deltaX);
+
+		dqNext = deltaQ.cwiseMax(-agent.getAgentParams().pinoModel.velocityLimit)
+			.cwiseMin(agent.getAgentParams().pinoModel.velocityLimit);
+		qNext = qCur + dqNext * dt;
+		agent.getTrajectoryGenerator().optimizer->solveJoint7(qNext, dqNext);
+
+		jointViaPoint_.time_from_start = cartTraj_.points[i].time_from_start;
+		for (size_t row = 0; row < agent.getAgentParams().nq; row++) {
+			jointViaPoint_.velocities[row] = dqNext[row];
+			jointViaPoint_.positions[row] = qNext[row];
+		}
+		jointTraj_.points.push_back(jointViaPoint_);
+
+		qCur = qNext;
+		dqCur = dqNext;
+	}
+	jointTraj_.header.stamp = cartTraj_.header.stamp;
+	return true;
+
+
 void BaselineHittingExperiment::planRequestCB(air_hockey_msgs::PlannerRequestConstPtr msg) {
 	publishStatus = true;
 	qStart = Eigen::VectorXf::Map(msg->q_0.data(), msg->q_0.size()).cast<double>();
@@ -247,6 +317,7 @@ void BaselineHittingExperiment::planRequestCB(air_hockey_msgs::PlannerRequestCon
 	prePlanPoint.time_from_start = ros::Duration(0.);
 	prePlanPoint.positions = std::vector<double>(std::begin(msg->q_0), std::end(msg->q_0));
 	prePlanPoint.velocities = std::vector<double>(std::begin(msg->q_dot_0), std::end(msg->q_dot_0));
+    publishStatus = true;
 }
 
 int main(int argc, char **argv) {

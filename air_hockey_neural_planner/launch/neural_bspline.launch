@@ -26,7 +26,8 @@
         <param name="back_controllers" value="$(arg back_controllers)" />
     </node>
 
-<!--    <node pkg="air_hockey_baseline_agent" type="baseline_hitting_experiment" name="baseline_hitting_exp" output="screen" ns="iiwa_front"/>--> -->
+<!--    <param name="iiwa_front/solve_with_ik" value="true" type="bool"/>-->
+<!--    <node pkg="air_hockey_baseline_agent" type="baseline_hitting_experiment" name="baseline_hitting_exp" output="screen" ns="iiwa_front"/>-->
 
 
     <rosparam file="$(find air_hockey_puck_tracker)/config/config.yaml" command="load" subst_value="true"/>
