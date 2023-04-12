@@ -168,8 +168,7 @@ bool BaselineHittingExperiment::planHittingTrajectory() {
 			success = true;
 		}
 
-
-
+        if (success) {
 			agent.getTrajectoryGenerator().cubicSplineInterpolation(jointTraj, prePlanPoint);
 			agent.getTrajectoryGenerator().synchronizeCartesianTrajectory(jointTraj,cartTraj);
 
@@ -302,6 +301,7 @@ bool BaselineHittingExperiment::solveJointTrajectoryIK(const trajectory_msgs::Mu
 	}
 	jointTraj_.header.stamp = cartTraj_.header.stamp;
 	return true;
+}
 
 
 void BaselineHittingExperiment::planRequestCB(air_hockey_msgs::PlannerRequestConstPtr msg) {
